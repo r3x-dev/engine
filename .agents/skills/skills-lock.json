@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "dhh-rails-style": {
+      "source": "EveryInc/compound-engineering-plugin",
+      "sourceType": "github",
+      "computedHash": "a074cffa30542487467f57d1a609376f3aac64842e30588e3fb84b35a4ed438a"
+    }
+  }
+}
