@@ -1,24 +1,20 @@
-# README
+# r3x
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Ruby-native workflow executor and automation engine. File-based workflow definitions with database runtime state. Built for local-first execution, self-hosting, and Git-native version control.
 
-Things you may want to cover:
+Rails API backend with SQLite, Active Record, and Active Job. Supports staged DAG execution, pack-based extensibility, and multiple executor backends.
 
-* Ruby version
+## Quick Start
 
-* System dependencies
+```bash
+mise install
+bundle install
+bin/rails db:setup
+bin/rails server
+```
 
-* Configuration
+## Test
 
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+```bash
+bin/rails test
+```
