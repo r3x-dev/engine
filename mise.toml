@@ -1,0 +1,6 @@
+[tools]
+ruby = "4.0.1"
+
+[env]
+RAILS_ENV = "development"
+BUNDLE_PATH = ".bundle"
