@@ -1,10 +1,11 @@
 module R3x
   module Outputs
     class Discord
+      include R3x::Concerns::Logger
+
       def initialize
         @mode = ENV.fetch("R3X_DISCORD_MODE", "test")
         @webhook_url = ENV["R3X_DISCORD_WEBHOOK_URL"]
-        @logger = R3x::Logger.new
       end
 
       def deliver(content:)
@@ -25,7 +26,7 @@ module R3x
 
       private
 
-      attr_reader :logger, :mode, :webhook_url
+      attr_reader :mode, :webhook_url
     end
   end
 end
