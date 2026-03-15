@@ -7,11 +7,23 @@ gem "sqlite3", ">= 2.1"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 
-# Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-# gem "bcrypt", "~> 3.1.7"
+# HTTP client
+gem "faraday"
+gem "multi_json"
 
-# Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem "tzinfo-data", platforms: %i[ windows jruby ]
+# HTML/XML parsing
+gem "nokogiri"
+
+# LLM integration
+gem "ruby_llm"
+
+# Google Translate API
+gem "google-cloud-translate"
+
+# Google OAuth and API integration
+gem "googleauth"
+gem "google-apis-calendar_v3"
+gem "google-apis-gmail_v1"
 
 # Use the database-backed adapters for Rails.cache and Active Job
 gem "solid_cache"
