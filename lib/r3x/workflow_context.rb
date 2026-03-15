@@ -1,5 +1,7 @@
 module R3x
   class WorkflowContext
+    include R3x::Concerns::Logger
+
     def initialize
     end
 
@@ -13,10 +15,6 @@ module R3x
 
     def discord_output
       @discord_output ||= R3x::Outputs::Discord.new
-    end
-
-    def logger
-      @logger ||= R3x::Logger.new
     end
 
     private

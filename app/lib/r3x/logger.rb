@@ -20,9 +20,5 @@ module R3x
     def error(message)
       @logger.tagged(@tag) { @logger.error(message) }
     end
-
-    def tagged(tag, &block)
-      @logger.tagged(tag, &block)
-    end
   end
 end
