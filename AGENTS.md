@@ -11,6 +11,53 @@ This Rails app uses a small set of preferred libraries for common integration wo
 
 - Prefer `Faraday` for outbound HTTP and API integrations.
 - Reasoning: it is already a direct project dependency and gives us a standard place for middleware, retries, authentication, adapters, and test stubbing instead of ad hoc HTTP clients.
+- **JSON handling**: When making HTTP requests that send/receive JSON, use Faraday's built-in `:json` middleware (available via `faraday` gem 2.0+) instead of manually serializing with `MultiJson`. Configure the connection with `f.request :json` and `f.response :json` - this automatically sets the Content-Type header and handles request/response body serialization.
+  - **Bad**: `request.body = MultiJson.dump({"key" => "value"})`
+  - **Good**: `connection.post(url, { key: "value" })` with `f.request :json` middleware
+
+## Naming Conventions
+
+- When a class is namespaced within a descriptive module (e.g., `R3x::Outputs`, `R3x::Triggers`), do not repeat the module name in the class name.
+- **Good**: `R3x::Outputs::Discord`, `R3x::Triggers::Rss`, `R3x::Services::HttpClient`
+- **Bad**: `R3x::Outputs::DiscordOutput`, `R3x::Triggers::RssTrigger`
+- Exception: When the class name would be ambiguous without the qualifier (e.g., `HttpClient` clearly describes an HTTP client, but `Discord` in the `Services` module might need to be `DiscordWebhookClient` to distinguish from `Discord` in `Outputs`).
+
+### Zeitwerk & File Structure
+
+- Adhere strictly to Zeitwerk's path-to-constant mapping: file names must match their defined constant exactly (snake_case to CamelCase).
+- **Files**: `lib/r3x/services/http_client.rb` must define `R3x::Services::HttpClient`.
+- **Directories**: Directories represent namespaces. If a file is in `app/models/r3x/`, it must be wrapped in `module R3x`.
+- **Acronyms**: Use standard inflection (e.g., `rss.rb` → `Rss`, `api_client.rb` → `ApiClient`) unless a custom inflection is explicitly defined in `config/initializers/inflections.rb`.
+- **Validation**: Always ensure the filename and the class/module name are perfectly aligned to avoid `NameError` during autoloading.
+
+## Logging
+
+- Use Rails tagged logging with `self.class.name` for per-class log prefixes.
+- **Good**: `logger.tagged(self.class.name) { logger.info("message") }`
+- **Bad**: `logger.info("[Hardcoded::Class::Name] message")` or manual string interpolation
+- Reasoning: Using `self.class.name` keeps log tags synchronized with actual class names automatically, supports nested tagging, and works consistently with Rails log formatting.
+
+## Control Flow
+
+- `case` statements that dispatch on configuration values (e.g., ENV modes) must either exhaustively list all supported values or raise an exception in the `else` branch for unsupported values.
+- **Good**: 
+  ```ruby
+  case mode
+  when "real" then # handle real
+  when "test" then # handle test  
+  else
+    raise ArgumentError, "Unsupported mode: #{mode}"
+  end
+  ```
+- **Bad**:
+  ```ruby
+  case mode
+  when "real" then # handle real
+  else
+    # silently assumes test mode, hides typos in configuration
+  end
+  ```
+- Reasoning: Failing fast with a clear error prevents silent misconfiguration and makes debugging easier when an invalid mode is accidentally provided.
 
 ## Scope
 
