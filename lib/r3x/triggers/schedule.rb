@@ -18,10 +18,6 @@ module R3x
 
         Validators::Cron.validate!(cron, field_name: "cron")
       end
-
-      def to_h
-        { type: :schedule, cron: cron }
-      end
     end
   end
 end
