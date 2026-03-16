@@ -18,8 +18,8 @@ This Rails app uses a small set of preferred libraries for common integration wo
 ## Naming Conventions
 
 - When a class is namespaced within a descriptive module (e.g., `R3x::Outputs`, `R3x::Triggers`), do not repeat the module name in the class name.
-- **Good**: `R3x::Outputs::Discord`, `R3x::Triggers::Rss`, `R3x::Services::HttpClient`
-- **Bad**: `R3x::Outputs::DiscordOutput`, `R3x::Triggers::RssTrigger`
+- **Good**: `R3x::Outputs::Discord`, `R3x::Triggers::Schedule`, `R3x::Services::HttpClient`
+- **Bad**: `R3x::Outputs::DiscordOutput`, `R3x::Triggers::ScheduleTrigger`
 - Exception: When the class name would be ambiguous without the qualifier (e.g., `HttpClient` clearly describes an HTTP client, but `Discord` in the `Services` module might need to be `DiscordWebhookClient` to distinguish from `Discord` in `Outputs`).
 
 ### Zeitwerk & File Structure
