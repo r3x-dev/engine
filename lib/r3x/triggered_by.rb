@@ -10,10 +10,6 @@ module R3x
       type == :schedule
     end
 
-    def rss?
-      type == :rss
-    end
-
     def manual?
       type == :manual
     end
