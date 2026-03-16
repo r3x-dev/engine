@@ -6,7 +6,6 @@ module R3x
       end
 
       def validate!
-        # Manual trigger requires no options
         true
       end
     end

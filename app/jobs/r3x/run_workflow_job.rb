@@ -6,11 +6,18 @@ module R3x
       R3x::WorkflowPackLoader.load!
       workflow_class = R3x::WorkflowRegistry.fetch(workflow_key)
 
-      ctx = WorkflowContext.build do |builder|
-        builder.trigger_type = trigger_type
-        builder.with_solid_queue_task(workflow_key) if trigger_type == "schedule"
-      end
+      trigger = workflow_class.triggers.find { |t| t.type.to_s == trigger_type }
+      trigger ||= Triggers::Manual.new
 
+      execution = TriggerExecution.new(
+        trigger: trigger,
+        workflow_key: workflow_key
+      )
+
+      ctx = WorkflowContext.new(
+        trigger: execution,
+        workflow_key: workflow_key
+      )
       workflow_class.new.run(ctx)
     end
   end
