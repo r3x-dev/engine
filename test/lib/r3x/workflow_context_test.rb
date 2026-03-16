@@ -2,8 +2,16 @@ require "test_helper"
 
 module R3x
   class WorkflowContextTest < ActiveSupport::TestCase
-    test "defaults to manual trigger when no triggered_by provided" do
-      ctx = WorkflowContext.new
+    test "requires triggered_by" do
+      assert_raises(ArgumentError) do
+        WorkflowContext.build
+      end
+    end
+
+    test "defaults to manual trigger via builder" do
+      ctx = WorkflowContext.build do |b|
+        b.triggered_by = TriggeredBy.new(:manual)
+      end
       assert ctx.triggered_by.manual?
     end
 

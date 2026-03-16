@@ -32,7 +32,9 @@ module R3x
 
     test "can run loaded workflow" do
       workflow_class = R3x::WorkflowRegistry.fetch("test_workflow")
-      ctx = R3x::WorkflowContext.new
+      ctx = R3x::WorkflowContext.build do |b|
+        b.triggered_by = R3x::TriggeredBy.new(:manual)
+      end
       result = workflow_class.new.run(ctx)
 
       assert_equal true, result["test"]
