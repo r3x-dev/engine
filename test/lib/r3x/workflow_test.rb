@@ -147,8 +147,8 @@ module R3x
       assert_equal [ :schedule, :rss ], triggers.map(&:type)
     end
 
-    test "supported_trigger_types returns list of available trigger files" do
-      types = R3x::Workflow.supported_trigger_types
+    test "supported_types returns list of available trigger files" do
+      types = R3x::Triggers.supported_types
       assert_includes types, :rss
       assert_includes types, :schedule
       refute_includes types, :base
