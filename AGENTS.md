@@ -32,7 +32,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 
 ### Autoloading
 
-- Everything in `lib/r3x/` and `app/lib/r3x/` is autoloaded by Zeitwerk. You should never need to use `require` or `require_relative` for files within these paths.
+- Everything autoloaded by Rails (paths configured in `autoload_paths`, `autoload_lib`, etc.) is handled by Zeitwerk. You should never need to use `require` or `require_relative` for files within autoloaded paths.
 - **Bad**: `require_relative "../validators/cron"` at the top of a file in `lib/r3x/triggers/`
 - **Good**: Just reference `R3x::Validators::Cron` directly - Zeitwerk will find and load it automatically.
 - The only exception is requiring external gems that don't auto-require their components.

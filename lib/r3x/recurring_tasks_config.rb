@@ -5,17 +5,19 @@ module R3x
         result = {}
 
         WorkflowRegistry.all.each do |workflow_class|
-          schedule = workflow_class.schedule_trigger
-          next unless schedule
+          triggers = workflow_class.triggers.select(&:cron_schedulable?)
+          next if triggers.empty?
 
           workflow_key = workflow_class.workflow_key
 
-          result[workflow_key] = {
-            "class" => "R3x::RunWorkflowJob",
-            "args" => [ workflow_key, { "triggered_by" => "schedule" } ],
-            "schedule" => schedule.cron,
-            "queue" => "default"
-          }
+          triggers.each do |trigger|
+            result[workflow_key] = {
+              "class" => "R3x::RunWorkflowJob",
+              "args" => [ workflow_key, { "triggered_by" => trigger.type } ],
+              "schedule" => trigger.cron,
+              "queue" => "default"
+            }
+          end
         end
 
         result

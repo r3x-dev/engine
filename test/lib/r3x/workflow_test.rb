@@ -42,7 +42,7 @@ module R3x
         trigger :schedule, cron: "0 13 * * *"
       end
 
-      schedule = klass.schedule_trigger
+      schedule = klass.triggers.find(&:cron_schedulable?)
       assert schedule
       assert_equal :schedule, schedule.type
       assert_equal "0 13 * * *", schedule.cron
@@ -56,7 +56,7 @@ module R3x
         trigger :schedule, cron: "every day at 13:00"
       end
 
-      schedule = klass.schedule_trigger
+      schedule = klass.triggers.find(&:cron_schedulable?)
       assert schedule
       assert_equal "every day at 13:00", schedule.cron
     end
@@ -91,7 +91,7 @@ module R3x
         trigger :rss, url: "https://example.com/rss"
       end
 
-      rss = klass.rss_triggers.first
+      rss = klass.triggers.first
       assert rss
       assert_equal :rss, rss.type
       assert_equal "https://example.com/rss", rss.url
@@ -106,7 +106,7 @@ module R3x
         trigger :rss, url: "https://example.com/rss", every: "every 15 minutes"
       end
 
-      rss = klass.rss_triggers.first
+      rss = klass.triggers.first
       assert rss
       assert_equal "every 15 minutes", rss.every
     end
