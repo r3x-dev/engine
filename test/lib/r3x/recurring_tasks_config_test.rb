@@ -1,5 +1,4 @@
 require "test_helper"
-require "r3x/recurring_tasks_config"
 
 module R3x
   class RecurringTasksConfigTest < ActiveSupport::TestCase
