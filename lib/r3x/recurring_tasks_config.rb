@@ -13,7 +13,7 @@ module R3x
           triggers.each do |trigger|
             result[workflow_key] = {
               "class" => "R3x::RunWorkflowJob",
-              "args" => [ workflow_key, { "triggered_by" => trigger.type } ],
+              "args" => [ workflow_key, { "triggered_by" => trigger.type.to_s } ],
               "schedule" => trigger.cron,
               "queue" => "default"
             }

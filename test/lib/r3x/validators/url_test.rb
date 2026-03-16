@@ -1,5 +1,4 @@
 require "test_helper"
-require "r3x/validators/url"
 
 module R3x
   module Validators
