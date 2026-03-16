@@ -31,6 +31,8 @@ module R3x
           "TestTriggerType"
         end
 
+        trigger :schedule, cron: "0 * * * *"
+
         def run(ctx)
           {
             "trigger_type" => ctx.trigger.type.to_s,
@@ -57,6 +59,8 @@ module R3x
         def self.name
           "TestManual"
         end
+
+        trigger :manual
 
         def run(ctx)
           {

@@ -1,76 +1,115 @@
 require "test_helper"
 
 module R3x
-  class TriggerInfoTest < ActiveSupport::TestCase
-    test "converts type to symbol" do
-      trigger = R3x::TriggerInfo.new("schedule")
-      assert_equal :schedule, trigger.type
+  class TriggerExecutionTest < ActiveSupport::TestCase
+    test "delegates type to trigger" do
+      trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
+      execution = TriggerExecution.new(trigger: trigger, workflow_key: "test")
+      assert_equal :schedule, execution.type
     end
 
-    test "schedule? returns true for schedule type" do
-      trigger = R3x::TriggerInfo.new(:schedule)
-      assert trigger.schedule?
-      refute trigger.manual?
+    test "dynamic schedule? predicate" do
+      trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
+      execution = TriggerExecution.new(trigger: trigger, workflow_key: "test")
+      assert execution.schedule?
+      refute execution.manual?
     end
 
-    test "manual? returns true for manual type" do
-      trigger = R3x::TriggerInfo.new(:manual)
-      refute trigger.schedule?
-      assert trigger.manual?
+    test "dynamic manual? predicate" do
+      trigger = R3x::Triggers::Manual.new
+      execution = TriggerExecution.new(trigger: trigger, workflow_key: "test")
+      refute execution.schedule?
+      assert execution.manual?
     end
 
-    test "previous_run_at returns nil for non-schedule trigger" do
-      trigger = R3x::TriggerInfo.new(:manual, previous_run_at_fetcher: -> { Time.current })
-      assert_nil trigger.previous_run_at
+    test "delegates options to trigger" do
+      trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
+      execution = TriggerExecution.new(trigger: trigger, workflow_key: "test")
+      assert_equal({ cron: "0 13 * * *" }, execution.options)
+    end
+  end
+
+  class WorkflowExecutionTest < ActiveSupport::TestCase
+    test "previous_run_at returns nil when no execution in solid_queue" do
+      execution = WorkflowExecution.new(workflow_key: "nonexistent_workflow")
+      assert_nil execution.previous_run_at
     end
 
     test "previous_run_at is memoized" do
-      call_count = 0
-      fetcher = -> {
-        call_count += 1
-        Time.current
-      }
-      trigger = R3x::TriggerInfo.new(:schedule, previous_run_at_fetcher: fetcher)
+      # Setup test data
+      job = SolidQueue::Job.create!(
+        queue_name: "default",
+        class_name: "R3x::RunWorkflowJob",
+        arguments: [ "test_memo" ]
+      )
+      SolidQueue::RecurringTask.create!(
+        key: "test_memo",
+        schedule: "0 * * * *",
+        class_name: "R3x::RunWorkflowJob",
+        arguments: [],
+        queue_name: "default"
+      )
+      SolidQueue::RecurringExecution.create!(
+        task_key: "test_memo",
+        run_at: 2.hours.ago,
+        job_id: job.id
+      )
 
-      t1 = trigger.previous_run_at
-      t2 = trigger.previous_run_at
+      execution = WorkflowExecution.new(workflow_key: "test_memo")
+
+      t1 = execution.previous_run_at
+      t2 = execution.previous_run_at
 
       assert_equal t1, t2
-      assert_equal 1, call_count
+      assert t1.present?
+    ensure
+      SolidQueue::RecurringExecution.where(task_key: "test_memo").delete_all
+      SolidQueue::RecurringTask.where(key: "test_memo").delete_all
+      SolidQueue::Job.where(class_name: "R3x::RunWorkflowJob").delete_all
     end
 
     test "first_run? returns true when no previous_run_at" do
-      trigger = R3x::TriggerInfo.new(:schedule)
-      assert trigger.first_run?
+      execution = WorkflowExecution.new(workflow_key: "new_workflow")
+      assert execution.first_run?
     end
 
     test "first_run? returns false when previous_run_at exists" do
-      trigger = R3x::TriggerInfo.new(:schedule, previous_run_at_fetcher: -> { Time.current })
-      refute trigger.first_run?
+      job = SolidQueue::Job.create!(
+        queue_name: "default",
+        class_name: "R3x::RunWorkflowJob",
+        arguments: [ "test_fr" ]
+      )
+      SolidQueue::RecurringTask.create!(
+        key: "test_fr",
+        schedule: "0 * * * *",
+        class_name: "R3x::RunWorkflowJob",
+        arguments: [],
+        queue_name: "default"
+      )
+      SolidQueue::RecurringExecution.create!(
+        task_key: "test_fr",
+        run_at: 2.hours.ago,
+        job_id: job.id
+      )
+
+      execution = WorkflowExecution.new(workflow_key: "test_fr")
+      refute execution.first_run?
+    ensure
+      SolidQueue::RecurringExecution.where(task_key: "test_fr").delete_all
+      SolidQueue::RecurringTask.where(key: "test_fr").delete_all
+      SolidQueue::Job.where(class_name: "R3x::RunWorkflowJob").delete_all
     end
   end
 
   class WorkflowContextTest < ActiveSupport::TestCase
-    test "requires trigger_type" do
-      assert_raises(ArgumentError) do
-        WorkflowContext.build
-      end
-    end
+    test "has trigger and execution" do
+      trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
+      trigger_execution = TriggerExecution.new(trigger: trigger, workflow_key: "test")
+      ctx = WorkflowContext.new(trigger: trigger_execution, workflow_key: "test")
 
-    test "accepts trigger_type as string" do
-      ctx = WorkflowContext.build do |b|
-        b.trigger_type = "schedule"
-      end
       assert_equal :schedule, ctx.trigger.type
       assert ctx.trigger.schedule?
-    end
-
-    test "accepts trigger_type as symbol" do
-      ctx = WorkflowContext.build do |b|
-        b.trigger_type = :manual
-      end
-      assert_equal :manual, ctx.trigger.type
-      assert ctx.trigger.manual?
+      assert ctx.execution.is_a?(WorkflowExecution)
     end
   end
 end

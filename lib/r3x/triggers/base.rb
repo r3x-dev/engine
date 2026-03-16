@@ -11,10 +11,6 @@ module R3x
       def validate!
         raise NotImplementedError, "#{self.class.name} must implement validate!"
       end
-
-      def to_h
-        { type: type }.merge(options)
-      end
     end
   end
 end
