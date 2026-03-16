@@ -10,7 +10,7 @@ module R3x
       end
 
       def validate!
-        unless cron
+        if cron.nil? || cron.to_s.empty?
           raise ArgumentError, "trigger :schedule requires a 'cron' option (e.g., cron: '0 13 * * *' or cron: 'every day at 13:00')"
         end
 

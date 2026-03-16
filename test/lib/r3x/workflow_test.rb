@@ -147,6 +147,28 @@ module R3x
       assert_equal [ :schedule, :rss ], triggers.map(&:type)
     end
 
+    test "trigger :schedule rejects blank cron" do
+      assert_raises(ArgumentError) do
+        Class.new(R3x::Workflow) do
+          def self.name
+            "Test"
+          end
+          trigger :schedule, cron: ""
+        end
+      end
+    end
+
+    test "trigger :rss rejects blank url" do
+      assert_raises(ArgumentError) do
+        Class.new(R3x::Workflow) do
+          def self.name
+            "Test"
+          end
+          trigger :rss, url: ""
+        end
+      end
+    end
+
     test "supported_types returns list of available trigger files" do
       types = R3x::Triggers.supported_types
       assert_includes types, :rss

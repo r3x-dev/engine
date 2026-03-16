@@ -16,7 +16,7 @@ module R3x
       end
 
       def validate!
-        unless url
+        if url.nil? || url.to_s.empty?
           raise ArgumentError, "trigger :rss requires a 'url' option"
         end
 
