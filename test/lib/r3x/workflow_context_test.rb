@@ -16,14 +16,6 @@ module R3x
     test "schedule trigger detection" do
       ctx = WorkflowContext.new(triggered_by: TriggeredBy.new(:schedule))
       assert ctx.triggered_by.schedule?
-      refute ctx.triggered_by.rss?
-      refute ctx.triggered_by.manual?
-    end
-
-    test "rss trigger detection" do
-      ctx = WorkflowContext.new(triggered_by: TriggeredBy.new(:rss))
-      refute ctx.triggered_by.schedule?
-      assert ctx.triggered_by.rss?
       refute ctx.triggered_by.manual?
     end
   end

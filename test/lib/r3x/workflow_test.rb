@@ -71,56 +71,6 @@ module R3x
       end
     end
 
-    test "trigger :rss requires url option" do
-      assert_raises(ArgumentError) do
-        Class.new(R3x::Workflow) do
-          def self.name
-            "Test"
-          end
-          trigger :rss
-        end
-      end
-    end
-
-    test "trigger :rss with url and default every" do
-      klass = Class.new(R3x::Workflow) do
-        def self.name
-          "Test"
-        end
-        trigger :rss, url: "https://example.com/rss"
-      end
-
-      rss = klass.triggers.first
-      assert rss
-      assert_equal :rss, rss.type
-      assert_equal "https://example.com/rss", rss.url
-      assert_equal "every hour", rss.every
-    end
-
-    test "trigger :rss with custom every" do
-      klass = Class.new(R3x::Workflow) do
-        def self.name
-          "Test"
-        end
-        trigger :rss, url: "https://example.com/rss", every: "every 15 minutes"
-      end
-
-      rss = klass.triggers.first
-      assert rss
-      assert_equal "every 15 minutes", rss.every
-    end
-
-    test "trigger :rss validates every is valid cron" do
-      assert_raises(ArgumentError) do
-        Class.new(R3x::Workflow) do
-          def self.name
-            "Test"
-          end
-          trigger :rss, url: "https://example.com/rss", every: "not valid"
-        end
-      end
-    end
-
     test "unknown trigger type raises error" do
       assert_raises(ArgumentError) do
         Class.new(R3x::Workflow) do
@@ -138,12 +88,11 @@ module R3x
           "Test"
         end
         trigger :schedule, cron: "0 13 * * *"
-        trigger :rss, url: "https://example.com/rss"
       end
 
       triggers = klass.triggers
-      assert_equal 2, triggers.size
-      assert_equal [ :schedule, :rss ], triggers.map(&:type)
+      assert_equal 1, triggers.size
+      assert_equal [ :schedule ], triggers.map(&:type)
     end
 
     test "trigger :schedule rejects blank cron" do
@@ -157,20 +106,8 @@ module R3x
       end
     end
 
-    test "trigger :rss rejects blank url" do
-      assert_raises(ArgumentError) do
-        Class.new(R3x::Workflow) do
-          def self.name
-            "Test"
-          end
-          trigger :rss, url: ""
-        end
-      end
-    end
-
     test "supported_types returns list of available trigger files" do
       types = R3x::Triggers.supported_types
-      assert_includes types, :rss
       assert_includes types, :schedule
       refute_includes types, :base
     end
@@ -186,7 +123,7 @@ module R3x
       end
 
       assert_match(/Unknown trigger type: nonexistent/, error.message)
-      assert_match(/Supported types:.*:rss.*:schedule/, error.message)
+      assert_match(/Supported types:.*:schedule/, error.message)
     end
   end
 end
