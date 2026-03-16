@@ -10,8 +10,8 @@ module R3x
       builder.to_context
     end
 
-    def initialize(triggered_by: nil, previous_run_at_fetcher: nil)
-      @triggered_by = triggered_by || TriggeredBy.new(:manual)
+    def initialize(triggered_by:, previous_run_at_fetcher: nil)
+      @triggered_by = triggered_by
       @previous_run_at_fetcher = previous_run_at_fetcher
     end
 
@@ -49,6 +49,8 @@ module R3x
       end
 
       def to_context
+        raise ArgumentError, "triggered_by is required" if @triggered_by.nil?
+
         WorkflowContext.new(
           triggered_by: @triggered_by,
           previous_run_at_fetcher: @previous_run_at_fetcher
