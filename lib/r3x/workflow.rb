@@ -23,7 +23,7 @@ module R3x
       end
 
       def schedulable_triggers
-        triggers.select(&:cron_schedulable?)
+        triggers.select { |t| t.respond_to?(:cron_schedulable?) && t.cron_schedulable? }
       end
     end
 

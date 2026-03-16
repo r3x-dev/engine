@@ -41,7 +41,7 @@ module R3x
         trigger :schedule, cron: "0 13 * * *"
       end
 
-      schedule = klass.triggers.find(&:cron_schedulable?)
+      schedule = klass.schedulable_triggers.first
       assert schedule
       assert_equal :schedule, schedule.type
       assert_equal "0 13 * * *", schedule.cron
@@ -55,7 +55,7 @@ module R3x
         trigger :schedule, cron: "every day at 13:00"
       end
 
-      schedule = klass.triggers.find(&:cron_schedulable?)
+      schedule = klass.schedulable_triggers.first
       assert schedule
       assert_equal "every day at 13:00", schedule.cron
     end

@@ -5,7 +5,7 @@ module R3x
         result = {}
 
         WorkflowRegistry.all.each do |workflow_class|
-          triggers = workflow_class.triggers.select(&:cron_schedulable?)
+          triggers = workflow_class.schedulable_triggers
           next if triggers.empty?
 
           workflow_key = workflow_class.workflow_key
