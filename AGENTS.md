@@ -83,6 +83,18 @@ This Rails app uses a small set of preferred libraries for common integration wo
   ```
 - Reasoning: Failing fast with a clear error prevents silent misconfiguration and makes debugging easier when an invalid mode is accidentally provided.
 
+## Object Design
+
+- Prefer capability-based APIs over branching on symbolic types when behavior can be expressed through an object interface.
+- **Good**: `triggers.select(&:cron_schedulable?)`
+- **Bad**: `triggers.select { |t| t.type == :schedule }`
+- When multiple classes share a capability, extract a small concern or module with an explicit predicate and required methods.
+- **Good**: `include R3x::Triggers::Concerns::CronSchedulable`
+- Framework code should avoid hardcoding knowledge of concrete subtypes. Prefer polymorphism, capability predicates, and object-owned methods like `to_h`.
+- Name methods around behavior, not concrete subtype names, unless the code truly depends on that exact subtype.
+- Prefer duck typing: focus on behavior rather than names. Ask what the object can do and which methods it responds to; prefer ability over identity.
+- Reasoning: Duck typing is meritocratic. New classes can participate by exposing the right behavior without forcing central dispatch code to learn every subtype.
+
 ## Scope
 
 - Apply these as defaults for new work.
