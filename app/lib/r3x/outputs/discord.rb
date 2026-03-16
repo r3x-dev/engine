@@ -16,7 +16,7 @@ module R3x
           raise ArgumentError, "Missing Discord webhook URL" if webhook_url.blank?
           R3x::Services::DiscordWebhookClient.new(webhook_url: webhook_url).deliver(content: content)
         when "test"
-          logger.info("[DISCORD OUTPUT] #{content}")
+          logger.info(content)
         else
           raise ArgumentError, "Unsupported Discord mode: #{mode}. Supported: real, test"
         end
