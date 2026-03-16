@@ -18,7 +18,7 @@ module R3x
       assert_equal Workflows::TestWorkflow, workflow_class
       assert_equal "test_workflow", workflow_class.workflow_key
 
-      schedule = workflow_class.triggers.find(&:cron_schedulable?)
+      schedule = workflow_class.schedulable_triggers.first
       assert schedule
       assert_equal :schedule, schedule.type
       assert_equal "0 * * * *", schedule.cron
@@ -33,7 +33,7 @@ module R3x
     test "can run loaded workflow" do
       workflow_class = R3x::WorkflowRegistry.fetch("test_workflow")
       ctx = R3x::WorkflowContext.build do |b|
-        b.triggered_by = R3x::TriggeredBy.new(:manual)
+        b.trigger_type = "manual"
       end
       result = workflow_class.new.run(ctx)
 

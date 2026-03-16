@@ -25,28 +25,26 @@ module R3x
     test "performs workflow with schedule trigger" do
       job = RunWorkflowJob.new
 
-      # Create a test workflow class that checks triggered_by
+      # Create a test workflow class that checks trigger
       test_workflow_class = Class.new(R3x::Workflow) do
         def self.name
-          "TestTriggeredBy"
+          "TestTriggerType"
         end
 
         def run(ctx)
           {
-            "triggered_by_type" => ctx.triggered_by.type.to_s,
-            "schedule?" => ctx.triggered_by.schedule?,
-            "manual?" => ctx.triggered_by.manual?
+            "trigger_type" => ctx.trigger.type.to_s,
+            "schedule?" => ctx.trigger.schedule?
           }
         end
       end
 
       WorkflowRegistry.register(test_workflow_class)
 
-      result = job.perform("test_triggered_by", triggered_by: "schedule")
+      result = job.perform("test_trigger_type", trigger_type: "schedule")
 
-      assert_equal "schedule", result["triggered_by_type"]
+      assert_equal "schedule", result["trigger_type"]
       assert result["schedule?"]
-      refute result["manual?"]
     ensure
       WorkflowRegistry.reset!
       WorkflowPackLoader.load!(force: true)
@@ -62,20 +60,18 @@ module R3x
 
         def run(ctx)
           {
-            "triggered_by_type" => ctx.triggered_by.type.to_s,
-            "schedule?" => ctx.triggered_by.schedule?,
-            "manual?" => ctx.triggered_by.manual?
+            "trigger_type" => ctx.trigger.type.to_s,
+            "schedule?" => ctx.trigger.schedule?
           }
         end
       end
 
       WorkflowRegistry.register(test_workflow_class)
 
-      result = job.perform("test_manual", triggered_by: "manual")
+      result = job.perform("test_manual", trigger_type: "manual")
 
-      assert_equal "manual", result["triggered_by_type"]
+      assert_equal "manual", result["trigger_type"]
       refute result["schedule?"]
-      assert result["manual?"]
     ensure
       WorkflowRegistry.reset!
       WorkflowPackLoader.load!(force: true)
