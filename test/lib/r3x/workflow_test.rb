@@ -1,5 +1,4 @@
 require "test_helper"
-require "r3x/workflow"
 
 module R3x
   class WorkflowTest < ActiveSupport::TestCase

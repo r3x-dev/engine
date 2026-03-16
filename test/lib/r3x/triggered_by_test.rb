@@ -1,5 +1,4 @@
 require "test_helper"
-require "r3x/triggered_by"
 
 module R3x
   class TriggeredByTest < ActiveSupport::TestCase
