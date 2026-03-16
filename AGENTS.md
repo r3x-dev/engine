@@ -30,12 +30,36 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - **Acronyms**: Use standard inflection (e.g., `rss.rb` → `Rss`, `api_client.rb` → `ApiClient`) unless a custom inflection is explicitly defined in `config/initializers/inflections.rb`.
 - **Validation**: Always ensure the filename and the class/module name are perfectly aligned to avoid `NameError` during autoloading.
 
+### Autoloading
+
+- Everything in `lib/r3x/` and `app/lib/r3x/` is autoloaded by Zeitwerk. You should never need to use `require` or `require_relative` for files within these paths.
+- **Bad**: `require_relative "../validators/cron"` at the top of a file in `lib/r3x/triggers/`
+- **Good**: Just reference `R3x::Validators::Cron` directly - Zeitwerk will find and load it automatically.
+- The only exception is requiring external gems that don't auto-require their components.
+- **Debugging**: If you get a `NameError` when referencing a class that should exist, it's likely a Zeitwerk autoloading issue (wrong file name, wrong constant name, or missing namespace). Check that file names match constants exactly (snake_case ↔ CamelCase).
+
+## Testing
+
+- When writing tests for workflow DSL or infrastructure, use generic workflow names (e.g., `TestWorkflow`, `MyTestWorkflow`), not real workflow names from `workflows/` folder.
+- Real workflows in `workflows/` are "user workflows" and should not be hardcoded in tests for the core framework.
+- Use anonymous classes or fixture workflows in `test/fixtures/workflows/` for testing framework behavior.
+- **Good**: `Class.new(R3x::Workflow) { def self.name; "Test"; end }`
+- **Bad**: Testing `MyUserWorkflow` workflow directly in framework tests
+
 ## Logging
 
 - Use Rails tagged logging with `self.class.name` for per-class log prefixes.
 - **Good**: `logger.tagged(self.class.name) { logger.info("message") }`
 - **Bad**: `logger.info("[Hardcoded::Class::Name] message")` or manual string interpolation
 - Reasoning: Using `self.class.name` keeps log tags synchronized with actual class names automatically, supports nested tagging, and works consistently with Rails log formatting.
+
+## Validators
+
+- Place shared validation logic in `lib/r3x/validators/`.
+- **Good**: `R3x::Validators::Cron`, `R3x::Validators::Url`
+- **Bad**: `R3x::Triggers::CronValidator`, `R3x::Services::UrlChecker`
+- Reasoning: Validators are reusable across triggers, services, and other components. Keep them in a dedicated namespace.
+- Pattern: Each validator should expose a `validate!(value, field_name: "field")` class method that raises `ArgumentError` on invalid input.
 
 ## Control Flow
 

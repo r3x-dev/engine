@@ -55,4 +55,7 @@ Rails.application.configure do
 
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.logger = ActiveSupport::Logger.new(STDOUT)
+
+  # Disable Mission Control Jobs HTTP Basic auth in development
+  config.mission_control.jobs.http_basic_auth_enabled = false
 end

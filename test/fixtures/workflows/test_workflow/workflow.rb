@@ -1,14 +1,6 @@
 module Workflows
-  class TestWorkflow
-    class << self
-      def workflow_key
-        "test_workflow"
-      end
-
-      def trigger_types
-        %w[manual schedule]
-      end
-    end
+  class TestWorkflow < R3x::Workflow
+    trigger :schedule, cron: "0 * * * *"
 
     def run(ctx)
       {
