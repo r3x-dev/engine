@@ -44,3 +44,5 @@
 
 # Ignore ruby-version file (we use mise.toml)
 .ruby-version
+
+/workflows
