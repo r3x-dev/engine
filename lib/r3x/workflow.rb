@@ -22,12 +22,8 @@ module R3x
         @_triggers.dup
       end
 
-      def schedule_trigger
-        triggers.find { |t| t.type == :schedule }
-      end
-
-      def rss_triggers
-        triggers.select { |t| t.type == :rss }
+      def schedulable_triggers
+        triggers.select(&:cron_schedulable?)
       end
     end
 

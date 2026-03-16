@@ -27,15 +27,7 @@ namespace :r3x do
         else
           puts "  Triggers:"
           triggers.each do |trigger|
-            case trigger.type
-            when :schedule
-              puts "    - schedule: #{trigger.cron}"
-            when :rss
-              puts "    - rss: #{trigger.url}"
-              puts "      every: #{trigger.every}"
-            else
-              puts "    - #{trigger.type}: #{trigger.to_h}"
-            end
+            puts "    - #{trigger.type}: #{trigger.to_h}"
           end
         end
       end
