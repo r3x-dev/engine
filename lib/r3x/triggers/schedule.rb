@@ -1,6 +1,8 @@
 module R3x
   module Triggers
     class Schedule < Base
+      include Concerns::CronSchedulable
+
       def initialize(cron: nil, **options)
         super(:schedule, cron: cron, **options)
       end

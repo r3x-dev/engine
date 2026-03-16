@@ -18,7 +18,7 @@ module R3x
       assert_equal Workflows::TestWorkflow, workflow_class
       assert_equal "test_workflow", workflow_class.workflow_key
 
-      schedule = workflow_class.schedule_trigger
+      schedule = workflow_class.triggers.find(&:cron_schedulable?)
       assert schedule
       assert_equal :schedule, schedule.type
       assert_equal "0 * * * *", schedule.cron
