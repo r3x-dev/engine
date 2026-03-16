@@ -4,6 +4,16 @@ Ruby-native workflow executor and automation engine. File-based workflow definit
 
 Rails API backend with SQLite, Active Record, and Active Job. Supports staged DAG execution, pack-based extensibility, and multiple executor backends.
 
+## Development Setup
+
+After cloning the repository, enable the pre-commit hooks:
+
+```bash
+git config --local core.hooksPath .githooks
+```
+
+This ensures that `bin/ci` runs automatically before each commit to catch issues early.
+
 ## Quick Start
 
 ```bash
