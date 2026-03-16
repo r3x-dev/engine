@@ -2,7 +2,10 @@ module R3x
   class WorkflowContext
     include R3x::Concerns::Logger
 
-    def initialize
+    attr_reader :triggered_by
+
+    def initialize(triggered_by: nil)
+      @triggered_by = triggered_by || TriggeredBy.new(:manual)
     end
 
     def fetch_body(url)
@@ -10,7 +13,7 @@ module R3x
     end
 
     def rss_trigger
-      @rss_trigger ||= R3x::Triggers::Rss.new
+      @rss_trigger ||= R3x::Services::RssParser.new
     end
 
     def discord_output
