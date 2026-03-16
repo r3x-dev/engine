@@ -5,8 +5,13 @@ module R3x
     def perform(workflow_key, triggered_by: nil)
       R3x::WorkflowPackLoader.load!
       workflow_class = R3x::WorkflowRegistry.fetch(workflow_key)
-      triggered_by_obj = triggered_by ? TriggeredBy.new(triggered_by) : nil
-      workflow_class.new.run(R3x::WorkflowContext.new(triggered_by: triggered_by_obj))
+
+      ctx = WorkflowContext.build do |builder|
+        builder.triggered_by = TriggeredBy.new(triggered_by) if triggered_by
+        builder.with_solid_queue_task(workflow_key) if triggered_by == "schedule"
+      end
+
+      workflow_class.new.run(ctx)
     end
   end
 end
