@@ -2,13 +2,13 @@ module R3x
   class RunWorkflowJob < ApplicationJob
     queue_as :default
 
-    def perform(workflow_key, triggered_by: "manual")
+    def perform(workflow_key, trigger_type: "manual")
       R3x::WorkflowPackLoader.load!
       workflow_class = R3x::WorkflowRegistry.fetch(workflow_key)
 
       ctx = WorkflowContext.build do |builder|
-        builder.triggered_by = TriggeredBy.new(triggered_by)
-        builder.with_solid_queue_task(workflow_key) if triggered_by == "schedule"
+        builder.trigger_type = trigger_type
+        builder.with_solid_queue_task(workflow_key) if trigger_type == "schedule"
       end
 
       workflow_class.new.run(ctx)

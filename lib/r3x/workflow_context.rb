@@ -2,7 +2,7 @@ module R3x
   class WorkflowContext
     include R3x::Concerns::Logger
 
-    attr_reader :triggered_by
+    attr_reader :trigger
 
     def self.build
       builder = Builder.new
@@ -10,19 +10,8 @@ module R3x
       builder.to_context
     end
 
-    def initialize(triggered_by:, previous_run_at_fetcher: nil)
-      @triggered_by = triggered_by
-      @previous_run_at_fetcher = previous_run_at_fetcher
-    end
-
-    def previous_run_at
-      return @previous_run_at if defined?(@previous_run_at)
-
-      @previous_run_at = @previous_run_at_fetcher&.call
-    end
-
-    def first_run?
-      previous_run_at.nil?
+    def initialize(trigger:)
+      @trigger = trigger
     end
 
     def fetch_body(url)
@@ -34,10 +23,10 @@ module R3x
     end
 
     class Builder
-      attr_accessor :triggered_by, :previous_run_at_fetcher
+      attr_accessor :trigger_type, :previous_run_at_fetcher
 
       def initialize
-        @triggered_by = nil
+        @trigger_type = nil
         @previous_run_at_fetcher = nil
       end
 
@@ -49,12 +38,10 @@ module R3x
       end
 
       def to_context
-        raise ArgumentError, "triggered_by is required" if @triggered_by.nil?
+        raise ArgumentError, "trigger_type is required" if @trigger_type.nil?
 
-        WorkflowContext.new(
-          triggered_by: @triggered_by,
-          previous_run_at_fetcher: @previous_run_at_fetcher
-        )
+        trigger = TriggerInfo.new(@trigger_type, previous_run_at_fetcher: @previous_run_at_fetcher)
+        WorkflowContext.new(trigger: trigger)
       end
     end
 
