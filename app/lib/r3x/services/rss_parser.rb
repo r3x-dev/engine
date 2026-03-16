@@ -1,6 +1,6 @@
 module R3x
-  module Triggers
-    class Rss
+  module Services
+    class RssParser
       def parse(body, source_url:)
         doc = Nokogiri::XML(body)
 

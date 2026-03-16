@@ -1,17 +1,26 @@
-development:
-  porto_santo_news:
-    class: R3x::RunWorkflowJob
-    args: [porto_santo_news]
-    schedule: "*/15 * * * *"
-    queue: default
+<% require "fugit" %>
+<%
+# Static maintenance tasks (always present)
+static_tasks = {
+  "clear_solid_queue_finished_jobs" => {
+    "command" => "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)",
+    "schedule" => "every hour at minute 12",
+    "queue" => "default"
+  }
+}
 
-production:
-  porto_santo_news:
-    class: R3x::RunWorkflowJob
-    args: [porto_santo_news]
-    schedule: "*/15 * * * *"
-    queue: default
+# Load workflows and generate recurring tasks from DSL
+R3x::WorkflowPackLoader.load!
+dynamic_tasks = R3x::RecurringTasksConfig.to_h
 
-  clear_solid_queue_finished_jobs:
-    command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
-    schedule: every hour at minute 12
+# Merge static and dynamic tasks
+all_tasks = static_tasks.merge(dynamic_tasks)
+
+# Generate for all environments
+config = {
+  "development" => all_tasks,
+  "production" => all_tasks,
+  "test" => {} # No recurring tasks in test
+}
+%>
+<%= config.to_yaml %>

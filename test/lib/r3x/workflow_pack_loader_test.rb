@@ -17,7 +17,11 @@ module R3x
 
       assert_equal Workflows::TestWorkflow, workflow_class
       assert_equal "test_workflow", workflow_class.workflow_key
-      assert_equal %w[manual schedule], workflow_class.trigger_types
+
+      schedule = workflow_class.schedule_trigger
+      assert schedule
+      assert_equal :schedule, schedule.type
+      assert_equal "0 * * * *", schedule.cron
     end
 
     test "raises KeyError for unknown workflow" do

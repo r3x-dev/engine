@@ -1,5 +1,49 @@
 namespace :r3x do
   namespace :workflows do
+    desc "List all registered workflows with their triggers"
+    task list: :environment do
+      R3x::WorkflowPackLoader.load!
+
+      workflows = R3x::WorkflowRegistry.all
+
+      if workflows.empty?
+        puts "No workflows registered."
+        next
+      end
+
+      puts "\nRegistered Workflows (#{workflows.size}):"
+      puts "=" * 60
+
+      workflows.each do |workflow_class|
+        key = workflow_class.workflow_key
+        class_name = workflow_class.name
+
+        puts "\n#{key}"
+        puts "  Class: #{class_name}"
+
+        triggers = workflow_class.triggers
+        if triggers.empty?
+          puts "  Triggers: none"
+        else
+          puts "  Triggers:"
+          triggers.each do |trigger|
+            case trigger.type
+            when :schedule
+              puts "    - schedule: #{trigger.cron}"
+            when :rss
+              puts "    - rss: #{trigger.url}"
+              puts "      every: #{trigger.every}"
+            else
+              puts "    - #{trigger.type}: #{trigger.to_h}"
+            end
+          end
+        end
+      end
+
+      puts "\n" + "=" * 60
+      puts "Total: #{workflows.size} workflow(s)"
+    end
+
     desc "Run all workflows or a specific one (r3x:workflows:run[workflow_key])"
     task :run, [ :workflow_key ] => :environment do |_task, args|
       R3x::WorkflowPackLoader.load!

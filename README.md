@@ -13,6 +13,8 @@ bin/rails db:setup
 bin/rails server
 ```
 
+Then open http://localhost:3000/ to view the Mission Control Jobs dashboard.
+
 ## Test
 
 ```bash
