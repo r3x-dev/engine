@@ -1,6 +1,6 @@
 [tools]
 "gem:ruby-lsp" = "latest"
-ruby = "4.0.1"
+ruby = "4.0.2"
 
 [env]
 RAILS_ENV = "development"
