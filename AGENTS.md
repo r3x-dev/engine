@@ -2,6 +2,36 @@
 
 This Rails app uses a small set of preferred libraries for common integration work. Follow these defaults for new code and agent-authored changes unless an existing subsystem already requires a different interface.
 
+## Project Overview
+
+- `r3x` is a Rails API app that acts as a Ruby-native workflow executor and automation engine.
+- The high-level split is: framework/runtime code lives in the app and `lib/r3x/`, while user-defined workflows live under `workflows/`.
+- Workflows are file-based, Git-friendly, and loaded into a database-backed runtime that uses Active Job + Solid Queue for execution and recurring scheduling.
+- The default local UI surface is Mission Control Jobs mounted at `/jobs`; the root route redirects there.
+
+## Codebase Map
+
+- `lib/r3x/`: core framework code for the workflow DSL, trigger types, workflow loading, registry, execution context, and recurring-task config.
+- `app/lib/r3x/`: runtime support code such as outputs, service clients, and shared concerns.
+- `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves and executes workflows.
+- `workflows/`: user workflow packs. These are not the framework itself; they are loaded by the framework.
+- `config/initializers/r3x_workflow_loader.rb`: boot-time workflow loading hook.
+- `test/fixtures/workflows/`: fixture workflows for framework tests. Prefer these over hardcoding real workflows in tests.
+
+## Runtime Flow
+
+- Workflows subclass `R3x::Workflow`, declare triggers via the DSL, and implement `#run(ctx)`.
+- `R3x::WorkflowPackLoader` discovers `workflow.rb` entrypoints from directories listed in `R3X_WORKFLOW_PATHS`, loads them, and registers their classes in `R3x::WorkflowRegistry`.
+- `R3x::RecurringTasksConfig` turns schedulable workflow triggers into Solid Queue recurring-task definitions.
+- `R3x::RunWorkflowJob` fetches the workflow from the registry, builds a `WorkflowContext`, and calls `workflow_class.new.run(ctx)`.
+- Trigger discovery is filesystem-backed through `lib/r3x/triggers/*.rb`, so trigger file names, constants, and supported types must stay aligned.
+
+## Maintenance Warning
+
+- Keep this file synchronized with the real codebase. If you change workflow loading, trigger discovery, scheduling flow, top-level directory structure, namespaces, or the framework/user-workflow boundary, update the relevant `AGENTS.md` sections in the same change.
+- In particular, update examples and notes here when changing files such as `lib/r3x/workflow.rb`, `lib/r3x/workflow_pack_loader.rb`, `lib/r3x/workflow_registry.rb`, `lib/r3x/recurring_tasks_config.rb`, `lib/r3x/triggers.rb`, `app/jobs/r3x/run_workflow_job.rb`, or `config/initializers/r3x_workflow_loader.rb`.
+- When adding a new subsystem or moving code between `lib/r3x/`, `app/lib/r3x/`, `app/jobs/r3x/`, or `workflows/`, refresh the project overview and codebase map so future agents can still orient themselves quickly.
+
 ## JSON
 
 - Prefer `MultiJson` for JSON parsing and serialization work.
