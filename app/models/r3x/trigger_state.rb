@@ -1,6 +1,6 @@
 module R3x
   class TriggerState < ApplicationRecord
-    serialize :state, coder: MultiJson if connection.adapter_name.downcase == "sqlite"
+    serialize :state, coder: MultiJson if ActiveRecord::Base.connection_db_config.adapter.to_s.downcase == "sqlite"
 
     validates :workflow_key, presence: true
     validates :trigger_type, presence: true
