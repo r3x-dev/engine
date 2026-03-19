@@ -172,6 +172,49 @@ module R3x
         assert_equal({ "key" => "value" }, result)
       end
 
+      test "token_valid? returns true when token is valid" do
+        ENV["VAULT_ADDR"] = "https://vault.test"
+        ENV["VAULT_TOKEN"] = "test-token"
+        reset_vault_singleton
+
+        stub_request(:get, "https://vault.test/v1/auth/token/lookup-self")
+          .with(headers: { "X-Vault-Token" => "test-token" })
+          .to_return(
+            status: 200,
+            body: { data: { id: "test-token", policies: [ "default" ] } }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        assert_equal true, HashiCorpVault.token_valid?
+      end
+
+      test "token_valid? returns false when token is invalid" do
+        ENV["VAULT_ADDR"] = "https://vault.test"
+        ENV["VAULT_TOKEN"] = "invalid-token"
+        reset_vault_singleton
+
+        stub_request(:get, "https://vault.test/v1/auth/token/lookup-self")
+          .with(headers: { "X-Vault-Token" => "invalid-token" })
+          .to_return(
+            status: 403,
+            body: { errors: [ "bad token" ] }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        assert_equal false, HashiCorpVault.token_valid?
+      end
+
+      test "token_valid? returns false when network error occurs" do
+        ENV["VAULT_ADDR"] = "https://vault.test"
+        ENV["VAULT_TOKEN"] = "test-token"
+        reset_vault_singleton
+
+        stub_request(:get, "https://vault.test/v1/auth/token/lookup-self")
+          .to_raise(SocketError.new("Connection refused"))
+
+        assert_equal false, HashiCorpVault.token_valid?
+      end
+
       private
 
       def reset_vault_singleton
