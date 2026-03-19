@@ -1,0 +1,25 @@
+{
+  // https://docs.renovatebot.com/configuration-options/
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Auto-merge only patch updates for gems when tests pass",
+      "matchUpdateTypes": ["patch"],
+      "matchPackagePatterns": ["*"],
+      "automerge": true,
+      "automergeType": "branch",
+      "automergeStrategy": "squash",
+      "requiredStatusChecks": ["CI/test"]
+    },
+    {
+      "description": "Minor and major updates - PR only, no auto-merge",
+      "matchUpdateTypes": ["minor", "major"],
+      "matchPackagePatterns": ["*"],
+      "automerge": false
+    }
+  ],
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 10
+}
