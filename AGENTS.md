@@ -12,7 +12,14 @@ This Rails app uses a small set of preferred libraries for common integration wo
 ## Codebase Map
 
 - `lib/r3x/`: core framework code for the workflow DSL, trigger types, workflow loading, registry, execution context, and recurring-task config.
+<<<<<<< HEAD
 - `app/lib/r3x/`: runtime support code such as outputs, client wrappers, and shared concerns.
+||||||| parent of 5d19d19 (Fix CronValidator reference in Schedule trigger)
+- `app/lib/r3x/`: runtime support code such as outputs, service clients, and shared concerns.
+=======
+- `lib/r3x/dsl/`: shared DSL infrastructure, especially validation concerns and configuration errors used by workflow-declared objects.
+- `app/lib/r3x/`: runtime support code such as outputs, service clients, and shared concerns.
+>>>>>>> 5d19d19 (Fix CronValidator reference in Schedule trigger)
 - `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves and executes workflows.
 - `workflows/`: user workflow packs. These are not the framework itself; they are loaded by the framework.
 - `config/initializers/r3x_workflow_loader.rb`: boot-time workflow loading hook.
@@ -21,6 +28,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 ## Runtime Flow
 
 - Workflows subclass `R3x::Workflow`, declare triggers via the DSL, and implement `#run(ctx)`.
+- Workflow-declared DSL objects must validate themselves before being registered; invalid DSL configuration should raise `R3x::ConfigurationError` with collected validation errors.
 - `R3x::WorkflowPackLoader` discovers `workflow.rb` entrypoints from directories listed in `R3X_WORKFLOW_PATHS`, loads them, and registers their classes in `R3x::WorkflowRegistry`.
 - `R3x::RecurringTasksConfig` turns schedulable workflow triggers into Solid Queue recurring-task definitions.
 - `R3x::RunWorkflowJob` fetches the workflow from the registry, builds a `WorkflowContext`, and calls `workflow_class.new.run(ctx)`.
@@ -30,6 +38,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 
 - Keep this file synchronized with the real codebase. If you change workflow loading, trigger discovery, scheduling flow, top-level directory structure, namespaces, or the framework/user-workflow boundary, update the relevant `AGENTS.md` sections in the same change.
 - In particular, update examples and notes here when changing files such as `lib/r3x/workflow.rb`, `lib/r3x/workflow_pack_loader.rb`, `lib/r3x/workflow_registry.rb`, `lib/r3x/recurring_tasks_config.rb`, `lib/r3x/triggers.rb`, `app/jobs/r3x/run_workflow_job.rb`, or `config/initializers/r3x_workflow_loader.rb`.
+- Also update this file when changing the shared DSL validation contract in files such as `lib/r3x/dsl/validatable.rb`, `lib/r3x/configuration_error.rb`, or the base classes for workflow-declared objects.
 - When adding a new subsystem or moving code between `lib/r3x/`, `app/lib/r3x/`, `app/jobs/r3x/`, or `workflows/`, refresh the project overview and codebase map so future agents can still orient themselves quickly.
 
 ## JSON
@@ -66,7 +75,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 
 - Everything autoloaded by Rails (paths configured in `autoload_paths`, `autoload_lib`, etc.) is handled by Zeitwerk. You should never need to use `require` or `require_relative` for files within autoloaded paths.
 - **Bad**: `require_relative "../validators/cron"` at the top of a file in `lib/r3x/triggers/`
-- **Good**: Just reference `R3x::Validators::Cron` directly - Zeitwerk will find and load it automatically.
+- **Good**: Just reference `R3x::Validators::CronValidator` directly - Zeitwerk will find and load it automatically.
 - The only exception is requiring external gems that don't auto-require their components.
 - **Debugging**: If you get a `NameError` when referencing a class that should exist, it's likely a Zeitwerk autoloading issue (wrong file name, wrong constant name, or missing namespace). Check that file names match constants exactly (snake_case ↔ CamelCase).
 
@@ -95,9 +104,12 @@ This Rails app uses a small set of preferred libraries for common integration wo
 
 - Place shared validation logic in `lib/r3x/validators/`.
 - **Good**: `R3x::Validators::Cron`, `R3x::Validators::Url`
-- **Bad**: `R3x::Triggers::CronValidator`, `R3x::Client::UrlChecker`
+- **Bad**: `R3x::Triggers::Cron`, `R3x::Services::UrlChecker`
 - Reasoning: Validators are reusable across triggers, services, and other components. Keep them in a dedicated namespace.
-- Pattern: Each validator should expose a `validate!(value, field_name: "field")` class method that raises `ArgumentError` on invalid input.
+- Validators used with `validates_with` should inherit from `ActiveModel::Validator` and implement `validate(record)`.
+- DSL objects should use `ActiveModel::Validations` via the shared DSL validation layer and call these validators from object-level validations for reusable value checks.
+- Presence and object semantics belong to the DSL object itself; `R3x::Validators::*` should focus on validating the shape or format of a provided value.
+- Every new workflow DSL object must go through the shared DSL validation layer. Do not add triggers, steps, outputs, or other workflow-declared objects that bypass validation or rely only on ad hoc `raise ArgumentError`.
 
 ## Control Flow
 
