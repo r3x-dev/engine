@@ -104,7 +104,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 
 - Place shared validation logic in `lib/r3x/validators/`.
 - **Good**: `R3x::Validators::Cron`, `R3x::Validators::Url`
-- **Bad**: `R3x::Triggers::Cron`, `R3x::Client::UrlChecker`
+- **Bad**: `R3x::Triggers::Cron`, `R3x::Services::UrlChecker`
 - Reasoning: Validators are reusable across triggers, services, and other components. Keep them in a dedicated namespace.
 - Validators used with `validates_with` should inherit from `ActiveModel::Validator` and implement `validate(record)`.
 - DSL objects should use `ActiveModel::Validations` via the shared DSL validation layer and call these validators from object-level validations for reusable value checks.
