@@ -1,8 +1,13 @@
+RAILS_BIN := "bundle exec rails"
+
 up:
-  rails s
+  {{RAILS_BIN}} s
+
+tests:
+  {{RAILS_BIN}} test
 
 workflows-run:
-  rails r3x:workflows:run
+  {{RAILS_BIN}} r3x:workflows:run
 
 workflows-list:
-  rails r3x:workflows:list
+  {{RAILS_BIN}} r3x:workflows:list

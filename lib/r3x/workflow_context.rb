@@ -20,7 +20,7 @@ module R3x
     private
 
     def http_client
-      @http_client ||= R3x::Services::HttpClient.new
+      @http_client ||= R3x::Client::Http.new
     end
   end
 end

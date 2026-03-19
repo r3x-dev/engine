@@ -55,3 +55,7 @@ group :development, :test do
   # Auto-load environment variables from .env file
   gem "dotenv-rails", require: false
 end
+
+group :test do
+  gem "webmock"
+end
