@@ -2,8 +2,8 @@ require "faraday"
 require "faraday/retry"
 
 module R3x
-  module Services
-    class DiscordWebhookClient
+  module Client
+    class DiscordWebhook
       def initialize(webhook_url:)
         @webhook_url = webhook_url
         @connection = Faraday.new do |f|

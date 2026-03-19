@@ -14,7 +14,7 @@ module R3x
         case mode
         when "real"
           raise ArgumentError, "Missing Discord webhook URL" if webhook_url.blank?
-          R3x::Services::DiscordWebhookClient.new(webhook_url: webhook_url).deliver(content: content)
+          R3x::Client::DiscordWebhook.new(webhook_url: webhook_url).deliver(content: content)
         when "test"
           logger.info(content)
         else
