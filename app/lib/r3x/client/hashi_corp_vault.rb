@@ -21,7 +21,7 @@ module R3x
 
         secrets = response.body.is_a?(Hash) && response.body.dig("data", "data")
 
-        unless secrets.present? && secrets.is_a?(Hash)
+        unless secrets.is_a?(Hash)
           raise RuntimeError, "Vault response missing KV v2 data at data.data"
         end
 
