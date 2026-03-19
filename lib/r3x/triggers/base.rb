@@ -1,6 +1,8 @@
 module R3x
   module Triggers
     class Base
+      include Dsl::Validatable
+
       attr_reader :type, :options
 
       def initialize(type, **options)
@@ -8,8 +10,12 @@ module R3x
         @options = options
       end
 
-      def validate!
-        raise NotImplementedError, "#{self.class.name} must implement validate!"
+      def to_h
+        options.dup
+      end
+
+      def validation_subject
+        "trigger :#{type}"
       end
     end
   end
