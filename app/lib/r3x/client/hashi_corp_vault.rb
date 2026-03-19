@@ -15,13 +15,13 @@ module R3x
       end
 
       def read(path)
-        response = connection.get("/v1/#{path}")
+        response = connection.get("v1/#{path}")
 
         raise RuntimeError, "Vault request failed with status #{response.status}: #{response.body["errors"]}" unless response.success?
 
         secrets = response.body.is_a?(Hash) && response.body.dig("data", "data")
 
-        unless secrets.is_a?(Hash)
+        unless secrets.is_a?(Hash) && secrets.present?
           raise RuntimeError, "Vault response missing KV v2 data at data.data"
         end
 

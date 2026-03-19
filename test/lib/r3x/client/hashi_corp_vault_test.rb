@@ -149,6 +149,29 @@ module R3x
         assert_match "Vault response missing KV v2 data", error.message
       end
 
+      test "preserves path prefix from VAULT_ADDR" do
+        ENV["VAULT_ADDR"] = "https://vault.test/internal/vault"
+        ENV["VAULT_TOKEN"] = "test-token"
+        reset_vault_singleton
+
+        stub_request(:get, "https://vault.test/internal/vault/v1/secret/data/env/r3x")
+          .with(headers: { "X-Vault-Token" => "test-token" })
+          .to_return(
+            status: 200,
+            body: {
+              data: {
+                data: { "key" => "value" },
+                metadata: { version: 1 }
+              }
+            }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        result = HashiCorpVault.read("secret/data/env/r3x")
+
+        assert_equal({ "key" => "value" }, result)
+      end
+
       private
 
       def reset_vault_singleton
