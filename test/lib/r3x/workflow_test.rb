@@ -23,7 +23,7 @@ module R3x
     end
 
     test "trigger :schedule requires cron option" do
-      assert_raises(ArgumentError) do
+      error = assert_raises(ConfigurationError) do
         Class.new(R3x::Workflow) do
           def self.name
             "Test"
@@ -31,6 +31,9 @@ module R3x
           trigger :schedule
         end
       end
+
+      assert_includes error.message, "Invalid trigger :schedule for Test"
+      assert_includes error.message, "Cron can't be blank"
     end
 
     test "trigger :schedule accepts valid cron expression" do
@@ -61,7 +64,7 @@ module R3x
     end
 
     test "trigger :schedule rejects invalid cron" do
-      assert_raises(ArgumentError) do
+      error = assert_raises(ConfigurationError) do
         Class.new(R3x::Workflow) do
           def self.name
             "Test"
@@ -69,6 +72,8 @@ module R3x
           trigger :schedule, cron: "invalid cron syntax"
         end
       end
+
+      assert_includes error.message, "Cron is not a valid cron expression"
     end
 
     test "unknown trigger type raises error" do
@@ -96,7 +101,7 @@ module R3x
     end
 
     test "trigger :schedule rejects blank cron" do
-      assert_raises(ArgumentError) do
+      error = assert_raises(ConfigurationError) do
         Class.new(R3x::Workflow) do
           def self.name
             "Test"
@@ -104,6 +109,21 @@ module R3x
           trigger :schedule, cron: ""
         end
       end
+
+      assert_includes error.message, "Cron can't be blank"
+    end
+
+    test "trigger :schedule rejects whitespace-only cron" do
+      error = assert_raises(ConfigurationError) do
+        Class.new(R3x::Workflow) do
+          def self.name
+            "Test"
+          end
+          trigger :schedule, cron: "   "
+        end
+      end
+
+      assert_includes error.message, "Cron can't be blank"
     end
 
     test "supported_types returns list of available trigger files" do

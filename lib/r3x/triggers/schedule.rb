@@ -3,20 +3,16 @@ module R3x
     class Schedule < Base
       include Concerns::CronSchedulable
 
+      validates :cron, presence: true
+      validates_with Validators::Cron
+
       def initialize(cron: nil, **options)
-        super(:schedule, cron: cron, **options)
+        normalized_cron = cron.is_a?(String) ? cron.strip : cron
+        super(:schedule, cron: normalized_cron, **options)
       end
 
       def cron
         options[:cron]
-      end
-
-      def validate!
-        if cron.nil? || cron.to_s.empty?
-          raise ArgumentError, "trigger :schedule requires a 'cron' option (e.g., cron: '0 13 * * *' or cron: 'every day at 13:00')"
-        end
-
-        Validators::Cron.validate!(cron, field_name: "cron")
       end
     end
   end

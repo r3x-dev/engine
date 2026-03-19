@@ -13,7 +13,7 @@ module R3x
         trigger_class = Triggers.resolve(type)
         trigger_instance = trigger_class.new(**options)
 
-        trigger_instance.validate!
+        trigger_instance.validate!(message_prefix: "Invalid trigger :#{type} for #{name}")
         @_triggers << trigger_instance
       end
 
