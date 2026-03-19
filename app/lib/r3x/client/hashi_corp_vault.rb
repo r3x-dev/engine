@@ -9,6 +9,10 @@ module R3x
         instance.read(path)
       end
 
+      def self.token_valid?
+        instance.token_valid?
+      end
+
       def initialize
         @vault_addr = ENV["VAULT_ADDR"].presence || raise(ArgumentError, "Missing VAULT_ADDR")
         @vault_token = ENV["VAULT_TOKEN"].presence || raise(ArgumentError, "Missing VAULT_TOKEN")
@@ -26,6 +30,12 @@ module R3x
         end
 
         secrets.transform_keys(&:to_s)
+      end
+
+      def token_valid?
+        connection.get("v1/auth/token/lookup-self").success?
+      rescue StandardError
+        false
       end
 
       private
