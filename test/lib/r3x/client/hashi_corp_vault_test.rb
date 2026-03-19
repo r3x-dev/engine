@@ -57,6 +57,18 @@ module R3x
         assert_equal "Missing VAULT_ADDR", error.message
       end
 
+      test "raises when vault config is blank string" do
+        ENV["VAULT_ADDR"] = ""
+        ENV["VAULT_TOKEN"] = ""
+        reset_vault_singleton
+
+        error = assert_raises(ArgumentError) do
+          HashiCorpVault.read("secret/data/env/r3x")
+        end
+
+        assert_equal "Missing VAULT_ADDR", error.message
+      end
+
       test "raises when vault returns a non-success status" do
         ENV["VAULT_ADDR"] = "https://vault.test"
         ENV["VAULT_TOKEN"] = "test-token"
@@ -95,6 +107,46 @@ module R3x
         end
 
         assert_equal "Vault response missing KV v2 data at data.data", error.message
+      end
+
+      test "raises when vault returns non-hash data payload" do
+        ENV["VAULT_ADDR"] = "https://vault.test"
+        ENV["VAULT_TOKEN"] = "test-token"
+        reset_vault_singleton
+
+        stub_request(:get, "https://vault.test/v1/secret/data/env/r3x")
+          .with(headers: { "X-Vault-Token" => "test-token" })
+          .to_return(
+            status: 200,
+            body: { data: { data: "not-a-hash" } }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        error = assert_raises(RuntimeError) do
+          HashiCorpVault.read("secret/data/env/r3x")
+        end
+
+        assert_equal "Vault response missing KV v2 data at data.data", error.message
+      end
+
+      test "raises when vault returns non-object body" do
+        ENV["VAULT_ADDR"] = "https://vault.test"
+        ENV["VAULT_TOKEN"] = "test-token"
+        reset_vault_singleton
+
+        stub_request(:get, "https://vault.test/v1/secret/data/env/r3x")
+          .with(headers: { "X-Vault-Token" => "test-token" })
+          .to_return(
+            status: 200,
+            body: "<html>Login page</html>",
+            headers: { "Content-Type" => "text/html" }
+          )
+
+        error = assert_raises(RuntimeError) do
+          HashiCorpVault.read("secret/data/env/r3x")
+        end
+
+        assert_match "Vault response missing KV v2 data", error.message
       end
 
       private

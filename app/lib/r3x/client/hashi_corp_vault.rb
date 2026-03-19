@@ -10,8 +10,8 @@ module R3x
       end
 
       def initialize
-        @vault_addr = ENV["VAULT_ADDR"] || raise(ArgumentError, "Missing VAULT_ADDR")
-        @vault_token = ENV["VAULT_TOKEN"] || raise(ArgumentError, "Missing VAULT_TOKEN")
+        @vault_addr = ENV["VAULT_ADDR"].presence || raise(ArgumentError, "Missing VAULT_ADDR")
+        @vault_token = ENV["VAULT_TOKEN"].presence || raise(ArgumentError, "Missing VAULT_TOKEN")
       end
 
       def read(path)
@@ -19,9 +19,9 @@ module R3x
 
         raise RuntimeError, "Vault request failed with status #{response.status}: #{response.body["errors"]}" unless response.success?
 
-        secrets = response.body.dig("data", "data")
+        secrets = response.body.is_a?(Hash) && response.body.dig("data", "data")
 
-        unless secrets.is_a?(Hash) || secrets.present?
+        unless secrets.is_a?(Hash) && secrets.present?
           raise RuntimeError, "Vault response missing KV v2 data at data.data"
         end
 

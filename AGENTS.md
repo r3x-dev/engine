@@ -78,6 +78,12 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - **Good**: `Class.new(R3x::Workflow) { def self.name; "Test"; end }`
 - **Bad**: Testing `MyUserWorkflow` workflow directly in framework tests
 
+### TDD Pattern
+
+- When fixing a bug, write a failing test first that reproduces the issue, then fix the code.
+- **Flow**: Write test → verify it fails → fix code → verify test passes.
+- This ensures the bug is actually fixed and prevents regressions.
+
 ## Logging
 
 - Use Rails tagged logging with `self.class.name` for per-class log prefixes.
@@ -114,6 +120,13 @@ This Rails app uses a small set of preferred libraries for common integration wo
   end
   ```
 - Reasoning: Failing fast with a clear error prevents silent misconfiguration and makes debugging easier when an invalid mode is accidentally provided.
+
+## Environment Variables
+
+- When reading required environment variables, use `.presence || raise` to reject both missing and blank values.
+- **Good**: `ENV["VAULT_ADDR"].presence || raise(ArgumentError, "Missing VAULT_ADDR")`
+- **Bad**: `ENV["VAULT_ADDR"] || raise(ArgumentError, "Missing VAULT_ADDR")` — allows empty strings to pass through
+- Reasoning: In Rails/Dotenv, misconfigured `.env` files often yield empty strings (e.g., `VAULT_ADDR=`), which are truthy but invalid. Failing fast with a clear error prevents confusing downstream failures.
 
 ## Object Design
 
