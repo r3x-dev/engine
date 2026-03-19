@@ -6,12 +6,11 @@ module R3x
       included do
         include ActiveModel::Validations
 
-        define_method(:validate!) do |message_prefix: nil|
-          return true if valid?
+      define_method(:validate!) do |message_prefix: nil|
+        return true if valid?
 
-          message = [ message_prefix, errors.full_messages.to_sentence ].compact.join(": ")
-          raise ConfigurationError.new(message, subject: self, errors: errors)
-        end
+        raise ConfigurationError.new(nil, subject: self, errors: errors, message_prefix: message_prefix)
+      end
       end
 
       def validation_subject
