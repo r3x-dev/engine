@@ -2,8 +2,9 @@ require "fugit"
 
 module R3x
   module Validators
-    class Cron
-      def initialize(options = {}, &block)
+    class Cron < ActiveModel::Validator
+      def initialize(options = {})
+        super
         @cron_field = options[:cron_field] || :cron
         @allow_blank = options[:allow_blank]
       end
