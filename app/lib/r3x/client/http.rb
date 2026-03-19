@@ -1,6 +1,6 @@
 module R3x
-  module Services
-    class HttpClient
+  module Client
+    class Http
       def initialize
         @connection = Faraday.new
       end
