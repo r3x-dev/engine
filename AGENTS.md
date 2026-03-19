@@ -11,10 +11,12 @@ This Rails app uses a small set of preferred libraries for common integration wo
 
 ## Codebase Map
 
-- `lib/r3x/`: core framework code for the workflow DSL, trigger types, workflow loading, registry, execution context, and recurring-task config.
+- `lib/r3x/`: core framework code for the workflow DSL, trigger types, workflow loading, registry, execution context, recurring-task config, and shared DSL helpers.
 - `lib/r3x/dsl/`: shared DSL infrastructure, especially validation concerns and configuration errors used by workflow-declared objects.
-- `app/lib/r3x/`: runtime support code such as outputs, service clients, and shared concerns.
-- `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves and executes workflows.
+- `lib/r3x/trigger_collection.rb`: internal collection class that manages workflow triggers as a hash keyed by `unique_key`.
+- `app/lib/r3x/`: runtime support code such as outputs, client wrappers, and shared concerns.
+- `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves and executes workflows, and `R3x::ChangeDetectionJob`, which evaluates change-detecting triggers before enqueueing workflow runs.
+- `app/models/r3x/`: runtime support models such as `R3x::TriggerState` for per-trigger change-detection state.
 - `workflows/`: user workflow packs. These are not the framework itself; they are loaded by the framework.
 - `config/initializers/r3x_workflow_loader.rb`: boot-time workflow loading hook.
 - `test/fixtures/workflows/`: fixture workflows for framework tests. Prefer these over hardcoding real workflows in tests.
@@ -24,8 +26,10 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - Workflows subclass `R3x::Workflow`, declare triggers via the DSL, and implement `#run(ctx)`.
 - Workflow-declared DSL objects must validate themselves before being registered; invalid DSL configuration should raise `R3x::ConfigurationError` with collected validation errors.
 - `R3x::WorkflowPackLoader` discovers `workflow.rb` entrypoints from directories listed in `R3X_WORKFLOW_PATHS`, loads them, and registers their classes in `R3x::WorkflowRegistry`.
-- `R3x::RecurringTasksConfig` turns schedulable workflow triggers into Solid Queue recurring-task definitions.
-- `R3x::RunWorkflowJob` fetches the workflow from the registry, builds a `WorkflowContext`, and calls `workflow_class.new.run(ctx)`.
+- `R3x::RecurringTasksConfig` turns schedulable workflow triggers into Solid Queue recurring-task definitions. All triggers have a `unique_key` (based on type + options hash) used for identification and duplicate detection.
+- Change-detecting triggers are file-defined trigger objects that provide `cron`, `unique_key`, and `detect_changes(workflow_key:, state:)`. Their durable runtime state lives in `R3x::TriggerState`.
+- `R3x::ChangeDetectionJob` loads the trigger, fetches/updates `R3x::TriggerState`, and only enqueues `R3x::RunWorkflowJob` when the trigger reports a change.
+- `R3x::RunWorkflowJob` fetches the workflow from the registry, resolves the trigger by `trigger_key`, builds a `WorkflowContext`, and calls `workflow_class.new.run(ctx)`.
 - Trigger discovery is filesystem-backed through `lib/r3x/triggers/*.rb`, so trigger file names, constants, and supported types must stay aligned.
 
 ## Maintenance Warning
@@ -108,16 +112,19 @@ This Rails app uses a small set of preferred libraries for common integration wo
 ## Control Flow
 
 - `case` statements that dispatch on configuration values (e.g., ENV modes) must either exhaustively list all supported values or raise an exception in the `else` branch for unsupported values.
-- **Good**: 
+- **Good**:
+
   ```ruby
   case mode
   when "real" then # handle real
-  when "test" then # handle test  
+  when "test" then # handle test
   else
     raise ArgumentError, "Unsupported mode: #{mode}"
   end
   ```
+
 - **Bad**:
+
   ```ruby
   case mode
   when "real" then # handle real
@@ -125,6 +132,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
     # silently assumes test mode, hides typos in configuration
   end
   ```
+
 - Reasoning: Failing fast with a clear error prevents silent misconfiguration and makes debugging easier when an invalid mode is accidentally provided.
 
 ## Environment Variables

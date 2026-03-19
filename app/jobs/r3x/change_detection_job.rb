@@ -1,0 +1,69 @@
+module R3x
+  class ChangeDetectionJob < ApplicationJob
+    queue_as :default
+
+    def perform(workflow_key, trigger_key:)
+      R3x::WorkflowPackLoader.load!
+      workflow_class = R3x::WorkflowRegistry.fetch(workflow_key)
+      trigger = find_trigger(workflow_class: workflow_class, trigger_key: trigger_key)
+      trigger_state = load_trigger_state(workflow_key: workflow_key, trigger_key: trigger_key, trigger_type: trigger.type)
+      result = normalize_result(
+        trigger.detect_changes(
+          workflow_key: workflow_key,
+          state: trigger_state.state.deep_symbolize_keys
+        )
+      )
+
+      trigger_state.record_check!(result)
+
+      return unless result[:changed]
+
+      R3x::RunWorkflowJob.perform_later(
+        workflow_key,
+        trigger_key: trigger_key,
+        trigger_payload: result[:payload]
+      )
+    rescue StandardError => e
+      trigger_state.record_error!(e) if defined?(trigger_state) && trigger_state&.persisted?
+      raise
+    end
+
+    private
+
+    def find_trigger(workflow_class:, trigger_key:)
+      trigger = workflow_class.triggers_by_key[trigger_key]
+
+      if trigger.nil?
+        raise ArgumentError, "Unknown trigger key '#{trigger_key}' for workflow '#{workflow_class.workflow_key}'"
+      end
+
+      unless trigger.change_detecting?
+        raise ArgumentError, "Trigger '#{trigger_key}' is not change-detecting"
+      end
+
+      trigger
+    end
+
+    def load_trigger_state(workflow_key:, trigger_key:, trigger_type:)
+      TriggerState.find_or_create_by!(
+        workflow_key: workflow_key,
+        trigger_key: trigger_key
+      ) do |state|
+        state.trigger_type = trigger_type.to_s
+        state.state = {}
+      end
+    end
+
+    def normalize_result(result)
+      normalized = result.deep_symbolize_keys
+
+      unless normalized.key?(:changed) && normalized.key?(:state)
+        raise ArgumentError, "Change-detecting trigger must return a hash with :changed and :state"
+      end
+
+      normalized[:state] ||= {}
+      normalized[:payload] ||= nil
+      normalized
+    end
+  end
+end
