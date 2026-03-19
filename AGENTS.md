@@ -12,14 +12,8 @@ This Rails app uses a small set of preferred libraries for common integration wo
 ## Codebase Map
 
 - `lib/r3x/`: core framework code for the workflow DSL, trigger types, workflow loading, registry, execution context, and recurring-task config.
-<<<<<<< HEAD
-- `app/lib/r3x/`: runtime support code such as outputs, client wrappers, and shared concerns.
-||||||| parent of 5d19d19 (Fix CronValidator reference in Schedule trigger)
-- `app/lib/r3x/`: runtime support code such as outputs, service clients, and shared concerns.
-=======
 - `lib/r3x/dsl/`: shared DSL infrastructure, especially validation concerns and configuration errors used by workflow-declared objects.
 - `app/lib/r3x/`: runtime support code such as outputs, service clients, and shared concerns.
->>>>>>> 5d19d19 (Fix CronValidator reference in Schedule trigger)
 - `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves and executes workflows.
 - `workflows/`: user workflow packs. These are not the framework itself; they are loaded by the framework.
 - `config/initializers/r3x_workflow_loader.rb`: boot-time workflow loading hook.
