@@ -1,5 +1,10 @@
+# https://docs.rubocop.org/rubocop/configuration.html
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+
+AllCops:
+  Exclude:
+    - docs/**/*
 
 # Overwrite or add rules to create your own house style
 #
