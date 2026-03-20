@@ -8,7 +8,7 @@ module R3x
     setup do
       @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
       ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
-      WorkflowPackLoader.load!(force: true)
+      Workflow::PackLoader.load!(force: true)
       clear_enqueued_jobs
       R3x::TriggerState.delete_all
     end
@@ -17,8 +17,8 @@ module R3x
       clear_enqueued_jobs
       R3x::TriggerState.delete_all
       ENV["R3X_WORKFLOW_PATHS"] = @original_workflow_paths
-      WorkflowRegistry.reset!
-      WorkflowPackLoader.load!(force: true)
+      Workflow::Registry.reset!
+      Workflow::PackLoader.load!(force: true)
     end
 
     test "creates trigger state and does not enqueue workflow when unchanged" do
@@ -129,7 +129,7 @@ module R3x
     private
 
     def register_change_detecting_workflow(fake_trigger)
-      workflow_class = Class.new(R3x::Workflow) do
+      workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
           "TestChangeDetectingFeed"
         end
@@ -141,7 +141,7 @@ module R3x
         end
       end
 
-      WorkflowRegistry.register(workflow_class)
+      Workflow::Registry.register(workflow_class)
     end
   end
 end

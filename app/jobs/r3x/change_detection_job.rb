@@ -6,8 +6,8 @@ module R3x
       workflow_key, options = normalize_arguments(workflow_key, options)
       trigger_key = options.fetch(:trigger_key)
 
-      R3x::WorkflowPackLoader.load!
-      workflow_class = R3x::WorkflowRegistry.fetch(workflow_key)
+      R3x::Workflow::PackLoader.load!
+      workflow_class = R3x::Workflow::Registry.fetch(workflow_key)
       trigger = find_trigger(workflow_class: workflow_class, trigger_key: trigger_key)
       trigger_state = load_trigger_state(workflow_key: workflow_key, trigger_key: trigger_key, trigger_type: trigger.type)
       result = normalize_result(

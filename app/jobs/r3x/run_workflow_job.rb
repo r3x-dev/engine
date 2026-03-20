@@ -7,17 +7,17 @@ module R3x
       trigger_key = options.fetch(:trigger_key)
       trigger_payload = options[:trigger_payload]
 
-      R3x::WorkflowPackLoader.load!
-      workflow_class = R3x::WorkflowRegistry.fetch(workflow_key)
+      R3x::Workflow::PackLoader.load!
+      workflow_class = R3x::Workflow::Registry.fetch(workflow_key)
       trigger = find_trigger(workflow_class: workflow_class, trigger_key: trigger_key)
 
-      execution = TriggerExecution.new(
+      execution = R3x::TriggerManager::Execution.new(
         trigger: trigger,
         workflow_key: workflow_key,
         payload: trigger_payload
       )
 
-      ctx = WorkflowContext.new(
+      ctx = R3x::Workflow::Context.new(
         trigger: execution,
         workflow_key: workflow_key,
         workflow_class: workflow_class

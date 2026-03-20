@@ -6,7 +6,7 @@ module R3x
     setup do
       @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
       ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
-      WorkflowPackLoader.load!(force: true)
+      R3x::Workflow::PackLoader.load!(force: true)
     end
 
     teardown do
@@ -27,25 +27,25 @@ module R3x
 
     test "only includes workflows with schedule triggers" do
       # Create a workflow without schedule trigger
-      workflow_class = Class.new(R3x::Workflow) do
+      workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
           "Workflows::NoSchedule"
         end
       end
 
-      WorkflowRegistry.register(workflow_class)
+      R3x::Workflow::Registry.register(workflow_class)
 
       tasks = RecurringTasksConfig.to_h
       refute tasks.key?("no_schedule")
 
       # Cleanup
-      WorkflowRegistry.reset!
-      WorkflowPackLoader.load!(force: true)
+      R3x::Workflow::Registry.reset!
+      R3x::Workflow::PackLoader.load!(force: true)
     end
 
     test "generates change detection tasks for change-detecting triggers" do
       fake_trigger = R3x::TestSupport::FakeChangeDetectingTrigger.new(identity: "feed")
-      workflow_class = Class.new(R3x::Workflow) do
+      workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
           "Workflows::ChangeDetectingFeed"
         end
@@ -54,7 +54,7 @@ module R3x
         define_singleton_method(:schedulable_triggers) { [ fake_trigger ] }
       end
 
-      WorkflowRegistry.register(workflow_class)
+      R3x::Workflow::Registry.register(workflow_class)
 
       tasks = RecurringTasksConfig.to_h
       expected_key = "change_detecting_feed:#{fake_trigger.unique_key}"
@@ -65,8 +65,8 @@ module R3x
       assert_equal "every 15 minutes", task["schedule"]
       assert_equal "default", task["queue"]
     ensure
-      WorkflowRegistry.reset!
-      WorkflowPackLoader.load!(force: true)
+      R3x::Workflow::Registry.reset!
+      R3x::Workflow::PackLoader.load!(force: true)
     end
   end
 end
