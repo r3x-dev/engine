@@ -142,10 +142,11 @@ This Rails app uses a small set of preferred libraries for common integration wo
 
 ## Environment Variables
 
-- When reading required environment variables, use `.presence || raise` to reject both missing and blank values.
-- **Good**: `ENV["VAULT_ADDR"].presence || raise(ArgumentError, "Missing VAULT_ADDR")`
+- When reading required environment variables, use `R3x::Env.fetch("KEY")` which rejects both missing and blank values.
+- **Good**: `R3x::Env.fetch("VAULT_ADDR")`
+- **Bad**: `ENV["VAULT_ADDR"].presence || raise(ArgumentError, "Missing VAULT_ADDR")` — use the helper instead of inline pattern
 - **Bad**: `ENV["VAULT_ADDR"] || raise(ArgumentError, "Missing VAULT_ADDR")` — allows empty strings to pass through
-- Reasoning: In Rails/Dotenv, misconfigured `.env` files often yield empty strings (e.g., `VAULT_ADDR=`), which are truthy but invalid. Failing fast with a clear error prevents confusing downstream failures.
+- The helper lives in `lib/r3x/env.rb`. In Rails/Dotenv, misconfigured `.env` files often yield empty strings (e.g., `VAULT_ADDR=`), which are truthy but invalid. Failing fast with a clear error prevents confusing downstream failures.
 
 ## Object Design
 

@@ -19,8 +19,12 @@ module R3x
         @workflow_class = workflow_class
       end
 
-      def http
-        R3x::Client::Http.new
+      def http(verify_ssl: true)
+        R3x::Client::Http.new(verify_ssl: verify_ssl)
+      end
+
+      def prometheus
+        R3x::Client::Prometheus.new
       end
 
       private

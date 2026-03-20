@@ -14,8 +14,8 @@ module R3x
       end
 
       def initialize
-        @vault_addr = ENV["VAULT_ADDR"].presence || raise(ArgumentError, "Missing VAULT_ADDR")
-        @vault_token = ENV["VAULT_TOKEN"].presence || raise(ArgumentError, "Missing VAULT_TOKEN")
+        @vault_addr = R3x::Env.fetch("VAULT_ADDR")
+        @vault_token = R3x::Env.fetch("VAULT_TOKEN")
       end
 
       def read(path)
