@@ -37,7 +37,7 @@ module R3x
 
     def self.load_from_vault(path)
       unless R3x::Client::HashiCorpVault.configured?
-        logger.info "VAULT_ADDR or VAULT_TOKEN not set - skipping Vault"
+        logger.info "R3X_VAULT_ADDR or R3X_VAULT_TOKEN not set - skipping Vault"
         return {}
       end
 
@@ -46,13 +46,17 @@ module R3x
       loaded = {}
 
       secrets.each do |key, value|
-        next if key.start_with?(INTERNAL_PREFIX)
+        if key.start_with?(INTERNAL_PREFIX)
+          raise RuntimeError, "Vault secret key '#{key}' starts with reserved prefix '#{INTERNAL_PREFIX}'"
+        end
         ENV[key] = value.to_s
         loaded[key] = true
       end
 
       logger.info "Loaded #{loaded.size} secrets from Vault"
       loaded
+    rescue RuntimeError => e
+      raise
     rescue StandardError => e
       logger.warn "Vault error: #{e.message}"
       {}

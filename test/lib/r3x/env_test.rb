@@ -144,22 +144,22 @@ module R3x
     # load_from_vault tests
 
     test "load_from_vault returns empty hash when vault is not configured" do
-      original_addr = ENV["VAULT_ADDR"]
-      original_token = ENV["VAULT_TOKEN"]
-      ENV.delete("VAULT_ADDR")
-      ENV.delete("VAULT_TOKEN")
+      original_addr = ENV["R3X_VAULT_ADDR"]
+      original_token = ENV["R3X_VAULT_TOKEN"]
+      ENV.delete("R3X_VAULT_ADDR")
+      ENV.delete("R3X_VAULT_TOKEN")
 
       assert_equal({}, Env.load_from_vault("secret/data/test"))
     ensure
-      ENV["VAULT_ADDR"] = original_addr
-      ENV["VAULT_TOKEN"] = original_token
+      ENV["R3X_VAULT_ADDR"] = original_addr
+      ENV["R3X_VAULT_TOKEN"] = original_token
     end
 
-    test "load_from_vault injects secrets into ENV skipping R3X_ keys" do
-      original_addr = ENV["VAULT_ADDR"]
-      original_token = ENV["VAULT_TOKEN"]
-      ENV["VAULT_ADDR"] = "https://vault.test"
-      ENV["VAULT_TOKEN"] = "test-token"
+    test "load_from_vault raises RuntimeError when vault returns R3X_ prefixed key" do
+      original_addr = ENV["R3X_VAULT_ADDR"]
+      original_token = ENV["R3X_VAULT_TOKEN"]
+      ENV["R3X_VAULT_ADDR"] = "https://vault.test"
+      ENV["R3X_VAULT_TOKEN"] = "test-token"
       reset_vault_singleton
 
       stub_request(:get, "https://vault.test/v1/auth/token/lookup-self")
@@ -181,21 +181,15 @@ module R3x
           headers: { "Content-Type" => "application/json" }
         )
 
-      original_gemini = ENV["GEMINI_API_KEY_MICHAL"]
-      original_openai = ENV["OPENAI_API_KEY_TEST"]
+      error = assert_raises(RuntimeError) do
+        Env.load_from_vault("secret/data/test")
+      end
 
-      result = Env.load_from_vault("secret/data/test")
-
-      assert_equal "AIza-vault-key", ENV["GEMINI_API_KEY_MICHAL"]
-      assert_equal "sk-vault-key", ENV["OPENAI_API_KEY_TEST"]
-      assert_nil ENV["R3X_DISCORD_WEBHOOK_URL"]
-      assert_equal({ "GEMINI_API_KEY_MICHAL" => true, "OPENAI_API_KEY_TEST" => true }, result)
+      assert_match /starts with reserved prefix/, error.message
+      assert_match /R3X_DISCORD_WEBHOOK_URL/, error.message
     ensure
-      ENV["GEMINI_API_KEY_MICHAL"] = original_gemini
-      ENV["OPENAI_API_KEY_TEST"] = original_openai
-      ENV["VAULT_ADDR"] = original_addr
-      ENV["VAULT_TOKEN"] = original_token
-      ENV.delete("R3X_DISCORD_WEBHOOK_URL")
+      ENV["R3X_VAULT_ADDR"] = original_addr
+      ENV["R3X_VAULT_TOKEN"] = original_token
       reset_vault_singleton
       WebMock.reset!
     end
