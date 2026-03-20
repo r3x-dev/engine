@@ -159,6 +159,12 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - Prefer duck typing: focus on behavior rather than names. Ask what the object can do and which methods it responds to; prefer ability over identity.
 - Reasoning: Duck typing is meritocratic. New classes can participate by exposing the right behavior without forcing central dispatch code to learn every subtype.
 
+## Scratchpad
+
+- `scratchpad/` is for quick test scripts, one-off experiments, and prototyping — anything outside the main implementation code and test suite.
+- The directory is gitignored. Do not place production code there.
+- Use it when you need to verify something quickly (e.g., hitting an API, testing a query) without writing a proper test.
+
 ## Scope
 
 - Apply these as defaults for new work.
