@@ -1,11 +1,20 @@
-# Provides a tagged logger to any class that includes it.
+# Provides a tagged logger to any class that includes or extends it.
 # The logger is automatically tagged with the class name.
 #
-# Usage:
+# Usage (instance methods):
 #   class MyClass
 #     include R3x::Concerns::Logger
 #
 #     def do_something
+#       logger.info("message")  # => [MyClass] message
+#     end
+#   end
+#
+# Usage (class methods):
+#   class MyClass
+#     extend R3x::Concerns::Logger
+#
+#     def self.do_something
 #       logger.info("message")  # => [MyClass] message
 #     end
 #   end
@@ -15,10 +24,14 @@ module R3x
     module Logger
       extend ActiveSupport::Concern
 
-      included do
+      class_methods do
         def logger
-          @logger ||= ActiveSupport::TaggedLogging.new(Rails.logger).tagged(self.class.name)
+          Rails.logger.tagged(name)
         end
+      end
+
+      def logger
+        Rails.logger.tagged(self.class.name)
       end
     end
   end

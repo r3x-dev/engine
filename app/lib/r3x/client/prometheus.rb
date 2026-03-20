@@ -2,7 +2,7 @@ module R3x
   module Client
     class Prometheus
       def initialize
-        base_url = R3x::Env.fetch("R3X_PROMETHEUS_URL")
+        base_url = R3x::Env.fetch!("R3X_PROMETHEUS_URL")
         @connection = Faraday.new(url: base_url) do |f|
           f.request :json
           f.response :json

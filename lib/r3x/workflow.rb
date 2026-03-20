@@ -1,6 +1,6 @@
 module R3x
   module Workflow
-    KNOWN_CAPABILITIES = Set.new(%i[networking filesystem shell]).freeze
+    KNOWN_CAPABILITIES = Set.new(%i[networking filesystem shell llm]).freeze
 
     module Dsl
       extend ActiveSupport::Concern
@@ -10,6 +10,7 @@ module R3x
           super
           subclass._triggers = TriggerManager::Collection.new
           subclass._capabilities = Set.new
+          subclass._llm_config = nil
         end
 
         def workflow_key
@@ -22,13 +23,18 @@ module R3x
           _triggers.add(trigger_instance)
         end
 
-        def uses(*capabilities)
+        def uses(*capabilities, **options)
           incoming = Set.new(capabilities.flatten.compact.map(&:to_sym))
           unknown = incoming - KNOWN_CAPABILITIES
           raise ArgumentError, "Unknown capabilities: #{unknown.to_a.join(', ')}. Known: #{KNOWN_CAPABILITIES.to_a.join(', ')}" if unknown.any?
 
           duplicates = incoming & _capabilities
           raise ArgumentError, "Capability already declared: #{duplicates.to_a.join(', ')}" if duplicates.any?
+
+          if incoming.include?(:llm)
+            validate_llm_options!(options)
+            self._llm_config = options.slice(:api_key)
+          end
 
           _capabilities.merge(incoming)
         end
@@ -39,6 +45,10 @@ module R3x
 
         def uses?(capability)
           _capabilities.include?(capability.to_sym)
+        end
+
+        def llm_config
+          _llm_config
         end
 
         def triggers
@@ -55,6 +65,20 @@ module R3x
 
         attr_accessor :_triggers
         attr_accessor :_capabilities
+        attr_accessor :_llm_config
+
+        private
+
+        def validate_llm_options!(options)
+          key_name = options[:api_key]
+          unless key_name.is_a?(String) && key_name.present?
+            raise ArgumentError, "uses :llm requires api_key: option (e.g., api_key: \"GEMINI_API_KEY_NAME\")"
+          end
+
+          unless key_name.match?(LlmResolver::API_KEY_PATTERN)
+            raise ArgumentError, "Invalid api_key '#{key_name}'. Must match #{LlmResolver::API_KEY_PATTERN}"
+          end
+        end
       end
     end
   end
