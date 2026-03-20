@@ -2,7 +2,10 @@ module R3x
   class ChangeDetectionJob < ApplicationJob
     queue_as :default
 
-    def perform(workflow_key, trigger_key:)
+    def perform(workflow_key, options = nil)
+      workflow_key, options = normalize_arguments(workflow_key, options)
+      trigger_key = options.fetch(:trigger_key)
+
       R3x::WorkflowPackLoader.load!
       workflow_class = R3x::WorkflowRegistry.fetch(workflow_key)
       trigger = find_trigger(workflow_class: workflow_class, trigger_key: trigger_key)
@@ -14,15 +17,17 @@ module R3x
         )
       )
 
-      trigger_state.record_check!(result)
+      TriggerState.transaction do
+        if result[:changed]
+          R3x::RunWorkflowJob.perform_later(
+            workflow_key,
+            trigger_key: trigger_key,
+            trigger_payload: result[:payload]
+          )
+        end
 
-      return unless result[:changed]
-
-      R3x::RunWorkflowJob.perform_later(
-        workflow_key,
-        trigger_key: trigger_key,
-        trigger_payload: result[:payload]
-      )
+        trigger_state.record_check!(result)
+      end
     rescue StandardError => e
       trigger_state.record_error!(e) if defined?(trigger_state) && trigger_state&.persisted?
       raise
@@ -51,6 +56,29 @@ module R3x
       ) do |state|
         state.trigger_type = trigger_type.to_s
         state.state = {}
+      end
+    end
+
+    def normalize_arguments(workflow_key, options)
+      if workflow_key.is_a?(Hash) && options.nil?
+        options = workflow_key
+        workflow_key = nil
+      end
+
+      options = normalize_options_hash(options)
+      workflow_key ||= options[:workflow_key]
+
+      [ workflow_key.presence || raise(ArgumentError, "Missing workflow_key"), options ]
+    end
+
+    def normalize_options_hash(options)
+      case options
+      when nil
+        {}
+      when Hash
+        options.deep_symbolize_keys
+      else
+        raise ArgumentError, "Expected options hash, got #{options.class.name}"
       end
     end
 

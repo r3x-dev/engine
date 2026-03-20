@@ -102,7 +102,7 @@ module R3x
       )
 
       assert_equal "fake_change_detecting", result["trigger_type"]
-      assert_equal({ "entries" => [ { "title" => "Hello" } ] }, result["payload"])
+      assert_equal({ entries: [ { title: "Hello" } ] }, result["payload"])
     ensure
       WorkflowRegistry.reset!
       WorkflowPackLoader.load!(force: true)

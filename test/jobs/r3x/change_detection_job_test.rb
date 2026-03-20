@@ -34,7 +34,7 @@ module R3x
       register_change_detecting_workflow(fake_trigger)
 
       assert_no_enqueued_jobs do
-        ChangeDetectionJob.perform_now("test_change_detecting_feed", trigger_key: fake_trigger.unique_key)
+        ChangeDetectionJob.perform_now("test_change_detecting_feed", { "trigger_key" => fake_trigger.unique_key })
       end
 
       state = R3x::TriggerState.find_by!(workflow_key: "test_change_detecting_feed", trigger_key: fake_trigger.unique_key)
@@ -56,7 +56,7 @@ module R3x
       register_change_detecting_workflow(fake_trigger)
 
       assert_enqueued_jobs 1, only: R3x::RunWorkflowJob do
-        ChangeDetectionJob.perform_now("test_change_detecting_feed", trigger_key: fake_trigger.unique_key)
+        ChangeDetectionJob.perform_now("test_change_detecting_feed", { "trigger_key" => fake_trigger.unique_key })
       end
 
       enqueued_job = enqueued_jobs.last
@@ -71,6 +71,38 @@ module R3x
       state = R3x::TriggerState.find_by!(workflow_key: "test_change_detecting_feed", trigger_key: fake_trigger.unique_key)
       assert_equal({ "cursor" => "v2" }, state.state)
       assert state.last_triggered_at.present?
+    end
+
+    test "does not advance trigger state when enqueue fails" do
+      fake_trigger = R3x::TestSupport::FakeChangeDetectingTrigger.new(
+        identity: "feed",
+        detector: ->(workflow_key:, state:) do
+          { changed: true, state: state.merge(cursor: "v2"), payload: { "entries" => [ { "title" => "Hello" } ] } }
+        end
+      )
+
+      register_change_detecting_workflow(fake_trigger)
+
+      original_perform_later = R3x::RunWorkflowJob.method(:perform_later)
+      R3x::RunWorkflowJob.singleton_class.send(:define_method, :perform_later) do |*|
+        raise ActiveJob::EnqueueError, "enqueue failed"
+      end
+
+      error = assert_raises(ActiveJob::EnqueueError) do
+        ChangeDetectionJob.perform_now("test_change_detecting_feed", { "trigger_key" => fake_trigger.unique_key })
+      ensure
+        R3x::RunWorkflowJob.singleton_class.send(:define_method, :perform_later, original_perform_later)
+      end
+
+      assert_equal "enqueue failed", error.message
+
+      state = R3x::TriggerState.find_by!(workflow_key: "test_change_detecting_feed", trigger_key: fake_trigger.unique_key)
+
+      assert_equal({}, state.state)
+      assert_nil state.last_checked_at
+      assert_nil state.last_triggered_at
+      assert state.last_error_at.present?
+      assert_equal "enqueue failed", state.last_error_message
     end
 
     test "persists last error details when detection fails" do
