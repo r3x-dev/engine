@@ -4,18 +4,14 @@ module R3x
   module Client
     class HashiCorpVault
       include Singleton
+      extend R3x::Concerns::Logger
 
       def self.read(path)
         instance.read(path)
       end
 
-      def self.token_valid?
-        instance.token_valid?
-      end
-
-      def initialize
-        @vault_addr = R3x::Env.fetch("VAULT_ADDR")
-        @vault_token = R3x::Env.fetch("VAULT_TOKEN")
+      def self.configured?
+        R3x::Env.present?("VAULT_ADDR") && R3x::Env.present?("VAULT_TOKEN")
       end
 
       def read(path)
@@ -32,13 +28,12 @@ module R3x
         secrets.transform_keys(&:to_s)
       end
 
-      def token_valid?
-        connection.get("v1/auth/token/lookup-self").success?
-      rescue StandardError
-        false
-      end
-
       private
+
+      def initialize
+        @vault_addr = R3x::Env.fetch!("VAULT_ADDR")
+        @vault_token = R3x::Env.fetch!("VAULT_TOKEN")
+      end
 
       attr_reader :vault_addr, :vault_token
 
