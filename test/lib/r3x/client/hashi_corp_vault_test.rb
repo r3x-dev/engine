@@ -28,7 +28,7 @@ module R3x
             body: {
               data: {
                 data: {
-                  discord_webhook_url: "https://discord.test",
+                  api_key: "test-api-key",
                   mode: "real"
                 },
                 metadata: { version: 1 }
@@ -40,7 +40,7 @@ module R3x
         result = HashiCorpVault.read("secret/data/env/r3x")
 
         assert_equal({
-          "discord_webhook_url" => "https://discord.test",
+          "api_key" => "test-api-key",
           "mode" => "real"
         }, result)
       end
