@@ -93,12 +93,56 @@ module R3x
         def self.name
           "Test"
         end
-        trigger :schedule, cron: "0 13 * * *"
+        trigger :schedule, cron: "0 * * * *"
       end
 
       triggers = klass.triggers
       assert_equal 1, triggers.size
       assert_equal [ :schedule ], triggers.map(&:type)
+    end
+
+    test "uses declares workflow capabilities" do
+      klass = Class.new(R3x::Workflow) do
+        def self.name
+          "Workflows::NetworkedWorkflow"
+        end
+
+        uses :networking
+      end
+
+      assert_equal Set.new([ :networking ]), klass.capabilities
+      assert klass.uses?(:networking)
+      refute klass.uses?(:filesystem)
+    end
+
+    test "uses raises on duplicate capability" do
+      klass = Class.new(R3x::Workflow) do
+        def self.name
+          "Workflows::DuplicateCap"
+        end
+
+        uses :networking
+      end
+
+      error = assert_raises(ArgumentError) do
+        klass.uses(:networking)
+      end
+
+      assert_match "Capability already declared", error.message
+    end
+
+    test "uses raises on unknown capability" do
+      error = assert_raises(ArgumentError) do
+        Class.new(R3x::Workflow) do
+          def self.name
+            "Workflows::BadCap"
+          end
+
+          uses :hacking
+        end
+      end
+
+      assert_match "Unknown capabilities: hacking", error.message
     end
 
     test "trigger :schedule rejects blank cron (empty string and whitespace)" do

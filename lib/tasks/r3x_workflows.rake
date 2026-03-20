@@ -52,11 +52,12 @@ namespace :r3x do
         puts "Running workflow: #{key}"
         begin
           workflow_class = R3x::WorkflowRegistry.fetch(key)
-          result = workflow_class.new.run(R3x::WorkflowContext.new)
+          trigger = workflow_class.triggers.find(&:manual?) || R3x::Triggers::Manual.new
+          result = RunWorkflowJob.new.perform(key, trigger_key: trigger.unique_key)
           puts "  ✓ Success: #{result.inspect}"
         rescue => e
           puts "  ✗ Error: #{e.message}"
-          raise e if args[:workflow_key].present? # Re-raise if specific workflow failed
+          raise e if args[:workflow_key].present?
         end
       end
 
