@@ -10,12 +10,18 @@ module R3x
         @options = options
       end
 
-      def to_h
-        options.dup
+      def change_detecting?
+        false
       end
 
-      def validation_subject
-        "trigger :#{type}"
+      def cron_schedulable?
+        false
+      end
+
+      def unique_key
+        # Generate unique key from type + sorted options hash
+        key_json = MultiJson.dump(options.sort.to_h)
+        "#{type}:#{Digest::SHA256.hexdigest(key_json)[0..15]}"
       end
     end
   end
