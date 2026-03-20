@@ -1,0 +1,114 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../config/boot"
+require "active_support/core_ext/string"
+require "pathname"
+
+ROOT = Pathname.new(File.expand_path("..", __dir__))
+AGENTS_PATH = ROOT.join("AGENTS.md")
+
+class LintR3x
+  def initialize(agents_path = AGENTS_PATH, verbose: false)
+    @agents_path = agents_path
+    @verbose = verbose || !STDOUT.tty?
+    @errors = []
+    @passed = 0
+    @failed = 0
+  end
+
+  def run
+    unless File.exist?(@agents_path)
+      abort "AGENTS.md not found at #{@agents_path}"
+    end
+
+    content = File.read(@agents_path)
+    check_file_references(content)
+    check_class_references(content)
+    report
+    @errors.empty?
+  end
+
+  private
+
+  def check_file_references(content)
+    content.scan(/`([^`]*\.(?:rb|yml|json))`/).flatten.each do |ref|
+      next if ref.start_with?("bin/")
+      next if ref.include?("*")
+      next if ref.exclude?("/")
+      path = ROOT.join(ref)
+      if File.exist?(path)
+        print "." if @verbose
+        @passed += 1
+      else
+        @errors << "File not found: #{ref}"
+        print "F" if @verbose
+        @failed += 1
+      end
+    end
+  end
+
+  def check_class_references(content)
+    content.scan(/`([^`]+)`/).flatten.each do |ref|
+      next if ref.include?("\n")
+      next if ref.match?(/^[a-z]/)
+
+      if ref.start_with?("R3x::")
+        class_name = ref
+      elsif ref.start_with?("SolidQueue::")
+        class_name = "R3x::#{ref}"
+      elsif ref.match?(/^[A-Z]/) && !ref.include?("::")
+        class_name = "R3x::#{ref}"
+      else
+        next
+      end
+
+      next if class_name.include?("..")
+
+      parts = class_name.split("::")
+      next unless valid_class_name_parts?(parts)
+
+      if class_exists?(class_name)
+        print "." if @verbose
+        @passed += 1
+      else
+        @errors << "Class not found: #{class_name}"
+        print "F" if @verbose
+        @failed += 1
+      end
+    end
+  end
+
+  def valid_class_name_parts?(parts)
+    parts.all? { |p| p.match?(/^[A-Z][a-zA-Z0-9_]*$/) }
+  end
+
+  def class_exists?(class_name)
+    class_name.safe_constantize
+    true
+  rescue NameError, LoadError
+    false
+  end
+
+  def report
+    if @verbose
+      puts
+      puts "  #{@passed} passed, #{@failed} failed"
+    end
+
+    if @errors.empty?
+      puts "  All references: OK"
+      puts "  PASS"
+    else
+      puts
+      @errors.each { |e| puts "  #{e}" }
+      puts
+      puts "  FAIL - #{@errors.size} stale reference(s)"
+    end
+  end
+end
+
+if __FILE__ == $0
+  success = LintR3x.new(verbose: true).run
+  exit(success ? 0 : 1)
+end
