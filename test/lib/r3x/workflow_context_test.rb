@@ -27,6 +27,17 @@ module R3x
       execution = TriggerExecution.new(trigger: trigger, workflow_key: "test")
       assert_equal({ cron: "0 13 * * *" }, execution.options)
     end
+
+    test "exposes runtime payload" do
+      trigger = R3x::Triggers::Manual.new
+      execution = TriggerExecution.new(
+        trigger: trigger,
+        workflow_key: "test",
+        payload: { "entries" => [ { "title" => "Hello" } ] }
+      )
+
+      assert_equal({ "entries" => [ { "title" => "Hello" } ] }, execution.payload)
+    end
   end
 
   class WorkflowExecutionTest < ActiveSupport::TestCase

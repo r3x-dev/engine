@@ -1,4 +1,5 @@
 require "test_helper"
+require_relative "../../support/fake_change_detecting_trigger"
 
 module R3x
   class WorkflowTest < ActiveSupport::TestCase
@@ -100,30 +101,22 @@ module R3x
       assert_equal [ :schedule ], triggers.map(&:type)
     end
 
-    test "trigger :schedule rejects blank cron" do
-      error = assert_raises(ConfigurationError) do
-        Class.new(R3x::Workflow) do
-          def self.name
-            "Test"
+    test "trigger :schedule rejects blank cron (empty string and whitespace)" do
+      [
+        "",
+        "   "
+      ].each do |cron|
+        error = assert_raises(ConfigurationError) do
+          Class.new(R3x::Workflow) do
+            def self.name
+              "Test"
+            end
+            trigger :schedule, cron: cron
           end
-          trigger :schedule, cron: ""
         end
+
+        assert_includes error.message, "Cron can't be blank"
       end
-
-      assert_includes error.message, "Cron can't be blank"
-    end
-
-    test "trigger :schedule rejects whitespace-only cron" do
-      error = assert_raises(ConfigurationError) do
-        Class.new(R3x::Workflow) do
-          def self.name
-            "Test"
-          end
-          trigger :schedule, cron: "   "
-        end
-      end
-
-      assert_includes error.message, "Cron can't be blank"
     end
 
     test "supported_types returns list of available trigger files" do
@@ -144,6 +137,38 @@ module R3x
 
       assert_match(/Unknown trigger type: nonexistent/, error.message)
       assert_match(/Supported types:.*:schedule/, error.message)
+    end
+
+    test "rejects duplicate change-detecting trigger keys in one workflow" do
+      original_resolve = R3x::Triggers.method(:resolve)
+
+      R3x::Triggers.define_singleton_method(:resolve) do |_type|
+        R3x::TestSupport::FakeChangeDetectingTrigger
+      end
+
+      error = begin
+        assert_raises(ArgumentError) do
+          Class.new(R3x::Workflow) do
+            def self.name
+              "Workflows::DuplicateChangeDetecting"
+            end
+
+            trigger :fake_change_detecting, identity: "same"
+            trigger :fake_change_detecting, identity: "same", cron: "every hour"
+          end
+        end
+      end
+
+      assert_match(/Trigger with key .* already exists/, error.message)
+    ensure
+      R3x::Triggers.define_singleton_method(:resolve, original_resolve)
+    end
+
+    test "change-detecting trigger key does not change when only cron changes" do
+      trigger_one = R3x::TestSupport::FakeChangeDetectingTrigger.new(identity: "feed", cron: "every 15 minutes")
+      trigger_two = R3x::TestSupport::FakeChangeDetectingTrigger.new(identity: "feed", cron: "every hour")
+
+      assert_equal trigger_one.unique_key, trigger_two.unique_key
     end
   end
 end

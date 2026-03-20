@@ -11,16 +11,26 @@ module R3x
           workflow_key = workflow_class.workflow_key
 
           triggers.each do |trigger|
-            result[workflow_key] = {
-              "class" => "R3x::RunWorkflowJob",
-              "args" => [ workflow_key, { "triggered_by" => trigger.type.to_s } ],
-              "schedule" => trigger.cron,
-              "queue" => "default"
-            }
+            result_key = "#{workflow_key}:#{trigger.unique_key}"
+            result[result_key] = task_definition_for(
+              workflow_key: workflow_key,
+              trigger: trigger
+            )
           end
         end
 
         result
+      end
+
+      private
+
+      def task_definition_for(workflow_key:, trigger:)
+        {
+          "class" => trigger.change_detecting? ? "R3x::ChangeDetectionJob" : "R3x::RunWorkflowJob",
+          "args" => [ workflow_key, { "trigger_key" => trigger.unique_key } ],
+          "schedule" => trigger.cron,
+          "queue" => "default"
+        }
       end
     end
   end
