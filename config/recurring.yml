@@ -10,7 +10,7 @@ static_tasks = {
 }
 
 # Load workflows and generate recurring tasks from DSL
-R3x::WorkflowPackLoader.load!
+R3x::Workflow::PackLoader.load!
 dynamic_tasks = R3x::RecurringTasksConfig.to_h
 
 # Merge static and dynamic tasks

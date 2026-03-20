@@ -2,9 +2,9 @@ namespace :r3x do
   namespace :workflows do
     desc "List all registered workflows with their triggers"
     task list: :environment do
-      R3x::WorkflowPackLoader.load!
+      R3x::Workflow::PackLoader.load!
 
-      workflows = R3x::WorkflowRegistry.all
+      workflows = R3x::Workflow::Registry.all
 
       if workflows.empty?
         puts "No workflows registered."
@@ -38,12 +38,12 @@ namespace :r3x do
 
     desc "Run all workflows or a specific one (r3x:workflows:run[workflow_key])"
     task :run, [ :workflow_key ] => :environment do |_task, args|
-      R3x::WorkflowPackLoader.load!
+      R3x::Workflow::PackLoader.load!
 
       workflow_keys = if args[:workflow_key].present?
         [ args[:workflow_key].to_s ]
       else
-        R3x::WorkflowRegistry.all.map do |workflow_class|
+        R3x::Workflow::Registry.all.map do |workflow_class|
           workflow_class.respond_to?(:workflow_key) ? workflow_class.workflow_key : workflow_class.name.demodulize.underscore
         end
       end
@@ -51,7 +51,7 @@ namespace :r3x do
       workflow_keys.each do |key|
         puts "Running workflow: #{key}"
         begin
-          workflow_class = R3x::WorkflowRegistry.fetch(key)
+          workflow_class = R3x::Workflow::Registry.fetch(key)
           trigger = workflow_class.triggers.find(&:manual?) || R3x::Triggers::Manual.new
           result = RunWorkflowJob.new.perform(key, trigger_key: trigger.unique_key)
           puts "  ✓ Success: #{result.inspect}"
