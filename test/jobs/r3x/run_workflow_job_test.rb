@@ -12,6 +12,7 @@ module R3x
 
     teardown do
       ENV["R3X_WORKFLOW_PATHS"] = @original_workflow_paths
+      WebMock.reset!
     end
 
     test "performs workflow with manual trigger" do
