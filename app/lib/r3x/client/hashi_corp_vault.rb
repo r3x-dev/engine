@@ -11,7 +11,7 @@ module R3x
       end
 
       def self.configured?
-        R3x::Env.present?("VAULT_ADDR") && R3x::Env.present?("VAULT_TOKEN")
+        R3x::Env.present?("R3X_VAULT_ADDR") && R3x::Env.present?("R3X_VAULT_TOKEN")
       end
 
       def read(path)
@@ -31,8 +31,8 @@ module R3x
       private
 
       def initialize
-        @vault_addr = R3x::Env.fetch!("VAULT_ADDR")
-        @vault_token = R3x::Env.fetch!("VAULT_TOKEN")
+        @vault_addr = R3x::Env.fetch!("R3X_VAULT_ADDR")
+        @vault_token = R3x::Env.fetch!("R3X_VAULT_TOKEN")
       end
 
       attr_reader :vault_addr, :vault_token
