@@ -1,12 +1,18 @@
 module R3x
   module Client
     class Http
-      def initialize
-        @connection = Faraday.new
+      def initialize(verify_ssl: true)
+        @connection = Faraday.new(ssl: { verify: verify_ssl }) do |f|
+          f.response :raise_error
+        end
       end
 
-      def get(url)
-        connection.get(url)
+      def get(url, params: {}, headers: {})
+        connection.get(url, params, headers)
+      end
+
+      def head(url, params: {}, headers: {})
+        connection.head(url, params, headers)
       end
 
       def post(url, payload)
