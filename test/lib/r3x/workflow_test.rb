@@ -4,7 +4,7 @@ require_relative "../../support/fake_change_detecting_trigger"
 module R3x
   class WorkflowTest < ActiveSupport::TestCase
     test "workflow_key is derived from class name by convention" do
-      klass = Class.new(R3x::Workflow) do
+      klass = Class.new(R3x::Workflow::Base) do
         def self.name
           "Workflows::MyAwesomeWorkflow"
         end
@@ -14,7 +14,7 @@ module R3x
     end
 
     test "workflow_key works for single word class" do
-      klass = Class.new(R3x::Workflow) do
+      klass = Class.new(R3x::Workflow::Base) do
         def self.name
           "Workflows::Test"
         end
@@ -25,7 +25,7 @@ module R3x
 
     test "trigger :schedule requires cron option" do
       error = assert_raises(ConfigurationError) do
-        Class.new(R3x::Workflow) do
+        Class.new(R3x::Workflow::Base) do
           def self.name
             "Test"
           end
@@ -38,7 +38,7 @@ module R3x
     end
 
     test "trigger :schedule accepts valid cron expression" do
-      klass = Class.new(R3x::Workflow) do
+      klass = Class.new(R3x::Workflow::Base) do
         def self.name
           "Test"
         end
@@ -52,7 +52,7 @@ module R3x
     end
 
     test "trigger :schedule accepts human readable cron" do
-      klass = Class.new(R3x::Workflow) do
+      klass = Class.new(R3x::Workflow::Base) do
         def self.name
           "Test"
         end
@@ -66,7 +66,7 @@ module R3x
 
     test "trigger :schedule rejects invalid cron" do
       error = assert_raises(ConfigurationError) do
-        Class.new(R3x::Workflow) do
+        Class.new(R3x::Workflow::Base) do
           def self.name
             "Test"
           end
@@ -79,7 +79,7 @@ module R3x
 
     test "unknown trigger type raises error" do
       assert_raises(ArgumentError) do
-        Class.new(R3x::Workflow) do
+        Class.new(R3x::Workflow::Base) do
           def self.name
             "Test"
           end
@@ -89,7 +89,7 @@ module R3x
     end
 
     test "triggers returns all registered triggers" do
-      klass = Class.new(R3x::Workflow) do
+      klass = Class.new(R3x::Workflow::Base) do
         def self.name
           "Test"
         end
@@ -102,7 +102,7 @@ module R3x
     end
 
     test "uses declares workflow capabilities" do
-      klass = Class.new(R3x::Workflow) do
+      klass = Class.new(R3x::Workflow::Base) do
         def self.name
           "Workflows::NetworkedWorkflow"
         end
@@ -116,7 +116,7 @@ module R3x
     end
 
     test "uses raises on duplicate capability" do
-      klass = Class.new(R3x::Workflow) do
+      klass = Class.new(R3x::Workflow::Base) do
         def self.name
           "Workflows::DuplicateCap"
         end
@@ -133,7 +133,7 @@ module R3x
 
     test "uses raises on unknown capability" do
       error = assert_raises(ArgumentError) do
-        Class.new(R3x::Workflow) do
+        Class.new(R3x::Workflow::Base) do
           def self.name
             "Workflows::BadCap"
           end
@@ -151,7 +151,7 @@ module R3x
         "   "
       ].each do |cron|
         error = assert_raises(ConfigurationError) do
-          Class.new(R3x::Workflow) do
+          Class.new(R3x::Workflow::Base) do
             def self.name
               "Test"
             end
@@ -171,7 +171,7 @@ module R3x
 
     test "unknown trigger type raises error with dynamic supported types list" do
       error = assert_raises(ArgumentError) do
-        Class.new(R3x::Workflow) do
+        Class.new(R3x::Workflow::Base) do
           def self.name
             "Test"
           end
@@ -192,7 +192,7 @@ module R3x
 
       error = begin
         assert_raises(ArgumentError) do
-          Class.new(R3x::Workflow) do
+          Class.new(R3x::Workflow::Base) do
             def self.name
               "Workflows::DuplicateChangeDetecting"
             end

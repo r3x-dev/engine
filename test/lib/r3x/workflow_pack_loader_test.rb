@@ -1,11 +1,11 @@
 require "test_helper"
 
 module R3x
-  class WorkflowPackLoaderTest < ActiveSupport::TestCase
+  class R3x::Workflow::PackLoaderTest < ActiveSupport::TestCase
     setup do
       @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
       ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
-      R3x::WorkflowPackLoader.load!(force: true)
+      R3x::Workflow::PackLoader.load!(force: true)
     end
 
     teardown do
@@ -13,7 +13,7 @@ module R3x
     end
 
     test "loads workflow from external path by convention" do
-      workflow_class = R3x::WorkflowRegistry.fetch("test_workflow")
+      workflow_class = R3x::Workflow::Registry.fetch("test_workflow")
 
       assert_equal Workflows::TestWorkflow, workflow_class
       assert_equal "test_workflow", workflow_class.workflow_key
@@ -26,18 +26,18 @@ module R3x
 
     test "raises KeyError for unknown workflow" do
       assert_raises(KeyError) do
-        R3x::WorkflowRegistry.fetch("unknown_workflow")
+        R3x::Workflow::Registry.fetch("unknown_workflow")
       end
     end
 
     test "can run loaded workflow" do
-      workflow_class = R3x::WorkflowRegistry.fetch("test_workflow")
+      workflow_class = R3x::Workflow::Registry.fetch("test_workflow")
       trigger = R3x::Triggers::Manual.new
-      execution = R3x::TriggerExecution.new(
+      execution = R3x::TriggerManager::Execution.new(
         trigger: trigger,
         workflow_key: "test_workflow"
       )
-      ctx = R3x::WorkflowContext.new(
+      ctx = R3x::Workflow::Context.new(
         trigger: execution,
         workflow_key: "test_workflow"
       )
