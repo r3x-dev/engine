@@ -82,7 +82,9 @@ class NamespaceRefactoringTest < ActiveSupport::TestCase
       next if class_name.include?("::Concerns::")
       next if class_name.include?("::Dsl::")
       next if class_name.include?("::Validators::")
-      next if class_name.include?("::Services::") # Bad examples in docs
+
+      line_with_ref = content.lines.find { |l| l.include?(class_name) }
+      next if line_with_ref&.match?(/\*\*Bad\*\*/i) # Bad examples in docs
 
       begin
         class_name.constantize
