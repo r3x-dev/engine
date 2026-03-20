@@ -104,6 +104,9 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - **Good**: `logger.tagged(self.class.name) { logger.info("message") }`
 - **Bad**: `logger.info("[Hardcoded::Class::Name] message")` or manual string interpolation
 - Reasoning: Using `self.class.name` keeps log tags synchronized with actual class names automatically, supports nested tagging, and works consistently with Rails log formatting.
+- Use `R3x::Concerns::Logger` - provides both instance and class method `logger` tagged with class name. `Rails.logger` is already `TaggedLogging` so just call `.tagged(name)` directly.
+- For class methods: `extend R3x::Concerns::Logger` then call `logger.info(...)`
+- For instance methods: `include R3x::Concerns::Logger` then call `logger.info(...)`
 
 ## Validators
 

@@ -26,7 +26,6 @@ module R3x
     end
 
     test "only includes workflows with schedule triggers" do
-      # Create a workflow without schedule trigger
       workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
           "Workflows::NoSchedule"
@@ -38,9 +37,8 @@ module R3x
       tasks = RecurringTasksConfig.to_h
       refute tasks.key?("no_schedule")
 
-      # Cleanup
-      R3x::Workflow::Registry.reset!
-      R3x::Workflow::PackLoader.load!(force: true)
+      Workflow::Registry.reset!
+      Workflow::PackLoader.load!(force: true)
     end
 
     test "generates change detection tasks for change-detecting triggers" do
@@ -65,8 +63,8 @@ module R3x
       assert_equal "every 15 minutes", task["schedule"]
       assert_equal "default", task["queue"]
     ensure
-      R3x::Workflow::Registry.reset!
-      R3x::Workflow::PackLoader.load!(force: true)
+      Workflow::Registry.reset!
+      Workflow::PackLoader.load!(force: true)
     end
   end
 end
