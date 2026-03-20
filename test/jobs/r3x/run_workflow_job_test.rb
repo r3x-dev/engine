@@ -7,7 +7,7 @@ module R3x
       @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
       ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
 
-      WorkflowPackLoader.load!(force: true)
+      Workflow::PackLoader.load!(force: true)
     end
 
     teardown do
@@ -18,7 +18,7 @@ module R3x
     test "performs workflow with manual trigger" do
       job = RunWorkflowJob.new
 
-      test_workflow_class = Class.new(R3x::Workflow) do
+      test_workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
           "TestManual"
         end
@@ -33,7 +33,7 @@ module R3x
         end
       end
 
-      WorkflowRegistry.register(test_workflow_class)
+      Workflow::Registry.register(test_workflow_class)
       manual_trigger = test_workflow_class.triggers.first
 
       result = job.perform("test_manual", trigger_key: manual_trigger.unique_key)
@@ -41,14 +41,14 @@ module R3x
       assert_equal "manual", result["trigger_type"]
       refute result["schedule?"]
     ensure
-      WorkflowRegistry.reset!
-      WorkflowPackLoader.load!(force: true)
+      Workflow::Registry.reset!
+      Workflow::PackLoader.load!(force: true)
     end
 
     test "performs workflow with schedule trigger" do
       job = RunWorkflowJob.new
 
-      test_workflow_class = Class.new(R3x::Workflow) do
+      test_workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
           "TestSchedule"
         end
@@ -63,7 +63,7 @@ module R3x
         end
       end
 
-      WorkflowRegistry.register(test_workflow_class)
+      Workflow::Registry.register(test_workflow_class)
       schedule_trigger = test_workflow_class.triggers.first
 
       result = job.perform("test_schedule", trigger_key: schedule_trigger.unique_key)
@@ -71,15 +71,15 @@ module R3x
       assert_equal "schedule", result["trigger_type"]
       assert result["schedule?"]
     ensure
-      WorkflowRegistry.reset!
-      WorkflowPackLoader.load!(force: true)
+      Workflow::Registry.reset!
+      Workflow::PackLoader.load!(force: true)
     end
 
     test "performs workflow with change-detecting trigger and payload" do
       job = RunWorkflowJob.new
       fake_trigger = R3x::TestSupport::FakeChangeDetectingTrigger.new(identity: "feed")
 
-      workflow_class = Class.new(R3x::Workflow) do
+      workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
           "TestChangeDetecting"
         end
@@ -94,7 +94,7 @@ module R3x
         end
       end
 
-      WorkflowRegistry.register(workflow_class)
+      Workflow::Registry.register(workflow_class)
 
       result = job.perform(
         "test_change_detecting",
@@ -105,8 +105,8 @@ module R3x
       assert_equal "fake_change_detecting", result["trigger_type"]
       assert_equal({ entries: [ { title: "Hello" } ] }, result["payload"])
     ensure
-      WorkflowRegistry.reset!
-      WorkflowPackLoader.load!(force: true)
+      Workflow::Registry.reset!
+      Workflow::PackLoader.load!(force: true)
     end
   end
 end

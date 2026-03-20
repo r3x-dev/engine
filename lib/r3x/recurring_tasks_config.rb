@@ -4,7 +4,7 @@ module R3x
       def to_h
         result = {}
 
-        WorkflowRegistry.all.each do |workflow_class|
+        Workflow::Registry.all.each do |workflow_class|
           triggers = workflow_class.schedulable_triggers
           next if triggers.empty?
 
