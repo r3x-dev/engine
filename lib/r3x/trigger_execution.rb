@@ -1,10 +1,11 @@
 module R3x
   class TriggerExecution
-    attr_reader :trigger, :workflow_key
+    attr_reader :trigger, :workflow_key, :payload
 
-    def initialize(trigger:, workflow_key:)
+    def initialize(trigger:, workflow_key:, payload: nil)
       @trigger = trigger
       @workflow_key = workflow_key
+      @payload = payload
     end
 
     def type
