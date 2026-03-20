@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_15_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_18_100000) do
   create_table "solid_queue_blocked_executions", force: :cascade do |t|
     t.string "concurrency_key", null: false
     t.datetime "created_at", null: false
@@ -130,6 +130,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_15_120100) do
     t.index ["expires_at"], name: "index_solid_queue_semaphores_on_expires_at"
     t.index ["key", "value"], name: "index_solid_queue_semaphores_on_key_and_value"
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
+  end
+
+  create_table "trigger_states", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "last_checked_at"
+    t.datetime "last_error_at"
+    t.text "last_error_message"
+    t.datetime "last_triggered_at"
+    t.json "state", default: {}, null: false
+    t.string "trigger_key", null: false
+    t.string "trigger_type", null: false
+    t.datetime "updated_at", null: false
+    t.string "workflow_key", null: false
+    t.index ["trigger_type"], name: "index_trigger_states_on_trigger_type"
+    t.index ["workflow_key", "trigger_key"], name: "index_trigger_states_on_workflow_key_and_trigger_key", unique: true
+    t.index ["workflow_key"], name: "index_trigger_states_on_workflow_key"
   end
 
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

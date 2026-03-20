@@ -2,25 +2,30 @@ module R3x
   class WorkflowContext
     include R3x::Concerns::Logger
 
-    attr_reader :trigger, :execution
+    attr_reader :trigger, :execution, :workflow_class
 
-    def initialize(trigger:, workflow_key:)
+    def initialize(trigger:, workflow_key:, workflow_class: nil)
       @trigger = trigger
+      @workflow_class = workflow_class
       @execution = WorkflowExecution.new(workflow_key: workflow_key)
     end
 
-    def fetch_body(url)
-      http_client.get(url)
+    def client
+      @client ||= ClientProxy.new(workflow_class: workflow_class)
     end
 
-    def discord_output
-      @discord_output ||= R3x::Outputs::Discord.new
-    end
+    class ClientProxy
+      def initialize(workflow_class:)
+        @workflow_class = workflow_class
+      end
 
-    private
+      def http
+        R3x::Client::Http.new
+      end
 
-    def http_client
-      @http_client ||= R3x::Client::Http.new
+      private
+
+      attr_reader :workflow_class
     end
   end
 end

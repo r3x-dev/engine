@@ -6,7 +6,11 @@ module R3x
       end
 
       def get(url)
-        connection.get(url).body
+        connection.get(url)
+      end
+
+      def post(url, payload)
+        connection.post(url, payload)
       end
 
       private
