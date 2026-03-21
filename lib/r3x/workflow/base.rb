@@ -26,7 +26,18 @@ module R3x
         )
         @ctx = context
 
-        run
+        isolation = R3x::Isolation.for
+        if isolation == R3x::Isolation::None
+          run
+        else
+          isolation.run(
+            self.class,
+            context,
+            trigger_key: trigger_key,
+            trigger_payload: trigger_payload,
+            networking: self.class.uses?(:networking)
+          )
+        end
       ensure
         @ctx = nil
       end
