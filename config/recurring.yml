@@ -1,26 +1,13 @@
-<% require "fugit" %>
-<%
-# Static maintenance tasks (always present)
-static_tasks = {
-  "clear_solid_queue_finished_jobs" => {
-    "command" => "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)",
-    "schedule" => "every hour at minute 12",
-    "queue" => "default"
-  }
-}
+development:
+  clear_solid_queue_finished_jobs:
+    command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
+    schedule: "every hour at minute 12"
+    queue: "default"
 
-# Load workflows and generate recurring tasks from DSL
-R3x::Workflow::PackLoader.load!
-dynamic_tasks = R3x::RecurringTasksConfig.to_h
+production:
+  clear_solid_queue_finished_jobs:
+    command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
+    schedule: "every hour at minute 12"
+    queue: "default"
 
-# Merge static and dynamic tasks
-all_tasks = static_tasks.merge(dynamic_tasks)
-
-# Generate for all environments
-config = {
-  "development" => all_tasks,
-  "production" => all_tasks,
-  "test" => {} # No recurring tasks in test
-}
-%>
-<%= config.to_yaml %>
+test: {}
