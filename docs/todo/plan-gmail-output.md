@@ -154,41 +154,6 @@ ctx.client.gmail(
 
 ---
 
-## PxoWeekly email format
-
-Based on n8n workflow output:
-
-```
-🇬🇧🎉 This week in Porto Santo
-
-🌅 #Sunsessions with M da Silva
-📍 Foot On Water Restaurant & Beach Bar
-📅 17 de agosto, 16h30–20h30
-
-🎤 Concert at Praça
-📍 Town Square
-📅 18 de agosto, 21h00
-
-💬 More details on pxopulse.com
-
-
-==============
-
-🇵🇹🎉 Esta semana em Porto Santo
-
-🌅 #Sunsessions com M da Silva
-📍 Foot On Water Restaurant & Beach Bar
-📅 17 de agosto, 16h30–20h30
-
-🎤 Concerto na Praça
-📍 Praça do Povo
-📅 18 de agosto, 21h00
-
-💬 Mais detalhes em pxopulse.com
-```
-
----
-
 ## Comparison with Discord Output
 
 | Aspect | `Outputs::Discord` | `Outputs::Gmail` |

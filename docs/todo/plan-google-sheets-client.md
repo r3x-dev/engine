@@ -132,18 +132,6 @@ ctx.client.google_sheets(
 
 ---
 
-## PxoWeekly sheet columns
-
-Based on n8n workflow, `ThisWeekApproved` has:
-- `name` — event name
-- `start_date` — format `d/M/yyyy`
-- `end_date` — optional
-- `start_time` — time string
-- `location` — venue
-- `category` — event category
-
----
-
 ## Sharing requirement
 
 The Google Sheet must be shared with the OAuth account's email address.
