@@ -18,8 +18,7 @@ module R3x
                                "Supported types: #{supported.map { |t| ":#{t}" }.join(", ")}"
         end
 
-        class_name = type.to_s.camelize
-        full_class_name = "::R3x::Triggers::#{class_name}"
+        full_class_name = "::R3x::Triggers::#{type.to_s.camelize}"
 
         begin
           full_class_name.constantize

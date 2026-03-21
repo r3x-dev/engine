@@ -216,20 +216,20 @@ module R3x
 
     # uses :llm tests
 
-    test "uses :llm with valid api_key declares capability and stores config" do
+    test "uses :llm with valid api_key_env declares capability and stores config" do
       klass = Class.new(R3x::Workflow::Base) do
         def self.name
           "Workflows::LlmWorkflow"
         end
 
-        uses :llm, api_key: "GEMINI_API_KEY_MICHAL"
+        uses :llm, api_key_env: "GEMINI_API_KEY_MICHAL"
       end
 
       assert klass.uses?(:llm)
-      assert_equal({ api_key: "GEMINI_API_KEY_MICHAL" }, klass.llm_config)
+      assert_equal({ api_key_env: "GEMINI_API_KEY_MICHAL" }, klass.llm_config)
     end
 
-    test "uses :llm without api_key raises" do
+    test "uses :llm without api_key_env raises" do
       error = assert_raises(ArgumentError) do
         Class.new(R3x::Workflow::Base) do
           def self.name
@@ -240,35 +240,35 @@ module R3x
         end
       end
 
-      assert_match /requires api_key/, error.message
+      assert_match /requires api_key_env/, error.message
     end
 
-    test "uses :llm with blank api_key raises" do
+    test "uses :llm with blank api_key_env raises" do
       error = assert_raises(ArgumentError) do
         Class.new(R3x::Workflow::Base) do
           def self.name
             "Workflows::LlmBlankKey"
           end
 
-          uses :llm, api_key: ""
+          uses :llm, api_key_env: ""
         end
       end
 
-      assert_match /requires api_key/, error.message
+      assert_match /requires api_key_env/, error.message
     end
 
-    test "uses :llm with lowercase api_key raises" do
+    test "uses :llm with lowercase api_key_env raises" do
       error = assert_raises(ArgumentError) do
         Class.new(R3x::Workflow::Base) do
           def self.name
             "Workflows::LlmLowercaseKey"
           end
 
-          uses :llm, api_key: "gemini_api_key_michal"
+          uses :llm, api_key_env: "gemini_api_key_michal"
         end
       end
 
-      assert_match /Invalid api_key/, error.message
+      assert_match /Invalid api_key_env/, error.message
     end
 
     test "uses :llm with non-GEMINI_API_KEY prefix raises" do
@@ -278,25 +278,25 @@ module R3x
             "Workflows::LlmBadPrefix"
           end
 
-          uses :llm, api_key: "OPENAI_KEY_TEST"
+          uses :llm, api_key_env: "OPENAI_KEY_TEST"
         end
       end
 
-      assert_match /Invalid api_key/, error.message
+      assert_match /Invalid api_key_env/, error.message
     end
 
-    test "uses :llm with special characters in api_key raises" do
+    test "uses :llm with special characters in api_key_env raises" do
       error = assert_raises(ArgumentError) do
         Class.new(R3x::Workflow::Base) do
           def self.name
             "Workflows::LlmInjection"
           end
 
-          uses :llm, api_key: "GEMINI_API_KEY_TEST;INJECTED"
+          uses :llm, api_key_env: "GEMINI_API_KEY_TEST;INJECTED"
         end
       end
 
-      assert_match /Invalid api_key/, error.message
+      assert_match /Invalid api_key_env/, error.message
     end
 
     test "uses :llm can coexist with other capabilities" do
@@ -306,12 +306,12 @@ module R3x
         end
 
         uses :networking
-        uses :llm, api_key: "GEMINI_API_KEY_PROD"
+        uses :llm, api_key_env: "GEMINI_API_KEY_PROD"
       end
 
       assert klass.uses?(:networking)
       assert klass.uses?(:llm)
-      assert_equal({ api_key: "GEMINI_API_KEY_PROD" }, klass.llm_config)
+      assert_equal({ api_key_env: "GEMINI_API_KEY_PROD" }, klass.llm_config)
     end
 
     test "llm_config is nil when :llm not declared" do
@@ -330,7 +330,7 @@ module R3x
           "Workflows::Parent"
         end
 
-        uses :llm, api_key: "GEMINI_API_KEY_PARENT"
+        uses :llm, api_key_env: "GEMINI_API_KEY_PARENT"
       end
 
       child = Class.new(R3x::Workflow::Base) do
@@ -339,8 +339,58 @@ module R3x
         end
       end
 
-      assert_equal({ api_key: "GEMINI_API_KEY_PARENT" }, parent.llm_config)
+      assert_equal({ api_key_env: "GEMINI_API_KEY_PARENT" }, parent.llm_config)
       assert_nil child.llm_config
+    end
+
+    # Default trigger behavior tests
+
+    test "returns default Manual trigger when no triggers declared" do
+      klass = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::NoTriggers"
+        end
+      end
+
+      triggers = klass.triggers
+      assert_equal 1, triggers.size
+      assert_equal :manual, triggers.first.type
+    end
+
+    test "returns declared triggers when triggers are declared" do
+      klass = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::WithTriggers"
+        end
+
+        trigger :schedule, cron: "0 12 * * *"
+      end
+
+      triggers = klass.triggers
+      assert_equal 1, triggers.size
+      assert_equal :schedule, triggers.first.type
+    end
+
+    test "schedulable_triggers excludes auto-generated Manual triggers" do
+      klass = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::NoExplicitTriggers"
+        end
+      end
+
+      # Should return empty array, not the auto-generated Manual trigger
+      assert_empty klass.schedulable_triggers
+    end
+
+    test "triggers_by_key excludes auto-generated Manual triggers" do
+      klass = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::NoExplicitTriggers"
+        end
+      end
+
+      # Should return empty hash, not the auto-generated Manual trigger
+      assert_empty klass.triggers_by_key
     end
   end
 end

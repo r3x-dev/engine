@@ -1,8 +1,8 @@
 module R3x
   module Client
     class Http
-      def initialize(verify_ssl: true)
-        @connection = Faraday.new(ssl: { verify: verify_ssl }) do |f|
+      def initialize(verify_ssl: true, timeout: 10)
+        @connection = Faraday.new(ssl: { verify: verify_ssl }, request: { timeout: timeout }) do |f|
           f.response :raise_error
         end
       end

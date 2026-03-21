@@ -154,8 +154,8 @@ GEM
     google-cloud-env (2.3.1)
       base64 (~> 0.2)
       faraday (>= 1.0, < 3.a)
-    google-cloud-errors (1.5.0)
-    google-cloud-location (1.2.1)
+    google-cloud-errors (1.6.0)
+    google-cloud-location (1.3.0)
       gapic-common (~> 1.2)
       google-cloud-errors (~> 1.0)
     google-cloud-translate (3.7.4)
@@ -178,25 +178,25 @@ GEM
       google-cloud-errors (~> 1.0)
       grpc-google-iam-v1 (~> 1.11)
     google-logging-utils (0.2.0)
-    google-protobuf (4.34.0)
+    google-protobuf (4.34.1)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.34.0-aarch64-linux-gnu)
+    google-protobuf (4.34.1-aarch64-linux-gnu)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.34.0-aarch64-linux-musl)
+    google-protobuf (4.34.1-aarch64-linux-musl)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.34.0-arm64-darwin)
+    google-protobuf (4.34.1-arm64-darwin)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.34.0-x86_64-darwin)
+    google-protobuf (4.34.1-x86_64-darwin)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.34.0-x86_64-linux-gnu)
+    google-protobuf (4.34.1-x86_64-linux-gnu)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.34.0-x86_64-linux-musl)
+    google-protobuf (4.34.1-x86_64-linux-musl)
       bigdecimal
       rake (~> 13.3)
     googleapis-common-protos (1.7.0)
@@ -270,7 +270,7 @@ GEM
       net-pop
       net-smtp
     marcel (1.1.0)
-    mcp (0.8.0)
+    mcp (0.9.0)
       json-schema (>= 4.1)
     mini_mime (1.1.5)
     minitest (6.0.2)
@@ -575,20 +575,20 @@ CHECKSUMS
   google-apis-gmail_v1 (0.47.0) sha256=3064434b6da55b85e2828ce4bb0f4d04e8cfd187a4ab262ceb1dcb01f98e49ef
   google-cloud-core (1.8.0) sha256=e572edcbf189cfcab16590628a516cec3f4f63454b730e59f0b36575120281cf
   google-cloud-env (2.3.1) sha256=0faac01eb27be78c2591d64433663b1a114f8f7af55a4f819755426cac9178e7
-  google-cloud-errors (1.5.0) sha256=b56be28b8c10628125214dde571b925cfcebdbc58619e598250c37a2114f7b4b
-  google-cloud-location (1.2.1) sha256=1e409111d7e793379d8f978008c0ae55dd446935cb41863f729e878015f0494b
+  google-cloud-errors (1.6.0) sha256=1da8476dd706ad04b9d32e3c4b90d07d3463b37d6407cb56d41342ea7647d0a1
+  google-cloud-location (1.3.0) sha256=3df2153b57eadc8c799a48f301752d37fd04b9e1583e26a06d5d20c1471011da
   google-cloud-translate (3.7.4) sha256=db7caf9ad35c5a93d2a913e95fcc66eb40848877de782a126e8e85b1eab05274
   google-cloud-translate-v2 (1.1.0) sha256=cce9567ce11854277eaed6496dc6884b6b3e20952c7ad7e7d1d04d9f097753ec
   google-cloud-translate-v3 (1.7.1) sha256=68dcc963f08d9ee6e10bd9d2e33efefabc569e7774b9d92885e9070ca779eb1d
   google-iam-v1 (1.5.1) sha256=5b9e6a9d86b6b7b9e7269eb73390c3803c135db32a754fe4a44634292b6effa4
   google-logging-utils (0.2.0) sha256=675462b4ea5affa825a3442694ca2d75d0069455a1d0956127207498fca3df7b
-  google-protobuf (4.34.0) sha256=bffaea30fbe2807c80667a78953b15645b3bef62b25c10ca187e4418119be531
-  google-protobuf (4.34.0-aarch64-linux-gnu) sha256=0ab8a8a97976a2265d647e69b3ff1980c89184abdaf06d36091856c5ab37cc55
-  google-protobuf (4.34.0-aarch64-linux-musl) sha256=0632a86df6d320eac3b335bd779499d43ad8ee6d1f8c8494b773ed5d3d5c6ab4
-  google-protobuf (4.34.0-arm64-darwin) sha256=f83967a8095a9da676b79ba372c58fef2ca3878428bd40febfce65b3752c90d1
-  google-protobuf (4.34.0-x86_64-darwin) sha256=4a5b67281993345adca54bb32947f25a289597eafaa240e5b714d0a740f99321
-  google-protobuf (4.34.0-x86_64-linux-gnu) sha256=bbb333fbe79c16f35a2e2154cf29f3ce26f60390dba286b339861206d5435ef9
-  google-protobuf (4.34.0-x86_64-linux-musl) sha256=0b75858a388b17e73aa4176df2e722762dbc92551b7075fdc562d33c1c6de0b0
+  google-protobuf (4.34.1) sha256=347181542b8d659c60f028fa3791c9cccce651a91ad27782dbc5c5e374796cdc
+  google-protobuf (4.34.1-aarch64-linux-gnu) sha256=f9c07607dc139c895f2792a7740fcd01cd94d4d7b0e0a939045b50d7999f0b1d
+  google-protobuf (4.34.1-aarch64-linux-musl) sha256=db58e5a4a492b43c6614486aea31b7fb86955b175d1d48f28ebf388f058d78a9
+  google-protobuf (4.34.1-arm64-darwin) sha256=2745061f973119e6e7f3c81a0c77025d291a3caa6585a2cd24a25bbc7bedb267
+  google-protobuf (4.34.1-x86_64-darwin) sha256=4dc498376e218871613589c4d872400d42ad9ae0c700bdb2606fe1c77a593075
+  google-protobuf (4.34.1-x86_64-linux-gnu) sha256=87088c9fd8e47b5b40ca498fc1195add6149e941ff7e81c532a5b0b8876d4cc9
+  google-protobuf (4.34.1-x86_64-linux-musl) sha256=8c0e91436fbe504ffc64f0bd621f2e69adbcce8ed2c58439d7a21117069cfdd7
   googleapis-common-protos (1.7.0) sha256=b684c0b9e1800c6bb89ad64e0dcabb377a01a31ff7aec1bfebd26c183b2c9241
   googleapis-common-protos-types (1.22.0) sha256=f97492b77bd6da0018c860d5004f512fe7cd165554d7019a8f4df6a56fbfc4c7
   googleauth (1.16.2) sha256=15009502e2e38af71948cda918f230e27d327f6882a1e47967a5a4664930a638
@@ -614,7 +614,7 @@ CHECKSUMS
   loofah (2.25.1) sha256=d436c73dbd0c1147b16c4a41db097942d217303e1f7728704b37e4df9f6d2e04
   mail (2.9.0) sha256=6fa6673ecd71c60c2d996260f9ee3dd387d4673b8169b502134659ece6d34941
   marcel (1.1.0) sha256=fdcfcfa33cc52e93c4308d40e4090a5d4ea279e160a7f6af988260fa970e0bee
-  mcp (0.8.0) sha256=ae8bd146bb8e168852866fd26f805f52744f6326afb3211e073f78a95e0c34fb
+  mcp (0.9.0) sha256=a0a3737b0ac9df0772f4ef7e2b013c260ddbcf217a5d50a66bff0baeddf03e47
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   minitest (6.0.2) sha256=db6e57956f6ecc6134683b4c87467d6dd792323c7f0eea7b93f66bd284adbc3d
   mission_control-jobs (1.1.0) sha256=b13da9cde3344fec7c744b79d2a34c3ecd454f45d4d593d4c968ba762315e84c

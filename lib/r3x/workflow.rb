@@ -33,7 +33,7 @@ module R3x
 
           if incoming.include?(:llm)
             validate_llm_options!(options)
-            self._llm_config = options.slice(:api_key)
+            self._llm_config = options.slice(:api_key_env)
           end
 
           _capabilities.merge(incoming)
@@ -51,14 +51,20 @@ module R3x
           _llm_config
         end
 
+        # Returns all triggers, with a default Manual trigger if none declared
         def triggers
-          _triggers.to_a
+          triggers = _triggers.to_a
+          triggers.empty? ? [ Triggers::Manual.new ] : triggers
         end
 
+        # Returns only explicitly declared triggers that support cron scheduling
+        # Note: Uses _triggers directly to exclude auto-generated Manual triggers
         def schedulable_triggers
           _triggers.select(&:cron_schedulable?)
         end
 
+        # Returns explicitly declared triggers indexed by unique_key
+        # Note: Uses _triggers directly to exclude auto-generated Manual triggers
         def triggers_by_key
           _triggers.by_key
         end
@@ -69,14 +75,16 @@ module R3x
 
         private
 
+        LLM_API_KEY_PATTERN = /\A[A-Z]+_API_KEY_[A-Z0-9_]+\z/.freeze
+
         def validate_llm_options!(options)
-          key_name = options[:api_key]
+          key_name = options[:api_key_env]
           unless key_name.is_a?(String) && key_name.present?
-            raise ArgumentError, "uses :llm requires api_key: option (e.g., api_key: \"GEMINI_API_KEY_NAME\")"
+            raise ArgumentError, "uses :llm requires api_key_env: option (e.g., api_key_env: \"GEMINI_API_KEY_NAME\")"
           end
 
-          unless key_name.match?(LlmResolver::API_KEY_PATTERN)
-            raise ArgumentError, "Invalid api_key '#{key_name}'. Must match #{LlmResolver::API_KEY_PATTERN}"
+          unless key_name.match?(LLM_API_KEY_PATTERN)
+            raise ArgumentError, "Invalid api_key_env '#{key_name}'. Must match #{LLM_API_KEY_PATTERN}"
           end
         end
       end

@@ -23,9 +23,7 @@ module R3x
         workflow_class: workflow_class
       )
 
-      guard_network_access(workflow_class) do
-        workflow_class.new.run(ctx)
-      end
+      workflow_class.new.run(ctx)
     end
 
     private
@@ -63,19 +61,6 @@ module R3x
       end
 
       trigger
-    end
-
-    def guard_network_access(workflow_class)
-      if workflow_class.uses?(:networking)
-        yield
-      else
-        begin
-          WebMock.disable_net_connect!
-          yield
-        ensure
-          WebMock.allow_net_connect!
-        end
-      end
     end
   end
 end
