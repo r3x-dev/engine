@@ -84,6 +84,50 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - The only exception is requiring external gems that don't auto-require their components.
 - **Debugging**: If you get a `NameError` when referencing a class that should exist, it's likely a Zeitwerk autoloading issue (wrong file name, wrong constant name, or missing namespace). Check that file names match constants exactly (snake_case ↔ CamelCase).
 
+### Nested Classes in Separate Files
+
+When a parent class needs helper classes that are conceptually nested under it (e.g., `Bwrap::Proxy`), place them in separate files using the directory-as-namespace pattern.
+
+**Structure:**
+- `lib/r3x/isolation/bwrap.rb` defines `R3x::Isolation::Bwrap`
+- `lib/r3x/isolation/bwrap/proxy.rb` defines `R3x::Isolation::Bwrap::Proxy`
+
+**Implementation:**
+```ruby
+# lib/r3x/isolation/bwrap.rb
+module R3x
+  module Isolation
+    class Bwrap
+      # Uses Proxy internally
+      Proxy.new.start
+    end
+  end
+end
+
+# lib/r3x/isolation/bwrap/proxy.rb
+module R3x
+  module Isolation
+    # Forward declaration if Bwrap not yet loaded
+    class Bwrap < Base; end unless defined?(Bwrap)
+    
+    class Bwrap
+      class Proxy
+        def start; ...; end
+      end
+    end
+  end
+end
+```
+
+**Good:**
+- `lib/r3x/isolation/bwrap.rb` + `lib/r3x/isolation/bwrap/proxy.rb`
+
+**Bad:**
+- Everything crammed in one huge `bwrap.rb` file with `class Proxy` nested inside
+- Using separate `bwrap_proxy.rb` file that tries to be parallel to `bwrap.rb` (Zeitwerk won't map it correctly as nested class)
+
+**Reasoning:** The directory name (`bwrap/`) creates the namespace for Zeitwerk to recognize `Proxy` as a nested class. This keeps the parent class file focused while allowing complex implementations to be split into testable units. The forward declaration in `proxy.rb` handles loading order issues when files are required manually (e.g., in tests outside Rails autoloading).
+
 ## Testing
 
 - When writing tests for workflow DSL or infrastructure, use generic workflow names (e.g., `TestWorkflow`, `MyTestWorkflow`), not real workflow names from `workflows/` folder.
