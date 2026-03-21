@@ -1,0 +1,126 @@
+#!/usr/bin/env ruby
+require_relative "../config/environment"
+require "optparse"
+
+SUBCOMMANDS = {
+  "run"  => "Run a workflow by key (default)",
+  "list" => "List available workflows",
+  "info" => "Show details for a specific workflow"
+}.freeze
+
+def print_help
+  puts "Usage: bin/workflow [options] [command] [arguments]"
+  puts ""
+  puts "Options:"
+  puts "  -h, --help    Show this help"
+  puts ""
+  puts "Commands:"
+  SUBCOMMANDS.each do |cmd, desc|
+    puts "  %-12s %s" % [cmd, desc]
+  end
+  puts ""
+  puts "When no command is given, the first argument is treated as a workflow key (run)."
+end
+
+def cmd_list
+  R3x::Workflow::PackLoader.load!
+  workflows = R3x::Workflow::Registry.all
+
+  if workflows.empty?
+    puts "No workflows found."
+    return
+  end
+
+  puts "Available workflows:"
+  workflows.each do |wf|
+    triggers = wf.triggers.map { |t| t.type }.uniq.join(", ")
+    puts "  #{wf.workflow_key}  (triggers: #{triggers})"
+  end
+end
+
+def cmd_info(key)
+  R3x::Workflow::PackLoader.load!
+  workflow_class = R3x::Workflow::Registry.fetch(key)
+
+  puts "Workflow: #{key}"
+  puts "  Class:    #{workflow_class}"
+  puts "  Triggers:"
+  workflow_class.triggers.each do |t|
+    puts "    #{t.type}  key=#{t.unique_key}"
+  end
+end
+
+def cmd_run(key, options)
+  puts "Running workflow: #{key}"
+
+  if options[:dry_run]
+    R3x::Workflow::PackLoader.load!
+    workflow_class = R3x::Workflow::Registry.fetch(key)
+
+    puts "  Class:    #{workflow_class}"
+    puts "  Triggers:"
+    workflow_class.triggers.each do |t|
+      puts "    #{t.type}  key=#{t.unique_key}"
+    end
+    puts "(dry run — not executing)"
+    return
+  end
+
+  result = R3x::Workflow::ManualRunner.run(key)
+  puts "Result: #{result.inspect}"
+end
+
+# --- Parse global options ---
+global_options = {}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: bin/workflow [options] [command] [arguments]"
+
+  opts.on("-h", "--help", "Show help") do
+    print_help
+    exit 0
+  end
+end.order!
+
+command = ARGV.shift
+
+# If no command given or command looks like a workflow key (not a known subcommand),
+# default to `run`.
+if command.nil?
+  print_help
+  exit 0
+end
+
+unless SUBCOMMANDS.key?(command)
+  # Not a known subcommand — treat as workflow key for `run`
+  ARGV.unshift(command)
+  command = "run"
+end
+
+case command
+when "list"
+  cmd_list
+
+when "info"
+  key = ARGV.shift || abort("Usage: bin/workflow info <workflow_key>")
+  cmd_info(key)
+
+when "run"
+  run_options = {}
+
+  parser = OptionParser.new do |opts|
+    opts.banner = "Usage: bin/workflow run [options] <workflow_key>"
+
+    opts.on("-d", "--dry-run", "Resolve workflow but do not execute") do
+      run_options[:dry_run] = true
+    end
+  end
+
+  parser.order!(ARGV)
+
+  key = ARGV.shift || abort("Usage: bin/workflow run [options] <workflow_key>")
+  cmd_run(key, run_options)
+
+else
+  abort "Unknown command: #{command}"
+end
