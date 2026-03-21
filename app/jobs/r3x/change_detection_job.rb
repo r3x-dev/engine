@@ -19,16 +19,12 @@ module R3x
 
       TriggerState.transaction do
         if result[:changed]
-          R3x::RunWorkflowJob.perform_later(
-            workflow_key,
-            trigger_key: trigger_key,
-            trigger_payload: result[:payload]
-          )
+          workflow_class.perform_later(trigger_key, trigger_payload: result[:payload])
         end
 
         trigger_state.record_check!(result)
       end
-    rescue StandardError => e
+    rescue => e
       trigger_state.record_error!(e) if defined?(trigger_state) && trigger_state&.persisted?
       raise
     end

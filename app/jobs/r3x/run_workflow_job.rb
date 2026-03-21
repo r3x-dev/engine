@@ -9,21 +9,7 @@ module R3x
 
       R3x::Workflow::PackLoader.load!
       workflow_class = R3x::Workflow::Registry.fetch(workflow_key)
-      trigger = find_trigger(workflow_class: workflow_class, trigger_key: trigger_key)
-
-      execution = R3x::TriggerManager::Execution.new(
-        trigger: trigger,
-        workflow_key: workflow_key,
-        payload: trigger_payload
-      )
-
-      ctx = R3x::Workflow::Context.new(
-        trigger: execution,
-        workflow_key: workflow_key,
-        workflow_class: workflow_class
-      )
-
-      workflow_class.new.run(ctx)
+      workflow_class.new.perform(trigger_key, trigger_payload: trigger_payload)
     end
 
     private
@@ -51,16 +37,6 @@ module R3x
       else
         raise ArgumentError, "Expected options hash, got #{options.class.name}"
       end
-    end
-
-    def find_trigger(workflow_class:, trigger_key:)
-      trigger = workflow_class.triggers_by_key[trigger_key]
-
-      if trigger.nil?
-        raise ArgumentError, "Unknown trigger key '#{trigger_key}' for workflow '#{workflow_class.workflow_key}'"
-      end
-
-      trigger
     end
   end
 end
