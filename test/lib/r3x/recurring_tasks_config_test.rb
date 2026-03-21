@@ -21,7 +21,7 @@ module R3x
       task = tasks.find { |k, _| k.start_with?(expected_key) }&.last
 
       assert task, "Expected task with key starting with #{expected_key}"
-      assert_equal "R3x::RunWorkflowJob", task["class"]
+      assert_equal "Workflows::TestWorkflow", task["class"]
       assert_equal "0 * * * *", task["schedule"]
       assert_equal "default", task["queue"]
     end
@@ -76,7 +76,7 @@ module R3x
 
       task = dynamic_tasks.find { |t| t.key.include?(":schedule:") }
       assert task, "Expected a schedule trigger task"
-      assert_equal "R3x::RunWorkflowJob", task.class_name
+      assert_equal "Workflows::TestWorkflow", task.class_name
       assert_equal "0 * * * *", task.schedule
     end
 
