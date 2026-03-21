@@ -26,10 +26,14 @@ gem "google-cloud-translate"
 gem "googleauth"
 gem "google-apis-calendar_v3"
 gem "google-apis-gmail_v1"
+gem "google-apis-sheets_v4"
 
 # Use the database-backed adapters for Rails.cache and Active Job
 gem "solid_cache"
 gem "solid_queue"
+
+# CLI tools
+gem "highline"
 
 # Active Job dashboard (requires propshaft for API-only apps)
 gem "mission_control-jobs"
