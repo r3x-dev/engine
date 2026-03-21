@@ -28,6 +28,10 @@ module R3x
           R3x::Client::Prometheus.new
         end
 
+        def apify(api_key_env:)
+          R3x::Client::Apify.new(api_key: R3x::Env.secure_fetch(api_key_env, prefix: "APIFY_API_KEY"))
+        end
+
         private
 
         attr_reader :workflow_class
