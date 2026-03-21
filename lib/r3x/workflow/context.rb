@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Workflow
     class Context
@@ -40,7 +42,7 @@ module R3x
         end
 
         def google_sheets(spreadsheet_id:, credentials_env:)
-          R3x::Client::GoogleSheets::Client.new(
+          R3x::Client::GoogleSheets.new(
             spreadsheet_id: spreadsheet_id,
             credentials: MultiJson.load(R3x::Env.secure_fetch(credentials_env, prefix: "GOOGLE_CREDENTIALS_"))
           )
