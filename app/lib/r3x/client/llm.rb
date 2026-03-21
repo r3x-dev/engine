@@ -7,14 +7,13 @@ module R3x
         end
       end
 
-      def analyze_image(image_bytes, prompt:, model:)
+      def analyze_image(image_bytes, prompt:, model:, schema: nil)
         io = StringIO.new(image_bytes)
         io.set_encoding(Encoding::BINARY)
 
-        @llm_context
-          .chat(model: model, provider: :gemini)
-          .ask(prompt, with: [ io ])
-          .content
+        chat = @llm_context.chat(model: model, provider: :gemini)
+        chat = chat.with_schema(schema) if schema
+        chat.ask(prompt, with: [ io ]).content
       end
 
       def chat(model:)
