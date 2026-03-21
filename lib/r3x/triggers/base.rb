@@ -18,6 +18,10 @@ module R3x
         false
       end
 
+      def manual?
+        type == :manual
+      end
+
       def unique_key
         # Generate unique key from type + sorted options hash
         key_json = MultiJson.dump(options.sort.to_h)

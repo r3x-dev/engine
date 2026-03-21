@@ -171,6 +171,38 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - The directory is gitignored. Do not place production code there.
 - Use it when you need to verify something quickly (e.g., hitting an API, testing a query) without writing a proper test.
 
+## Code Style
+
+### Method Chaining
+
+Prefer chaining methods across multiple lines over introducing single-use intermediate variables.
+
+**Good:**
+```ruby
+@llm_context
+  .chat(model: model, provider: :gemini)
+  .ask(prompt, with: [io])
+  .content
+```
+
+**Bad:**
+```ruby
+chat = @llm_context.chat(model: model, provider: :gemini)
+response = chat.ask(prompt, with: [io])
+response.content
+```
+
+**Rationale:**
+- Each intermediate variable adds a name that must be understood and maintained
+- Chaining makes the data flow obvious - input flows through transformations to output
+- Fewer local variables reduce cognitive load and naming fatigue
+- The pattern works well with Ruby's method chaining syntax and fluent interfaces
+
+**Exceptions:**
+- When intermediate results are used multiple times
+- When the intermediate value has semantic meaning that aids comprehension
+- When debugging requires inspecting intermediate state
+
 ## Scope
 
 - Apply these as defaults for new work.
