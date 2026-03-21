@@ -16,6 +16,9 @@ gem "multi_json"
 # HTML/XML parsing
 gem "nokogiri"
 
+# RSS/Atom feed parsing
+gem "rss"
+
 # LLM integration
 gem "ruby_llm"
 
