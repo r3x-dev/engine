@@ -1,4 +1,5 @@
 require "test_helper"
+require_relative "../../support/fake_change_detecting_trigger"
 
 module R3x
   class WorkflowTest < ActiveSupport::TestCase
@@ -232,12 +233,29 @@ module R3x
           "Workflows::WithTriggers"
         end
 
-        trigger :schedule, cron: "0 12 * * *"
+        trigger :manual
       end
 
       triggers = klass.triggers
       assert_equal 1, triggers.size
-      assert_equal :schedule, triggers.first.type
+      assert_equal :manual, triggers.first.type
+    end
+
+    test "prevents overriding perform method in subclasses" do
+      error = assert_raises(ArgumentError) do
+        Class.new(R3x::Workflow::Base) do
+          def self.name
+            "Workflows::BadWorkflow"
+          end
+
+          def perform
+            # This should raise an error
+          end
+        end
+      end
+
+      assert_match(/Do not override #perform/, error.message)
+      assert_match(/Override #run\(ctx\) instead/, error.message)
     end
 
     test "schedulable_triggers excludes auto-generated Manual triggers" do
