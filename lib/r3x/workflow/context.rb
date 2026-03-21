@@ -39,6 +39,13 @@ module R3x
           )
         end
 
+        def google_sheets(spreadsheet_id:, credentials_env:)
+          R3x::Client::GoogleSheets::Client.new(
+            spreadsheet_id: spreadsheet_id,
+            credentials: MultiJson.load(R3x::Env.secure_fetch(credentials_env, prefix: "GOOGLE_CREDENTIALS_"))
+          )
+        end
+
         private
 
         attr_reader :workflow_class
