@@ -1,5 +1,6 @@
 [tools]
 "gem:ruby-lsp" = "latest"
+"github:bnomei/wtp-mcp" = "latest"
 ruby = "4.0.2"
 
 [env]
