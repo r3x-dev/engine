@@ -1,6 +1,6 @@
 version: "1.0"
 defaults:
-  base_dir: ".."
+  base_dir: ".worktrees"
 
 hooks:
   post_create:
@@ -11,3 +11,6 @@ hooks:
     - type: copy
       from: "workflows/"
       to: "workflows/"
+
+    - type: command
+      command: mise trust
