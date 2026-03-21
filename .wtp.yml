@@ -1,0 +1,13 @@
+version: "1.0"
+defaults:
+  base_dir: ".."
+
+hooks:
+  post_create:
+    - type: copy
+      from: ".env"
+      to: ".env"
+
+    - type: copy
+      from: "workflows/"
+      to: "workflows/"
