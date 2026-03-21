@@ -36,10 +36,41 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `R3x::RunWorkflowJob` fetches the workflow from the registry, resolves the trigger by `trigger_key`, builds a `Workflow::Context`, and calls `workflow_class.new.run(ctx)`.
 - Trigger discovery is filesystem-backed through `lib/r3x/triggers/*.rb`, so trigger file names, constants, and supported types must stay aligned.
 
+## Working with Workflows
+
+Use `bin/workflow` (preferred) or rake tasks to interact with workflows from the command line. Both load all workflow packs via `PackLoader.load!` and query `Registry`.
+
+### `bin/workflow` — CLI entrypoint
+
+```
+bin/workflow [options] [command] [arguments]
+```
+
+| Command | Description |
+|---------|-------------|
+| `bin/workflow list` | List all registered workflows with their trigger types. |
+| `bin/workflow info <key>` | Show class name and trigger details for a specific workflow. |
+| `bin/workflow run <key>` | Execute a workflow immediately via `ManualRunner`. |
+| `bin/workflow run -d <key>` | Dry run — resolve and display the workflow without executing. |
+| `bin/workflow <key>` | Shorthand for `run <key>` (unknown first arg is treated as workflow key). |
+
+**Global options:** `-h, --help` — print usage.
+
+`ManualRunner` (`lib/r3x/workflow/manual_runner.rb`) fetches the workflow class from the registry, picks its first manual trigger (or creates a default `Triggers::Manual`), builds a `Workflow::Context`, and calls `workflow_class.new.run(ctx)`. This is the same execution path used by `R3x::RunWorkflowJob` but without Solid Queue — it runs synchronously in the current process.
+
+### Rake equivalents
+
+| Rake task | Equivalent |
+|-----------|------------|
+| `rake r3x:workflows:list` | `bin/workflow list` |
+| `rake r3x:workflows:run[key]` | `bin/workflow run key` |
+
+The rake tasks exist for convenience in deployment scripts; prefer `bin/workflow` for interactive use because it has richer option parsing (e.g. `--dry-run`).
+
 ## Maintenance Warning
 
 - Keep this file synchronized with the real codebase. If you change workflow loading, trigger discovery, scheduling flow, top-level directory structure, namespaces, or the framework/user-workflow boundary, update the relevant `AGENTS.md` sections in the same change.
-- In particular, update examples and notes here when changing files such as `lib/r3x/workflow.rb`, `lib/r3x/workflow/pack_loader.rb`, `lib/r3x/workflow/registry.rb`, `lib/r3x/recurring_tasks_config.rb`, `lib/r3x/triggers.rb`, `app/jobs/r3x/run_workflow_job.rb`, or `config/initializers/r3x_workflow_loader.rb`.
+- In particular, update examples and notes here when changing files such as `lib/r3x/workflow.rb`, `lib/r3x/workflow/pack_loader.rb`, `lib/r3x/workflow/registry.rb`, `lib/r3x/recurring_tasks_config.rb`, `lib/r3x/triggers.rb`, `app/jobs/r3x/run_workflow_job.rb`, `lib/r3x/workflow/manual_runner.rb`, `bin/workflow`, `lib/tasks/r3x_workflows.rake`, or `config/initializers/r3x_workflow_loader.rb`.
 - Also update this file when changing the shared DSL validation contract in files such as `lib/r3x/dsl/validatable.rb`, `lib/r3x/configuration_error.rb`, or the base classes for workflow-declared objects.
 - Also update this file when changing Active Job backend semantics, `Solid Queue` database wiring, or any logic that depends on enqueueing being inside the same database transaction as app writes.
 - When adding a new subsystem or moving code between `lib/r3x/`, `app/lib/r3x/`, `app/jobs/r3x/`, or `workflows/`, refresh the project overview and codebase map so future agents can still orient themselves quickly.
