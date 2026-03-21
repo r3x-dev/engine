@@ -138,9 +138,9 @@ ctx.client.gmail(credentials_env: "...", mode: "real").deliver(...)
 
 ```ruby
 ctx.client.gmail(
-  credentials_env: "GOOGLE_CREDENTIALS_PXOPULSE"
+  credentials_env: "GOOGLE_CREDENTIALS_MYAPP"
 ).deliver(
-  to: "pxopulse@gmail.com",
+  to: "recipient@example.com",
   subject: "Weekly pulse",
   body: formatted_content
 )

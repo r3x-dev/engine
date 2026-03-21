@@ -148,6 +148,8 @@ GEM
       retriable (~> 3.1)
     google-apis-gmail_v1 (0.47.0)
       google-apis-core (>= 0.15.0, < 2.a)
+    google-apis-sheets_v4 (0.47.0)
+      google-apis-core (>= 0.15.0, < 2.a)
     google-cloud-core (1.8.0)
       google-cloud-env (>= 1.0, < 3.a)
       google-cloud-errors (~> 1.0)
@@ -239,6 +241,8 @@ GEM
       googleapis-common-protos (~> 1.7.0)
       grpc (~> 1.41)
     hashdiff (1.2.1)
+    highline (3.1.2)
+      reline
     i18n (1.14.8)
       concurrent-ruby (~> 1.0)
     importmap-rails (2.2.3)
@@ -511,8 +515,10 @@ DEPENDENCIES
   faraday
   google-apis-calendar_v3
   google-apis-gmail_v1
+  google-apis-sheets_v4
   google-cloud-translate
   googleauth
+  highline
   mission_control-jobs
   multi_json
   nokogiri
@@ -573,6 +579,7 @@ CHECKSUMS
   google-apis-calendar_v3 (0.53.0) sha256=8ec7ef75362a5f938f1dac6d744e56856ed6d332467f1b5426b0771f5cd14ba9
   google-apis-core (1.0.2) sha256=ba4579aaadc902d6cc7bc8db88f566ab00f5e31ea87ab41e9f9a032c470f2629
   google-apis-gmail_v1 (0.47.0) sha256=3064434b6da55b85e2828ce4bb0f4d04e8cfd187a4ab262ceb1dcb01f98e49ef
+  google-apis-sheets_v4 (0.47.0) sha256=18b38419ea7365867af14a6cd4ad3000c1b4804fceb34417f98c8d303d097238
   google-cloud-core (1.8.0) sha256=e572edcbf189cfcab16590628a516cec3f4f63454b730e59f0b36575120281cf
   google-cloud-env (2.3.1) sha256=0faac01eb27be78c2591d64433663b1a114f8f7af55a4f819755426cac9178e7
   google-cloud-errors (1.6.0) sha256=1da8476dd706ad04b9d32e3c4b90d07d3463b37d6407cb56d41342ea7647d0a1
@@ -601,6 +608,7 @@ CHECKSUMS
   grpc (1.78.1-x86_64-linux-musl) sha256=4e90a3d0f2baa1cd70756ffe116bd81bb7b398ff774272828a23a89ac9a30b06
   grpc-google-iam-v1 (1.11.0) sha256=8f0aa8a8503b3e001cb1561f31e43aa0445752fb675334afa1afac7f023f368c
   hashdiff (1.2.1) sha256=9c079dbc513dfc8833ab59c0c2d8f230fa28499cc5efb4b8dd276cf931457cd1
+  highline (3.1.2) sha256=67cbd34d19f6ef11a7ee1d82ffab5d36dfd5b3be861f450fc1716c7125f4bb4a
   i18n (1.14.8) sha256=285778639134865c5e0f6269e0b818256017e8cde89993fdfcbfb64d088824a5
   importmap-rails (2.2.3) sha256=7101be2a4dc97cf1558fb8f573a718404c5f6bcfe94f304bf1f39e444feeb16a
   io-console (0.8.2) sha256=d6e3ae7a7cc7574f4b8893b4fca2162e57a825b223a177b7afa236c5ef9814cc
