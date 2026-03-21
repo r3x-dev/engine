@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+require_relative "../config/environment"
+
+key = ARGV[0] || raise("Usage: bin/run-workflow <workflow_key>")
+
+puts "Running workflow: #{key}"
+result = R3x::Workflow::ManualRunner.run(key)
+puts "Result: #{result.inspect}"

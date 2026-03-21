@@ -20,8 +20,8 @@ module R3x
           @workflow_class = workflow_class
         end
 
-        def http(verify_ssl: true)
-          R3x::Client::Http.new(verify_ssl: verify_ssl)
+        def http(verify_ssl: true, timeout: 10)
+          R3x::Client::Http.new(verify_ssl: verify_ssl, timeout: timeout)
         end
 
         def prometheus
@@ -30,6 +30,16 @@ module R3x
 
         def apify(api_key_env:)
           R3x::Client::Apify.new(api_key: R3x::Env.secure_fetch(api_key_env, prefix: "APIFY_API_KEY"))
+
+        def llm
+          unless workflow_class.uses?(:llm)
+            raise ArgumentError, "Workflow does not declare uses :llm"
+          end
+          api_key_name = workflow_class.llm_config[:api_key_env]
+          R3x::Client::Llm.new(
+            api_key: R3x::Env.secure_fetch(api_key_name, prefix: /\A[A-Z]+_API_KEY_[A-Z0-9_]+\z/),
+            config_attr: "#{api_key_name.split("_").first.downcase}_api_key"
+          )
         end
 
         private
