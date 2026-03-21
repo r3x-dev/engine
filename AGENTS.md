@@ -145,7 +145,8 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - **Good**: `R3x::Validators::Cron`, `R3x::Validators::Url`
 - **Bad**: `R3x::Triggers::Cron`, `R3x::Services::UrlChecker`
 - Reasoning: Validators are reusable across triggers, services, and other components. Keep them in a dedicated namespace.
-- Validators used with `validates_with` should inherit from `ActiveModel::Validator` and implement `validate(record)`.
+- Validators used with `validates_with` should inherit from `ActiveModel::Validator` and implement `validate(record)`. They may also expose a `validate!` class method for direct use (e.g., `R3x::Validators::Url.validate!("https://example.com")`).
+- Trigger concerns that provide capability predicates should also include the relevant validations. For example, `CronSchedulable` auto-includes `validates :cron, presence: true` and `validates_with Validators::Cron` — individual triggers should not repeat these.
 - DSL objects should use `ActiveModel::Validations` via the shared DSL validation layer and call these validators from object-level validations for reusable value checks.
 - Presence and object semantics belong to the DSL object itself; `R3x::Validators::*` should focus on validating the shape or format of a provided value.
 - Every new workflow DSL object must go through the shared DSL validation layer. Do not add triggers, steps, outputs, or other workflow-declared objects that bypass validation or rely only on ad hoc `raise ArgumentError`.
