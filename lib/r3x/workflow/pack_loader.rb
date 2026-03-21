@@ -13,6 +13,7 @@ module R3x
 
           R3x::Workflow::Registry.reset!
           workflow_files.each do |entrypoint|
+            R3x::Workflow::Validator.scan_file(entrypoint)
             require entrypoint
             register_workflow(entrypoint)
           end
