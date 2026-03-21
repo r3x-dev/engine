@@ -30,6 +30,7 @@ module R3x
 
         def apify(api_key_env:)
           R3x::Client::Apify.new(api_key: R3x::Env.secure_fetch(api_key_env, prefix: "APIFY_API_KEY"))
+        end
 
         def llm
           unless workflow_class.uses?(:llm)
