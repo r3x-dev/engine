@@ -32,14 +32,10 @@ module R3x
           R3x::Client::Apify.new(api_key: R3x::Env.secure_fetch(api_key_env, prefix: "APIFY_API_KEY"))
         end
 
-        def llm
-          unless workflow_class.uses?(:llm)
-            raise ArgumentError, "Workflow does not declare uses :llm"
-          end
-          api_key_name = workflow_class.llm_config[:api_key_env]
+        def llm(api_key_env:)
           R3x::Client::Llm.new(
-            api_key: R3x::Env.secure_fetch(api_key_name, prefix: /\A[A-Z]+_API_KEY_[A-Z0-9_]+\z/),
-            config_attr: "#{api_key_name.split("_").first.downcase}_api_key"
+            api_key: R3x::Env.secure_fetch(api_key_env, prefix: /\A[A-Z]+_API_KEY_[A-Z0-9_]+\z/),
+            config_attr: "#{api_key_env.split("_").first.downcase}_api_key"
           )
         end
 
