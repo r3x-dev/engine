@@ -138,9 +138,9 @@ ctx.client.gmail(credentials_env: "...", mode: "real").deliver(...)
 
 ```ruby
 ctx.client.gmail(
-  credentials_env: "GOOGLE_CREDENTIALS_PXOPULSE"
+  credentials_env: "GOOGLE_CREDENTIALS_MYAPP"
 ).deliver(
-  to: "pxopulse@gmail.com",
+  to: "recipient@example.com",
   subject: "Weekly pulse",
   body: formatted_content
 )
@@ -150,41 +150,6 @@ ctx.client.gmail(
 
 # Real mode returns:
 # {"mode" => "real", "message_id" => "18a3f..."}
-```
-
----
-
-## PxoWeekly email format
-
-Based on n8n workflow output:
-
-```
-🇬🇧🎉 This week in Porto Santo
-
-🌅 #Sunsessions with M da Silva
-📍 Foot On Water Restaurant & Beach Bar
-📅 17 de agosto, 16h30–20h30
-
-🎤 Concert at Praça
-📍 Town Square
-📅 18 de agosto, 21h00
-
-💬 More details on pxopulse.com
-
-
-==============
-
-🇵🇹🎉 Esta semana em Porto Santo
-
-🌅 #Sunsessions com M da Silva
-📍 Foot On Water Restaurant & Beach Bar
-📅 17 de agosto, 16h30–20h30
-
-🎤 Concerto na Praça
-📍 Praça do Povo
-📅 18 de agosto, 21h00
-
-💬 Mais detalhes em pxopulse.com
 ```
 
 ---

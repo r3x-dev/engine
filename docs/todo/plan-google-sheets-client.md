@@ -120,7 +120,7 @@ end
 ```ruby
 ctx.client.google_sheets(
   spreadsheet_id: "13T1oLQXmhbBYMe0shLs-5aJJsW5Esgx9xaNjSMclubU",
-  credentials_env: "GOOGLE_CREDENTIALS_PXOPULSE"
+  credentials_env: "GOOGLE_CREDENTIALS_MYAPP"
 ).read_rows(range: "ThisWeekApproved")
 
 # Returns:
@@ -129,18 +129,6 @@ ctx.client.google_sheets(
 #   {"name" => "Festival", "start_date" => "17/1/2026", "location" => "Town", ...}
 # ]
 ```
-
----
-
-## PxoWeekly sheet columns
-
-Based on n8n workflow, `ThisWeekApproved` has:
-- `name` — event name
-- `start_date` — format `d/M/yyyy`
-- `end_date` — optional
-- `start_time` — time string
-- `location` — venue
-- `category` — event category
 
 ---
 
