@@ -24,14 +24,13 @@ gem "google-apis-sheets_v4"
 
 ## 2. `app/lib/r3x/client/google_sheets.rb`
 
-### Class: `R3x::Client::GoogleSheets::Client`
+### Class: `R3x::Client::GoogleSheets`
 
 ```ruby
 module R3x
   module Client
-    module GoogleSheets
-      class Client
-        def initialize(spreadsheet_id:, credentials:)
+    class GoogleSheets
+      def initialize(spreadsheet_id:, credentials:)
           @spreadsheet_id = spreadsheet_id
           @credentials = credentials
           @service = build_service
@@ -52,7 +51,7 @@ module R3x
 
         def build_service
           service = Google::Apis::SheetsV4::SheetsService.new
-          service.authorization = GoogleAuth.from_json(
+          service.authorization = R3x::Client::GoogleAuth.from_json(
             credentials,
             scope: Google::Apis::SheetsV4::AUTH_SPREADSHEETS_READONLY
           )
@@ -94,24 +93,14 @@ Add inside `ClientProxy` class, after `llm` method:
 
 ```ruby
 def google_sheets(spreadsheet_id:, credentials_env:)
-  credentials = fetch_google_credentials(credentials_env)
-  R3x::Client::GoogleSheets::Client.new(
+  R3x::Client::GoogleSheets.new(
     spreadsheet_id: spreadsheet_id,
-    credentials: credentials
+    credentials: MultiJson.load(R3x::Env.secure_fetch(credentials_env, prefix: "GOOGLE_CREDENTIALS_"))
   )
 end
 ```
 
-Add as private method on `ClientProxy`:
 
-```ruby
-private
-
-def fetch_google_credentials(credentials_env)
-  json = R3x::Env.secure_fetch(credentials_env, prefix: "GOOGLE_CREDENTIALS_")
-  MultiJson.load(json)
-end
-```
 
 ---
 
