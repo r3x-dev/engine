@@ -29,7 +29,6 @@ module R3x
               data: {
                 data: {
                   api_key: "test-api-key",
-                  mode: "real"
                 },
                 metadata: { version: 1 }
               }
@@ -41,7 +40,6 @@ module R3x
 
         assert_equal({
           "api_key" => "test-api-key",
-          "mode" => "real"
         }, result)
       end
 
