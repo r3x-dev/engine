@@ -28,7 +28,7 @@ module R3x
             body: {
               data: {
                 data: {
-                  api_key: "test-api-key",
+                  api_key: "test-api-key"
                 },
                 metadata: { version: 1 }
               }
@@ -39,7 +39,7 @@ module R3x
         result = HashiCorpVault.read("secret/data/env/r3x")
 
         assert_equal({
-          "api_key" => "test-api-key",
+          "api_key" => "test-api-key"
         }, result)
       end
 
