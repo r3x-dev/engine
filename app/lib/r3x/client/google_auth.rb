@@ -4,14 +4,14 @@ module R3x
   module Client
     module GoogleAuth
       SCOPE_ALIASES = {
-        "gmail.readonly" => Google::Apis::GmailV1::AUTH_GMAIL_READONLY,
-        "gmail.send" => Google::Apis::GmailV1::AUTH_GMAIL_SEND,
-        "gmail.compose" => Google::Apis::GmailV1::AUTH_GMAIL_COMPOSE,
-        "gmail.modify" => Google::Apis::GmailV1::AUTH_GMAIL_MODIFY,
-        "sheets.readonly" => Google::Apis::SheetsV4::AUTH_SPREADSHEETS_READONLY,
-        "sheets" => Google::Apis::SheetsV4::AUTH_SPREADSHEETS,
-        "calendar.readonly" => Google::Apis::CalendarV3::AUTH_CALENDAR_READONLY,
-        "calendar" => Google::Apis::CalendarV3::AUTH_CALENDAR
+        "gmail.readonly" => ::Google::Apis::GmailV1::AUTH_GMAIL_READONLY,
+        "gmail.send" => ::Google::Apis::GmailV1::AUTH_GMAIL_SEND,
+        "gmail.compose" => ::Google::Apis::GmailV1::AUTH_GMAIL_COMPOSE,
+        "gmail.modify" => ::Google::Apis::GmailV1::AUTH_GMAIL_MODIFY,
+        "sheets.readonly" => ::Google::Apis::SheetsV4::AUTH_SPREADSHEETS_READONLY,
+        "sheets" => ::Google::Apis::SheetsV4::AUTH_SPREADSHEETS,
+        "calendar.readonly" => ::Google::Apis::CalendarV3::AUTH_CALENDAR_READONLY,
+        "calendar" => ::Google::Apis::CalendarV3::AUTH_CALENDAR
       }.freeze
 
       def self.from_json(parsed_json, scope:)
