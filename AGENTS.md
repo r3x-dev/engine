@@ -18,6 +18,9 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `lib/r3x/dsl/`: shared DSL infrastructure, especially validation concerns and configuration errors used by workflow-declared objects.
 - `lib/r3x/trigger_manager.rb` + `lib/r3x/trigger_manager/`: trigger infrastructure — `R3x::TriggerManager::Collection` (manages workflow triggers as a hash keyed by `unique_key`) and `R3x::TriggerManager::Execution` (wraps a trigger for runtime use).
 - `app/lib/r3x/`: runtime support code such as outputs, client wrappers, and shared concerns.
+- `app/lib/r3x/client/google/credentials.rb`: shared Google credentials loader used by Gmail and Google Sheets integrations.
+- `app/lib/r3x/client/google/gmail.rb`: Gmail API client used by `R3x::Outputs::Gmail`.
+- `R3x::Client::Google` is a project namespace; when referencing the third-party Google gem namespace, use `::Google` to avoid constant collisions.
 - `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves and executes workflows, and `R3x::ChangeDetectionJob`, which evaluates change-detecting triggers before enqueueing workflow runs.
 - `app/models/r3x/`: runtime support models such as `R3x::TriggerState` for per-trigger change-detection state.
 - `workflows/`: user workflow packs. These are not the framework itself; they are loaded by the framework.
@@ -39,6 +42,18 @@ This Rails app uses a small set of preferred libraries for common integration wo
 ## Working with Workflows
 
 Use `bin/workflow` (preferred) or rake tasks to interact with workflows from the command line. Both load all workflow packs via `PackLoader.load!` and query `Registry`.
+
+### Output safety
+
+- New workflow code that can cause external side effects (email, API writes, webhooks, state changes outside R3x) should default to `dry_run: true` or equivalent safe mode.
+- Only switch to real delivery with an explicit opt-in in the workflow or script, e.g. `dry_run: false`.
+- If a client can be destructive or noisy, prefer a boolean `dry_run` flag over an implicit ENV-based mode switch.
+- When a client is used from app/runtime code, resolve the default through `R3x::Policy.dry_run_for(:key, dry_run)`: development and test should be dry-run by default, production should default to real delivery unless the caller explicitly opts into `dry_run: true`.
+- `R3x::Policy` may also honor per-feature overrides like `R3X_GMAIL_DRY_RUN` and a global `R3X_DRY_RUN` if we need to widen or narrow the policy later.
+- For integration credentials, prefer passing `*_env` references like `credentials_env:` or `api_key_env:` instead of raw secrets or parsed credential hashes. Resolve the secret lazily inside the client/output so dry-run paths can avoid loading credentials when they do not need them.
+- When integrating a third-party API, put the actual API logic in a dedicated client object under `app/lib/r3x/client/<provider>/...` and keep outputs as thin policy/delivery wrappers.
+- When adding a new output/client with a real delivery path, include a dry-run path first and test that it does not call the external service.
+- Scratchpad scripts should also default to dry-run unless the user explicitly asks for real delivery.
 
 ### `bin/workflow` — CLI entrypoint
 

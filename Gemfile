@@ -27,6 +27,7 @@ gem "googleauth"
 gem "google-apis-calendar_v3"
 gem "google-apis-gmail_v1"
 gem "google-apis-sheets_v4"
+gem "mail"
 
 # Use the database-backed adapters for Rails.cache and Active Job
 gem "solid_cache"

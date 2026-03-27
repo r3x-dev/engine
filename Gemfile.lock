@@ -513,6 +513,7 @@ DEPENDENCIES
   google-cloud-translate
   googleauth
   highline
+  mail
   mission_control-jobs
   multi_json
   nokogiri

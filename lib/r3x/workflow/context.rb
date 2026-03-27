@@ -44,7 +44,14 @@ module R3x
         def google_sheets(spreadsheet_id:, credentials_env:)
           R3x::Client::GoogleSheets.new(
             spreadsheet_id: spreadsheet_id,
-            credentials: MultiJson.load(R3x::Env.secure_fetch(credentials_env, prefix: "GOOGLE_CREDENTIALS_"))
+            credentials_env: credentials_env
+          )
+        end
+
+        def gmail(credentials_env:, dry_run: nil)
+          R3x::Outputs::Gmail.new(
+            credentials_env: credentials_env,
+            dry_run: dry_run
           )
         end
 
