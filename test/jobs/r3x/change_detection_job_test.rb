@@ -53,20 +53,18 @@ module R3x
         end
       )
 
-      register_change_detecting_workflow(fake_trigger)
+      workflow_class = register_change_detecting_workflow(fake_trigger)
 
-      assert_enqueued_jobs 1, only: R3x::RunWorkflowJob do
+      assert_enqueued_jobs 1, only: workflow_class do
         ChangeDetectionJob.perform_now("test_change_detecting_feed", { "trigger_key" => fake_trigger.unique_key })
       end
 
       enqueued_job = enqueued_jobs.last
-      assert_equal R3x::RunWorkflowJob, enqueued_job[:job]
-      assert_equal "test_change_detecting_feed", enqueued_job[:args][0]
-      assert_equal fake_trigger.unique_key, enqueued_job[:args][1]["trigger_key"]
-      assert_equal(
-        { "entries" => [ { "title" => "Hello", "_aj_symbol_keys" => [ "title" ] } ], "_aj_symbol_keys" => [ "entries" ] },
-        enqueued_job[:args][1]["trigger_payload"]
-      )
+      assert_equal workflow_class, enqueued_job[:job]
+      assert_equal fake_trigger.unique_key, enqueued_job[:args][0]
+      payload = enqueued_job[:args][1]["trigger_payload"]
+      assert_equal 1, payload["entries"].length
+      assert_equal "Hello", payload["entries"].first["title"]
 
       state = R3x::TriggerState.find_by!(workflow_key: "test_change_detecting_feed", trigger_key: fake_trigger.unique_key)
       assert_equal({ "cursor" => "v2" }, state.state)
@@ -81,17 +79,17 @@ module R3x
         end
       )
 
-      register_change_detecting_workflow(fake_trigger)
+      workflow_class = register_change_detecting_workflow(fake_trigger)
 
-      original_perform_later = R3x::RunWorkflowJob.method(:perform_later)
-      R3x::RunWorkflowJob.singleton_class.send(:define_method, :perform_later) do |*|
+      original_perform_later = workflow_class.method(:perform_later)
+      workflow_class.singleton_class.send(:define_method, :perform_later) do |*|
         raise ActiveJob::EnqueueError, "enqueue failed"
       end
 
       error = assert_raises(ActiveJob::EnqueueError) do
         ChangeDetectionJob.perform_now("test_change_detecting_feed", { "trigger_key" => fake_trigger.unique_key })
       ensure
-        R3x::RunWorkflowJob.singleton_class.send(:define_method, :perform_later, original_perform_later)
+        workflow_class.singleton_class.send(:define_method, :perform_later, original_perform_later)
       end
 
       assert_equal "enqueue failed", error.message
@@ -142,6 +140,7 @@ module R3x
       end
 
       Workflow::Registry.register(workflow_class)
+      workflow_class
     end
   end
 end

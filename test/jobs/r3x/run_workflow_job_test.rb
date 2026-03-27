@@ -75,6 +75,42 @@ module R3x
       Workflow::PackLoader.load!(force: true)
     end
 
+    test "executes workflow through Active Job perform_now" do
+      job = RunWorkflowJob.new
+      called = nil
+
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "TestPerformNow"
+        end
+
+        trigger :manual
+
+        def run(_ctx)
+          raise "should not be called directly in this test"
+        end
+      end
+
+      Workflow::Registry.register(workflow_class)
+      manual_trigger = workflow_class.triggers.first
+      original_perform_now = workflow_class.method(:perform_now)
+
+      workflow_class.singleton_class.send(:define_method, :perform_now) do |*args, **kwargs|
+        called = { args: args, kwargs: kwargs }
+        { "mode" => "perform_now" }
+      end
+
+      result = job.perform("test_perform_now", trigger_key: manual_trigger.unique_key)
+
+      assert_equal({ "mode" => "perform_now" }, result)
+      assert_equal [ manual_trigger.unique_key ], called[:args]
+      assert_equal({ trigger_payload: nil }, called[:kwargs])
+    ensure
+      workflow_class.singleton_class.send(:define_method, :perform_now, original_perform_now) if workflow_class && original_perform_now
+      Workflow::Registry.reset!
+      Workflow::PackLoader.load!(force: true)
+    end
+
     test "performs workflow with change-detecting trigger and payload" do
       job = RunWorkflowJob.new
       fake_trigger = R3x::TestSupport::FakeChangeDetectingTrigger.new(identity: "feed")

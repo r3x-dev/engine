@@ -30,3 +30,10 @@ Then open http://localhost:3000/ to view the Mission Control Jobs dashboard.
 ```bash
 bin/rails test
 ```
+
+## Operational Notes
+
+- Workflow classes are enqueued directly as Active Job classes so workflows can use `ActiveJob::Continuable` and `step` on the real workflow job instance.
+- Tradeoff: queued workflow runs persist the concrete workflow class name in Solid Queue.
+- If a workflow class is renamed or removed before an older queued run executes, that older run may fail deserialization.
+- After workflow class renames/removals, clean up pending jobs or recurring tasks that still reference the old class if you need a clean queue.
