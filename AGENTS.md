@@ -7,6 +7,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `r3x` is a Rails API app that acts as a Ruby-native workflow executor and automation engine.
 - The high-level split is: framework/runtime code lives in the app and `lib/r3x/`, while user-defined workflows live under `workflows/`.
 - Workflows are file-based, Git-friendly, and loaded into a database-backed runtime that uses Active Job + Solid Queue for execution and recurring scheduling.
+- Workflow classes are enqueued directly as Active Job classes so workflow code can use `ActiveJob::Continuable` and `step` on the real workflow job instance.
 - `Solid Queue` is the active job backend for app/runtime execution. Treat queueing semantics as database-backed, not Redis-backed.
 - In the current app configuration, `Solid Queue` is not wired through `config.solid_queue.connects_to`, so queue records use the same Active Record database connection as the app in the environments configured here. That means queue inserts can participate in the same database transaction as app writes.
 - If `Solid Queue` is ever moved to a separate database, or replaced with a non-database backend, revisit any code that relies on transactional integrity between app writes and job enqueueing. In that setup, `enqueue_after_transaction_commit` and related tests become important again.
@@ -39,6 +40,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `R3x::ChangeDetectionJob` loads the trigger, fetches/updates `R3x::TriggerState`, and only enqueues the workflow job class itself when the trigger reports a change.
 - Because the app currently uses `Solid Queue` as a database-backed backend on the same Active Record database connection, code may intentionally rely on a database transaction covering both `TriggerState` updates and `perform_later`. Do not assume those guarantees survive a future backend or database split.
 - `R3x::RunWorkflowJob` fetches the workflow from the registry and calls `workflow_class.perform_now(trigger_key, trigger_payload: ...)` for compatibility with callers that still dispatch by workflow key.
+- Known limitation: because queued workflow runs persist the concrete workflow class name, renaming or removing a workflow class across deploys can strand older queued runs with job deserialization failures. This is currently an accepted tradeoff for preserving `ActiveJob::Continuable` on the workflow job itself.
 - Trigger discovery is filesystem-backed through `lib/r3x/triggers/*.rb`, so trigger file names, constants, and supported types must stay aligned.
 
 ## Working with Workflows
@@ -83,6 +85,11 @@ bin/workflow [options] [command] [arguments]
 | `rake r3x:workflows:run[key]` | `bin/workflow run key` |
 
 The rake tasks exist for convenience in deployment scripts; prefer `bin/workflow` for interactive use because it has richer option parsing (e.g. `--dry-run`).
+
+### Operational note
+
+- When refactoring workflow class names, remember that already queued scheduled or change-detected runs may still point at the old concrete class name.
+- If a workflow class is renamed or removed, consider cleaning up pending jobs and recurring tasks created under the old class, or accept that older queued runs may fail deserialization.
 
 ## Maintenance Warning
 
