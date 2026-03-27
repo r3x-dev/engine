@@ -3,9 +3,9 @@
 module R3x
   module Client
     class GoogleSheets
-      def initialize(spreadsheet_id:, credentials:)
+      def initialize(spreadsheet_id:, credentials_env:)
         @spreadsheet_id = spreadsheet_id
-        @credentials = credentials
+        @credentials_env = credentials_env
         @service = build_service
       end
 
@@ -25,13 +25,13 @@ module R3x
 
       private
 
-      attr_reader :spreadsheet_id, :credentials, :service
+      attr_reader :spreadsheet_id, :credentials_env, :service
 
       def build_service
-        service = Google::Apis::SheetsV4::SheetsService.new
+        service = ::Google::Apis::SheetsV4::SheetsService.new
         service.authorization = R3x::Client::GoogleAuth.from_json(
-          credentials,
-          scope: Google::Apis::SheetsV4::AUTH_SPREADSHEETS_READONLY
+          R3x::Client::Google::Credentials.from_env(credentials_env),
+          scope: ::Google::Apis::SheetsV4::AUTH_SPREADSHEETS_READONLY
         )
         service
       end

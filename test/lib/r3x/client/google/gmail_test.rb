@@ -1,0 +1,85 @@
+require "test_helper"
+
+module R3x
+  module Client
+    module Google
+      class GmailTest < ActiveSupport::TestCase
+        test "deliver sends encoded message" do
+          credentials = {
+            "client_id" => "client-id",
+            "client_secret" => "client-secret",
+            "refresh_token" => "refresh-token"
+          }
+          authorization = Object.new
+          service = Object.new
+          service.define_singleton_method(:authorization=) { |value| @authorization = value }
+          service.define_singleton_method(:authorization) { @authorization }
+          service.define_singleton_method(:send_user_message) do |_user_id, message|
+            @delivered_message = message
+            Struct.new(:id).new("message-123")
+          end
+          service.define_singleton_method(:delivered_message) { @delivered_message }
+
+          with_stubbed_google_credentials(credentials) do
+            with_stubbed_google_auth(authorization) do
+              with_stubbed_gmail_service(service) do
+                result = Gmail.new(credentials_env: "GOOGLE_CREDENTIALS_TEST_APP").deliver(
+                  to: "recipient@example.com",
+                  subject: "Hello",
+                  body: "Body"
+                )
+
+                assert_equal authorization, service.authorization
+                assert_equal({ "mode" => "real", "message_id" => "message-123" }, result)
+                assert_includes service.delivered_message.raw, "To: recipient@example.com"
+                assert_includes service.delivered_message.raw, "Subject: Hello"
+                assert_includes service.delivered_message.raw, "Body"
+              end
+            end
+          end
+        end
+
+        private
+
+        def with_stubbed_google_credentials(result)
+          singleton_class = R3x::Client::Google::Credentials.singleton_class
+          original_method = R3x::Client::Google::Credentials.method(:from_env)
+
+          singleton_class.define_method(:from_env) do |_credentials_env|
+            result
+          end
+
+          yield
+        ensure
+          singleton_class.define_method(:from_env, original_method)
+        end
+
+        def with_stubbed_google_auth(result)
+          singleton_class = R3x::Client::GoogleAuth.singleton_class
+          original_method = R3x::Client::GoogleAuth.method(:from_json)
+
+          singleton_class.define_method(:from_json) do |_parsed_json, scope:|
+            result
+          end
+
+          yield
+        ensure
+          singleton_class.define_method(:from_json, original_method)
+        end
+
+        def with_stubbed_gmail_service(result)
+          singleton_class = ::Google::Apis::GmailV1::GmailService.singleton_class
+          original_method = ::Google::Apis::GmailV1::GmailService.method(:new)
+
+          singleton_class.define_method(:new) do
+            result
+          end
+
+          yield
+        ensure
+          singleton_class.define_method(:new, original_method)
+        end
+      end
+    end
+  end
+end
