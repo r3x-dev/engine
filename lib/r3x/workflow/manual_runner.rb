@@ -11,9 +11,8 @@ module R3x
 
       def run(workflow_key)
         workflow_class = Registry.fetch(workflow_key)
-        trigger = workflow_class.triggers.find(&:manual?) || Triggers::Manual.new
 
-        workflow_class.new.perform_now(trigger.unique_key)
+        workflow_class.perform_now
       end
     end
   end

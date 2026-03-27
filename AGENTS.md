@@ -15,13 +15,14 @@ This Rails app uses a small set of preferred libraries for common integration wo
 ## Codebase Map
 
 - `lib/r3x/`: core framework code for the workflow DSL, trigger types, workflow loading, registry, execution context, recurring-task config, and shared DSL helpers.
+- `lib/r3x/workflow/executor.rb`: shared workflow execution helper that resolves the trigger and builds `Workflow::Context` for a loaded workflow class.
 - `lib/r3x/dsl/`: shared DSL infrastructure, especially validation concerns and configuration errors used by workflow-declared objects.
 - `lib/r3x/trigger_manager.rb` + `lib/r3x/trigger_manager/`: trigger infrastructure — `R3x::TriggerManager::Collection` (manages workflow triggers as a hash keyed by `unique_key`) and `R3x::TriggerManager::Execution` (wraps a trigger for runtime use).
 - `app/lib/r3x/`: runtime support code such as outputs, client wrappers, and shared concerns.
 - `app/lib/r3x/client/google/credentials.rb`: shared Google credentials loader used by Gmail and Google Sheets integrations.
 - `app/lib/r3x/client/google/gmail.rb`: Gmail API client used by `R3x::Outputs::Gmail`.
 - `R3x::Client::Google` is a project namespace; when referencing the third-party Google gem namespace, use `::Google` to avoid constant collisions.
-- `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves and executes workflows, and `R3x::ChangeDetectionJob`, which evaluates change-detecting triggers before enqueueing workflow runs.
+- `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves a workflow key and dispatches to the workflow job class, and `R3x::ChangeDetectionJob`, which evaluates change-detecting triggers before enqueueing workflow runs.
 - `app/models/r3x/`: runtime support models such as `R3x::TriggerState` for per-trigger change-detection state.
 - `workflows/`: user workflow packs. These are not the framework itself; they are loaded by the framework.
 - `config/initializers/r3x_workflow_loader.rb`: boot-time workflow loading hook.
@@ -30,13 +31,14 @@ This Rails app uses a small set of preferred libraries for common integration wo
 ## Runtime Flow
 
 - Workflows subclass `R3x::Workflow::Base`, declare triggers via the DSL, and implement `#run(ctx)`.
+- `R3x::Workflow::Base` is also an `ApplicationJob`; its `#perform` delegates trigger/context setup to `R3x::Workflow::Executor` and then calls `#run(ctx)` on the current job instance.
 - Workflow-declared DSL objects must validate themselves before being registered; invalid DSL configuration should raise `R3x::ConfigurationError` with collected validation errors.
 - `R3x::Workflow::PackLoader` discovers workflow entrypoints named `workflow.rb` from directories listed in `R3X_WORKFLOW_PATHS`, loads them, and registers their classes in `R3x::Workflow::Registry`.
 - `R3x::RecurringTasksConfig` turns schedulable workflow triggers into Solid Queue dynamic recurring tasks via `SolidQueue::RecurringTask`. All triggers have a `unique_key` (based on type + options hash) used for identification and duplicate detection. `schedule_all!` persists dynamic tasks and sweeps stale ones.
 - Change-detecting triggers are file-defined trigger objects that provide `cron`, `unique_key`, and `detect_changes(workflow_key:, state:)`. Their durable runtime state lives in `R3x::TriggerState`.
-- `R3x::ChangeDetectionJob` loads the trigger, fetches/updates `R3x::TriggerState`, and only enqueues `R3x::RunWorkflowJob` when the trigger reports a change.
+- `R3x::ChangeDetectionJob` loads the trigger, fetches/updates `R3x::TriggerState`, and only enqueues the workflow job class itself when the trigger reports a change.
 - Because the app currently uses `Solid Queue` as a database-backed backend on the same Active Record database connection, code may intentionally rely on a database transaction covering both `TriggerState` updates and `perform_later`. Do not assume those guarantees survive a future backend or database split.
-- `R3x::RunWorkflowJob` fetches the workflow from the registry, resolves the trigger by `trigger_key`, builds a `Workflow::Context`, and calls `workflow_class.new.run(ctx)`.
+- `R3x::RunWorkflowJob` fetches the workflow from the registry and calls `workflow_class.perform_now(trigger_key, trigger_payload: ...)` for compatibility with callers that still dispatch by workflow key.
 - Trigger discovery is filesystem-backed through `lib/r3x/triggers/*.rb`, so trigger file names, constants, and supported types must stay aligned.
 
 ## Working with Workflows
@@ -71,7 +73,7 @@ bin/workflow [options] [command] [arguments]
 
 **Global options:** `-h, --help` — print usage.
 
-`ManualRunner` (`lib/r3x/workflow/manual_runner.rb`) fetches the workflow class from the registry, picks its first manual trigger (or creates a default `Triggers::Manual`), builds a `Workflow::Context`, and calls `workflow_class.new.run(ctx)`. This is the same execution path used by `R3x::RunWorkflowJob` but without Solid Queue — it runs synchronously in the current process.
+`ManualRunner` (`lib/r3x/workflow/manual_runner.rb`) fetches the workflow class from the registry and calls `workflow_class.perform_now`. Manual execution is resolved inside the workflow execution path, so workflows can still be run manually even when they only declare non-manual triggers.
 
 ### Rake equivalents
 

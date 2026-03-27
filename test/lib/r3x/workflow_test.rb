@@ -241,6 +241,85 @@ module R3x
       assert_equal :manual, triggers.first.type
     end
 
+    test "perform does not fallback to manual trigger for unknown trigger key" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::StrictTriggerLookup"
+        end
+
+        trigger :manual
+
+        def run(_ctx)
+          raise "should not execute"
+        end
+      end
+
+      error = assert_raises(ArgumentError) do
+        workflow_class.perform_now("missing-trigger")
+      end
+
+      assert_match(/Unknown trigger key 'missing-trigger'/, error.message)
+    end
+
+    test "perform accepts auto-generated manual trigger when no triggers are declared" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::ImplicitManual"
+        end
+
+        def run(ctx)
+          { "trigger_type" => ctx.trigger.type.to_s }
+        end
+      end
+
+      result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
+
+      assert_equal "manual", result["trigger_type"]
+    end
+
+    test "perform without trigger key uses manual trigger for schedule-only workflow" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::ManualFallback"
+        end
+
+        trigger :schedule, cron: "0 * * * *"
+
+        def run(ctx)
+          { "trigger_type" => ctx.trigger.type.to_s }
+        end
+      end
+
+      result = workflow_class.perform_now
+
+      assert_equal "manual", result["trigger_type"]
+    end
+
+    test "perform does not reload workflow packs" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::NoPackReload"
+        end
+
+        trigger :manual
+
+        def run(ctx)
+          { "trigger_type" => ctx.trigger.type.to_s }
+        end
+      end
+
+      original_load = R3x::Workflow::PackLoader.method(:load!)
+      R3x::Workflow::PackLoader.singleton_class.send(:define_method, :load!) do |*|
+        raise "should not reload packs during workflow execution"
+      end
+
+      result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
+
+      assert_equal "manual", result["trigger_type"]
+    ensure
+      R3x::Workflow::PackLoader.singleton_class.send(:define_method, :load!, original_load)
+    end
+
     test "prevents overriding perform method in subclasses" do
       error = assert_raises(ArgumentError) do
         Class.new(R3x::Workflow::Base) do

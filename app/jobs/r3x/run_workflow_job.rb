@@ -9,7 +9,7 @@ module R3x
 
       R3x::Workflow::PackLoader.load!
       workflow_class = R3x::Workflow::Registry.fetch(workflow_key)
-      workflow_class.new.perform(trigger_key, trigger_payload: trigger_payload)
+      workflow_class.perform_now(trigger_key, trigger_payload: trigger_payload)
     end
 
     private
