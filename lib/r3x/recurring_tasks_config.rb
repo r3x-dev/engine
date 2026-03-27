@@ -16,7 +16,7 @@ module R3x
           triggers.each do |trigger|
             key = namespaced_key(workflow_key, trigger)
             current_keys << key
-            task_options << [ key, task_options_for(workflow_key: workflow_key, trigger: trigger) ]
+            task_options << [ key, task_options_for(workflow_class: workflow_class, trigger: trigger) ]
           end
         end
 
@@ -48,7 +48,7 @@ module R3x
           triggers.each do |trigger|
             result_key = namespaced_key(workflow_key, trigger)
             result[result_key] = task_options_for(
-              workflow_key: workflow_key, trigger: trigger
+              workflow_class: workflow_class, trigger: trigger
             ).stringify_keys
           end
         end
@@ -62,13 +62,23 @@ module R3x
         "workflow:#{workflow_key}:#{trigger.unique_key}"
       end
 
-      def task_options_for(workflow_key:, trigger:)
-        {
-          class: trigger.change_detecting? ? "R3x::ChangeDetectionJob" : "R3x::RunWorkflowJob",
-          args: [ workflow_key, { "trigger_key" => trigger.unique_key } ],
-          schedule: trigger.cron,
-          queue: "default"
-        }
+      def task_options_for(workflow_class:, trigger:)
+        queue_name = workflow_class.new.queue_name
+        if trigger.change_detecting?
+          {
+            class: "R3x::ChangeDetectionJob",
+            args: [ workflow_class.workflow_key, { "trigger_key" => trigger.unique_key } ],
+            schedule: trigger.cron,
+            queue: queue_name
+          }
+        else
+          {
+            class: workflow_class.name,
+            args: [ trigger.unique_key ],
+            schedule: trigger.cron,
+            queue: queue_name
+          }
+        end
       end
     end
   end
