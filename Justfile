@@ -14,3 +14,6 @@ workflows-run:
 
 workflows-list:
   {{RAILS_BIN}} r3x:workflows:list
+
+bundler-audit-update:
+  bundle exec bundler-audit update
