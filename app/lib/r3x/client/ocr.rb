@@ -19,7 +19,7 @@ module R3x
         ".pdf"  => "application/pdf"
       }.freeze
 
-      def initialize(api_key_env: "OCRSPACE_API_KEY")
+      def initialize(api_key_env:)
         @api_key = R3x::Env.secure_fetch(api_key_env, prefix: "OCRSPACE_API_KEY")
       end
 
