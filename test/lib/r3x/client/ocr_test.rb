@@ -17,7 +17,7 @@ module R3x
         ENV.delete("OCRSPACE_API_KEY")
 
         error = assert_raises(ArgumentError) do
-          Ocr.new
+          Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         end
 
         assert_equal "Missing OCRSPACE_API_KEY", error.message
@@ -27,7 +27,7 @@ module R3x
         ENV["OCRSPACE_API_KEY"] = ""
 
         error = assert_raises(ArgumentError) do
-          Ocr.new
+          Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         end
 
         assert_equal "Missing OCRSPACE_API_KEY", error.message
@@ -56,7 +56,7 @@ module R3x
         stub_success("Extracted text")
 
         io = StringIO.new("fake image data")
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(io, filetype: "image/jpeg")
 
         assert_equal "Extracted text", result.text
@@ -65,7 +65,7 @@ module R3x
       end
 
       test "parse with IO requires filetype" do
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
 
         error = assert_raises(ArgumentError) do
           client.parse(StringIO.new("data"))
@@ -81,7 +81,7 @@ module R3x
         tempfile.write("fake png data")
         tempfile.rewind
 
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(tempfile.path)
 
         assert_equal "File text", result.text
@@ -91,7 +91,7 @@ module R3x
       end
 
       test "parse with unsupported extension raises" do
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
 
         error = assert_raises(ArgumentError) do
           client.parse("/tmp/file.xyz")
@@ -103,7 +103,7 @@ module R3x
       test "parse passes language parameter" do
         stub_success("Polski tekst")
 
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg", language: "pol")
 
         assert_equal "Polski tekst", result.text
@@ -112,7 +112,7 @@ module R3x
       test "parse passes engine parameter" do
         stub_success("Engine 2 text")
 
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg", engine: 2)
 
         assert_equal "Engine 2 text", result.text
@@ -121,7 +121,7 @@ module R3x
       test "parse passes overlay parameter" do
         stub_success("Overlay text")
 
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg", overlay: true)
 
         assert_equal "Overlay text", result.text
@@ -131,7 +131,7 @@ module R3x
         stub_request(:post, "https://api.ocr.space/parse/image")
           .to_return(status: 500, body: "internal error")
 
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
 
         error = assert_raises(RuntimeError) do
           client.parse(StringIO.new("data"), filetype: "image/jpeg")
@@ -152,7 +152,7 @@ module R3x
             headers: { "Content-Type" => "application/json" }
           )
 
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
 
         error = assert_raises(RuntimeError) do
           client.parse(StringIO.new("data"), filetype: "image/jpeg")
@@ -164,7 +164,7 @@ module R3x
       test "result success? returns true when exit code is 1" do
         stub_success("ok")
 
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg")
 
         assert result.success?
@@ -186,7 +186,7 @@ module R3x
             headers: { "Content-Type" => "application/json" }
           )
 
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg")
 
         assert result.partial?
@@ -209,7 +209,7 @@ module R3x
             headers: { "Content-Type" => "application/json" }
           )
 
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg")
 
         assert_equal 2, result.count
@@ -220,7 +220,7 @@ module R3x
       test "page success? returns true for successful parse" do
         stub_success("ok")
 
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg")
 
         assert result.first.success?
@@ -246,7 +246,7 @@ module R3x
             headers: { "Content-Type" => "application/json" }
           )
 
-        client = Ocr.new
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg")
 
         refute result.first.success?
