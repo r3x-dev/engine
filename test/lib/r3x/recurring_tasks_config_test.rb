@@ -39,7 +39,6 @@ module R3x
       refute tasks.key?("no_schedule")
 
       Workflow::Registry.reset!
-      Workflow::PackLoader.load!(force: true)
     end
 
     test "generates change detection tasks for change-detecting triggers" do

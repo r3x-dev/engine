@@ -6,14 +6,11 @@ module R3x
       setup do
         @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
         ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
-
-        Workflow::PackLoader.load!(force: true)
       end
 
       teardown do
         ENV["R3X_WORKFLOW_PATHS"] = @original_workflow_paths
         Workflow::Registry.reset!
-        Workflow::PackLoader.load!(force: true)
       end
 
       test "runs schedule-only workflow through manual trigger" do
