@@ -6,8 +6,6 @@ module R3x
     setup do
       @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
       ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
-
-      Workflow::PackLoader.load!(force: true)
     end
 
     teardown do
@@ -42,7 +40,6 @@ module R3x
       refute result["schedule?"]
     ensure
       Workflow::Registry.reset!
-      Workflow::PackLoader.load!(force: true)
     end
 
     test "performs workflow with schedule trigger" do
@@ -72,7 +69,6 @@ module R3x
       assert result["schedule?"]
     ensure
       Workflow::Registry.reset!
-      Workflow::PackLoader.load!(force: true)
     end
 
     test "executes workflow through Active Job perform_now" do
@@ -108,7 +104,6 @@ module R3x
     ensure
       workflow_class.singleton_class.send(:define_method, :perform_now, original_perform_now) if workflow_class && original_perform_now
       Workflow::Registry.reset!
-      Workflow::PackLoader.load!(force: true)
     end
 
     test "performs workflow with change-detecting trigger and payload" do
@@ -142,7 +137,6 @@ module R3x
       assert_equal({ entries: [ { title: "Hello" } ] }, result["payload"])
     ensure
       Workflow::Registry.reset!
-      Workflow::PackLoader.load!(force: true)
     end
   end
 end
