@@ -23,7 +23,6 @@ def print_help
 end
 
 def cmd_list
-  R3x::Workflow::PackLoader.load!
   workflows = R3x::Workflow::Registry.all
 
   if workflows.empty?
@@ -39,7 +38,6 @@ def cmd_list
 end
 
 def cmd_info(key)
-  R3x::Workflow::PackLoader.load!
   workflow_class = R3x::Workflow::Registry.fetch(key)
 
   puts "Workflow: #{key}"
@@ -54,7 +52,6 @@ def cmd_run(key, options)
   puts "Running workflow: #{key}"
 
   if options[:dry_run]
-    R3x::Workflow::PackLoader.load!
     workflow_class = R3x::Workflow::Registry.fetch(key)
 
     puts "  Class:    #{workflow_class}"

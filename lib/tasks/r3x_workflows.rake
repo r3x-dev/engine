@@ -2,8 +2,6 @@ namespace :r3x do
   namespace :workflows do
     desc "List all registered workflows with their triggers"
     task list: :environment do
-      R3x::Workflow::PackLoader.load!
-
       workflows = R3x::Workflow::Registry.all
 
       if workflows.empty?

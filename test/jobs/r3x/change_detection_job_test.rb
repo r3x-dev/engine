@@ -8,7 +8,6 @@ module R3x
     setup do
       @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
       ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
-      Workflow::PackLoader.load!(force: true)
       clear_enqueued_jobs
       R3x::TriggerState.delete_all
     end
@@ -18,7 +17,6 @@ module R3x
       R3x::TriggerState.delete_all
       ENV["R3X_WORKFLOW_PATHS"] = @original_workflow_paths
       Workflow::Registry.reset!
-      Workflow::PackLoader.load!(force: true)
     end
 
     test "creates trigger state and does not enqueue workflow when unchanged" do
