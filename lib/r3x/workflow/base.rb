@@ -15,7 +15,7 @@ module R3x
       end
 
       def perform(trigger_key = nil, trigger_payload: nil)
-        ctx = Executor.build_context(
+        ctx = R3x::Workflow::Executor.build_context(
           workflow_class: self.class,
           trigger_key: trigger_key,
           trigger_payload: trigger_payload

@@ -162,6 +162,12 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - Use `R3x::Concerns::Logger` - provides both instance and class method `logger` tagged with class name. `Rails.logger` is already `TaggedLogging` so just call `.tagged(name)` directly.
 - For class methods: `extend R3x::Concerns::Logger` then call `logger.info(...)`
 - For instance methods: `include R3x::Concerns::Logger` then call `logger.info(...)`
+- **Lazy logging for debug level**: Use block form `logger.debug { "..." }` — the block only executes if debug level is enabled, avoiding unnecessary string allocation.
+- **Eager logging for info/warn/error**: Use string form `logger.info "..."` — these levels are always enabled, so block overhead is wasted.
+- **Good**: `logger.debug { "Processing #{items.count} items" }` (block — skipped when debug off)
+- **Good**: `logger.info "Workflow completed"` (string — always evaluated, no block overhead)
+- **Bad**: `logger.debug "Processing #{items.count} items"` (string built even when debug off)
+- **Bad**: `logger.info { "Workflow completed" }` (block overhead for always-enabled level)
 
 ## Validators
 
