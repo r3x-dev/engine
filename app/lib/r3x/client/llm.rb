@@ -20,8 +20,11 @@ module R3x
         @llm_context.chat(model: model, provider: :gemini)
       end
 
-      def message(model:, prompt:)
-        chat(model: model).ask(prompt)
+      def message(model:, prompt:, schema: nil)
+        conversation = chat(model: model)
+        conversation = conversation.with_schema(schema) if schema
+
+        conversation.ask(prompt)
       end
     end
   end
