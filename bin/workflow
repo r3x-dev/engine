@@ -3,7 +3,7 @@ require_relative "../config/environment"
 require "optparse"
 
 SUBCOMMANDS = {
-  "run"  => "Run a workflow by key (default)",
+  "run"  => "Run a workflow from file path",
   "list" => "List available workflows",
   "info" => "Show details for a specific workflow"
 }.freeze
@@ -19,10 +19,36 @@ def print_help
     puts "  %-12s %s" % [cmd, desc]
   end
   puts ""
-  puts "When no command is given, the first argument is treated as a workflow key (run)."
+  puts "Examples:"
+  puts "  bin/workflow run workflows/my_workflow/workflow.rb"
+  puts "  bin/workflow run ./path/to/workflow.rb"
+  puts "  bin/workflow list"
+  puts "  bin/workflow info my_workflow"
+end
+
+def load_workflow(path)
+  full_path = File.expand_path(path)
+  raise ArgumentError, "Workflow file not found: #{path}" unless File.exist?(full_path)
+  raise ArgumentError, "Not a file: #{path}" unless File.file?(full_path)
+
+  require full_path
+
+  workflow = find_workflow_in_file(full_path)
+  raise ArgumentError, "No workflow class found in #{path}" unless workflow
+
+  workflow
+end
+
+def find_workflow_in_file(full_path)
+  ObjectSpace.each_object(Class).find do |klass|
+    klass < R3x::Workflow::Base &&
+      klass.name.present? &&
+      Object.const_source_location(klass.name)&.first == full_path
+  end
 end
 
 def cmd_list
+  R3x::Workflow::PackLoader.load!
   workflows = R3x::Workflow::Registry.all
 
   if workflows.empty?
@@ -38,6 +64,7 @@ def cmd_list
 end
 
 def cmd_info(key)
+  R3x::Workflow::PackLoader.load!
   workflow_class = R3x::Workflow::Registry.fetch(key)
 
   puts "Workflow: #{key}"
@@ -48,28 +75,21 @@ def cmd_info(key)
   end
 end
 
-def cmd_run(key, options)
-  puts "Running workflow: #{key}"
-
+def cmd_run(file_path, options)
   if options[:dry_run]
-    workflow_class = R3x::Workflow::Registry.fetch(key)
-
-    puts "  Class:    #{workflow_class}"
-    puts "  Triggers:"
-    workflow_class.triggers.each do |t|
-      puts "    #{t.type}  key=#{t.unique_key}"
-    end
-    puts "(dry run — not executing)"
+    puts "Dry run: #{file_path}"
+    puts "  (would load from: #{File.expand_path(file_path)})"
+    puts "  (not executing)"
     return
   end
 
-  result = R3x::Workflow::ManualRunner.run(key)
+  puts "Running: #{file_path}"
+  workflow_class = load_workflow(file_path)
+  result = workflow_class.perform_now
   puts "Result: #{result.inspect}"
 end
 
 # --- Parse global options ---
-global_options = {}
-
 OptionParser.new do |opts|
   opts.banner = "Usage: bin/workflow [options] [command] [arguments]"
 
@@ -81,17 +101,14 @@ end.order!
 
 command = ARGV.shift
 
-# If no command given or command looks like a workflow key (not a known subcommand),
-# default to `run`.
 if command.nil?
   print_help
   exit 0
 end
 
 unless SUBCOMMANDS.key?(command)
-  # Not a known subcommand — treat as workflow key for `run`
-  ARGV.unshift(command)
-  command = "run"
+  print_help
+  exit 1
 end
 
 case command
@@ -105,18 +122,13 @@ when "info"
 when "run"
   run_options = {}
 
-  parser = OptionParser.new do |opts|
-    opts.banner = "Usage: bin/workflow run [options] <workflow_key>"
+  OptionParser.new do |opts|
+    opts.banner = "Usage: bin/workflow run [options] <workflow_file_path>"
+    opts.on("-d", "--dry-run", "Show what would be executed") { run_options[:dry_run] = true }
+  end.order!(ARGV)
 
-    opts.on("-d", "--dry-run", "Resolve workflow but do not execute") do
-      run_options[:dry_run] = true
-    end
-  end
-
-  parser.order!(ARGV)
-
-  key = ARGV.shift || abort("Usage: bin/workflow run [options] <workflow_key>")
-  cmd_run(key, run_options)
+  file_path = ARGV.shift || abort("Usage: bin/workflow run [options] <workflow_file_path>")
+  cmd_run(file_path, run_options)
 
 else
   abort "Unknown command: #{command}"
