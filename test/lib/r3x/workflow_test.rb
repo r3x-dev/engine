@@ -358,5 +358,68 @@ module R3x
       # Should return empty hash, not the auto-generated Manual trigger
       assert_empty klass.triggers_by_key
     end
+
+    test "with_cache reuses the cached result for identical block code" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::CacheTest"
+        end
+      end
+
+      workflow = workflow_class.new
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+      calls = 0
+
+      Rails.cache = cache
+      begin
+        first = workflow.with_cache { calls += 1; { "calls" => calls } }
+        second = workflow.with_cache { calls += 1; { "calls" => calls } }
+
+        assert_equal 1, calls
+        assert_equal({ "calls" => 1 }, first)
+        assert_equal({ "calls" => 1 }, second)
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "with_cache regenerates the cache key when block code changes" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::CacheKeyTest"
+        end
+      end
+
+      workflow = workflow_class.new
+
+      key_one = workflow.send(:cache_key_for, proc { "one" })
+      key_two = workflow.send(:cache_key_for, proc { "two" })
+
+      refute_equal key_one, key_two
+    end
+
+    test "with_cache force option bypasses the cached value" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::ForceCacheTest"
+        end
+      end
+
+      workflow = workflow_class.new
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+      calls = 0
+
+      Rails.cache = cache
+      begin
+        workflow.with_cache { calls += 1; { "calls" => calls } }
+        workflow.with_cache(force: true) { calls += 1; { "calls" => calls } }
+
+        assert_equal 2, calls
+      ensure
+        Rails.cache = original_cache
+      end
+    end
   end
 end
