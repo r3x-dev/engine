@@ -15,8 +15,8 @@ module R3x
         connection.head(url, params, headers)
       end
 
-      def post(url, payload)
-        connection.post(url, payload)
+      def post(url, payload, headers: {})
+        connection.post(url, payload, headers)
       end
 
       private
