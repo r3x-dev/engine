@@ -1,6 +1,8 @@
 module R3x
   module Workflow
     class PackLoader
+      WORKFLOW_ENTRYPOINT_FILENAME = "workflow.rb"
+
       class << self
         def load!(force: false)
           mutex.synchronize do
@@ -23,14 +25,14 @@ module R3x
             next [] unless File.directory?(base)
 
             files = []
-            root_workflow = File.join(base, "workflow.rb")
+            root_workflow = File.join(base, WORKFLOW_ENTRYPOINT_FILENAME)
             files << root_workflow if File.file?(root_workflow)
 
             Dir.foreach(base) do |entry|
               next if entry.start_with?(".")
               subdir = File.join(base, entry)
               if File.directory?(subdir)
-                workflow_file = File.join(subdir, "workflow.rb")
+                workflow_file = File.join(subdir, WORKFLOW_ENTRYPOINT_FILENAME)
                 files << workflow_file if File.file?(workflow_file)
               end
             end
