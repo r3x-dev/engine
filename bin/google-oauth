@@ -2,400 +2,296 @@
 # frozen_string_literal: true
 
 require_relative "../config/environment"
-require "optparse"
+require "thor"
 require "signet/oauth_2/client"
 require "highline"
 
-SUBCOMMANDS = {
-  "authorize" => "Start OAuth2 authorization flow",
-  "status"    => "Check credential status for a project",
-  "scopes"    => "List available scope aliases"
-}.freeze
+class GoogleOAuthCLI < Thor
+  def self.exit_on_failure? = true
+  namespace :"google-oauth"
 
-def print_help
-  puts "Usage: bin/google-oauth [options] [command]"
-  puts ""
-  puts "Options:"
-  puts "  -h, --help    Show this help"
-  puts ""
-  puts "Commands:"
-  SUBCOMMANDS.each do |cmd, desc|
-    puts "  %-12s %s" % [cmd, desc]
-  end
-  puts ""
-  puts "PROJECT suffix:"
-  puts "  The PROJECT argument is a suffix for environment variable names in Vault/.env"
-  puts ""
-  puts "  Required env vars (pre-OAuth):"
-  puts "    GOOGLE_CLIENT_ID_<PROJECT>      - OAuth client ID from Google Cloud Console"
-  puts "    GOOGLE_CLIENT_SECRET_<PROJECT>  - OAuth client secret"
-  puts ""
-  puts "  Required env var (post-OAuth):"
-  puts "    GOOGLE_CREDENTIALS_<PROJECT>    - JSON with client_id, client_secret, refresh_token"
-  puts ""
-  puts "  Examples:"
-  puts "    --project MYAPP     →  GOOGLE_CLIENT_ID_MYAPP, GOOGLE_CREDENTIALS_MYAPP"
-  puts "    --project ACME      →  GOOGLE_CLIENT_ID_ACME, GOOGLE_CREDENTIALS_ACME"
-end
+  desc "authorize", "Start OAuth2 authorization flow"
+  option :project, type: :string, aliases: "-p", required: true, desc: "Project name (e.g. MYAPP)"
+  option :scopes, type: :string, aliases: "-s", desc: "Comma-separated scope aliases (optional - will prompt if not provided)"
+  def authorize
+    project = options[:project]
 
-def checkmark
-  "  \e[32m✓\e[0m"
-end
-
-def crossmark
-  "  \e[31m✗\e[0m"
-end
-
-def step(text)
-  puts ""
-  puts text
-end
-
-def success(text)
-  puts "#{checkmark} #{text}"
-end
-
-def failure(text)
-  puts "#{crossmark} #{text}"
-end
-
-def print_scopes
-  puts ""
-  puts "Available scope aliases:"
-  R3x::Client::GoogleAuth::SCOPE_ALIASES.each do |alias_name, scope|
-    puts "  %-24s %s" % [alias_name, scope]
-  end
-  puts ""
-  puts "Example: --scopes gmail.readonly,sheets.readonly"
-end
-
-def interactive_scope_selection
-  cli = HighLine.new
-
-  puts ""
-  puts "=== Select Google API Scopes ==="
-  puts ""
-
-  aliases = R3x::Client::GoogleAuth::SCOPE_ALIASES.keys
-  selected_aliases = []
-
-  loop do
-    # Show menu with remaining options
-    remaining = aliases - selected_aliases
-    
-    if remaining.empty?
-      puts "All available scopes selected."
-      break
+    scope_aliases = if options[:scopes]&.strip&.present?
+      options[:scopes]
+    else
+      interactive_scope_selection
     end
 
-    puts "Available scopes (selected: #{selected_aliases.size}):"
-    puts ""
+    scopes = scope_aliases.split(",").map(&:strip).map do |s|
+      R3x::Client::GoogleAuth.resolve_scope(s)
+    end
 
-    choice = cli.choose do |menu|
-      menu.prompt = "Select a scope (or 'done' to finish): "
-      
-      remaining.each do |alias_name|
-        scope = R3x::Client::GoogleAuth::SCOPE_ALIASES[alias_name]
-        menu.choice("#{alias_name} (#{scope})") { alias_name }
+    puts ""
+    puts "=== Google OAuth2 Authorization ==="
+    puts ""
+    puts "Project: #{project}"
+    puts "Scopes:  #{scopes.join(', ')}"
+
+    step("[Step 1] Loading client credentials...")
+
+    client_id = fetch_env!("GOOGLE_CLIENT_ID_#{project}")
+    success("Found GOOGLE_CLIENT_ID_#{project}")
+
+    client_secret = fetch_env!("GOOGLE_CLIENT_SECRET_#{project}")
+    success("Found GOOGLE_CLIENT_SECRET_#{project}")
+
+    step("[Step 2] Generating authorization URL...")
+
+    auth_client = Signet::OAuth2::Client.new(
+      client_id:     client_id,
+      client_secret: client_secret,
+      redirect_uri:  "http://localhost",
+      scope:         scopes,
+      authorization_uri: "https://accounts.google.com/o/oauth2/auth"
+    )
+
+    auth_url = auth_client.authorization_uri.to_s
+
+    puts ""
+    puts "  Open this URL in your browser:"
+    puts ""
+    puts "  #{auth_url}"
+
+    step("[Step 3] After granting access...")
+    puts "  Google will redirect to a URL like:"
+    puts "    http://localhost/?code=4/0AX4XfWh..."
+    puts ""
+    puts "  The browser may show a connection error — that's expected."
+    puts "  Copy the authorization code from the 'code' parameter in the URL."
+
+    puts ""
+    print "  Paste the authorization code: "
+    code = $stdin.gets&.chomp
+
+    if code.nil? || code.strip.empty?
+      puts ""
+      failure("No code provided — aborting")
+      abort
+    end
+
+    step("[Step 4] Exchanging code for tokens...")
+
+    token_client = Signet::OAuth2::Client.new(
+      client_id:     client_id,
+      client_secret: client_secret,
+      redirect_uri:  "http://localhost",
+      code:          code.strip,
+      token_credential_uri: "https://oauth2.googleapis.com/token"
+    )
+
+    begin
+      token_client.fetch_access_token!
+    rescue Signet::AuthorizationError => e
+      failure("Token exchange failed: #{e.message}")
+      puts ""
+      puts "  Make sure you copied the full authorization code."
+      puts "  Re-run this command to try again."
+      abort
+    rescue StandardError => e
+      failure("Unexpected error: #{e.class} — #{e.message}")
+      abort
+    end
+
+    success("Access token obtained")
+
+    credentials = {
+      "client_id"     => client_id,
+      "client_secret" => client_secret,
+      "refresh_token" => token_client.refresh_token
+    }
+    json_output = MultiJson.dump(credentials)
+
+    step("[Step 5] Store these credentials in Vault")
+    vault_key = "GOOGLE_CREDENTIALS_#{project}"
+    puts ""
+    puts "  Vault key: #{vault_key}"
+    puts ""
+    puts "  #{json_output}"
+    puts ""
+    puts "  Run:"
+    puts "  vault kv put secret/data/env/r3x #{vault_key}='#{json_output}'"
+    puts ""
+    puts "Done! Test with: bin/google-oauth status --project #{project}"
+  end
+
+  desc "status", "Check credential status for a project"
+  option :project, type: :string, aliases: "-p", required: true, desc: "Project name (e.g. MYAPP)"
+  def status
+    project = options[:project]
+
+    puts ""
+    puts "=== Google OAuth2 Status ==="
+    puts ""
+    puts "Project: #{project}"
+
+    step("[Step 1] Checking credentials...")
+
+    credentials_key = "GOOGLE_CREDENTIALS_#{project}"
+    credentials_json = R3x::Env.fetch(credentials_key)
+
+    unless credentials_json
+      failure("Missing #{credentials_key}")
+      puts ""
+      puts "  Run authorization first:"
+      puts "  bin/google-oauth authorize --project #{project} --scopes gmail.readonly,sheets.readonly"
+      abort
+    end
+
+    success("Found #{credentials_key}")
+
+    step("[Step 2] Parsing credentials...")
+
+    parsed = begin
+      MultiJson.load(credentials_json)
+    rescue MultiJson::ParseError => e
+      failure("Invalid JSON: #{e.message}")
+      abort
+    end
+
+    %w[client_id client_secret refresh_token].each do |field|
+      if parsed[field].to_s.empty?
+        failure("Missing field: #{field}")
+        abort
       end
-      
-      menu.choice(:done) { nil }
     end
 
-    break if choice.nil? || choice == :done
+    success("Credentials JSON is valid")
 
-    selected_aliases << choice
-    puts "  ✓ Added: #{choice}"
+    step("[Step 3] Validating refresh token...")
+
+    begin
+      R3x::Client::GoogleAuth.from_json(parsed, scope: "https://www.googleapis.com/auth/spreadsheets.readonly")
+      success("Token valid — access token obtained")
+    rescue Signet::AuthorizationError => e
+      failure("Token invalid: #{e.class} — #{e.message}")
+      puts ""
+      puts "  The refresh token may have expired or been revoked."
+      puts "  Re-run: bin/google-oauth authorize --project #{project} --scopes gmail.readonly,sheets.readonly"
+      abort
+    rescue KeyError => e
+      failure("Missing credential field: #{e.message}")
+      abort
+    rescue StandardError => e
+      failure("Unexpected error: #{e.class} — #{e.message}")
+      abort
+    end
+
     puts ""
-
-    # Break if all scopes selected
-    break if (aliases - selected_aliases).empty?
-
-    # Ask if they want to add more
-    more = cli.ask("Add another scope? (y/n) ") { |q| q.default = "y" }
-    break unless more.downcase.start_with?("y")
+    puts "Status: Ready"
   end
 
-  if selected_aliases.empty?
+  desc "scopes", "List available scope aliases"
+  def scopes
     puts ""
-    puts "No scopes selected. Aborting."
-    abort
-  end
-
-  puts ""
-  puts "Selected scopes:"
-  selected_aliases.each { |a| puts "  • #{a}" }
-
-  confirm = cli.ask("Proceed with authorization? (y/n) ") { |q| q.default = "y" }
-
-  unless confirm.downcase.start_with?("y")
-    puts "Cancelled."
-    abort
-  end
-
-  selected_aliases.join(",")
-end
-
-def cmd_authorize(options)
-  project = options[:project] || abort("Error: --project is required\nUsage: bin/google-oauth authorize --project PROJECT [--scopes SCOPES]")
-
-  # Get scopes - either from CLI or interactively
-  scope_aliases = if options[:scopes] && !options[:scopes].strip.empty?
-    options[:scopes]
-  else
-    interactive_scope_selection
-  end
-
-  scopes = scope_aliases.split(",").map(&:strip).map do |s|
-    R3x::Client::GoogleAuth.resolve_scope(s)
-  end
-
-  puts ""
-  puts "=== Google OAuth2 Authorization ==="
-  puts ""
-  puts "Project: #{project}"
-  puts "Scopes:  #{scopes.join(', ')}"
-
-  # --- Step 1: Load client credentials ---
-  step("[Step 1] Loading client credentials...")
-
-  client_id_key = "GOOGLE_CLIENT_ID_#{project}"
-  client_secret_key = "GOOGLE_CLIENT_SECRET_#{project}"
-
-  client_id = R3x::Env.fetch(client_id_key)
-  if client_id
-    success("Found #{client_id_key}")
-  else
-    failure("Missing #{client_id_key}")
+    puts "Available scope aliases:"
+    R3x::Client::GoogleAuth::SCOPE_ALIASES.each do |alias_name, scope|
+      puts "  %-24s %s" % [alias_name, scope]
+    end
     puts ""
-    puts "  Set it in Vault at: secret/data/env/r3x"
-    puts "  Key: #{client_id_key}"
-    puts "  Value: your Google OAuth client ID"
-    abort
+    puts "Example: --scopes gmail.readonly,sheets.readonly"
   end
 
-  client_secret = R3x::Env.fetch(client_secret_key)
-  if client_secret
-    success("Found #{client_secret_key}")
-  else
-    failure("Missing #{client_secret_key}")
+  private
+
+  def checkmark
+    "  \e[32m✓\e[0m"
+  end
+
+  def crossmark
+    "  \e[31m✗\e[0m"
+  end
+
+  def step(text)
     puts ""
-    puts "  Set it in Vault at: secret/data/env/r3x"
-    puts "  Key: #{client_secret_key}"
-    puts "  Value: your Google OAuth client secret"
-    abort
+    puts text
   end
 
-  # --- Step 2: Build authorization URL ---
-  step("[Step 2] Generating authorization URL...")
-
-  auth_client = Signet::OAuth2::Client.new(
-    client_id:     client_id,
-    client_secret: client_secret,
-    redirect_uri:  "http://localhost",
-    scope:         scopes,
-    authorization_uri: "https://accounts.google.com/o/oauth2/auth"
-  )
-
-  auth_url = auth_client.authorization_uri.to_s
-
-  puts ""
-  puts "  Open this URL in your browser:"
-  puts ""
-  puts "  #{auth_url}"
-
-  # --- Step 3: Get authorization code ---
-  step("[Step 3] After granting access...")
-  puts "  Google will redirect to a URL like:"
-  puts "    http://localhost/?code=4/0AX4XfWh..."
-  puts ""
-  puts "  The browser may show a connection error — that's expected."
-  puts "  Copy the authorization code from the 'code' parameter in the URL."
-
-  puts ""
-  print "  Paste the authorization code: "
-  code = $stdin.gets&.chomp
-
-  if code.nil? || code.strip.empty?
-    puts ""
-    failure("No code provided — aborting")
-    abort
+  def success(text)
+    puts "#{checkmark} #{text}"
   end
 
-  # --- Step 4: Exchange code for tokens ---
-  step("[Step 4] Exchanging code for tokens...")
-
-  token_client = Signet::OAuth2::Client.new(
-    client_id:     client_id,
-    client_secret: client_secret,
-    redirect_uri:  "http://localhost",
-    code:          code.strip,
-    token_credential_uri: "https://oauth2.googleapis.com/token"
-  )
-
-  begin
-    token_client.fetch_access_token!
-  rescue Signet::AuthorizationError => e
-    failure("Token exchange failed: #{e.message}")
-    puts ""
-    puts "  Make sure you copied the full authorization code."
-    puts "  Re-run this command to try again."
-    abort
-  rescue StandardError => e
-    failure("Unexpected error: #{e.class} — #{e.message}")
-    abort
+  def failure(text)
+    puts "#{crossmark} #{text}"
   end
 
-  success("Access token obtained")
-
-  # --- Step 5: Output credentials JSON ---
-  credentials = {
-    "client_id"     => client_id,
-    "client_secret" => client_secret,
-    "refresh_token" => token_client.refresh_token
-  }
-  json_output = MultiJson.dump(credentials)
-
-  step("[Step 5] Store these credentials in Vault")
-  vault_key = "GOOGLE_CREDENTIALS_#{project}"
-  puts ""
-  puts "  Vault key: #{vault_key}"
-  puts ""
-  puts "  #{json_output}"
-  puts ""
-  puts "  Run:"
-  puts "  vault kv put secret/data/env/r3x #{vault_key}='#{json_output}'"
-  puts ""
-  puts "Done! Test with: bin/google-oauth status --project #{project}"
-end
-
-def cmd_status(options)
-  project = options[:project] || abort("Error: --project is required\nUsage: bin/google-oauth status --project PROJECT")
-
-  puts ""
-  puts "=== Google OAuth2 Status ==="
-  puts ""
-  puts "Project: #{project}"
-
-  # --- Step 1: Check credentials exist ---
-  step("[Step 1] Checking credentials...")
-
-  credentials_key = "GOOGLE_CREDENTIALS_#{project}"
-  credentials_json = R3x::Env.fetch(credentials_key)
-
-  unless credentials_json
-    failure("Missing #{credentials_key}")
-    puts ""
-    puts "  Run authorization first:"
-    puts "  bin/google-oauth authorize --project #{project} --scopes gmail.readonly,sheets.readonly"
-    abort
-  end
-
-  success("Found #{credentials_key}")
-
-  # --- Step 2: Parse JSON ---
-  step("[Step 2] Parsing credentials...")
-
-  parsed = begin
-    MultiJson.load(credentials_json)
-  rescue MultiJson::ParseError => e
-    failure("Invalid JSON: #{e.message}")
-    abort
-  end
-
-  %w[client_id client_secret refresh_token].each do |field|
-    if parsed[field].to_s.empty?
-      failure("Missing field: #{field}")
+  def fetch_env!(key)
+    R3x::Env.fetch(key) || begin
+      failure("Missing #{key}")
+      puts ""
+      puts "  Set it in Vault at: secret/data/env/r3x"
+      puts "  Key: #{key}"
       abort
     end
   end
 
-  success("Credentials JSON is valid")
+  def interactive_scope_selection
+    cli = HighLine.new
 
-  # --- Step 3: Validate refresh token ---
-  step("[Step 3] Validating refresh token...")
-
-  begin
-    R3x::Client::GoogleAuth.from_json(parsed, scope: "https://www.googleapis.com/auth/spreadsheets.readonly")
-    success("Token valid — access token obtained")
-  rescue Signet::AuthorizationError => e
-    failure("Token invalid: #{e.class} — #{e.message}")
     puts ""
-    puts "  The refresh token may have expired or been revoked."
-    puts "  Re-run: bin/google-oauth authorize --project #{project} --scopes gmail.readonly,sheets.readonly"
-    abort
-  rescue KeyError => e
-    failure("Missing credential field: #{e.message}")
-    abort
-  rescue StandardError => e
-    failure("Unexpected error: #{e.class} — #{e.message}")
-    abort
+    puts "=== Select Google API Scopes ==="
+    puts ""
+
+    aliases = R3x::Client::GoogleAuth::SCOPE_ALIASES.keys
+    selected_aliases = []
+
+    loop do
+      remaining = aliases - selected_aliases
+
+      if remaining.empty?
+        puts "All available scopes selected."
+        break
+      end
+
+      puts "Available scopes (selected: #{selected_aliases.size}):"
+      puts ""
+
+      choice = cli.choose do |menu|
+        menu.prompt = "Select a scope (or 'done' to finish): "
+
+        remaining.each do |alias_name|
+          scope = R3x::Client::GoogleAuth::SCOPE_ALIASES[alias_name]
+          menu.choice("#{alias_name} (#{scope})") { alias_name }
+        end
+
+        menu.choice(:done) { nil }
+      end
+
+      break if choice.nil? || choice == :done
+
+      selected_aliases << choice
+      puts "  ✓ Added: #{choice}"
+      puts ""
+
+      break if (aliases - selected_aliases).empty?
+
+      more = cli.ask("Add another scope? (y/n) ") { |q| q.default = "y" }
+      break unless more.downcase.start_with?("y")
+    end
+
+    if selected_aliases.empty?
+      puts ""
+      puts "No scopes selected. Aborting."
+      abort
+    end
+
+    puts ""
+    puts "Selected scopes:"
+    selected_aliases.each { |a| puts "  • #{a}" }
+
+    confirm = cli.ask("Proceed with authorization? (y/n) ") { |q| q.default = "y" }
+
+    unless confirm.downcase.start_with?("y")
+      puts "Cancelled."
+      abort
+    end
+
+    selected_aliases.join(",")
   end
-
-  puts ""
-  puts "Status: Ready"
 end
 
-# --- Parse global options ---
-global_options = {}
-
-OptionParser.new do |opts|
-  opts.banner = "Usage: bin/google-oauth [options] [command]"
-
-  opts.on("-h", "--help", "Show help") do
-    print_help
-    exit 0
-  end
-end.order!
-
-command = ARGV.shift
-
-if command.nil?
-  print_help
-  exit 0
-end
-
-unless SUBCOMMANDS.key?(command)
-  puts "Unknown command: #{command}"
-  print_help
-  abort
-end
-
-# --- Parse command-specific options ---
-cmd_options = {}
-
-case command
-when "authorize"
-  OptionParser.new do |opts|
-    opts.banner = "Usage: bin/google-oauth authorize --project PROJECT [--scopes SCOPES]"
-
-    opts.on("-p", "--project PROJECT", "Project name (e.g. MYAPP)") do |v|
-      cmd_options[:project] = v
-    end
-
-    opts.on("-s", "--scopes SCOPES", "Comma-separated scope aliases (optional - will prompt if not provided)") do |v|
-      cmd_options[:scopes] = v
-    end
-  end.order!(ARGV)
-
-when "status"
-  OptionParser.new do |opts|
-    opts.banner = "Usage: bin/google-oauth status --project PROJECT"
-
-    opts.on("-p", "--project PROJECT", "Project name (e.g. MYAPP)") do |v|
-      cmd_options[:project] = v
-    end
-  end.order!(ARGV)
-end
-
-# --- Dispatch ---
-case command
-when "authorize"
-  cmd_authorize(cmd_options)
-when "status"
-  cmd_status(cmd_options)
-when "scopes"
-  print_scopes
-else
-  abort "Unknown command: #{command}"
-end
+GoogleOAuthCLI.start(ARGV)

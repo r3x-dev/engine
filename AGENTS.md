@@ -229,6 +229,21 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - The directory is gitignored. Do not place production code there.
 - Use it when you need to verify something quickly (e.g., hitting an API, testing a query) without writing a proper test.
 
+## CLI Scripts
+
+- Use [Thor](https://github.com/rails/thor) for all CLI scripts in `bin/`. Do not use raw OptionParser.
+- Thor is a Rails dependency and auto-generates help from `desc`/`option` declarations — no manual `print_help` methods needed.
+- Each command is a method with `desc` and `option`. Subcommands are separate methods on the same class.
+- **Class setup:**
+  ```ruby
+  class MyCLI < Thor
+    def self.exit_on_failure? = true
+    namespace :"my-tool"
+  end
+  ```
+- Known limitation: `-h`/`--help` does not work on subcommands that have `required: true` options. Thor validates required options before checking for help flags. Use `--help` without required options, or `bin/tool help <command>`. This is a Thor design limitation, not a bug in our scripts.
+- Do not use Thor reserved words as method names: `run`, `invoke`, `shell`, `options`, `behavior`, `root`, `action`, `create_file`, `inside`, `run_ruby_script`. Use `map "run" => :execute` if the CLI command name must be `run`.
+
 ## Code Style
 
 ### Method Chaining
