@@ -23,7 +23,7 @@ module R3x
 
         trigger :manual
 
-        def run(ctx)
+        def run
           {
             "trigger_type" => ctx.trigger.type.to_s,
             "schedule?" => ctx.trigger.schedule?
@@ -52,7 +52,7 @@ module R3x
 
         trigger :schedule, cron: "0 * * * *"
 
-        def run(ctx)
+        def run
           {
             "trigger_type" => ctx.trigger.type.to_s,
             "schedule?" => ctx.trigger.schedule?
@@ -82,7 +82,7 @@ module R3x
 
         trigger :manual
 
-        def run(_ctx)
+        def run
           raise "should not be called directly in this test"
         end
       end
@@ -117,7 +117,7 @@ module R3x
 
         define_singleton_method(:triggers_by_key) { { fake_trigger.unique_key => fake_trigger } }
 
-        def run(ctx)
+        def run
           {
             "trigger_type" => ctx.trigger.type.to_s,
             "payload" => ctx.trigger.payload
