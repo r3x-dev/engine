@@ -45,6 +45,21 @@ module R3x
         assert_equal binary_data, response.body
       end
 
+      test "post passes headers" do
+        stub_request(:post, "https://example.com/upload")
+          .with(headers: { "Authorization" => "Bearer token123" })
+          .to_return(status: 200, body: "ok")
+
+        response = Http.new.post(
+          "https://example.com/upload",
+          { foo: "bar" },
+          headers: { "Authorization" => "Bearer token123" }
+        )
+
+        assert_equal 200, response.status
+        assert_requested :post, "https://example.com/upload"
+      end
+
       test "head sends head request" do
         stub_request(:head, "https://example.com/ping")
           .to_return(status: 200, body: "")
