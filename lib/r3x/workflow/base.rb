@@ -12,33 +12,42 @@ module R3x
       class << self
         def method_added(method_name)
           if method_name == :perform && self != Base
-            raise ArgumentError, "Do not override #perform in #{name}. Override #run(ctx) instead."
+            raise ArgumentError, "Do not override #perform in #{name}. Override #run instead."
           end
           super
         end
       end
 
       def perform(trigger_key = nil, trigger_payload: nil)
-        ctx = R3x::Workflow::Executor.build_context(
+        context = R3x::Workflow::Executor.build_context(
           workflow_class: self.class,
           trigger_key: trigger_key,
           trigger_payload: trigger_payload
         )
+        @ctx = context
 
-        run(ctx)
+        run
+      ensure
+        @ctx = nil
       end
 
       def with_cache(force: false, &block)
+        if Rails.env.production?
+          raise RuntimeError, "with_cache is disabled in production"
+        end
+
         Rails.cache.fetch(cache_key_for(block), force: force, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes) do
           yield
         end
       end
 
-      def run(ctx)
-        raise NotImplementedError, "#{self.class.name} must implement #run(ctx)"
+      def run
+        raise NotImplementedError, "#{self.class.name} must implement #run"
       end
 
       private
+
+      attr_reader :ctx
 
       def cache_key_for(block)
         source = cache_block_source(block)

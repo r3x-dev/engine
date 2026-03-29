@@ -132,7 +132,7 @@ module R3x
 
         define_singleton_method(:triggers_by_key) { { fake_trigger.unique_key => fake_trigger } }
 
-        def run(ctx)
+        def run
           ctx.trigger.payload
         end
       end

@@ -249,7 +249,7 @@ module R3x
 
         trigger :manual
 
-        def run(_ctx)
+        def run
           raise "should not execute"
         end
       end
@@ -267,7 +267,7 @@ module R3x
           "Workflows::ImplicitManual"
         end
 
-        def run(ctx)
+        def run
           { "trigger_type" => ctx.trigger.type.to_s }
         end
       end
@@ -285,12 +285,30 @@ module R3x
 
         trigger :schedule, cron: "0 * * * *"
 
-        def run(ctx)
+        def run
           { "trigger_type" => ctx.trigger.type.to_s }
         end
       end
 
       result = workflow_class.perform_now
+
+      assert_equal "manual", result["trigger_type"]
+    end
+
+    test "perform exposes ctx helper to workflows" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::ContextHelper"
+        end
+
+        trigger :manual
+
+        def run
+          { "trigger_type" => ctx.trigger.type.to_s }
+        end
+      end
+
+      result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
 
       assert_equal "manual", result["trigger_type"]
     end
@@ -303,7 +321,7 @@ module R3x
 
         trigger :manual
 
-        def run(ctx)
+        def run
           { "trigger_type" => ctx.trigger.type.to_s }
         end
       end
@@ -334,7 +352,7 @@ module R3x
       end
 
       assert_match(/Do not override #perform/, error.message)
-      assert_match(/Override #run\(ctx\) instead/, error.message)
+      assert_match(/Override #run instead/, error.message)
     end
 
     test "schedulable_triggers excludes auto-generated Manual triggers" do
@@ -417,9 +435,29 @@ module R3x
         workflow.with_cache(force: true) { calls += 1; { "calls" => calls } }
 
         assert_equal 2, calls
-      ensure
-        Rails.cache = original_cache
+        ensure
+          Rails.cache = original_cache
+        end
       end
+
+    test "with_cache raises in production" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::ProductionCacheGuard"
+        end
+      end
+
+      workflow = workflow_class.new
+      original_env = Rails.method(:env)
+      Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new("production") }
+
+      error = assert_raises(RuntimeError) do
+        workflow.with_cache { "cached" }
+      end
+
+      assert_equal "with_cache is disabled in production", error.message
+    ensure
+      Rails.define_singleton_method(:env, original_env)
     end
   end
 end
