@@ -90,6 +90,15 @@ module R3x
         tempfile&.unlink
       end
 
+      test "parse accepts binary image data with filetype" do
+        stub_success("Binary text")
+
+        client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
+        result = client.parse("\x89PNG\x00\r\n".b, filetype: "image/png")
+
+        assert_equal "Binary text", result.text
+      end
+
       test "parse with unsupported extension raises" do
         client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
 
