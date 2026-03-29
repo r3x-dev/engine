@@ -1,135 +1,89 @@
 #!/usr/bin/env ruby
 require_relative "../config/environment"
-require "optparse"
+require "thor"
 
-SUBCOMMANDS = {
-  "run"  => "Run a workflow from file path",
-  "list" => "List available workflows",
-  "info" => "Show details for a specific workflow"
-}.freeze
+class WorkflowCLI < Thor
+  def self.exit_on_failure? = true
+  namespace :workflow
 
-def print_help
-  puts "Usage: bin/workflow [options] [command] [arguments]"
-  puts ""
-  puts "Options:"
-  puts "  -h, --help    Show this help"
-  puts ""
-  puts "Commands:"
-  SUBCOMMANDS.each do |cmd, desc|
-    puts "  %-12s %s" % [cmd, desc]
-  end
-  puts ""
-  puts "Examples:"
-  puts "  bin/workflow run workflows/my_workflow/workflow.rb"
-  puts "  bin/workflow run ./path/to/workflow.rb"
-  puts "  bin/workflow list"
-  puts "  bin/workflow info my_workflow"
-end
+  # "run" is a Thor reserved word, so we map it to "execute"
+  map "run" => :execute
 
-def load_workflow(path)
-  full_path = File.expand_path(path)
-  raise ArgumentError, "Workflow file not found: #{path}" unless File.exist?(full_path)
-  raise ArgumentError, "Not a file: #{path}" unless File.file?(full_path)
+  desc "run PATH", "Run a workflow from file path"
+  option :dry_run, type: :boolean, aliases: "-d", desc: "Show what would be executed"
+  option :verbose, type: :boolean, aliases: "-v", desc: "Enable verbose logging (debug level)"
+  def execute(path)
+    enable_verbose_logging if options[:verbose]
 
-  require full_path
+    if options[:dry_run]
+      puts "Dry run: #{path}"
+      puts "  (would load from: #{File.expand_path(path)})"
+      puts "  (not executing)"
+      return
+    end
 
-  workflow = find_workflow_in_file(full_path)
-  raise ArgumentError, "No workflow class found in #{path}" unless workflow
-
-  workflow
-end
-
-def find_workflow_in_file(full_path)
-  ObjectSpace.each_object(Class).find do |klass|
-    klass < R3x::Workflow::Base &&
-      klass.name.present? &&
-      Object.const_source_location(klass.name)&.first == full_path
-  end
-end
-
-def cmd_list
-  R3x::Workflow::PackLoader.load!
-  workflows = R3x::Workflow::Registry.all
-
-  if workflows.empty?
-    puts "No workflows found."
-    return
+    puts "Running: #{path}"
+    workflow_class = load_workflow(path)
+    result = workflow_class.perform_now
+    puts "Result: #{result.inspect}"
   end
 
-  puts "Available workflows:"
-  workflows.each do |wf|
-    triggers = wf.triggers.map { |t| t.type }.uniq.join(", ")
-    puts "  #{wf.workflow_key}  (triggers: #{triggers})"
+  desc "list", "List available workflows"
+  def list
+    R3x::Workflow::PackLoader.load!
+    workflows = R3x::Workflow::Registry.all
+
+    if workflows.empty?
+      puts "No workflows found."
+      return
+    end
+
+    puts "Available workflows:"
+    workflows.each do |wf|
+      triggers = wf.triggers.map { |t| t.type }.uniq.join(", ")
+      puts "  #{wf.workflow_key}  (triggers: #{triggers})"
+    end
+  end
+
+  desc "info KEY", "Show details for a specific workflow"
+  def info(key)
+    R3x::Workflow::PackLoader.load!
+    workflow_class = R3x::Workflow::Registry.fetch(key)
+
+    puts "Workflow: #{key}"
+    puts "  Class:    #{workflow_class}"
+    puts "  Triggers:"
+    workflow_class.triggers.each do |t|
+      puts "    #{t.type}  key=#{t.unique_key}"
+    end
+  end
+
+  private
+
+  def enable_verbose_logging
+    require "logger"
+    logger = ActiveSupport::Logger.new(STDOUT)
+    logger.level = Logger::DEBUG
+    Rails.logger = ActiveSupport::TaggedLogging.new(logger)
+    Rails.logger.info "Verbose logging enabled"
+  end
+
+  def load_workflow(path)
+    full_path = File.expand_path(path)
+    raise ArgumentError, "Workflow file not found: #{path}" unless File.exist?(full_path)
+    raise ArgumentError, "Not a file: #{path}" unless File.file?(full_path)
+
+    require full_path
+
+    workflow = ObjectSpace.each_object(Class).find do |klass|
+      klass < R3x::Workflow::Base &&
+        klass.name.present? &&
+        Object.const_source_location(klass.name)&.first == full_path
+    end
+    raise ArgumentError, "No workflow class found in #{path}" unless workflow
+
+    workflow
   end
 end
 
-def cmd_info(key)
-  R3x::Workflow::PackLoader.load!
-  workflow_class = R3x::Workflow::Registry.fetch(key)
-
-  puts "Workflow: #{key}"
-  puts "  Class:    #{workflow_class}"
-  puts "  Triggers:"
-  workflow_class.triggers.each do |t|
-    puts "    #{t.type}  key=#{t.unique_key}"
-  end
-end
-
-def cmd_run(file_path, options)
-  if options[:dry_run]
-    puts "Dry run: #{file_path}"
-    puts "  (would load from: #{File.expand_path(file_path)})"
-    puts "  (not executing)"
-    return
-  end
-
-  puts "Running: #{file_path}"
-  workflow_class = load_workflow(file_path)
-  result = workflow_class.perform_now
-  puts "Result: #{result.inspect}"
-end
-
-# --- Parse global options ---
-OptionParser.new do |opts|
-  opts.banner = "Usage: bin/workflow [options] [command] [arguments]"
-
-  opts.on("-h", "--help", "Show help") do
-    print_help
-    exit 0
-  end
-end.order!
-
-command = ARGV.shift
-
-if command.nil?
-  print_help
-  exit 0
-end
-
-unless SUBCOMMANDS.key?(command)
-  print_help
-  exit 1
-end
-
-case command
-when "list"
-  cmd_list
-
-when "info"
-  key = ARGV.shift || abort("Usage: bin/workflow info <workflow_key>")
-  cmd_info(key)
-
-when "run"
-  run_options = {}
-
-  OptionParser.new do |opts|
-    opts.banner = "Usage: bin/workflow run [options] <workflow_file_path>"
-    opts.on("-d", "--dry-run", "Show what would be executed") { run_options[:dry_run] = true }
-  end.order!(ARGV)
-
-  file_path = ARGV.shift || abort("Usage: bin/workflow run [options] <workflow_file_path>")
-  cmd_run(file_path, run_options)
-
-else
-  abort "Unknown command: #{command}"
-end
+WorkflowCLI.start(ARGV)
