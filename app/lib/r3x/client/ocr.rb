@@ -54,6 +54,10 @@ module R3x
           raise ArgumentError, "filetype required for IO objects (e.g. filetype: 'image/jpeg')"
         end
 
+        if binary_string?(io_or_path)
+          raise ArgumentError, "filetype required for raw binary image data (e.g. filetype: 'image/jpeg')"
+        end
+
         ext = File.extname(io_or_path.to_s).downcase
         MIME_TYPES.fetch(ext) do
           raise ArgumentError, "Unsupported file extension: '#{ext}'. Pass filetype: explicitly."
@@ -67,11 +71,21 @@ module R3x
         params[:language] = language if language
         params[:OCREngine] = engine.to_s if engine
 
-        raw = io_or_path.respond_to?(:read) ? io_or_path.read : File.binread(io_or_path.to_s)
+        raw = if io_or_path.respond_to?(:read)
+          io_or_path.read
+        elsif binary_string?(io_or_path)
+          io_or_path
+        else
+          File.binread(io_or_path.to_s)
+        end
         encoded = Base64.strict_encode64(raw)
         params[:base64Image] = "data:#{mime_type};base64,#{encoded}"
 
         params
+      end
+
+      def binary_string?(value)
+        value.is_a?(String) && (value.encoding == Encoding::BINARY || value.bytes.include?(0))
       end
     end
   end
