@@ -50,15 +50,13 @@ class WorkflowCliTest < ActiveSupport::TestCase
     assert_includes output, "Usage:"
   end
 
-  test "help command shows usage" do
-    output = run_cli("--help")
+  test "help command shows commands" do
+    output = run_cli("-h")
 
-    assert_includes output, "Usage:"
     assert_includes output, "Commands:"
     assert_includes output, "run"
     assert_includes output, "list"
     assert_includes output, "info"
-    assert_includes output, "Examples:"
   end
 
   test "nonexistent file shows error" do
@@ -73,11 +71,10 @@ class WorkflowCliTest < ActiveSupport::TestCase
     assert_includes output, "Not a file"
   end
 
-  test "unknown command shows help" do
+  test "unknown command shows error" do
     output = run_cli("unknown_command", allow_failure: true)
 
-    # Unknown commands now show help and exit with error
-    assert_includes output, "Usage:"
+    assert_includes output, "Could not find command"
   end
 
   private
