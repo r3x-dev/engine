@@ -523,6 +523,7 @@ DEPENDENCIES
   rails (~> 8.1.2)
   rubocop-rails-omakase
   ruby_llm
+  ruby_llm-schema
   solid_cache
   solid_queue
   sqlite3 (>= 2.1)
