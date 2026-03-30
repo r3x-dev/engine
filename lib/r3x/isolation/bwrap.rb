@@ -1,59 +1,45 @@
+# frozen_string_literal: true
+
 module R3x
   module Isolation
     class Bwrap < Base
+      extend R3x::Concerns::Logger
+
       def self.run(workflow_class, context, trigger_key: nil, trigger_payload: nil, networking: false, **options)
         temp_dir = Dir.mktmpdir("r3x-sandbox-")
         socket_path = "#{temp_dir}/proxy.sock"
         state_file = "#{temp_dir}/workflow_state.json"
+        env_path = Rails.root.join("config", "environment").to_s
 
         begin
-          # Serialize workflow state for child
           state = {
             workflow_key: context.execution.workflow_key,
-            workflow_class: workflow_class.name,
             trigger_key: trigger_key
           }
           state[:trigger_payload] = trigger_payload if trigger_payload
           File.write(state_file, MultiJson.dump(state))
 
-          # Start proxy in background thread (only if networking is not allowed)
           proxy = nil
           proxy_thread = nil
           unless networking
+            ready = Queue.new
             proxy = Proxy.new(socket_path)
-            proxy_thread = Thread.new { proxy.start }
-
-            # Wait for socket to be created (with timeout)
-            100.times do
-              break if File.exist?(socket_path)
-              sleep 0.01
-            end
-
-            unless File.exist?(socket_path)
-              raise "Proxy socket not created"
-            end
+            proxy_thread = Thread.new { proxy.start(ready) }
+            ready.pop
           end
 
           logger.info("Starting sandbox for #{workflow_class.name} (networking: #{networking})")
 
-          # Fork and execute workflow in bwrap
           pid = fork do
-            # Build bwrap arguments
             bwrap_args = build_bwrap_args(socket_path, state_file, networking: networking)
-
-            # Create log file for child output
             log_file = "#{temp_dir}/child.log"
 
-            # Execute bwrap with current Ruby
-            # Set R3X_SANDBOX=1 in child's environment only (not parent)
             exec({ "R3X_SANDBOX" => "1" },
                  "bwrap", *bwrap_args, "--",
-                 RbConfig.ruby, "-e",
-                 runner_script,
+                 RbConfig.ruby, "-e", runner_script(env_path),
                  out: log_file, err: log_file)
           end
 
-          # Parent waits for child
           _, status = Process.wait2(pid)
 
           unless status.success?
@@ -81,8 +67,6 @@ module R3x
           [ "--ro-bind-try", ruby_dir, ruby_dir ]
         end
 
-        rails_root = defined?(Rails) ? Rails.root.to_s : nil
-
         args = [
           "--unshare-user",
           "--unshare-pid",
@@ -97,59 +81,27 @@ module R3x
           "--ro-bind", "/lib", "/lib",
           "--ro-bind-try", "/lib64", "/lib64",
           *ruby_bind,
+          "--ro-bind", Rails.root.to_s, Rails.root.to_s,
           "--ro-bind-try", state_file, state_file,
           "--setenv", "R3X_STATE_FILE", state_file
         ]
 
-        # Bind Rails root and gems for workflow loading
-        if rails_root
-          args << "--ro-bind" << rails_root << rails_root
-          # Bind gem paths so Bundler can find gems
-          Gem.path.each do |gem_path|
-            args << "--ro-bind-try" << gem_path << gem_path
-          end
-        end
-
-        # Add network isolation only if networking is not allowed
         if networking
           args << "--share-net"
         else
           args << "--unshare-net"
-          args << "--ro-bind-try" << socket_path << socket_path if socket_path
-          args << "--setenv" << "R3X_SANDBOX_SOCKET" << socket_path if socket_path
+          args << "--ro-bind-try" << socket_path << socket_path
+          args << "--setenv" << "R3X_SANDBOX_SOCKET" << socket_path
         end
 
         args
       end
 
-      def self.runner_script
-        env_path = defined?(Rails) ? Rails.root.join("config", "environment").to_s : "config/environment"
-
+      def self.runner_script(env_path)
         <<~RUBY
-          require 'json'
-
-          state_file = ENV['R3X_STATE_FILE']
-          unless state_file
-            $stderr.puts "[Bwrap::Child] ERROR: Missing R3X_STATE_FILE"
-            exit 1
-          end
-
-          state = JSON.parse(File.read(state_file))
-
-          # Bootstrap Rails and the workflow registry
           require '#{env_path}'
-
-          workflow_class = R3x::Workflow::Registry.fetch(state['workflow_key'])
-          workflow_class.perform_now(state['trigger_key'], trigger_payload: state['trigger_payload'])
+          R3x::Isolation::Bwrap::Runner.run(ENV.fetch('R3X_STATE_FILE'), env_path: '#{env_path}')
         RUBY
-      end
-
-      def self.logger
-        if defined?(Rails)
-          Rails.logger
-        else
-          Logger.new($stdout)
-        end
       end
     end
   end
