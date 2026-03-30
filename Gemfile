@@ -18,6 +18,7 @@ gem "nokogiri"
 
 # LLM integration
 gem "ruby_llm"
+gem "ruby_llm-schema"
 
 # Google Translate API
 gem "google-cloud-translate"
