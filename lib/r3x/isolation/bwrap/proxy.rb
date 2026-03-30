@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Isolation
     # Forward declaration if Bwrap not yet loaded
@@ -5,32 +7,42 @@ module R3x
 
     class Bwrap
       class Proxy
+        include R3x::Concerns::Logger
+
+        STATUS_TEXTS = {
+          200 => "OK",
+          403 => "Forbidden",
+          500 => "Internal Server Error",
+          502 => "Bad Gateway"
+        }.freeze
+
         def initialize(socket_path)
           @socket_path = socket_path
           @server = nil
           @running = false
-          @logger = defined?(Rails) ? Rails.logger : Logger.new(STDOUT)
         end
 
-        def start
+        def start(ready = nil)
           @server = UNIXServer.new(@socket_path)
           @running = true
-          @logger.info("[Bwrap::Proxy] Started on #{@socket_path}")
+          logger.info("Started on #{@socket_path}")
+          ready << :ready if ready
 
           loop do
             break unless @running
 
-            begin
-              client = @server.accept_nonblock(exception: false)
-              next if client == :wait_readable
+            readable, = IO.select([ @server ], nil, nil, 0.5)
+            next unless readable
 
+            begin
+              client = @server.accept
               Thread.new { handle_client(client) }
             rescue IOError
               break
             end
           end
-        rescue IOError
-          # Socket closed
+        rescue => e
+          ready << e if ready
         ensure
           @server&.close
         end
@@ -49,14 +61,13 @@ module R3x
           response = forward_request(request)
           client.write(format_response(response))
         rescue => e
-          @logger.error("[Bwrap::Proxy] Error: #{e.message}")
+          logger.error("Error: #{e.message}")
           client.write("HTTP/1.1 502 Bad Gateway\r\n\r\n")
         ensure
           client.close rescue nil
         end
 
         def parse_request(client)
-          # Simple HTTP request parsing
           headers = {}
           method = nil
           path = nil
@@ -67,7 +78,6 @@ module R3x
             line = line.chomp
 
             if line.empty?
-              # End of headers
               break
             elsif line =~ /^(GET|POST|PUT|DELETE|PATCH)\s+(\S+)\s+HTTP/
               method = $1
@@ -79,7 +89,6 @@ module R3x
 
           return nil unless method
 
-          # Read body if present
           body = nil
           if headers["content-length"]
             body = client.read(headers["content-length"].to_i)
@@ -89,25 +98,25 @@ module R3x
         end
 
         def forward_request(request)
-          # For testing, just echo back
           host = request[:headers]["host"]
-
-          @logger.info("[Bwrap::Proxy] #{request[:method]} #{request[:path]} -> #{host}")
+          logger.info("#{request[:method]} #{request[:path]} -> #{host}")
 
           unless allowed_host?(host)
             return { status: 403, body: "Host not allowed: #{host}" }
           end
 
-          # Simple test - just return success
-          # Real implementation would forward via Faraday
+          # Stub — real implementation would forward via Faraday
           { status: 200, body: "{\"proxied\":true,\"host\":\"#{host}\"}" }
         rescue => e
           { status: 500, body: "Proxy error: #{e.message}" }
         end
 
         def format_response(response)
+          status = response[:status]
           body = response[:body].to_s
-          "HTTP/1.1 #{response[:status]} OK\r\n" \
+          status_text = STATUS_TEXTS[status] || "Unknown"
+
+          "HTTP/1.1 #{status} #{status_text}\r\n" \
           "Content-Length: #{body.bytesize}\r\n" \
           "Content-Type: application/json\r\n" \
           "\r\n" \
@@ -115,7 +124,7 @@ module R3x
         end
 
         def allowed_host?(host)
-          # For testing, allow all hosts
+          # Stub — real implementation would check against allowlist
           true
         end
       end
