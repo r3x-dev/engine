@@ -103,7 +103,7 @@ module R3x
         )
         discord = ctx.client.discord(webhook_url: "https://discord.test/webhook")
 
-        assert_instance_of R3x::Client::Discord::Webhook, discord
+        assert_instance_of R3x::Client::Discord, discord
       end
     end
   end
