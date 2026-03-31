@@ -19,9 +19,9 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `lib/r3x/workflow/executor.rb`: shared workflow execution helper that resolves the trigger and builds `Workflow::Context` for a loaded workflow class.
 - `lib/r3x/dsl/`: shared DSL infrastructure, especially validation concerns and configuration errors used by workflow-declared objects.
 - `lib/r3x/trigger_manager.rb` + `lib/r3x/trigger_manager/`: trigger infrastructure — `R3x::TriggerManager::Collection` (manages workflow triggers as a hash keyed by `unique_key`) and `R3x::TriggerManager::Execution` (wraps a trigger for runtime use).
-- `app/lib/r3x/`: runtime support code such as outputs, client wrappers, and shared concerns.
+- `app/lib/r3x/`: runtime support code such as client wrappers and shared concerns.
 - `app/lib/r3x/client/google/credentials.rb`: shared Google credentials loader used by Gmail and Google Sheets integrations.
-- `app/lib/r3x/client/google/gmail.rb`: Gmail API client used by `R3x::Outputs::Gmail`.
+- `app/lib/r3x/client/google/gmail.rb`: Gmail API client used by workflows via `ctx.client.gmail(...)`.
 - `R3x::Client::Google` is a project namespace; when referencing the third-party Google gem namespace, use `::Google` to avoid constant collisions.
 - `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves a workflow key and dispatches to the workflow job class, and `R3x::ChangeDetectionJob`, which evaluates change-detecting triggers before enqueueing workflow runs.
 - `app/models/r3x/`: runtime support models such as `R3x::TriggerState` for per-trigger change-detection state.
@@ -114,10 +114,9 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 
 ## Naming Conventions
 
-- When a class is namespaced within a descriptive module (e.g., `R3x::Outputs`, `R3x::Triggers`), do not repeat the module name in the class name.
-- **Good**: `R3x::Outputs::Discord`, `R3x::Triggers::Schedule`, `R3x::Client::Http`
-- **Bad**: `R3x::Outputs::DiscordOutput`, `R3x::Triggers::ScheduleTrigger`
-- Exception: When the class name would be ambiguous without the qualifier (e.g., `Http` clearly describes an HTTP client, but `DiscordWebhook` in the `Client` module might be needed to distinguish from `Discord` in `Outputs`).
+- When a class is namespaced within a descriptive module (e.g., `R3x::Client`, `R3x::Triggers`), do not repeat the module name in the class name.
+- **Good**: `R3x::Client::Http`, `R3x::Triggers::Schedule`, `R3x::Client::Discord::Webhook`
+- **Bad**: `R3x::Client::HttpClient`, `R3x::Triggers::ScheduleTrigger`
 
 ### Zeitwerk & File Structure
 
