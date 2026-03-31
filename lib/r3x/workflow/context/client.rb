@@ -30,11 +30,12 @@ module R3x
           )
         end
 
-        def gmail(credentials_env:, dry_run: nil)
-          R3x::Outputs::Gmail.new(
-            credentials_env: credentials_env,
-            dry_run: dry_run
-          )
+        def gmail(credentials_env:)
+          R3x::Client::Google::Gmail.new(credentials_env: credentials_env)
+        end
+
+        def discord(webhook_url:)
+          R3x::Client::Discord::Webhook.new(webhook_url: webhook_url)
         end
       end
     end
