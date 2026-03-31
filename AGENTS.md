@@ -276,6 +276,31 @@ response.content
 - When the intermediate value has semantic meaning that aids comprehension
 - When debugging requires inspecting intermediate state
 
+## Design Principles
+
+### KISS (Keep It Simple, Stupid)
+
+- Prefer simple solutions over clever ones.
+- Avoid over-engineering for hypothetical future requirements.
+- Each class/method should have one clear responsibility.
+- Don't add methods that "might be useful someday" (like `save_to(path)` for in-memory file objects).
+- When in doubt, choose the smaller API surface.
+
+### SRP (Single Responsibility Principle)
+
+- A class should have one reason to change.
+- Data objects should store data; let calling code decide what to do with it.
+- **Bad**: File wrapper with `save_to` method — mixes data storage with filesystem I/O.
+- **Good**: File wrapper with `to_io` method — provides access to data, caller decides whether to save, upload, or process.
+- Separate concerns: downloading ≠ processing ≠ persisting.
+
+### One Class Per File
+
+- Each class must be defined in its own file following Zeitwerk conventions.
+- Nested classes should be extracted to separate files under the parent namespace.
+- **Bad**: Defining `Http::DownloadedFile` inside `http.rb` alongside `Http` class.
+- **Good**: `Http` in `app/lib/r3x/client/http.rb`, `Http::DownloadedFile` in `app/lib/r3x/client/http/downloaded_file.rb`.
+
 ## Scope
 
 - Apply these as defaults for new work.
