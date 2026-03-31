@@ -35,7 +35,7 @@ module R3x
         end
 
         def discord(webhook_url:)
-          R3x::Client::Discord::Webhook.new(webhook_url: webhook_url)
+          R3x::Client::Discord.new(webhook_url: webhook_url)
         end
       end
     end
