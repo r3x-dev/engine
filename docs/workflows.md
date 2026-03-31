@@ -59,3 +59,48 @@ These notes apply to workflow code in general.
 - Not every client supports dry run.
 - If a client does not support it, say so clearly in the workflow or
   helper instead of assuming it will no-op.
+
+## Retry Fragile Operations
+
+- Network calls and other flaky external interactions should be wrapped
+  with the `retryable` gem (already in the Gemfile).
+- Use it for HTTP requests, API calls, file downloads, or any operation
+  where transient failures are expected and safe to retry.
+- Basic usage:
+
+  ```ruby
+  Retryable.retryable(tries: 3, on: [Faraday::TimeoutError, Faraday::ConnectionFailed]) do
+    connection.get("/api/data").body
+  end
+  ```
+
+- Common options:
+  - `tries` — total attempts (default 2). Set to `3` for two retries.
+  - `on` — exception class or array of classes to catch (default `StandardError`).
+  - `sleep` — seconds between retries (default 1). Use `0` to skip pauses, or a lambda for exponential backoff: `lambda { |n| 4**n }`.
+  - `matching` — retry based on exception message: `matching: /timeout/i`.
+  - `not` — exceptions that should never be retried, takes precedence over `on`.
+
+- Block receives two optional arguments: retry count so far and the last exception:
+
+  ```ruby
+  Retryable.retryable(tries: 4, on: Faraday::ServerError) do |retries, exception|
+    logger.debug { "Attempt #{retries} failed: #{exception}" } if retries > 0
+    http.get("/endpoint")
+  end
+  ```
+
+- For logging retries, use `log_method`:
+
+  ```ruby
+  log_method = lambda do |retries, exception|
+    logger.debug { "[Attempt ##{retries}] Retrying: #{exception.class} - #{exception.message}" }
+  end
+
+  Retryable.retryable(tries: 3, on: Faraday::TimeoutError, log_method: log_method) do
+    http.get("/endpoint")
+  end
+  ```
+
+- Avoid retrying operations that are not idempotent or that cause external side effects (e.g. sending emails, creating records) unless the remote API guarantees idempotency.
+- Full documentation: https://github.com/nfedyashev/retryable
