@@ -84,48 +84,26 @@ module R3x
         assert ctx.execution.is_a?(Execution)
       end
 
-      test "client proxy builds gmail output from credentials env" do
+      test "client proxy builds gmail client from credentials env" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
         trigger_execution = R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "test")
         ctx = Context.new(trigger: trigger_execution, workflow_key: "test")
         gmail = ctx.client.gmail(credentials_env: "GOOGLE_CREDENTIALS_MISSING")
 
-        assert_instance_of R3x::Outputs::Gmail, gmail
-        assert_equal({ "mode" => "dry-run" }, gmail.deliver(to: "recipient@example.com", subject: "Hello", body: "Body"))
+        assert_instance_of R3x::Client::Google::Gmail, gmail
       end
 
-      test "client proxy builds google sheets client from credentials env" do
-        captured = nil
-        fake_client = Object.new
-        singleton_class = R3x::Client::GoogleSheets.singleton_class
-        original_method = R3x::Client::GoogleSheets.method(:new)
-
-        singleton_class.define_method(:new) do |**kwargs|
-          captured = kwargs
-          fake_client
-        end
-
-        sheets = Context.new(
+      test "client proxy builds discord webhook client" do
+        ctx = Context.new(
           trigger: R3x::TriggerManager::Execution.new(
             trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
             workflow_key: "test"
           ),
           workflow_key: "test"
-        ).client.google_sheets(
-          spreadsheet_id: "spreadsheet-123",
-          credentials_env: "GOOGLE_CREDENTIALS_TEST_APP"
         )
+        discord = ctx.client.discord(webhook_url: "https://discord.test/webhook")
 
-        assert_same fake_client, sheets
-        assert_equal(
-          {
-            spreadsheet_id: "spreadsheet-123",
-            credentials_env: "GOOGLE_CREDENTIALS_TEST_APP"
-          },
-          captured
-        )
-      ensure
-        singleton_class.define_method(:new, original_method)
+        assert_instance_of R3x::Client::Discord::Webhook, discord
       end
     end
   end

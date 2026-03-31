@@ -12,7 +12,7 @@ module R3x
 
         def deliver(to:, subject:, body:)
           result = build_service.send_user_message(
-            "me",
+            "me", # The user's email address. The special value `me` can be used to indicate the
             ::Google::Apis::GmailV1::Message.new(raw: raw_message(to: to, subject: subject, body: body))
           )
 
