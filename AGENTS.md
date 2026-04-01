@@ -26,6 +26,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves a workflow key and dispatches to the workflow job class, and `R3x::ChangeDetectionJob`, which evaluates change-detecting triggers before enqueueing workflow runs.
 - `app/models/r3x/`: runtime support models such as `R3x::TriggerState` for per-trigger change-detection state.
 - `workflows/`: user workflow packs. These are not the framework itself; they are loaded by the framework.
+- `workflows/<pack>/test/`: self-contained tests for a specific workflow pack. Keep pack-local tests beside the workflow code, and use `test/fixtures/workflows/` for framework-level fixtures.
 - `config/initializers/r3x_workflow_loader.rb`: boot-time workflow loading hook.
 - `test/fixtures/workflows/`: fixture workflows for framework tests. Prefer these over hardcoding real workflows in tests.
 
@@ -139,6 +140,7 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - When writing tests for workflow DSL or infrastructure, use generic workflow names (e.g., `TestWorkflow`, `MyTestWorkflow`), not real workflow names from `workflows/` folder.
 - Real workflows in `workflows/` are "user workflows" and should not be hardcoded in tests for the core framework.
 - Use anonymous classes or fixture workflows in `test/fixtures/workflows/` for testing framework behavior.
+- Pack-specific workflow tests should live under `workflows/<pack>/test/` next to the workflow pack itself.
 - **Good**: `Class.new(R3x::Workflow::Base) { def self.name; "Test"; end }`
 - **Bad**: Testing `MyUserWorkflow` workflow directly in framework tests
 
