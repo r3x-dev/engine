@@ -2,7 +2,7 @@ require "test_helper"
 
 class WorkflowCliTest < ActiveSupport::TestCase
   setup do
-    @fixture_path = "test/fixtures/workflows/test_workflow/workflow.rb"
+    @fixture_path = "test/fixtures/workflows/test_workflow/workflow.rb".freeze
   end
 
   test "list command shows workflows from registry" do
