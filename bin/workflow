@@ -23,9 +23,7 @@ class WorkflowCLI < Thor
     end
 
     puts "Running: #{path}"
-    workflow_class = load_workflow(path)
-    result = workflow_class.perform_now
-    puts "Result: #{result.inspect}"
+    ap load_workflow(path).perform_now
   end
 
   desc "list", "List available workflows"
