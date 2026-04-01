@@ -1,6 +1,7 @@
 # https://docs.rubocop.org/rubocop/configuration.html
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+plugins: rubocop-thread_safety
 
 AllCops:
   Exclude:
