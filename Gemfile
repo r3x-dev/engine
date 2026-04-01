@@ -72,3 +72,5 @@ group :test do
 end
 
 gem "retryable", "~> 3.0"
+
+gem "amazing_print", "~> 2.0"
