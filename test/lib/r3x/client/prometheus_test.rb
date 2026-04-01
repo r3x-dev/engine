@@ -4,36 +4,70 @@ module R3x
   module Client
     class PrometheusTest < ActiveSupport::TestCase
       setup do
-        @original_url = ENV["R3X_PROMETHEUS_URL"]
+        @original_url = ENV["PROMETHEUS_URL"]
       end
 
       teardown do
-        ENV["R3X_PROMETHEUS_URL"] = @original_url
+        ENV["PROMETHEUS_URL"] = @original_url
         WebMock.reset!
       end
 
-      test "raises when R3X_PROMETHEUS_URL is missing" do
-        ENV.delete("R3X_PROMETHEUS_URL")
+      test "raises when PROMETHEUS_URL is missing" do
+        ENV.delete("PROMETHEUS_URL")
 
         error = assert_raises(ArgumentError) do
           Prometheus.new
         end
 
-        assert_equal "Missing R3X_PROMETHEUS_URL", error.message
+        assert_equal "Missing PROMETHEUS_URL", error.message
       end
 
-      test "raises when R3X_PROMETHEUS_URL is blank" do
-        ENV["R3X_PROMETHEUS_URL"] = ""
+      test "raises when PROMETHEUS_URL is blank" do
+        ENV["PROMETHEUS_URL"] = ""
 
         error = assert_raises(ArgumentError) do
           Prometheus.new
         end
 
-        assert_equal "Missing R3X_PROMETHEUS_URL", error.message
+        assert_equal "Missing PROMETHEUS_URL", error.message
+      end
+
+      test "supports custom url_env with matching prefix" do
+        ENV["PROMETHEUS_URL_CUSTOM"] = "http://custom-prom.test:9090"
+
+        stub_request(:get, "http://custom-prom.test:9090/api/v1/query")
+          .with(query: { "query" => "up" })
+          .to_return(
+            status: 200,
+            body: {
+              status: "success",
+              data: { resultType: "vector", result: [] }
+            }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        client = Prometheus.new(url_env: "PROMETHEUS_URL_CUSTOM")
+        result = client.query("up")
+
+        assert_equal "vector", result.result_type
+
+        ENV.delete("PROMETHEUS_URL_CUSTOM")
+      end
+
+      test "rejects url_env that does not match prefix" do
+        ENV["MY_PROM_URL"] = "http://prom.test:9090"
+
+        error = assert_raises(ArgumentError) do
+          Prometheus.new(url_env: "MY_PROM_URL")
+        end
+
+        assert_match(/must start with 'PROMETHEUS_URL'/, error.message)
+
+        ENV.delete("MY_PROM_URL")
       end
 
       test "query returns result with series values" do
-        ENV["R3X_PROMETHEUS_URL"] = "http://prometheus.test:9090"
+        ENV["PROMETHEUS_URL"] = "http://prometheus.test:9090"
 
         stub_request(:get, "http://prometheus.test:9090/api/v1/query")
           .with(query: { "query" => 'up{job="test"}' })
@@ -62,7 +96,7 @@ module R3x
       end
 
       test "query raises on non-success status" do
-        ENV["R3X_PROMETHEUS_URL"] = "http://prometheus.test:9090"
+        ENV["PROMETHEUS_URL"] = "http://prometheus.test:9090"
 
         stub_request(:get, "http://prometheus.test:9090/api/v1/query")
           .with(query: { "query" => "up" })

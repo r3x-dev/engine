@@ -8,8 +8,8 @@ module R3x
           R3x::Client::Http.new(verify_ssl: verify_ssl, timeout: timeout)
         end
 
-        def prometheus
-          R3x::Client::Prometheus.new
+        def prometheus(url_env: "PROMETHEUS_URL")
+          R3x::Client::Prometheus.new(url_env: url_env)
         end
 
         def apify(api_key_env:)
