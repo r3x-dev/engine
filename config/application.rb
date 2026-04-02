@@ -42,5 +42,9 @@ module R3x
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    server do
+      R3x::Workflow::Boot.load_and_schedule!
+    end
   end
 end
