@@ -96,6 +96,26 @@ The CLI handles workflow resolution internally: it checks if the argument looks 
 - Also update this file when changing Active Job backend semantics, `Solid Queue` database wiring, or any logic that depends on enqueueing being inside the same database transaction as app writes.
 - When adding a new subsystem or moving code between `lib/r3x/`, `app/lib/r3x/`, `app/jobs/r3x/`, or `workflows/`, refresh the project overview and codebase map so future agents can still orient themselves quickly.
 
+## Ruby Version Updates
+
+- `.ruby-version` is the primary source of truth for the Ruby version in this repo.
+- `Gemfile` reads the version from `.ruby-version`.
+- `mise` is configured to read idiomatic Ruby version files via `mise.toml`, so local tool selection follows `.ruby-version`.
+- `ruby/setup-ruby` can auto-detect `.ruby-version` when `ruby-version:` is omitted, so keep CI on the convention unless the version file moves out of the repo root.
+- `Dockerfile` must keep `ARG RUBY_VERSION` aligned with `.ruby-version`. The GitHub Actions workflow also reads `.ruby-version` and passes it to Docker build as `RUBY_VERSION`.
+- When bumping Ruby, update these files together:
+  - `.ruby-version`
+  - `Dockerfile`
+  - any workflow or script that hardcodes a Ruby version
+  - `Gemfile.lock`, but only by running Bundler
+- Preferred update flow:
+  - change `.ruby-version`
+  - verify `Gemfile` still reads from `.ruby-version`
+  - update `Dockerfile ARG RUBY_VERSION`
+  - run `bundle update --ruby` to refresh `Gemfile.lock`
+  - rebuild both Docker targets: `production` and `ci`
+- Do not hand-edit `Gemfile.lock` to add or change `RUBY VERSION`. If `Gemfile` and `Gemfile.lock` disagree, fix that by regenerating the lockfile through Bundler, not by manually patching the lockfile.
+
 This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `bin/ci` which includes `bin/lint-r3x` to verify AGENTS.md references.
 
 ## JSON
