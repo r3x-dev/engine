@@ -23,7 +23,14 @@ class WorkflowCLI < Thor
     end
 
     puts "Running: #{path}"
-    ap load_workflow(path).perform_now
+
+    result = load_workflow(path).perform_now
+
+    if result.is_a?(String)
+      puts result
+    else
+      ap result
+    end
   end
 
   desc "list", "List available workflows"
