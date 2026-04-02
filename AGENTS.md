@@ -27,7 +27,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `app/models/r3x/`: runtime support models such as `R3x::TriggerState` for per-trigger change-detection state.
 - `workflows/`: user workflow packs. These are not the framework itself; they are loaded by the framework.
 - `workflows/<pack>/test/`: self-contained tests for a specific workflow pack. Keep pack-local tests beside the workflow code, and use `test/fixtures/workflows/` for framework-level fixtures.
-- `config/initializers/r3x_workflow_loader.rb`: boot-time workflow loading hook.
+- `lib/r3x/workflow/boot.rb`: explicit workflow boot helper used by process entrypoints.
 - `test/fixtures/workflows/`: fixture workflows for framework tests. Prefer these over hardcoding real workflows in tests.
 
 ## Runtime Flow
@@ -37,6 +37,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - Workflow-declared DSL objects must validate themselves before being registered; invalid DSL configuration should raise `R3x::ConfigurationError` with collected validation errors.
 - `R3x::Workflow::PackLoader` discovers workflow entrypoints named `workflow.rb` from directories listed in `R3X_WORKFLOW_PATHS`, loads them, and registers their classes in `R3x::Workflow::Registry`.
 - `R3x::RecurringTasksConfig` turns schedulable workflow triggers into Solid Queue dynamic recurring tasks via `SolidQueue::RecurringTask`. All triggers have a `unique_key` (based on type + options hash) used for identification and duplicate detection. `schedule_all!` persists dynamic tasks and sweeps stale ones.
+- Workflow packs are loaded explicitly by process entrypoints, not globally during Rails boot. `bin/rails server` uses a `server do` hook to load workflows and schedule recurring tasks; `bin/jobs` loads workflows before starting the Solid Queue CLI.
 - Change-detecting triggers are file-defined trigger objects that provide `cron`, `unique_key`, and `detect_changes(workflow_key:, state:)`. Their durable runtime state lives in `R3x::TriggerState`.
 - `R3x::ChangeDetectionJob` loads the trigger, fetches/updates `R3x::TriggerState`, and only enqueues the workflow job class itself when the trigger reports a change.
 - Because the app currently uses `Solid Queue` as a database-backed backend on the same Active Record database connection, code may intentionally rely on a database transaction covering both `TriggerState` updates and `perform_later`. Do not assume those guarantees survive a future backend or database split.
@@ -50,7 +51,7 @@ If you're changing workflows or workflow framework code, read
 `docs/workflows.md` first. It collects the current guidance on steps,
 debugging, logging, LLM output, dry run behavior, and error handling.
 
-Use `bin/workflow` to interact with workflows from the command line. It loads all workflow packs via `PackLoader.load!` and queries `Registry`.
+Use `bin/workflow` to interact with workflows from the command line. `list` and `info` load all workflow packs via `PackLoader.load!` and query `Registry`; `run` loads only the requested workflow file.
 
 ### Output safety
 
@@ -79,7 +80,7 @@ bin/workflow [options] [command] [arguments]
 
 **Global options:** `-h, --help` — print usage.
 
-The CLI handles workflow resolution internally: it checks if the argument looks like a file path (contains `/` or ends with `workflow.rb`), loads from file if so, otherwise fetches from the registry via `workflow_key`. The resolved workflow class is then executed with `perform_now`.
+The `run` command loads the requested workflow file directly and executes the workflow class it defines. `list` and `info` load all workflow packs via `PackLoader.load!` and query `Registry`. `bin/rails server` loads all workflow packs and schedules recurring tasks via the Rails `server` hook, while `bin/jobs` loads all workflow packs without scheduling.
 
 **Note:** `bin/workflow run` always requires a file path. Use `bin/workflow list` and `bin/workflow info` to discover workflows loaded from `R3X_WORKFLOW_PATHS`.
 
@@ -91,7 +92,7 @@ The CLI handles workflow resolution internally: it checks if the argument looks 
 ## Maintenance Warning
 
 - Keep this file synchronized with the real codebase. If you change workflow loading, trigger discovery, scheduling flow, top-level directory structure, namespaces, or the framework/user-workflow boundary, update the relevant `AGENTS.md` sections in the same change.
-- In particular, update examples and notes here when changing files such as `lib/r3x/workflow.rb`, `lib/r3x/workflow/pack_loader.rb`, `lib/r3x/workflow/registry.rb`, `lib/r3x/recurring_tasks_config.rb`, `lib/r3x/triggers.rb`, `app/jobs/r3x/run_workflow_job.rb`, `bin/workflow`, or `config/initializers/r3x_workflow_loader.rb`.
+- In particular, update examples and notes here when changing files such as `lib/r3x/workflow.rb`, `lib/r3x/workflow/pack_loader.rb`, `lib/r3x/workflow/registry.rb`, `lib/r3x/workflow/boot.rb`, `lib/r3x/recurring_tasks_config.rb`, `lib/r3x/triggers.rb`, `app/jobs/r3x/run_workflow_job.rb`, `bin/workflow`, `bin/jobs`, or `config/application.rb`.
 - Also update this file when changing the shared DSL validation contract in files such as `lib/r3x/dsl/validatable.rb`, `lib/r3x/configuration_error.rb`, or the base classes for workflow-declared objects.
 - Also update this file when changing Active Job backend semantics, `Solid Queue` database wiring, or any logic that depends on enqueueing being inside the same database transaction as app writes.
 - When adding a new subsystem or moving code between `lib/r3x/`, `app/lib/r3x/`, `app/jobs/r3x/`, or `workflows/`, refresh the project overview and codebase map so future agents can still orient themselves quickly.
