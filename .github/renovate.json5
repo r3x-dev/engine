@@ -18,6 +18,14 @@
       "matchUpdateTypes": ["minor", "major"],
       "matchPackagePatterns": ["*"],
       "automerge": false
+    },
+    {
+      "description": "Auto-merge GitHub Actions updates when tests pass",
+      "matchManagers": ["github-actions"],
+      "automerge": true,
+      "automergeType": "branch",
+      "automergeStrategy": "squash",
+      "requiredStatusChecks": ["CI/test"]
     }
   ],
   "prHourlyLimit": 0,
