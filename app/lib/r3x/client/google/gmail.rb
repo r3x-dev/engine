@@ -11,6 +11,13 @@ module R3x
         end
 
         def deliver(to:, subject:, body:)
+          if R3x::Policy.dry_run_for(:gmail)
+            logger.info do
+              "[DRY-RUN]: \nto: #{to}\nsubject: #{subject}\nbody: #{body}"
+            end
+            return {"mode" => "dry_run"}
+          end
+
           result = build_service.send_user_message(
             "me", # The user's email address. The special value `me` can be used to indicate the
             ::Google::Apis::GmailV1::Message.new(raw: raw_message(to: to, subject: subject, body: body))

@@ -326,3 +326,4 @@ response.content
 
 - Apply these as defaults for new work.
 - Do not rewrite existing code only to satisfy these preferences unless the task explicitly calls for that refactor.
+- **Do not remove existing comments from code without explicit user approval.** Comments in the codebase are intentional documentation — preserve them unless the user asks to remove or rewrite them.

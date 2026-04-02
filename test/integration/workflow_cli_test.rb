@@ -36,12 +36,11 @@ class WorkflowCliTest < ActiveSupport::TestCase
     assert_includes output, "test"
   end
 
-  test "run command with dry-run shows file info" do
-    output = run_cli("run -d #{@fixture_path}")
+  test "run command with dry-run still executes workflow" do
+    output = run_cli("run --dry-run #{@fixture_path}")
 
     assert_includes output, "Dry run: #{@fixture_path}"
-    assert_includes output, "would load from:"
-    assert_includes output, "not executing"
+    assert_includes output, "Test workflow executed successfully"
   end
 
   test "run command without arguments shows usage" do

@@ -2,6 +2,10 @@
 require_relative "../config/environment"
 require "thor"
 
+logger = ActiveSupport::Logger.new(STDOUT)
+logger.level = Logger::INFO
+Rails.logger = ActiveSupport::TaggedLogging.new(logger)
+
 class WorkflowCLI < Thor
   def self.exit_on_failure? = true
   namespace :workflow
@@ -10,19 +14,14 @@ class WorkflowCLI < Thor
   map "run" => :execute
 
   desc "run PATH", "Run a workflow from file path"
-  option :dry_run, type: :boolean, aliases: "-d", desc: "Show what would be executed"
+  option :dry_run, type: :boolean, desc: "Run with global dry run mode (clients skip external side effects)"
   option :verbose, type: :boolean, aliases: "-v", desc: "Enable verbose logging (debug level)"
   def execute(path)
-    enable_verbose_logging if options[:verbose]
+    Rails.logger.level = Logger::DEBUG if options[:verbose]
 
-    if options[:dry_run]
-      puts "Dry run: #{path}"
-      puts "  (would load from: #{File.expand_path(path)})"
-      puts "  (not executing)"
-      return
-    end
+    ENV["R3X_DRY_RUN"] = "true" if options[:dry_run]
 
-    puts "Running: #{path}"
+    puts options[:dry_run] ? "Dry run: #{path}" : "Running: #{path}"
 
     result = load_workflow(path).perform_now
 
@@ -65,18 +64,16 @@ class WorkflowCLI < Thor
 
   private
 
-  def enable_verbose_logging
-    require "logger"
-    logger = ActiveSupport::Logger.new(STDOUT)
-    logger.level = Logger::DEBUG
-    Rails.logger = ActiveSupport::TaggedLogging.new(logger)
-    Rails.logger.info "Verbose logging enabled"
-  end
-
-  def load_workflow(path)
+  def workflow_file_path(path)
     full_path = File.expand_path(path)
     raise ArgumentError, "Workflow file not found: #{path}" unless File.exist?(full_path)
     raise ArgumentError, "Not a file: #{path}" unless File.file?(full_path)
+
+    full_path
+  end
+
+  def load_workflow(path)
+    full_path = workflow_file_path(path)
 
     require full_path
 
