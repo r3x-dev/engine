@@ -15,7 +15,7 @@ module R3x
             logger.info do
               "[DRY-RUN]: \nto: #{to}\nsubject: #{subject}\nbody: #{body}"
             end
-            return {"mode" => "dry_run"}
+            return { "mode" => "dry_run" }
           end
 
           result = build_service.send_user_message(
