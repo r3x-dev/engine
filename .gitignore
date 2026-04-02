@@ -43,9 +43,6 @@
 # Ignore byebug history
 .byebug_history
 
-# Ignore ruby-version file (we use mise.toml)
-.ruby-version
-
 /workflows
 /docs/mvp
 /scratchpad
