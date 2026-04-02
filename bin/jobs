@@ -3,4 +3,6 @@
 require_relative "../config/environment"
 require "solid_queue/cli"
 
+R3x::Workflow::Boot.load!
+
 SolidQueue::Cli.start(ARGV)
