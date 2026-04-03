@@ -12,9 +12,8 @@ module R3x
 
         def deliver(to:, subject:, body:)
           if R3x::Policy.dry_run_for(:gmail)
-            logger.info do
-              "[DRY-RUN]: \nto: #{to}\nsubject: #{subject}\nbody: #{body}"
-            end
+            logger.info { "[DRY-RUN]: \nto: #{to}\nsubject: #{subject}\nbody: #{body}" }
+
             return { "mode" => "dry_run" }
           end
 
