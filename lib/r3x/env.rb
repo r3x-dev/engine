@@ -14,6 +14,20 @@ module R3x
       fetch(key) || raise(ArgumentError, "Missing #{key}")
     end
 
+    def self.fetch_boolean(key)
+      value = fetch(key)
+      return if value.nil?
+
+      case value.to_s.downcase
+      when "1", "true", "yes", "on"
+        true
+      when "0", "false", "no", "off"
+        false
+      else
+        raise ArgumentError, "Invalid boolean for #{key}: #{value.inspect}"
+      end
+    end
+
     def self.present?(key)
       ENV[key].present?
     end

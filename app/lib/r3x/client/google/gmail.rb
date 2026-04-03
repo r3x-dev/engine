@@ -43,6 +43,7 @@ module R3x
 
         def raw_message(to:, subject:, body:)
           Mail.new.tap do |mail|
+            mail.charset = "UTF-8"
             mail.to = to
             mail.subject = subject
             mail.body = body
