@@ -57,9 +57,10 @@ RUN bundle install && \
 # Copy application code
 COPY . .
 
-# Precompile bootsnap code for faster boot times.
+# Precompile assets for Mission Control Jobs UI, then bootsnap for faster boot
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
-RUN bundle exec bootsnap precompile -j 1 app/ lib/
+RUN SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile && \
+    bundle exec bootsnap precompile -j 1 app/ lib/
 
 # CI image for containerized test/build checks.
 # It intentionally excludes the `development` group and keeps the `test` group.
