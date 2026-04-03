@@ -76,11 +76,12 @@ bin/workflow [options] [command] [arguments]
 | `bin/workflow list` | List all registered workflows with their trigger types. |
 | `bin/workflow info <key>` | Show class name and trigger details for a specific workflow. |
 | `bin/workflow run <path>` | Execute a workflow from file path (always requires path to `workflow.rb`). |
-| `bin/workflow run -d <path>` | Dry run — show what would be executed without running. |
+| `bin/workflow run -d <path>` | Dry run — execute with global dry-run mode enabled for side-effecting clients. |
+| `bin/workflow run --skip-cache <path>` | Execute while bypassing all `with_cache` blocks for that run. |
 
 **Global options:** `-h, --help` — print usage.
 
-The `run` command loads the requested workflow file directly and executes the workflow class it defines. `list` and `info` load all workflow packs via `PackLoader.load!` and query `Registry`. `bin/rails server` loads all workflow packs and schedules recurring tasks via the Rails `server` hook, while `bin/jobs` loads all workflow packs without scheduling.
+The `run` command loads the requested workflow file directly and executes the workflow class it defines. Use `--skip-cache` when you want to ignore `with_cache` during local iteration without editing the workflow file. `list` and `info` load all workflow packs via `PackLoader.load!` and query `Registry`. `bin/rails server` loads all workflow packs and schedules recurring tasks via the Rails `server` hook, while `bin/jobs` loads all workflow packs without scheduling.
 
 **Note:** `bin/workflow run` always requires a file path. Use `bin/workflow list` and `bin/workflow info` to discover workflows loaded from `R3X_WORKFLOW_PATHS`.
 

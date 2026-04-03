@@ -43,6 +43,13 @@ class WorkflowCliTest < ActiveSupport::TestCase
     assert_includes output, "Test workflow executed successfully"
   end
 
+  test "run command with skip-cache still executes workflow" do
+    output = run_cli("run --skip-cache #{@fixture_path}")
+
+    assert_includes output, "Running without cache: #{@fixture_path}"
+    assert_includes output, "Test workflow executed successfully"
+  end
+
   test "run command without arguments shows usage" do
     output = run_cli("run", allow_failure: true)
 

@@ -13,6 +13,25 @@ These notes apply to workflow code in general.
 - Keep steps small and meaningful. A step should mark a real unit of progress, not just wrap every
   line.
 
+## Available Helpers
+
+- `ctx`
+  - The current workflow execution context.
+  - Available during `perform` / `run`.
+  - Use it to access clients and runtime data without passing context through every helper method.
+- `step`
+  - Marks a resumable boundary using `ActiveJob::Continuable`.
+  - Use it around slow or externally dependent phases that should resume cleanly after interruption
+    or retry.
+- `with_cache`
+  - Wraps an expensive block in `Rails.cache` so repeated local runs can reuse the same result.
+  - Good for slow, noisy, or hard-to-reproduce API calls while iterating on a workflow.
+  - `bin/workflow run --skip-cache <path>` bypasses all `with_cache` blocks for that run without
+    editing the workflow.
+  - `R3X_SKIP_CACHE=true` does the same override at the env level.
+  - In production, `with_cache` still raises by default unless `R3X_SKIP_CACHE=true` is set.
+  - Use `with_cache(force: true)` when you need to refresh a stale cached value.
+
 ## Fail Fast
 
 - Prefer letting workflows fail loudly.
@@ -21,13 +40,13 @@ These notes apply to workflow code in general.
 
 ## Debugging And Caching
 
-- Use `with_cache` for expensive, repeatable blocks while debugging or iterating.
-- Good fits are calls that are slow, noisy, or hard to reproduce.
-- When you're repeatedly running the same workflow during debugging, wrap the slowest API calls in
-  `with_cache` temporarily so you can iterate faster.
-- `with_cache` is for development and test; it raises in production so cached debug paths do not
-  leak into live runs.
-- Use `with_cache(force: true)` when you need to bypass a stale value.
+- Prefer `with_cache` only around clearly expensive or noisy calls, not around the whole workflow.
+- The normal workflow is:
+  - add `with_cache` around the slowest boundary while iterating
+  - use `bin/workflow run --skip-cache <path>` when you want a fresh uncached run
+  - leave the helper in place if it remains useful for future debugging
+- If a cached block becomes confusing or hides too much behavior, remove it instead of stacking more
+  flags or conditions around it.
 
 ## Logging
 
