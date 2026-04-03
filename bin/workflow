@@ -15,13 +15,15 @@ class WorkflowCLI < Thor
 
   desc "run PATH", "Run a workflow from file path"
   option :dry_run, type: :boolean, desc: "Run with global dry run mode (clients skip external side effects)"
+  option :skip_cache, type: :boolean, desc: "Run without workflow cache (with_cache blocks execute directly)"
   option :verbose, type: :boolean, aliases: "-v", desc: "Enable verbose logging (debug level)"
   def execute(path)
     Rails.logger.level = Logger::DEBUG if options[:verbose]
 
     ENV["R3X_DRY_RUN"] = "true" if options[:dry_run]
+    ENV["R3X_SKIP_CACHE"] = "true" if options[:skip_cache]
 
-    puts options[:dry_run] ? "Dry run: #{path}" : "Running: #{path}"
+    puts run_message(path)
 
     result = load_workflow(path).perform_now
 
@@ -63,6 +65,14 @@ class WorkflowCLI < Thor
   end
 
   private
+
+  def run_message(path)
+    return "Dry run without cache: #{path}" if options[:dry_run] && options[:skip_cache]
+    return "Dry run: #{path}" if options[:dry_run]
+    return "Running without cache: #{path}" if options[:skip_cache]
+
+    "Running: #{path}"
+  end
 
   def workflow_file_path(path)
     full_path = File.expand_path(path)

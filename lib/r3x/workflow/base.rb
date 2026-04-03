@@ -32,6 +32,10 @@ module R3x
       end
 
       def with_cache(force: false, &block)
+        if R3x::Policy.skip_cache?
+          return yield
+        end
+
         if Rails.env.production?
           raise RuntimeError, "with_cache is disabled in production"
         end

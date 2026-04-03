@@ -5,15 +5,24 @@ module R3x
     setup do
       @original_global = ENV["R3X_DRY_RUN"]
       @original_gmail = ENV["R3X_GMAIL_DRY_RUN"]
+      @original_skip_cache = ENV["R3X_SKIP_CACHE"]
     end
 
     teardown do
       ENV["R3X_DRY_RUN"] = @original_global
       ENV["R3X_GMAIL_DRY_RUN"] = @original_gmail
+      ENV["R3X_SKIP_CACHE"] = @original_skip_cache
     end
 
     test "defaults to dry run in test environment" do
-      assert_equal true, Policy.default_dry_run_for(:gmail)
+      original = Rails.method(:env)
+      Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new("test") }
+
+      with_env("R3X_DRY_RUN" => nil, "R3X_GMAIL_DRY_RUN" => nil) do
+        assert_equal true, Policy.default_dry_run_for(:gmail)
+      end
+    ensure
+      Rails.define_singleton_method(:env, original)
     end
 
     test "dry_run_for prefers explicit value" do
@@ -36,26 +45,67 @@ module R3x
     end
 
     test "specific env override wins" do
-      ENV["R3X_GMAIL_DRY_RUN"] = "false"
-
-      assert_equal false, Policy.default_dry_run_for(:gmail)
+      with_env("R3X_GMAIL_DRY_RUN" => "false") do
+        assert_equal false, Policy.default_dry_run_for(:gmail)
+      end
     end
 
     test "global env override wins when specific is absent" do
-      ENV.delete("R3X_GMAIL_DRY_RUN")
-      ENV["R3X_DRY_RUN"] = "false"
-
-      assert_equal false, Policy.default_dry_run_for(:discord)
+      with_env("R3X_GMAIL_DRY_RUN" => nil, "R3X_DRY_RUN" => "false") do
+        assert_equal false, Policy.default_dry_run_for(:discord)
+      end
     end
 
     test "rejects invalid boolean values" do
-      ENV["R3X_GMAIL_DRY_RUN"] = "maybe"
+      with_env("R3X_GMAIL_DRY_RUN" => "maybe") do
+        error = assert_raises(ArgumentError) do
+          Policy.default_dry_run_for(:gmail)
+        end
 
-      error = assert_raises(ArgumentError) do
-        Policy.default_dry_run_for(:gmail)
+        assert_equal 'Invalid boolean for R3X_GMAIL_DRY_RUN: "maybe"', error.message
+      end
+    end
+
+    test "skip_cache? defaults to false" do
+      assert_equal false, Policy.skip_cache?
+    end
+
+    test "skip_cache? reads env override" do
+      with_env("R3X_SKIP_CACHE" => "true") do
+        assert_equal true, Policy.skip_cache?
+      end
+    end
+
+    test "skip_cache? rejects invalid boolean values" do
+      with_env("R3X_SKIP_CACHE" => "maybe") do
+        error = assert_raises(ArgumentError) do
+          Policy.skip_cache?
+        end
+
+        assert_equal 'Invalid boolean for R3X_SKIP_CACHE: "maybe"', error.message
+      end
+    end
+
+    private
+
+    def with_env(values)
+      old_values = {}
+
+      values.each do |key, value|
+        old_values[key] = ENV[key]
+
+        if value.nil?
+          ENV.delete(key)
+        else
+          ENV[key] = value
+        end
       end
 
-      assert_equal 'Invalid boolean for dry run: "maybe"', error.message
+      yield
+    ensure
+      old_values.each do |key, value|
+        ENV[key] = value
+      end
     end
   end
 end

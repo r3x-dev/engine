@@ -415,5 +415,61 @@ module R3x
     ensure
       Rails.define_singleton_method(:env, original_env)
     end
+
+    test "with_cache bypasses cache when skip-cache override is enabled" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::SkipCacheTest"
+        end
+      end
+
+      workflow = workflow_class.new
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+      original_skip_cache = ENV["R3X_SKIP_CACHE"]
+      calls = 0
+
+      Rails.cache = cache
+      ENV["R3X_SKIP_CACHE"] = "true"
+
+      begin
+        first = workflow.with_cache { calls += 1; { "calls" => calls } }
+        second = workflow.with_cache { calls += 1; { "calls" => calls } }
+
+        assert_equal 2, calls
+        assert_equal({ "calls" => 1 }, first)
+        assert_equal({ "calls" => 2 }, second)
+      ensure
+        ENV["R3X_SKIP_CACHE"] = original_skip_cache
+        Rails.cache = original_cache
+      end
+    end
+
+    test "with_cache bypasses production guard when skip-cache override is enabled" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::ProductionSkipCacheGuard"
+        end
+      end
+
+      workflow = workflow_class.new
+      original_env = Rails.method(:env)
+      original_skip_cache = ENV["R3X_SKIP_CACHE"]
+      calls = 0
+
+      Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new("production") }
+      ENV["R3X_SKIP_CACHE"] = "true"
+
+      result = workflow.with_cache do
+        calls += 1
+        { "calls" => calls }
+      end
+
+      assert_equal 1, calls
+      assert_equal({ "calls" => 1 }, result)
+    ensure
+      ENV["R3X_SKIP_CACHE"] = original_skip_cache
+      Rails.define_singleton_method(:env, original_env)
+    end
   end
 end
