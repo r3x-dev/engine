@@ -3,7 +3,7 @@ module R3x
     INTERNAL_PREFIX = "R3X_"
 
     def self.logger
-      Rails.logger.tagged(self.name)
+      Rails.logger.tagged(name)
     end
 
     def self.fetch(key)
@@ -14,6 +14,10 @@ module R3x
       fetch(key) || raise(ArgumentError, "Missing #{key}")
     end
 
+    # Intentionally not using ActiveModel::Type::Boolean.new.cast — it silently
+    # returns true for any unrecognized value instead of raising, which would
+    # silently accept typos in env vars (e.g. "fasle" → true). We want to fail
+    # fast with a clear error for invalid input.
     def self.fetch_boolean(key)
       value = fetch(key)
       return if value.nil?
@@ -61,7 +65,7 @@ module R3x
 
       secrets.each do |key, value|
         if key.start_with?(INTERNAL_PREFIX)
-          raise RuntimeError, "Vault secret key '#{key}' starts with reserved prefix '#{INTERNAL_PREFIX}'"
+          raise "Vault secret key '#{key}' starts with reserved prefix '#{INTERNAL_PREFIX}'"
         end
         ENV[key] = value.to_s
         loaded[key] = true
@@ -69,9 +73,9 @@ module R3x
 
       logger.info "Loaded #{loaded.size} secrets from Vault"
       loaded
-    rescue RuntimeError => e
+    rescue RuntimeError
       raise
-    rescue StandardError => e
+    rescue => e
       logger.warn "Vault error: #{e.message}"
       {}
     end
