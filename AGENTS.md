@@ -9,8 +9,10 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - Workflows are file-based, Git-friendly, and loaded into a database-backed runtime that uses Active Job + Solid Queue for execution and recurring scheduling.
 - Workflow classes are enqueued directly as Active Job classes so workflow code can use `ActiveJob::Continuable` and `step` on the real workflow job instance.
 - `Solid Queue` is the active job backend for app/runtime execution. Treat queueing semantics as database-backed, not Redis-backed.
-- In the current app configuration, `Solid Queue` is not wired through `config.solid_queue.connects_to`, so queue records use the same Active Record database connection as the app in the environments configured here. That means queue inserts can participate in the same database transaction as app writes.
-- If `Solid Queue` is ever moved to a separate database, or replaced with a non-database backend, revisit any code that relies on transactional integrity between app writes and job enqueueing. In that setup, `enqueue_after_transaction_commit` and related tests become important again.
+- In the current app configuration, `Solid Queue` is not wired through `config.solid_queue.connects_to`, and `Solid Cache` is not pointed at a separate cache database. In development and production, app tables, queue tables, and cache tables all use the primary Active Record database connection.
+- Because queue records use the same Active Record database connection as the app in the configured environments here, queue inserts can participate in the same database transaction as app writes.
+- If `Solid Queue` or `Solid Cache` is ever moved to a separate database, or replaced with a non-database backend/store, revisit any code that relies on transactional integrity between app writes and job enqueueing. In that setup, `enqueue_after_transaction_commit` and related tests become important again.
+- Production database configuration is environment-driven: prefer `R3X_DATABASE_URL`, and fall back to `R3X_DATABASE_PATH` for SQLite-style file paths.
 - The default local UI surface is Mission Control Jobs mounted at `/jobs`; the root route redirects there.
 
 ## Codebase Map
