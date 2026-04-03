@@ -63,4 +63,9 @@ Rails.application.configure do
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
   config.active_job.queue_adapter = :solid_queue
+
+  # Intentionally uses ActiveModel::Type::Boolean instead of R3x::Env.fetch_boolean.
+  # A typo in this env var should fail-open (auth stays enabled) rather than crash
+  # the app on boot.
+  config.mission_control.jobs.http_basic_auth_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch("MISSION_CONTROL_AUTH_ENABLED", true))
 end

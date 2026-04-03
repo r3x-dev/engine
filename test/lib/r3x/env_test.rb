@@ -56,7 +56,7 @@ module R3x
         Env.secure_fetch("OTHER_KEY_TEST", prefix: "GEMINI_API_KEY_")
       end
 
-      assert_match /must start with/, error.message
+      assert_match(/must start with/, error.message)
     ensure
       ENV.delete("OTHER_KEY_TEST")
     end
@@ -88,7 +88,7 @@ module R3x
         Env.secure_fetch("VAULT_TOKEN", prefix: /\AGEMINI_API_KEY_[A-Z0-9_]+\z/)
       end
 
-      assert_match /must match/, error.message
+      assert_match(/must match/, error.message)
     ensure
       ENV.delete("VAULT_TOKEN")
     end
@@ -100,7 +100,7 @@ module R3x
         Env.secure_fetch("GEMINI_API_KEY_michal", prefix: /\AGEMINI_API_KEY_[A-Z0-9_]+\z/)
       end
 
-      assert_match /must match/, error.message
+      assert_match(/must match/, error.message)
     ensure
       ENV.delete("GEMINI_API_KEY_michal")
     end
@@ -112,7 +112,7 @@ module R3x
         Env.secure_fetch("GEMINI_API_KEY_TEST;INJECTED", prefix: /\AGEMINI_API_KEY_[A-Z0-9_]+\z/)
       end
 
-      assert_match /must match/, error.message
+      assert_match(/must match/, error.message)
     ensure
       ENV.delete("GEMINI_API_KEY_TEST;INJECTED")
     end
@@ -124,7 +124,7 @@ module R3x
         Env.secure_fetch("GEMINI_API_KEY_../../../ETC", prefix: /\AGEMINI_API_KEY_[A-Z0-9_]+\z/)
       end
 
-      assert_match /must match/, error.message
+      assert_match(/must match/, error.message)
     ensure
       ENV.delete("GEMINI_API_KEY_../../../ETC")
     end
@@ -136,9 +136,60 @@ module R3x
         Env.secure_fetch("SOME_KEY", prefix: 42)
       end
 
-      assert_match /must be a String or Regexp/, error.message
+      assert_match(/must be a String or Regexp/, error.message)
     ensure
       ENV.delete("SOME_KEY")
+    end
+
+    # fetch_boolean tests
+
+    test "fetch_boolean returns true for truthy values" do
+      %w[1 true yes on].each do |value|
+        ENV["R3X_TEST_ENV_VAR"] = value
+        assert_equal true, Env.fetch_boolean("R3X_TEST_ENV_VAR"), "Expected true for #{value.inspect}"
+      end
+    ensure
+      ENV.delete("R3X_TEST_ENV_VAR")
+    end
+
+    test "fetch_boolean returns false for falsy values" do
+      %w[0 false no off].each do |value|
+        ENV["R3X_TEST_ENV_VAR"] = value
+        assert_equal false, Env.fetch_boolean("R3X_TEST_ENV_VAR"), "Expected false for #{value.inspect}"
+      end
+    ensure
+      ENV.delete("R3X_TEST_ENV_VAR")
+    end
+
+    test "fetch_boolean returns nil when env var is missing" do
+      ENV.delete("R3X_TEST_ENV_VAR")
+      assert_nil Env.fetch_boolean("R3X_TEST_ENV_VAR")
+    end
+
+    test "fetch_boolean returns nil when env var is blank" do
+      ENV["R3X_TEST_ENV_VAR"] = ""
+      assert_nil Env.fetch_boolean("R3X_TEST_ENV_VAR")
+    ensure
+      ENV.delete("R3X_TEST_ENV_VAR")
+    end
+
+    test "fetch_boolean raises on invalid value" do
+      ENV["R3X_TEST_ENV_VAR"] = "invalid"
+      error = assert_raises(ArgumentError) { Env.fetch_boolean("R3X_TEST_ENV_VAR") }
+      assert_match(/Invalid boolean/, error.message)
+      assert_match(/R3X_TEST_ENV_VAR/, error.message)
+    ensure
+      ENV.delete("R3X_TEST_ENV_VAR")
+    end
+
+    test "fetch_boolean is case-insensitive" do
+      ENV["R3X_TEST_ENV_VAR"] = "TRUE"
+      assert_equal true, Env.fetch_boolean("R3X_TEST_ENV_VAR")
+
+      ENV["R3X_TEST_ENV_VAR"] = "FALSE"
+      assert_equal false, Env.fetch_boolean("R3X_TEST_ENV_VAR")
+    ensure
+      ENV.delete("R3X_TEST_ENV_VAR")
     end
 
     # load_from_vault tests
@@ -164,7 +215,7 @@ module R3x
 
       stub_request(:get, "https://vault.test/v1/auth/token/lookup-self")
         .to_return(status: 200, body: { data: { id: "test-token" } }.to_json,
-                   headers: { "Content-Type" => "application/json" })
+          headers: { "Content-Type" => "application/json" })
 
       stub_request(:get, "https://vault.test/v1/secret/data/test")
         .to_return(
@@ -185,8 +236,8 @@ module R3x
         Env.load_from_vault("secret/data/test")
       end
 
-      assert_match /starts with reserved prefix/, error.message
-      assert_match /R3X_DISCORD_WEBHOOK_URL/, error.message
+      assert_match(/starts with reserved prefix/, error.message)
+      assert_match(/R3X_DISCORD_WEBHOOK_URL/, error.message)
     ensure
       ENV["R3X_VAULT_ADDR"] = original_addr
       ENV["R3X_VAULT_TOKEN"] = original_token
