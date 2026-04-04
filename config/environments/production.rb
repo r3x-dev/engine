@@ -63,6 +63,7 @@ Rails.application.configure do
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
   config.active_job.queue_adapter = :solid_queue
+  config.solid_queue.clear_finished_jobs_after = 2.weeks
 
   # Intentionally uses ActiveModel::Type::Boolean instead of R3x::Env.fetch_boolean.
   # A typo in this env var should fail-open (auth stays enabled) rather than crash
