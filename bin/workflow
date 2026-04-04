@@ -25,7 +25,7 @@ class WorkflowCLI < Thor
 
     puts run_message(path)
 
-    result = load_workflow(path).perform_now
+    result = load_workflow(path).new.perform
 
     if result.is_a?(String)
       puts result
