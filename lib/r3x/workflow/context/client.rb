@@ -34,8 +34,8 @@ module R3x
           R3x::Client::Google::Gmail.new(credentials_env: credentials_env)
         end
 
-        def discord(webhook_url:)
-          R3x::Client::Discord.new(webhook_url: webhook_url)
+        def discord(webhook_url_env:)
+          R3x::Client::Discord.new(webhook_url_env: webhook_url_env)
         end
       end
     end

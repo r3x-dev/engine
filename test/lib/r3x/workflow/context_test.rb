@@ -94,16 +94,28 @@ module R3x
       end
 
       test "client proxy builds discord webhook client" do
-        ctx = Context.new(
-          trigger: R3x::TriggerManager::Execution.new(
-            trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
+        with_env("DISCORD_WEBHOOK_URL_TEST" => "https://discord.test/webhook") do
+          ctx = Context.new(
+            trigger: R3x::TriggerManager::Execution.new(
+              trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
+              workflow_key: "test"
+            ),
             workflow_key: "test"
-          ),
-          workflow_key: "test"
-        )
-        discord = ctx.client.discord(webhook_url: "https://discord.test/webhook")
+          )
+          discord = ctx.client.discord(webhook_url_env: "DISCORD_WEBHOOK_URL_TEST")
 
-        assert_instance_of R3x::Client::Discord, discord
+          assert_instance_of R3x::Client::Discord, discord
+        end
+      end
+
+      private
+
+      def with_env(hash)
+        originals = hash.each_with_object({}) { |(k, _), memo| memo[k] = ENV[k] }
+        hash.each { |k, v| ENV[k] = v }
+        yield
+      ensure
+        originals.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
       end
     end
   end

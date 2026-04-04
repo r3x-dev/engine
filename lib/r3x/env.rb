@@ -37,6 +37,8 @@ module R3x
     end
 
     def self.secure_fetch(key, prefix:)
+      raise ArgumentError, "Missing env key for #{prefix}" if key.blank?
+
       case prefix
       when String
         unless key.start_with?(prefix)
