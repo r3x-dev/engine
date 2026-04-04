@@ -1,12 +1,25 @@
 # frozen_string_literal: true
 
+# Client for the Healthchecks.io Pinging API.
+#
+# Docs:
+# - https://healthchecks.io/docs/
+# - https://healthchecks.io/docs/http_api/
+#
+# Note: the official API docs show URLs like https://hc-ping.com/<uuid>,
+# but self-hosted instances default to PING_ENDPOINT = SITE_ROOT + /ping/
+# (see https://healthchecks.io/docs/self_hosted_configuration/#PING_ENDPOINT).
+# Set HEALTHCHECKS_IO_URL (or pass ping_endpoint:) to the full base including
+# /ping/ if your instance requires it, e.g. https://hc.example.com/ping/.
+# The check_uuid is then appended automatically.
 module R3x
   module Client
     class HealthchecksIO
       include R3x::Concerns::Logger
 
-      def initialize(base_url)
-        @base_url = base_url.chomp("/")
+      def initialize(check_uuid, ping_endpoint: nil, ping_endpoint_env: "HEALTHCHECKS_IO_URL")
+        resolved = ping_endpoint || R3x::Env.fetch!(ping_endpoint_env)
+        @ping_url = File.join(resolved, check_uuid)
       end
 
       # Run a block of code with automatic healthcheck lifecycle.
@@ -23,7 +36,7 @@ module R3x
         begin
           yield(self, rid)
           ping(rid: rid)
-        rescue StandardError => e
+        rescue => e
           fail(body: e.message, rid: rid)
           raise
         end
@@ -47,7 +60,7 @@ module R3x
       # @param rid [String, nil] Optional run ID for matching with start signal
       # @return [HealthchecksIO::Response] The response from Healthchecks.io
       def fail(body: nil, rid: nil)
-        make_request(:post, "/fail", body: body, rid: rid)
+        make_request(:post, "fail", body: body, rid: rid)
       end
 
       # Send a log signal to Healthchecks.io.
@@ -58,7 +71,7 @@ module R3x
       # @return [HealthchecksIO::Response] The response from Healthchecks.io
       def log(lines:, rid: nil)
         body = lines.is_a?(Array) ? lines.join("\n") : lines.to_s
-        make_request(:post, "/log", body: body, rid: rid)
+        make_request(:post, "log", body: body, rid: rid)
       end
 
       # Report an exit status to Healthchecks.io.
@@ -70,15 +83,15 @@ module R3x
       # @return [HealthchecksIO::Response] The response from Healthchecks.io
       def exit_status(code:, body: nil, rid: nil)
         method = body ? :post : :head
-        make_request(method, "/#{code}", body: body, rid: rid)
+        make_request(method, code.to_s, body: body, rid: rid)
       end
 
       private
 
-      attr_reader :base_url
+      attr_reader :ping_url
 
       def connection
-        @connection ||= Faraday.new(url: base_url) do |f|
+        @connection ||= Faraday.new(url: ping_url) do |f|
           f.response :raise_error
           f.options.timeout = 10
           f.options.open_timeout = 5
@@ -86,13 +99,14 @@ module R3x
       end
 
       def send_start(rid: nil)
-        make_request(:head, "/start", rid: rid)
+        make_request(:head, "start", rid: rid)
       end
 
       def make_request(method, path, body: nil, rid: nil)
-        url = build_url(path, rid)
+        url = path
+        url += "?rid=#{rid}" if rid
 
-        logger.debug { "HealthchecksIO #{method.upcase} #{url}" }
+        logger.debug { "HealthchecksIO #{method.upcase} #{ping_url}/#{url}" }
 
         response = case method
         when :head
@@ -104,13 +118,6 @@ module R3x
         end
 
         Response.new(response)
-      end
-
-      def build_url(path, rid)
-        uri = URI.parse(base_url)
-        uri.path = uri.path + path
-        uri.query = "rid=#{rid}" if rid
-        uri.to_s
       end
     end
   end

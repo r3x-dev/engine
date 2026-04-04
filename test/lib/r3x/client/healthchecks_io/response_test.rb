@@ -6,8 +6,10 @@ module R3x
   module Client
     class HealthchecksIOResponseTest < ActiveSupport::TestCase
       setup do
-        @base_url = "https://hc-ping.com/test-uuid-123"
-        @client = HealthchecksIO.new(@base_url)
+        @ping_endpoint = "https://hc-ping.com"
+        @check_uuid = "test-uuid-123"
+        @ping_url = "#{@ping_endpoint}/#{@check_uuid}".freeze
+        @client = HealthchecksIO.new(@check_uuid, ping_endpoint: @ping_endpoint)
       end
 
       teardown do
@@ -15,7 +17,7 @@ module R3x
       end
 
       test "success? returns true for successful response" do
-        stub_request(:head, @base_url).to_return(status: 200, body: "OK")
+        stub_request(:head, @ping_url).to_return(status: 200, body: "OK")
 
         response = @client.ping
 
@@ -23,7 +25,7 @@ module R3x
       end
 
       test "success? returns false for failed response" do
-        stub_request(:head, @base_url).to_return(status: 500, body: "Error")
+        stub_request(:head, @ping_url).to_return(status: 500, body: "Error")
 
         assert_raises(Faraday::Error) do
           @client.ping
@@ -31,7 +33,7 @@ module R3x
       end
 
       test "status returns the HTTP status code" do
-        stub_request(:head, @base_url).to_return(status: 201, body: "Created")
+        stub_request(:head, @ping_url).to_return(status: 201, body: "Created")
 
         response = @client.ping
 
@@ -39,7 +41,7 @@ module R3x
       end
 
       test "body returns the response body" do
-        stub_request(:head, @base_url).to_return(status: 200, body: "Custom body")
+        stub_request(:head, @ping_url).to_return(status: 200, body: "Custom body")
 
         response = @client.ping
 
@@ -47,7 +49,7 @@ module R3x
       end
 
       test "headers returns the response headers" do
-        stub_request(:head, @base_url)
+        stub_request(:head, @ping_url)
           .to_return(status: 200, body: "OK", headers: { "Content-Type" => "text/plain" })
 
         response = @client.ping
@@ -56,7 +58,7 @@ module R3x
       end
 
       test "body_limit returns integer from Ping-Body-Limit header" do
-        stub_request(:head, @base_url)
+        stub_request(:head, @ping_url)
           .to_return(status: 200, body: "OK", headers: { "Ping-Body-Limit" => "100000" })
 
         response = @client.ping
@@ -65,7 +67,7 @@ module R3x
       end
 
       test "body_limit returns nil when header not present" do
-        stub_request(:head, @base_url).to_return(status: 200, body: "OK")
+        stub_request(:head, @ping_url).to_return(status: 200, body: "OK")
 
         response = @client.ping
 
@@ -73,7 +75,7 @@ module R3x
       end
 
       test "to_s returns body as string" do
-        stub_request(:head, @base_url).to_return(status: 200, body: "Test body")
+        stub_request(:head, @ping_url).to_return(status: 200, body: "Test body")
 
         response = @client.ping
 
@@ -81,7 +83,7 @@ module R3x
       end
 
       test "inspect shows status and success" do
-        stub_request(:head, @base_url).to_return(status: 200, body: "OK")
+        stub_request(:head, @ping_url).to_return(status: 200, body: "OK")
 
         response = @client.ping
 
