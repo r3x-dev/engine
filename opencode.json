@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "formatter": {
+    "rubocop": {
+      "command": [
+        "bundle",
+        "exec",
+        "-a",
+        "$FILE"
+      ],
+      "extensions": [
+        ".rb",
+        ".rake",
+        ".gemspec",
+        ".ru"
+      ]
+    }
+  }
+}
