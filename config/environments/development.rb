@@ -54,6 +54,7 @@ Rails.application.configure do
   # config.generators.apply_rubocop_autocorrect_after_generate!
 
   config.active_job.queue_adapter = :solid_queue
+  config.solid_queue.clear_finished_jobs_after = 2.weeks
   config.solid_queue.logger = ActiveSupport::Logger.new(STDOUT)
 
   # Disable Mission Control Jobs HTTP Basic auth in development
