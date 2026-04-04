@@ -6,8 +6,10 @@ module R3x
   module Client
     class HealthchecksIOTest < ActiveSupport::TestCase
       setup do
-        @base_url = "https://hc-ping.com/test-uuid-123"
-        @client = HealthchecksIO.new(@base_url)
+        @ping_endpoint = "https://hc-ping.com"
+        @check_uuid = "test-uuid-123"
+        @ping_url = "#{@ping_endpoint}/#{@check_uuid}".freeze
+        @client = HealthchecksIO.new(@check_uuid, ping_endpoint: @ping_endpoint)
       end
 
       teardown do
@@ -15,8 +17,8 @@ module R3x
       end
 
       test "run sends start ping, yields block, and sends success ping" do
-        stub_request(:head, %r{#{@base_url}/start\?.*}).to_return(status: 200, body: "OK")
-        stub_request(:head, %r{#{@base_url}\?.*}).to_return(status: 200, body: "OK")
+        stub_request(:head, %r{#{@ping_url}/start\?.*}).to_return(status: 200, body: "OK")
+        stub_request(:head, %r{#{@ping_url}\?.*}).to_return(status: 200, body: "OK")
 
         executed = false
         received_rid = nil
@@ -29,13 +31,13 @@ module R3x
         end
 
         assert executed
-        assert_requested :head, %r{#{@base_url}/start\?.*}, times: 1
-        assert_requested :head, %r{#{@base_url}\?.*}, times: 1
+        assert_requested :head, %r{#{@ping_url}/start\?.*}, times: 1
+        assert_requested :head, %r{#{@ping_url}\?.*}, times: 1
       end
 
       test "run sends fail ping when block raises error" do
-        stub_request(:head, %r{#{@base_url}/start\?.*}).to_return(status: 200, body: "OK")
-        stub_request(:post, %r{#{@base_url}/fail\?.*}).to_return(status: 200, body: "OK")
+        stub_request(:head, %r{#{@ping_url}/start\?.*}).to_return(status: 200, body: "OK")
+        stub_request(:post, %r{#{@ping_url}/fail\?.*}).to_return(status: 200, body: "OK")
 
         error = assert_raises(StandardError) do
           @client.run do |client, rid|
@@ -44,8 +46,8 @@ module R3x
         end
 
         assert_equal "Test error", error.message
-        assert_requested :head, %r{#{@base_url}/start\?.*}, times: 1
-        assert_requested :post, %r{#{@base_url}/fail\?.*}, times: 1
+        assert_requested :head, %r{#{@ping_url}/start\?.*}, times: 1
+        assert_requested :post, %r{#{@ping_url}/fail\?.*}, times: 1
       end
 
       test "run raises ArgumentError when no block given" do
@@ -57,7 +59,7 @@ module R3x
       end
 
       test "ping sends success signal" do
-        request = stub_request(:head, @base_url)
+        request = stub_request(:head, @ping_url)
           .to_return(status: 200, body: "OK")
 
         response = @client.ping
@@ -69,7 +71,7 @@ module R3x
       end
 
       test "ping sends success signal with body" do
-        request = stub_request(:post, @base_url)
+        request = stub_request(:post, @ping_url)
           .with(body: "Custom data")
           .to_return(status: 200, body: "OK")
 
@@ -81,16 +83,16 @@ module R3x
 
       test "ping sends rid parameter" do
         rid = "123e4567-e89b-12d3-a456-426614174000"
-        stub_request(:head, "#{@base_url}?rid=#{rid}").to_return(status: 200, body: "OK")
+        stub_request(:head, "#{@ping_url}?rid=#{rid}").to_return(status: 200, body: "OK")
 
         response = @client.ping(rid: rid)
 
         assert response.success?
-        assert_requested :head, "#{@base_url}?rid=#{rid}", times: 1
+        assert_requested :head, "#{@ping_url}?rid=#{rid}", times: 1
       end
 
       test "fail sends failure signal" do
-        request = stub_request(:post, "#{@base_url}/fail")
+        request = stub_request(:post, "#{@ping_url}/fail")
           .to_return(status: 200, body: "OK")
 
         response = @client.fail
@@ -100,7 +102,7 @@ module R3x
       end
 
       test "fail sends failure signal with body" do
-        request = stub_request(:post, "#{@base_url}/fail")
+        request = stub_request(:post, "#{@ping_url}/fail")
           .with(body: "Error details")
           .to_return(status: 200, body: "OK")
 
@@ -111,7 +113,7 @@ module R3x
       end
 
       test "log sends log signal with array of lines" do
-        request = stub_request(:post, "#{@base_url}/log")
+        request = stub_request(:post, "#{@ping_url}/log")
           .with(body: "Line 1\nLine 2\nLine 3")
           .to_return(status: 200, body: "OK")
 
@@ -122,7 +124,7 @@ module R3x
       end
 
       test "log sends log signal with string" do
-        request = stub_request(:post, "#{@base_url}/log")
+        request = stub_request(:post, "#{@ping_url}/log")
           .with(body: "Single log line")
           .to_return(status: 200, body: "OK")
 
@@ -133,7 +135,7 @@ module R3x
       end
 
       test "exit_status sends exit code 0 as success" do
-        request = stub_request(:head, "#{@base_url}/0")
+        request = stub_request(:head, "#{@ping_url}/0")
           .to_return(status: 200, body: "OK")
 
         response = @client.exit_status(code: 0)
@@ -143,7 +145,7 @@ module R3x
       end
 
       test "exit_status sends non-zero exit code as failure" do
-        request = stub_request(:head, "#{@base_url}/1")
+        request = stub_request(:head, "#{@ping_url}/1")
           .to_return(status: 200, body: "OK")
 
         response = @client.exit_status(code: 1)
@@ -152,14 +154,31 @@ module R3x
         assert_requested request
       end
 
-      test "chomps trailing slash from base_url" do
-        client = HealthchecksIO.new("https://hc-ping.com/uuid/")
+      test "chomps trailing slash from ping_endpoint" do
+        client = HealthchecksIO.new("uuid", ping_endpoint: "https://hc-ping.com/")
         request = stub_request(:head, "https://hc-ping.com/uuid")
           .to_return(status: 200, body: "OK")
 
         client.ping
 
         assert_requested request
+      end
+
+      test "reads ping_endpoint from env by default" do
+        original_ping_endpoint = ENV["HEALTHCHECKS_IO_URL"]
+        ENV["HEALTHCHECKS_IO_URL"] = @ping_endpoint
+
+        begin
+          client = HealthchecksIO.new(@check_uuid)
+          request = stub_request(:head, @ping_url)
+            .to_return(status: 200, body: "OK")
+
+          client.ping
+
+          assert_requested request
+        ensure
+          ENV["HEALTHCHECKS_IO_URL"] = original_ping_endpoint
+        end
       end
     end
   end
