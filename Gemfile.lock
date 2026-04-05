@@ -436,7 +436,7 @@ GEM
       rubocop (~> 1.72, >= 1.72.1)
       rubocop-ast (>= 1.44.0, < 2.0)
     ruby-progressbar (1.13.0)
-    ruby_llm (1.14.0)
+    ruby_llm (1.14.1)
       base64
       event_stream_parser (~> 1)
       faraday (>= 1.10.0)
@@ -696,7 +696,7 @@ CHECKSUMS
   rubocop-rails-omakase (1.1.0) sha256=2af73ac8ee5852de2919abbd2618af9c15c19b512c4cfc1f9a5d3b6ef009109d
   rubocop-thread_safety (0.7.3) sha256=067cdd52fbf5deffc18995437e45b5194236eaff4f71de3375a1f6052e48f431
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
-  ruby_llm (1.14.0) sha256=57c6f7034fc4a44504ea137d70f853b07824f1c1cdbe774ab3ab3522e7098deb
+  ruby_llm (1.14.1) sha256=7487d0f0bb9e86836d9233d656e10637370a6b22eb2555343c0a4c179ce7c500
   ruby_llm-schema (0.3.0) sha256=a591edc5ca1b7f0304f0e2261de61ba4b3bea17be09f5cf7558153adfda3dec6
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   signet (0.21.0) sha256=d617e9fbf24928280d39dcfefba9a0372d1c38187ffffd0a9283957a10a8cd5b
