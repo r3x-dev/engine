@@ -33,6 +33,8 @@ module R3x
 
       def with_cache(force: false, &block)
         if R3x::Policy.skip_cache?
+          logger.info "Skipping cache for #{self.class.name} due to policy"
+
           return yield
         end
 
