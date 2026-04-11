@@ -1,0 +1,53 @@
+<div class="table-wrap">
+  <% if runs.empty? %>
+    <div class="empty">No workflow runs match the current filters.</div>
+  <% else %>
+    <table>
+      <thead>
+        <tr>
+          <th>Workflow</th>
+          <th>Status</th>
+          <th>Observed</th>
+          <th>Trigger</th>
+          <th>Queue</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% runs.each do |run| %>
+          <tr>
+            <td>
+              <%= dashboard_workflow_link(run) %>
+              <div class="meta"><code><%= run[:class_name] %></code></div>
+            </td>
+
+            <td>
+              <span class="pill <%= dashboard_tone_for(run[:status]) %>">
+                <%= dashboard_status_label(run[:status]) %>
+              </span>
+            </td>
+
+            <td><%= dashboard_timestamp(run[:recorded_at]) %></td>
+
+            <td><code><%= run[:trigger_key] || "manual/default" %></code></td>
+
+            <td><code><%= run[:queue_name] %></code></td>
+
+            <td>
+              <% if run[:error].present? %>
+                <div><%= dashboard_error_summary(run[:error]) %></div>
+              <% else %>
+                <span class="muted">No error details</span>
+              <% end %>
+
+              <div class="meta">
+                <%= link_to "Mission Control", run[:mission_control_path] %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>

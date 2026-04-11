@@ -1,0 +1,75 @@
+<% content_for :title, "Workflows" %>
+
+<section class="page-header">
+  <div>
+    <h2>Workflows</h2>
+    <p>Current workflow catalog with trigger health, next schedule, and the latest visible run.</p>
+  </div>
+
+  <div class="actions">
+    <%= link_to "Open Mission Control", mission_control_path, class: "button" %>
+    <%= link_to "View Recent Runs", workflow_runs_path, class: "button" %>
+  </div>
+</section>
+
+<section class="panel table-wrap">
+  <% if @workflows.empty? %>
+    <div class="empty">No workflows are currently registered.</div>
+  <% else %>
+    <table>
+      <thead>
+        <tr>
+          <th>Workflow</th>
+          <th>Triggers</th>
+          <th>Next trigger</th>
+          <th>Last run</th>
+          <th>Health</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% @workflows.each do |workflow| %>
+          <tr>
+            <td>
+              <%= link_to workflow[:title], workflow_path(workflow[:workflow_key]), class: "title-link" %>
+              <div class="meta"><code><%= workflow[:class_name] %></code></div>
+            </td>
+
+            <td>
+              <div class="pill-row">
+                <% workflow[:trigger_entries].each do |trigger_entry| %>
+                  <span class="pill <%= dashboard_tone_for(trigger_entry[:trigger].manual? ? "idle" : "scheduled") %>">
+                    <%= dashboard_trigger_label(trigger_entry) %>
+                  </span>
+                <% end %>
+              </div>
+            </td>
+
+            <td><%= dashboard_timestamp(workflow[:next_trigger_at]) %></td>
+
+            <td>
+              <% if workflow[:last_run].present? %>
+                <span class="pill <%= dashboard_tone_for(workflow[:last_run][:status]) %>">
+                  <%= dashboard_status_label(workflow[:last_run][:status]) %>
+                </span>
+                <div class="meta"><%= dashboard_timestamp(workflow[:last_run][:recorded_at]) %></div>
+              <% else %>
+                <span class="muted">No runs yet</span>
+              <% end %>
+            </td>
+
+            <td>
+              <span class="pill <%= dashboard_tone_for(workflow[:health][:status]) %>">
+                <%= dashboard_health_label(workflow[:health]) %>
+              </span>
+
+              <% if workflow[:health][:detail].present? %>
+                <div class="meta"><%= dashboard_error_summary(workflow[:health][:detail]) %></div>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>

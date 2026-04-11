@@ -1,0 +1,138 @@
+<% content_for :title, @workflow[:title] %>
+
+<section class="page-header">
+  <div>
+    <h2><%= @workflow[:title] %></h2>
+    <p><code><%= @workflow[:class_name] %></code></p>
+  </div>
+
+  <div class="actions">
+    <%= link_to "Back to Workflows", workflows_path, class: "button" %>
+    <%= link_to "Mission Control", mission_control_path, class: "button" %>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="stats">
+    <div class="stat">
+      <span class="label">Health</span>
+      <strong><%= dashboard_health_label(@workflow[:health]) %></strong>
+    </div>
+
+    <div class="stat">
+      <span class="label">Next trigger</span>
+      <strong><%= @workflow[:next_trigger_at].present? ? dashboard_relative_time(@workflow[:next_trigger_at]) : "Manual only" %></strong>
+    </div>
+
+    <div class="stat">
+      <span class="label">Last run</span>
+      <strong>
+        <%= @workflow[:last_run].present? ? dashboard_status_label(@workflow[:last_run][:status]) : "No runs yet" %>
+      </strong>
+    </div>
+
+    <div class="stat">
+      <span class="label">Triggers</span>
+      <strong><%= @workflow[:trigger_entries].size %></strong>
+    </div>
+  </div>
+</section>
+
+<section class="grid two" style="margin-top: 18px;">
+  <section class="panel stack">
+    <div>
+      <h3 class="section-title">Triggers</h3>
+      <p class="section-copy">Declared triggers, current schedule, and any persisted change-detection state.</p>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Trigger</th>
+            <th>Next run</th>
+            <th>State</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @workflow[:trigger_entries].each do |trigger_entry| %>
+            <% trigger_state = trigger_entry[:trigger_state] %>
+            <tr>
+              <td>
+                <div><strong><%= dashboard_trigger_label(trigger_entry) %></strong></div>
+                <div class="meta"><code><%= trigger_entry[:unique_key] %></code></div>
+                <div class="pill-row" style="margin-top: 8px;">
+                  <% if trigger_entry[:change_detecting] %>
+                    <span class="pill info">Change detecting</span>
+                  <% end %>
+                  <% if trigger_entry[:recurring_task].present? %>
+                    <span class="pill ok">Scheduled in Solid Queue</span>
+                  <% end %>
+                  <% if trigger_entry[:trigger].manual? %>
+                    <span class="pill muted">Manual</span>
+                  <% end %>
+                </div>
+              </td>
+
+              <td><%= dashboard_timestamp(trigger_entry[:next_trigger_at]) %></td>
+
+              <td>
+                <% if trigger_state.present? %>
+                  <div><strong>Last checked:</strong> <%= dashboard_timestamp(trigger_state.last_checked_at) %></div>
+                  <div><strong>Last triggered:</strong> <%= dashboard_timestamp(trigger_state.last_triggered_at) %></div>
+
+                  <% if trigger_state.last_error_at.present? %>
+                    <div class="meta">
+                      <strong>Last error:</strong>
+                      <%= dashboard_error_summary(trigger_state.last_error_message) %>
+                    </div>
+                  <% end %>
+                <% else %>
+                  <span class="muted">No persisted runtime state</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel stack">
+    <div>
+      <h3 class="section-title">Latest visible run</h3>
+      <p class="section-copy">Recent status from the current <code>solid_queue_jobs</code> retention window.</p>
+    </div>
+
+    <% if @workflow[:last_run].present? %>
+      <div class="pill-row">
+        <span class="pill <%= dashboard_tone_for(@workflow[:last_run][:status]) %>">
+          <%= dashboard_status_label(@workflow[:last_run][:status]) %>
+        </span>
+      </div>
+
+      <div><strong>Observed at:</strong> <%= dashboard_timestamp(@workflow[:last_run][:recorded_at]) %></div>
+      <div><strong>Queue:</strong> <code><%= @workflow[:last_run][:queue_name] %></code></div>
+      <div><strong>Trigger key:</strong> <code><%= @workflow[:last_run][:trigger_key] || "manual/default" %></code></div>
+
+      <% if @workflow[:last_run][:error].present? %>
+        <div class="meta"><strong>Error:</strong> <%= dashboard_error_summary(@workflow[:last_run][:error]) %></div>
+      <% end %>
+    <% else %>
+      <div class="empty">No workflow runs are visible for this workflow yet.</div>
+    <% end %>
+  </section>
+</section>
+
+<section class="panel stack" style="margin-top: 18px;">
+  <div class="page-header">
+    <div>
+      <h3 class="section-title">Recent runs</h3>
+      <p class="section-copy">Newest visible runs for this workflow.</p>
+    </div>
+
+    <%= link_to "See all runs", workflow_runs_path(workflow: @workflow[:workflow_key]), class: "button" %>
+  </div>
+
+  <%= render "r3x/dashboard/workflow_runs/table", runs: @runs %>
+</section>
