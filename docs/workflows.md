@@ -54,6 +54,15 @@ These notes apply to workflow code in general.
   - `R3X_SKIP_CACHE=true` does the same override at the env level.
   - In production, `with_cache` still raises by default unless `R3X_SKIP_CACHE=true` is set.
   - Use `with_cache(force: true)` when you need to refresh a stale cached value.
+- `ctx.durable_set(name = :default, ttl: 60.days)`
+  - Returns a workflow-scoped durable set backed by `Rails.cache`.
+  - Good for remembering which items were already processed, sent, uploaded, or otherwise handled
+    across workflow runs.
+  - Members are scoped by workflow key and set name, so different workflows and different sets do
+    not collide.
+  - Use `include?`, `add`, and `delete` on the returned set.
+  - Prefer this for best-effort dedup across runs; prefer a real table only when you need permanent
+    history or hard uniqueness guarantees.
 
 ## Fail Fast
 
@@ -64,10 +73,13 @@ These notes apply to workflow code in general.
 ## Debugging And Caching
 
 - Prefer `with_cache` only around clearly expensive or noisy calls, not around the whole workflow.
+- Prefer `ctx.durable_set` for cross-run item dedup, not `with_cache`.
 - The normal workflow is:
   - add `with_cache` around the slowest boundary while iterating
   - use `bin/workflow run --skip-cache <path>` when you want a fresh uncached run
   - leave the helper in place if it remains useful for future debugging
+- For durable dedup, use a stable member key from the item itself, such as a URL digest or external
+  post ID, and add it only after the relevant side effect succeeds.
 - If a cached block becomes confusing or hides too much behavior, remove it instead of stacking more
   flags or conditions around it.
 - When a workflow suddenly sees a boolean or `nil` where an array should be, inspect the nearest

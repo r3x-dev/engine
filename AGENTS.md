@@ -40,6 +40,8 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `workflows/`: user workflow packs. These are not the framework itself; they are loaded by the framework.
 - `workflows/<pack>/test/`: self-contained tests for a specific workflow pack. Keep pack-local tests beside the workflow code, and use `test/fixtures/workflows/` for framework-level fixtures.
 - `lib/r3x/workflow/boot.rb`: explicit workflow boot helper used by process entrypoints.
+- `lib/r3x/workflow/durable_set.rb`: workflow-scoped durable set backed by `Rails.cache`, intended
+  for remembering processed item keys across workflow runs.
 - `test/fixtures/workflows/`: fixture workflows for framework tests. Prefer these over hardcoding real workflows in tests.
 
 ## Runtime Flow
@@ -47,6 +49,8 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - Workflows subclass `R3x::Workflow::Base`, declare triggers via the DSL, and implement `#run`.
 - Workflow code can define structured LLM schemas via `R3x::Workflow::LlmSchema.define { ... }`, which lazy-loads `ruby_llm-schema` instead of requiring it for all processes at boot.
 - `R3x::Workflow::Base` is also an `ApplicationJob`; its `#perform` delegates trigger/context setup to `R3x::Workflow::Executor`, stores the context on the job, and then calls `#run` on the current job instance.
+- Workflow code can use `ctx.durable_set(name = :default, ttl: 60.days)` to get a durable,
+  workflow-scoped set for best-effort cross-run dedup of processed items.
 - Workflow-declared DSL objects must validate themselves before being registered; invalid DSL configuration should raise `R3x::ConfigurationError` with collected validation errors.
 - `R3x::Workflow::PackLoader` discovers workflow entrypoints named `workflow.rb` from directories listed in `R3X_WORKFLOW_PATHS`, loads them, and registers their classes in `R3x::Workflow::Registry`.
 - `R3x::RecurringTasksConfig` turns schedulable workflow triggers into Solid Queue dynamic recurring tasks via `SolidQueue::RecurringTask`. All triggers have a `unique_key` (based on type + options hash) used for identification and duplicate detection. `schedule_all!` persists dynamic tasks and sweeps stale ones.

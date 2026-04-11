@@ -662,5 +662,134 @@ module R3x
       ENV["R3X_SKIP_CACHE"] = original_skip_cache
       Rails.define_singleton_method(:env, original_env)
     end
+
+    test "ctx durable_set stores membership across calls" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "durable_set_workflow",
+          payload: nil
+        ),
+        workflow_key: "durable_set_workflow"
+      )
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        durable_set = context.durable_set
+
+        refute durable_set.include?("item-1")
+        durable_set.add("item-1")
+        assert durable_set.include?("item-1")
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "ctx durable_set scopes keys by set name" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "named_durable_set_workflow",
+          payload: nil
+        ),
+        workflow_key: "named_durable_set_workflow"
+      )
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        default_set = context.durable_set
+        sent_set = context.durable_set(:sent)
+
+        default_set.add("item-1")
+
+        assert default_set.include?("item-1")
+        refute sent_set.include?("item-1")
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "ctx durable_set scopes keys by workflow" do
+      trigger = R3x::Triggers::Manual.new
+      first_context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "workflow_one", payload: nil),
+        workflow_key: "workflow_one"
+      )
+      second_context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "workflow_two", payload: nil),
+        workflow_key: "workflow_two"
+      )
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        first_context.durable_set.add("item-1")
+
+        assert first_context.durable_set.include?("item-1")
+        refute second_context.durable_set.include?("item-1")
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "ctx durable_set add? returns true for new members and false for existing" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "add_predicate_workflow",
+          payload: nil
+        ),
+        workflow_key: "add_predicate_workflow"
+      )
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        durable_set = context.durable_set
+
+        assert durable_set.add?("item-1")
+        refute durable_set.add?("item-1")
+        assert durable_set.include?("item-1")
+
+        assert durable_set.add?("item-2")
+        refute durable_set.add?("item-2")
+        assert durable_set.include?("item-2")
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "ctx durable_set deletes members" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "delete_durable_set_workflow",
+          payload: nil
+        ),
+        workflow_key: "delete_durable_set_workflow"
+      )
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        durable_set = context.durable_set
+        durable_set.add("item-1")
+
+        assert durable_set.include?("item-1")
+
+        durable_set.delete("item-1")
+
+        refute durable_set.include?("item-1")
+      ensure
+        Rails.cache = original_cache
+      end
+    end
   end
 end
