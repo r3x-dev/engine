@@ -12,6 +12,9 @@ gem "puma", ">= 5.0"
 
 # HTTP client
 gem "faraday"
+gem "faraday-multipart"
+
+# Json
 gem "multi_json"
 
 # HTML/XML parsing

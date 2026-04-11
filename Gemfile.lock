@@ -518,6 +518,7 @@ DEPENDENCIES
   debug
   dotenv-rails
   faraday
+  faraday-multipart
   google-apis-calendar_v3
   google-apis-gmail_v1
   google-apis-sheets_v4

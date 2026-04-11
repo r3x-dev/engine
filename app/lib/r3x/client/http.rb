@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "faraday/multipart"
-
 module R3x
   module Client
     class Http
