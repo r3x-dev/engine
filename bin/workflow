@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require_relative "../config/environment"
 require "thor"
+require "amazing_print"
 
 logger = ActiveSupport::Logger.new(STDOUT)
 logger.level = Logger::INFO

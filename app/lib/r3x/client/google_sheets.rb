@@ -28,10 +28,12 @@ module R3x
       attr_reader :spreadsheet_id, :credentials_env, :service
 
       def build_service
+        R3x::Client::GoogleAuth.require_sheets!
+
         service = ::Google::Apis::SheetsV4::SheetsService.new
         service.authorization = R3x::Client::GoogleAuth.from_json(
           R3x::Client::Google::Credentials.from_env(credentials_env),
-          scope: ::Google::Apis::SheetsV4::AUTH_SPREADSHEETS_READONLY
+          scope: "sheets.readonly"
         )
         service
       end
