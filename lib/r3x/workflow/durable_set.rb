@@ -26,11 +26,12 @@ module R3x
       end
 
       def add?(member, ttl: default_ttl)
-        key = cache_key_for(member)
-        return false if Rails.cache.exist?(key)
-
-        Rails.cache.write(key, { "added_at" => Time.current.iso8601 }, expires_in: ttl)
-        true
+        Rails.cache.write(
+          cache_key_for(member),
+          { "added_at" => Time.current.iso8601 },
+          expires_in: ttl,
+          unless_exist: true
+        )
       end
 
       def delete(member)

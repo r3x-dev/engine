@@ -765,6 +765,48 @@ module R3x
       end
     end
 
+    test "ctx durable_set add? uses atomic cache writes" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "atomic_add_predicate_workflow",
+          payload: nil
+        ),
+        workflow_key: "atomic_add_predicate_workflow"
+      )
+      cache = Class.new do
+        attr_reader :writes
+
+        def initialize
+          @writes = []
+          @written = false
+        end
+
+        def exist?(_key)
+          raise "add? must not check existence separately"
+        end
+
+        def write(key, value, expires_in:, unless_exist: false)
+          writes << { key: key, value: value, expires_in: expires_in, unless_exist: unless_exist }
+          return false if unless_exist && @written
+
+          @written = true
+        end
+      end.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        durable_set = context.durable_set
+
+        assert durable_set.add?("item-1")
+        refute durable_set.add?("item-1")
+        assert_equal [ true, true ], cache.writes.map { |write| write[:unless_exist] }
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
     test "ctx durable_set deletes members" do
       context = R3x::Workflow::Context.new(
         trigger: R3x::TriggerManager::Execution.new(
