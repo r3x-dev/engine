@@ -30,7 +30,7 @@ module R3x
           client_secret: parsed_json.fetch("client_secret"),
           refresh_token: parsed_json.fetch("refresh_token"),
           token_credential_uri: "https://oauth2.googleapis.com/token",
-          scope: Array(scope)
+          scope: Array(scope).map { |value| resolve_scope(value) }
         ).tap(&:fetch_access_token!)
       end
 

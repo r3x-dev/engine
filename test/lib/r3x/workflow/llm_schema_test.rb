@@ -9,7 +9,7 @@ module R3x
         end
 
         assert klass < RubyLLM::Schema
-        assert_equal [:status], klass.properties.keys
+        assert_equal [ :status ], klass.properties.keys
       end
     end
   end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "faraday/multipart"
+
 module R3x
   module Client
     class Http
@@ -37,7 +39,7 @@ module R3x
         file_content_type = content_type || sniff_content_type(file_io)
         rewind_file(file_io)
 
-        file_part = Faraday::Multipart::FilePart.new(file_io, file_content_type, filename)
+        file_part = ::Faraday::Multipart::FilePart.new(file_io, file_content_type, filename)
 
         payload = params.merge(file_field => file_part)
 
@@ -81,9 +83,11 @@ module R3x
       end
 
       def sniff_content_type(file_io)
+        R3x::GemLoader.require("marcel")
+
         position = file_io.pos if file_io.respond_to?(:pos)
 
-        Marcel::MimeType.for(file_io)
+        ::Marcel::MimeType.for(file_io)
       ensure
         restore_file_position(file_io, position)
       end
