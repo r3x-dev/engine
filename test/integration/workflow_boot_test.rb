@@ -35,10 +35,10 @@ class WorkflowBootTest < ActiveSupport::TestCase
     end
   end
 
-  test "server hook does not load workflows when solid queue is out of process" do
+  test "server hook loads workflows but does not schedule them when solid queue is out of process" do
     script_path = Rails.root.join("tmp/server_hook_test_#{SecureRandom.hex(4)}.rb")
     idle_marker_path = Rails.root.join("tmp/server_idle_#{SecureRandom.hex(4)}.txt")
-    unexpected_load_marker_path = Rails.root.join("tmp/server_unexpected_load_#{SecureRandom.hex(4)}.txt")
+    load_marker_path = Rails.root.join("tmp/server_load_#{SecureRandom.hex(4)}.txt")
     unexpected_schedule_marker_path = Rails.root.join("tmp/server_unexpected_schedule_#{SecureRandom.hex(4)}.txt")
     FileUtils.mkdir_p(script_path.dirname)
     File.write(script_path, <<~RUBY)
@@ -53,7 +53,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
               end
 
               def load!(*args, **kwargs)
-                File.write(#{unexpected_load_marker_path.to_s.inspect}, "1")
+                File.write(#{load_marker_path.to_s.inspect}, "1")
               end
             end
           end
@@ -71,12 +71,12 @@ class WorkflowBootTest < ActiveSupport::TestCase
 
     assert $?.success?, "server hook command failed: #{command_output}"
     assert File.exist?(idle_marker_path), "expected server hook script to finish: #{command_output}"
-    refute File.exist?(unexpected_load_marker_path), "expected server hook not to call load!: #{command_output}"
+    assert File.exist?(load_marker_path), "expected server hook to call load!: #{command_output}"
     refute File.exist?(unexpected_schedule_marker_path), "expected server hook not to call load_and_schedule!: #{command_output}"
   ensure
     FileUtils.rm_f(script_path) if script_path
     FileUtils.rm_f(idle_marker_path) if idle_marker_path
-    FileUtils.rm_f(unexpected_load_marker_path) if unexpected_load_marker_path
+    FileUtils.rm_f(load_marker_path) if load_marker_path
     FileUtils.rm_f(unexpected_schedule_marker_path) if unexpected_schedule_marker_path
   end
 

@@ -44,8 +44,10 @@ module R3x
     config.api_only = true
 
     server do
-      if Rails.env.development? || ActiveModel::Type::Boolean.new.cast(ENV["SOLID_QUEUE_IN_PUMA"])
+      if ActiveModel::Type::Boolean.new.cast(ENV["SOLID_QUEUE_IN_PUMA"]) || Rails.env.development?
         R3x::Workflow::Boot.load_and_schedule!
+      else
+        R3x::Workflow::Boot.load!
       end
     end
   end
