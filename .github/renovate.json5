@@ -9,7 +9,7 @@
       "matchUpdateTypes": ["patch"],
       "matchPackagePatterns": ["*"],
       "automerge": true,
-      "automergeType": "pr",
+      "automergeType": "branch",
       "automergeStrategy": "squash",
       "requiredStatusChecks": ["test"]
     },
@@ -23,7 +23,7 @@
       "description": "Auto-merge GitHub Actions updates when tests pass",
       "matchManagers": ["github-actions"],
       "automerge": true,
-      "automergeType": "pr",
+      "automergeType": "branch",
       "automergeStrategy": "squash",
       "requiredStatusChecks": ["test"]
     }
