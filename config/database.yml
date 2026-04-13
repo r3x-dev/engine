@@ -1,3 +1,9 @@
+<%
+  rails_max_threads = Integer(ENV.fetch("RAILS_MAX_THREADS", 5))
+  job_threads = ENV["JOB_THREADS"].to_s.empty? ? 0 : Integer(ENV["JOB_THREADS"])
+  solid_queue_pool = job_threads.zero? ? 0 : job_threads + 2
+%>
+
 # SQLite. Versions 3.8.0 and up are supported.
 #   gem install sqlite3
 #
@@ -5,7 +11,8 @@
 #   gem "sqlite3"
 #
 default: &default
-  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  # Solid Queue needs extra connections for its supervisor and heartbeat threads.
+  max_connections: <%= [rails_max_threads, solid_queue_pool].max %>
   timeout: 5000
 
 sqlite: &sqlite
