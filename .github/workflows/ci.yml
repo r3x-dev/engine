@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches: [ main, "renovate/**" ]
 
 env:
   OLD_VERSIONS_TO_KEEP: "10"
