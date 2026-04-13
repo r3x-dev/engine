@@ -39,7 +39,7 @@ module R3x
         end
 
         if Rails.env.production?
-          raise RuntimeError, "with_cache is disabled in production"
+          raise RuntimeError, "with_cache is disabled in production, if you need to use it, please set R3X_SKIP_CACHE=true in the environment variables"
         end
 
         Rails.cache.fetch(cache_key_for(block), force: force, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes) do

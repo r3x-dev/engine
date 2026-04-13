@@ -2,6 +2,8 @@ module R3x
   module Client
     class Llm
       def initialize(api_key:, config_api_key_attr:)
+        R3x::GemLoader.require("ruby_llm")
+
         @llm_context = RubyLLM.context do |config|
           config.public_send(:"#{config_api_key_attr}=", api_key)
         end

@@ -33,10 +33,12 @@ module R3x
         attr_reader :credentials_env
 
         def build_service
+          R3x::Client::GoogleAuth.require_gmail!
+
           ::Google::Apis::GmailV1::GmailService.new.tap do |service|
             service.authorization = R3x::Client::GoogleAuth.from_json(
               R3x::Client::Google::Credentials.from_env(credentials_env),
-              scope: ::Google::Apis::GmailV1::AUTH_GMAIL_SEND
+              scope: "gmail.send"
             )
           end
         end

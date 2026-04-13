@@ -411,7 +411,7 @@ module R3x
         workflow.with_cache { "cached" }
       end
 
-      assert_equal "with_cache is disabled in production", error.message
+      assert_equal "with_cache is disabled in production, if you need to use it, please set R3X_SKIP_CACHE=true in the environment variables", error.message
     ensure
       Rails.define_singleton_method(:env, original_env)
     end
