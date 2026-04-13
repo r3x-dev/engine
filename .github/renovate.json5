@@ -9,9 +9,9 @@
       "matchUpdateTypes": ["patch"],
       "matchPackagePatterns": ["*"],
       "automerge": true,
-      "automergeType": "branch",
+      "automergeType": "pr",
       "automergeStrategy": "squash",
-      "requiredStatusChecks": ["CI/test"]
+      "requiredStatusChecks": ["test"]
     },
     {
       "description": "Minor and major updates - PR only, no auto-merge",
@@ -23,9 +23,9 @@
       "description": "Auto-merge GitHub Actions updates when tests pass",
       "matchManagers": ["github-actions"],
       "automerge": true,
-      "automergeType": "branch",
+      "automergeType": "pr",
       "automergeStrategy": "squash",
-      "requiredStatusChecks": ["CI/test"]
+      "requiredStatusChecks": ["test"]
     }
   ],
   "prHourlyLimit": 0,
