@@ -12,23 +12,26 @@ gem "puma", ">= 5.0"
 
 # HTTP client
 gem "faraday"
+gem "faraday-multipart"
+
+# Json
 gem "multi_json"
 
 # HTML/XML parsing
 gem "nokogiri"
 
 # LLM integration
-gem "ruby_llm"
-gem "ruby_llm-schema"
+gem "ruby_llm", require: false
+gem "ruby_llm-schema", require: false
 
 # Google Translate API
-gem "google-cloud-translate"
+gem "google-cloud-translate", require: false
 
 # Google OAuth and API integration
 gem "googleauth"
-gem "google-apis-calendar_v3"
-gem "google-apis-gmail_v1"
-gem "google-apis-sheets_v4"
+gem "google-apis-calendar_v3", require: false
+gem "google-apis-gmail_v1", require: false
+gem "google-apis-sheets_v4", require: false
 gem "mail"
 
 # Use the database-backed adapters for Rails.cache and Active Job
@@ -36,7 +39,7 @@ gem "solid_cache"
 gem "solid_queue"
 
 # CLI tools
-gem "highline"
+gem "highline", require: false
 
 # Active Job dashboard (requires propshaft for API-only apps)
 gem "mission_control-jobs"
@@ -74,4 +77,4 @@ end
 
 gem "retryable", "~> 3.0"
 
-gem "amazing_print", "~> 2.0"
+gem "amazing_print", "~> 2.0", require: false
