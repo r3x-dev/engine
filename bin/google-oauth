@@ -4,7 +4,6 @@
 require_relative "../config/environment"
 require "thor"
 require "signet/oauth_2/client"
-require "highline"
 
 class GoogleOAuthCLI < Thor
   def self.exit_on_failure? = true
@@ -189,7 +188,8 @@ class GoogleOAuthCLI < Thor
   def scopes
     puts ""
     puts "Available scope aliases:"
-    R3x::Client::GoogleAuth::SCOPE_ALIASES.each do |alias_name, scope|
+    R3x::Client::GoogleAuth.scope_aliases.each do |alias_name, const_name|
+      scope = R3x::Client::GoogleAuth.resolve_scope(alias_name)
       puts "  %-24s %s" % [alias_name, scope]
     end
     puts ""
@@ -230,13 +230,15 @@ class GoogleOAuthCLI < Thor
   end
 
   def interactive_scope_selection
+    require "highline"
+
     cli = HighLine.new
 
     puts ""
     puts "=== Select Google API Scopes ==="
     puts ""
 
-    aliases = R3x::Client::GoogleAuth::SCOPE_ALIASES.keys
+    aliases = R3x::Client::GoogleAuth.scope_aliases.keys
     selected_aliases = []
 
     loop do
@@ -250,11 +252,11 @@ class GoogleOAuthCLI < Thor
       puts "Available scopes (selected: #{selected_aliases.size}):"
       puts ""
 
-      choice = cli.choose do |menu|
-        menu.prompt = "Select a scope (or 'done' to finish): "
+        choice = cli.choose do |menu|
+          menu.prompt = "Select a scope (or 'done' to finish): "
 
-        remaining.each do |alias_name|
-          scope = R3x::Client::GoogleAuth::SCOPE_ALIASES[alias_name]
+          remaining.each do |alias_name|
+          scope = R3x::Client::GoogleAuth.resolve_scope(alias_name)
           menu.choice("#{alias_name} (#{scope})") { alias_name }
         end
 

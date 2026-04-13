@@ -23,7 +23,9 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `lib/r3x/trigger_manager.rb` + `lib/r3x/trigger_manager/`: trigger infrastructure — `R3x::TriggerManager::Collection` (manages workflow triggers as a hash keyed by `unique_key`) and `R3x::TriggerManager::Execution` (wraps a trigger for runtime use).
 - `app/lib/r3x/`: runtime support code such as client wrappers and shared concerns.
 - `app/lib/r3x/client/google/credentials.rb`: shared Google credentials loader used by Gmail and Google Sheets integrations.
+- `lib/r3x/gem_loader.rb`: tiny helper for one-time lazy `require` of heavy optional gems used by integrations and workflow helpers.
 - `app/lib/r3x/client/google/gmail.rb`: Gmail API client used by workflows via `ctx.client.gmail(...)`.
+- `lib/r3x/workflow/llm_schema.rb`: lazy wrapper around `RubyLLM::Schema` for workflows that need structured LLM output.
 - `R3x::Client::Google` is a project namespace; when referencing the third-party Google gem namespace, use `::Google` to avoid constant collisions.
 - `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves a workflow key and dispatches to the workflow job class, and `R3x::ChangeDetectionJob`, which evaluates change-detecting triggers before enqueueing workflow runs.
 - `app/models/r3x/`: runtime support models such as `R3x::TriggerState` for per-trigger change-detection state.
@@ -35,11 +37,13 @@ This Rails app uses a small set of preferred libraries for common integration wo
 ## Runtime Flow
 
 - Workflows subclass `R3x::Workflow::Base`, declare triggers via the DSL, and implement `#run`.
+- Workflow code can define structured LLM schemas via `R3x::Workflow::LlmSchema.define { ... }`, which lazy-loads `ruby_llm-schema` instead of requiring it for all processes at boot.
 - `R3x::Workflow::Base` is also an `ApplicationJob`; its `#perform` delegates trigger/context setup to `R3x::Workflow::Executor`, stores the context on the job, and then calls `#run` on the current job instance.
 - Workflow-declared DSL objects must validate themselves before being registered; invalid DSL configuration should raise `R3x::ConfigurationError` with collected validation errors.
 - `R3x::Workflow::PackLoader` discovers workflow entrypoints named `workflow.rb` from directories listed in `R3X_WORKFLOW_PATHS`, loads them, and registers their classes in `R3x::Workflow::Registry`.
 - `R3x::RecurringTasksConfig` turns schedulable workflow triggers into Solid Queue dynamic recurring tasks via `SolidQueue::RecurringTask`. All triggers have a `unique_key` (based on type + options hash) used for identification and duplicate detection. `schedule_all!` persists dynamic tasks and sweeps stale ones.
 - Workflow packs are loaded explicitly by process entrypoints, not globally during Rails boot. `bin/rails server` uses a `server do` hook to load workflows and schedule recurring tasks; `bin/jobs` loads workflows before starting the Solid Queue CLI.
+- Production deployments should prefer separate web and jobs controllers/processes over embedding Solid Queue into the Puma web process. If `SOLID_QUEUE_IN_PUMA` is enabled, remember that the Puma plugin can fork an additional Solid Queue supervisor plus worker/dispatcher/scheduler processes inside the same pod.
 - Change-detecting triggers are file-defined trigger objects that provide `cron`, `unique_key`, and `detect_changes(workflow_key:, state:)`. Their durable runtime state lives in `R3x::TriggerState`.
 - `R3x::ChangeDetectionJob` loads the trigger, fetches/updates `R3x::TriggerState`, and only enqueues the workflow job class itself when the trigger reports a change.
 - Because the app currently uses `Solid Queue` as a database-backed backend on the same Active Record database connection, code may intentionally rely on a database transaction covering both `TriggerState` updates and `perform_later`. Do not assume those guarantees survive a future backend or database split.
@@ -63,6 +67,12 @@ Use `bin/workflow` to interact with workflows from the command line. `list` and 
 - When a client is used from app/runtime code, resolve the default through `R3x::Policy.dry_run_for(:key, dry_run)`: development and test should be dry-run by default, production should default to real delivery unless the caller explicitly opts into `dry_run: true`.
 - `R3x::Policy` may also honor per-feature overrides like `R3X_GMAIL_DRY_RUN` and a global `R3X_DRY_RUN` if we need to widen or narrow the policy later.
 - For integration credentials, prefer passing `*_env` references like `credentials_env:` or `api_key_env:` instead of raw secrets or parsed credential hashes. Resolve the secret lazily inside the client/output so dry-run paths can avoid loading credentials when they do not need them.
+- Prefer lazy-loading heavy third-party gems from the client or workflow helper that first needs them. Mark the gem `require: false` in `Gemfile`, then call `R3x::GemLoader.require("...")` at the boundary that actually uses it.
+- Treat lazy-loading as a default design tool for optional workflow integrations and LLM helpers, especially in production boot paths.
+- Reasoning: this app boots the workflow engine for web and jobs processes, but not every workflow uses every integration. Avoid making all processes pay the memory and boot-time cost of Gmail, Google Sheets, Google Calendar, Google Translate, RubyLLM, or similar stacks when only a subset of workflows needs them.
+- When adding or reviewing integration code, actively consider whether the gem should stay eager-loaded or move behind `require: false` plus `R3x::GemLoader.require(...)`. Propose lazy-loading when the dependency is optional, heavy, or only used from specific workflows, CLI commands, or client methods.
+- Prefer putting the lazy-load boundary at the smallest practical edge: the client method, workflow helper, or DSL helper that first needs the dependency. Avoid top-level constants or alias maps that force third-party namespaces to load during Rails eager load if the integration is not universally needed.
+- For workflow-defined structured LLM output, prefer `R3x::Workflow::LlmSchema.define` so workflows that do not declare schemas do not pay to load the schema gem at boot.
 - When integrating a third-party API, put the actual API logic in a dedicated client object under `app/lib/r3x/client/<provider>/...` and keep outputs as thin policy/delivery wrappers.
 - When adding a new output/client with a real delivery path, include a dry-run path first and test that it does not call the external service.
 - Scratchpad scripts should also default to dry-run unless the user explicitly asks for real delivery.

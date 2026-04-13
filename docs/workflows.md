@@ -60,13 +60,16 @@ These notes apply to workflow code in general.
 - When a workflow expects structured LLM output, prefer `RubyLLM` schema support.
 - Use a schema when you want JSON-like data back instead of parsing free-form text by hand.
 - Keep the schema close to the prompt so the expected shape is obvious.
-- For nested JSON, define the shape with `array` and `object` blocks on a `RubyLLM::Schema` class,
+- Define new workflow schemas with `R3x::Workflow::LlmSchema.define`.
+- This is the current convention because it keeps `ruby_llm-schema` off the boot path for workflows that do not use structured LLM output.
+- Older direct inheritance from `RubyLLM::Schema` still works, but treat it as legacy in new code.
+- For nested JSON, define the shape with `array` and `object` blocks inside the helper block,
   then pass that schema to `message(...)`.
 - Read the parsed structured result from `response.content`; avoid manual JSON parsing when the
   schema already captures the shape.
 
   ```ruby
-  class WeeklyDigestSchema < RubyLLM::Schema
+  WeeklyDigestSchema = R3x::Workflow::LlmSchema.define do
     array :EN do
       object :entry do
         string :name

@@ -95,6 +95,8 @@ module R3x
         end
 
         def with_stubbed_gmail_service(result)
+          R3x::Client::GoogleAuth.require_gmail!
+
           singleton_class = ::Google::Apis::GmailV1::GmailService.singleton_class
           original_method = ::Google::Apis::GmailV1::GmailService.method(:new)
 
