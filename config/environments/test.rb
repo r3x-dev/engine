@@ -41,4 +41,7 @@ Rails.application.configure do
   config.action_controller.raise_on_missing_callback_actions = true
 
   config.active_job.queue_adapter = :test
+  config.solid_queue.clear_finished_jobs_after = 2.weeks
+  config.mission_control.jobs.adapters = [ :solid_queue ]
+  config.mission_control.jobs.http_basic_auth_enabled = false
 end

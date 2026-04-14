@@ -1,0 +1,52 @@
+<div class="table-wrap">
+  <% if runs.empty? %>
+    <div class="empty"><%= local_assigns.fetch(:empty_message, "No workflow runs match the current filters.") %></div>
+  <% else %>
+    <table>
+      <thead>
+        <tr>
+          <th>Workflow</th>
+          <th>Status</th>
+          <th>Observed</th>
+          <th>Trigger</th>
+          <th>Queue</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% runs.each do |run| %>
+          <tr>
+            <td>
+              <%= dashboard_workflow_link(run) %>
+              <div class="meta"><code><%= run[:class_name] %></code></div>
+            </td>
+
+            <td>
+              <span class="pill <%= dashboard_tone_for(run[:status]) %>">
+                <%= dashboard_status_label(run[:status]) %>
+              </span>
+            </td>
+
+            <td><%= dashboard_timestamp(run[:recorded_at]) %></td>
+
+            <td><code><%= run[:trigger_key] || "manual/default" %></code></td>
+
+            <td><code><%= run[:queue_name] %></code></td>
+
+            <td>
+              <% if run[:error].present? %>
+                <div><%= dashboard_error_summary(run[:error]) %></div>
+                <div class="meta"><%= link_to "View error", workflow_run_path(run[:job_id]) %></div>
+              <% else %>
+                <div class="meta"><%= link_to "View run", workflow_run_path(run[:job_id]) %></div>
+              <% end %>
+
+              <div class="meta">Job <code><%= run[:job_id] %></code></div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>
