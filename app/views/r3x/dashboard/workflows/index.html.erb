@@ -1,0 +1,79 @@
+<% content_for :title, "Workflows" %>
+
+<section class="page-header">
+  <div>
+    <h2>Workflows</h2>
+    <p>Current workflows reconstructed from persisted runtime state.</p>
+  </div>
+</section>
+
+<section class="panel table-wrap">
+  <% if @workflows.empty? %>
+    <div class="empty">No workflows are visible yet. They will appear here once recurring tasks or trigger state are written to the database.</div>
+  <% else %>
+    <table>
+      <thead>
+        <tr>
+          <th>Workflow</th>
+          <th>Trigger</th>
+          <th>Next trigger</th>
+          <th>Last run</th>
+          <th></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% @workflows.each do |workflow| %>
+          <tr>
+            <td>
+              <%= link_to workflow[:title], workflow_path(workflow[:workflow_key]), class: "title-link" %>
+              <div class="meta">
+                <% if workflow[:class_name].present? %>
+                  <code><%= workflow[:class_name] %></code>
+                <% else %>
+                  Only runtime traces are currently available.
+                <% end %>
+              </div>
+            </td>
+
+            <td>
+              <% primary_trigger = workflow[:trigger_entries].first %>
+              <% if primary_trigger.present? %>
+                <div><strong><%= dashboard_trigger_kind(primary_trigger) %></strong></div>
+                <div class="meta"><code><%= dashboard_trigger_details(primary_trigger) %></code></div>
+                <% if workflow[:trigger_entries].size > 1 %>
+                  <div class="meta"><%= workflow[:trigger_entries].size %> persisted triggers</div>
+                <% end %>
+              <% else %>
+                <span class="muted">No trigger data</span>
+              <% end %>
+            </td>
+
+            <td><%= dashboard_timestamp(workflow[:next_trigger_at]) %></td>
+
+            <td>
+              <% if workflow[:last_run].present? %>
+                <span class="pill <%= dashboard_tone_for(workflow[:last_run][:status]) %>">
+                  <%= dashboard_status_label(workflow[:last_run][:status]) %>
+                </span>
+                <div class="meta"><%= dashboard_timestamp(workflow[:last_run][:recorded_at]) %></div>
+              <% else %>
+                <span class="muted">No runs yet</span>
+              <% end %>
+            </td>
+
+            <td>
+              <% if workflow[:trigger_entries].present? %>
+                <%= form_with url: run_trigger_workflow_path(workflow[:workflow_key]), method: :post, local: true, class: "inline-form" do |form| %>
+                  <%= form.button dashboard_icon_label(:launch, "Run now"), class: "button success" %>
+                <% end %>
+              <% else %>
+                <span class="muted">Unavailable</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>

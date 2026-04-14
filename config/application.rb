@@ -42,6 +42,7 @@ module R3x
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+    config.mission_control.jobs.base_controller_class = "R3x::WebController"
 
     server do
       if ActiveModel::Type::Boolean.new.cast(ENV["SOLID_QUEUE_IN_PUMA"]) || Rails.env.development?

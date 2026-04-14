@@ -13,11 +13,17 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - Because queue records use the same Active Record database connection as the app in the configured environments here, queue inserts can participate in the same database transaction as app writes.
 - If `Solid Queue` or `Solid Cache` is ever moved to a separate database, or replaced with a non-database backend/store, revisit any code that relies on transactional integrity between app writes and job enqueueing. In that setup, `enqueue_after_transaction_commit` and related tests become important again.
 - Production database configuration is environment-driven: prefer `R3X_DATABASE_URL`, and fall back to `R3X_DATABASE_PATH` for SQLite-style file paths.
-- The default local UI surface is Mission Control Jobs mounted at `/jobs`; the root route redirects there.
+- The default local UI surface is the server-rendered workflow dashboard mounted at `/`.
+- Mission Control Jobs remains available at `/ops/jobs` for queue inspection and operational actions.
+- The dashboard is DB-first: workflow pages and recent runs are derived from current `Solid Queue` tables plus `trigger_states`, so they only show workflows and runs that have persisted runtime artifacts.
 
 ## Codebase Map
 
 - `lib/r3x/`: core framework code for the workflow DSL, trigger types, workflow loading, registry, execution context, recurring-task config, and shared DSL helpers.
+- `app/controllers/r3x/`: web controllers used to support HTML surfaces in the `api_only` app, including the shared `R3x::WebController` base for the dashboard and Mission Control.
+- `app/controllers/r3x/dashboard/`: server-rendered dashboard controllers for workflows and recent runs.
+- `app/views/r3x/dashboard/` + `app/views/layouts/r3x/dashboard.html.erb`: dashboard UI templates and layout.
+- `app/lib/r3x/dashboard/`: read-only query objects that build workflow summaries and recent runs from `Solid Queue` tables and `TriggerState`, plus the dashboard-side enqueuer used for `Run now`.
 - `lib/r3x/workflow/executor.rb`: shared workflow execution helper that resolves the trigger and builds `Workflow::Context` for a loaded workflow class.
 - `lib/r3x/dsl/`: shared DSL infrastructure, especially validation concerns and configuration errors used by workflow-declared objects.
 - `lib/r3x/trigger_manager.rb` + `lib/r3x/trigger_manager/`: trigger infrastructure — `R3x::TriggerManager::Collection` (manages workflow triggers as a hash keyed by `unique_key`) and `R3x::TriggerManager::Execution` (wraps a trigger for runtime use).
@@ -44,11 +50,13 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `R3x::RecurringTasksConfig` turns schedulable workflow triggers into Solid Queue dynamic recurring tasks via `SolidQueue::RecurringTask`. All triggers have a `unique_key` (based on type + options hash) used for identification and duplicate detection. `schedule_all!` persists dynamic tasks and sweeps stale ones.
 - Workflow packs are loaded explicitly by process entrypoints, not globally during Rails boot. In the current split-process setup, `bin/jobs` loads workflows before starting the Solid Queue CLI and schedules recurring tasks unless `SOLID_QUEUE_IN_PUMA=true`. The web process also loads workflows on server boot so Mission Control Jobs can validate and enqueue workflow-backed recurring tasks; it only schedules recurring tasks when it is also hosting Solid Queue in-process, which currently means development or `SOLID_QUEUE_IN_PUMA=true`.
 - Production deployments should prefer separate web and jobs controllers/processes over embedding Solid Queue into the Puma web process. If `SOLID_QUEUE_IN_PUMA` is enabled, remember that the Puma plugin can fork an additional Solid Queue supervisor plus worker/dispatcher/scheduler processes inside the same pod, the web boot path will also load workflows and schedule recurring tasks, and `bin/jobs` should not also try to register recurring tasks in that mode.
+- The dashboard does not require workflow packs to be loaded on the web pod. It reconstructs workflow pages from `solid_queue_recurring_tasks`, `solid_queue_jobs`, and `trigger_states`, and can enqueue `Run now` actions through `R3x::RunWorkflowJob` or `R3x::ChangeDetectionJob` without the original workflow class being present on the web pod.
 - Change-detecting triggers are file-defined trigger objects that provide `cron`, `unique_key`, and `detect_changes(workflow_key:, state:)`. Their durable runtime state lives in `R3x::TriggerState`.
 - `R3x::ChangeDetectionJob` loads the trigger, fetches/updates `R3x::TriggerState`, and only enqueues the workflow job class itself when the trigger reports a change.
 - Because the app currently uses `Solid Queue` as a database-backed backend on the same Active Record database connection, code may intentionally rely on a database transaction covering both `TriggerState` updates and `perform_later`. Do not assume those guarantees survive a future backend or database split.
 - `R3x::RunWorkflowJob` fetches the workflow from the registry and calls `workflow_class.perform_now(trigger_key, trigger_payload: ...)` for compatibility with callers that still dispatch by workflow key.
 - Known limitation: because queued workflow runs persist the concrete workflow class name, renaming or removing a workflow class across deploys can strand older queued runs with job deserialization failures. This is currently an accepted tradeoff for preserving `ActiveJob::Continuable` on the workflow job itself.
+- The dashboard's run history is DB-first and parses `Solid Queue` / `Active Job` payloads directly. It still accepts the underlying tradeoff that finished runs are retention-bound and that workflows with no persisted runtime artifacts are invisible to the dashboard.
 - Trigger discovery is filesystem-backed through `lib/r3x/triggers/*.rb`, so trigger file names, constants, and supported types must stay aligned.
 
 ## Working with Workflows

@@ -1,0 +1,83 @@
+<% content_for :title, "Run #{ @run[:job_id] }" %>
+
+<section class="page-header">
+  <div>
+    <h2>Run <code><%= @run[:job_id] %></code></h2>
+    <p>Detailed runtime view for a persisted workflow execution.</p>
+  </div>
+
+  <div class="actions">
+    <% if @run[:known_workflow] %>
+      <%= link_to "Back to workflow", workflow_path(@run[:workflow_key]), class: "button subtle" %>
+      <%= link_to "Workflow runs", workflow_runs_path(workflow: @run[:workflow_key]), class: "button subtle" %>
+    <% else %>
+      <%= link_to "Recent runs", workflow_runs_path, class: "button subtle" %>
+    <% end %>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="stats">
+    <div class="stat">
+      <span class="label">Workflow</span>
+      <strong><%= @run[:workflow_title] %></strong>
+    </div>
+
+    <div class="stat">
+      <span class="label">Status</span>
+      <strong><%= dashboard_status_label(@run[:status]) %></strong>
+    </div>
+
+    <div class="stat">
+      <span class="label">Observed</span>
+      <strong><%= dashboard_relative_time(@run[:recorded_at]) %></strong>
+    </div>
+
+    <div class="stat">
+      <span class="label">Queue</span>
+      <strong><code><%= @run[:queue_name] %></code></strong>
+    </div>
+  </div>
+</section>
+
+<section class="grid two" style="margin-top: 18px;">
+  <section class="panel stack">
+    <div>
+      <h3 class="section-title">Metadata</h3>
+      <p class="section-copy">Identifiers and timing information for this run.</p>
+    </div>
+
+    <div><strong>Workflow:</strong> <%= dashboard_workflow_link(@run) %></div>
+    <div><strong>Class:</strong> <code><%= @run[:class_name] %></code></div>
+    <div><strong>Trigger key:</strong> <code><%= @run[:trigger_key] || "manual/default" %></code></div>
+    <div><strong>Job id:</strong> <code><%= @run[:job_id] %></code></div>
+
+    <% if @run[:active_job_id].present? %>
+      <div><strong>Active Job id:</strong> <code><%= @run[:active_job_id] %></code></div>
+    <% end %>
+
+    <div><strong>Enqueued at:</strong> <%= dashboard_timestamp(@run[:enqueued_at]) %></div>
+    <div><strong>Recorded at:</strong> <%= dashboard_timestamp(@run[:recorded_at]) %></div>
+
+    <% if @run[:scheduled_at].present? %>
+      <div><strong>Scheduled at:</strong> <%= dashboard_timestamp(@run[:scheduled_at]) %></div>
+    <% end %>
+
+    <% if @run[:finished_at].present? %>
+      <div><strong>Finished at:</strong> <%= dashboard_timestamp(@run[:finished_at]) %></div>
+    <% end %>
+  </section>
+
+  <section class="panel stack">
+    <div>
+      <h3 class="section-title">Failure Details</h3>
+      <p class="section-copy">Full error output captured for this run.</p>
+    </div>
+
+    <% if @run[:error].present? %>
+      <pre class="error-block"><%= dashboard_error_body(@run[:error]) %></pre>
+    <% else %>
+      <div class="empty">No error details were recorded for this run.</div>
+    <% end %>
+  </section>
+</section>

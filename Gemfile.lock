@@ -242,6 +242,8 @@ GEM
       googleapis-common-protos (~> 1.7.0)
       grpc (~> 1.41)
     hashdiff (1.2.1)
+    heroicon (1.0.0)
+      rails (>= 5.2)
     highline (3.1.2)
       reline
     i18n (1.14.8)
@@ -524,6 +526,7 @@ DEPENDENCIES
   google-apis-sheets_v4
   google-cloud-translate
   googleauth
+  heroicon
   highline
   mail
   mission_control-jobs
@@ -620,6 +623,7 @@ CHECKSUMS
   grpc (1.80.0-x86_64-linux-musl) sha256=15a62e816c690bece9f5fd320a4b61aa735a2390daa8141596672a6e820ff342
   grpc-google-iam-v1 (1.11.0) sha256=8f0aa8a8503b3e001cb1561f31e43aa0445752fb675334afa1afac7f023f368c
   hashdiff (1.2.1) sha256=9c079dbc513dfc8833ab59c0c2d8f230fa28499cc5efb4b8dd276cf931457cd1
+  heroicon (1.0.0) sha256=e63a535a630d6fd3d99c0179d722753c8cd3478df1277eca7a4215c135b6e9cb
   highline (3.1.2) sha256=67cbd34d19f6ef11a7ee1d82ffab5d36dfd5b3be861f450fc1716c7125f4bb4a
   i18n (1.14.8) sha256=285778639134865c5e0f6269e0b818256017e8cde89993fdfcbfb64d088824a5
   importmap-rails (2.2.3) sha256=7101be2a4dc97cf1558fb8f573a718404c5f6bcfe94f304bf1f39e444feeb16a
