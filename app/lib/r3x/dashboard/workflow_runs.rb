@@ -3,6 +3,7 @@ module R3x
     class WorkflowRuns
       DEFAULT_LIMIT = 50
       LEGACY_CLASS_NAME = "R3x::RunWorkflowJob"
+      CHANGE_DETECTION_CLASS_NAME = "R3x::ChangeDetectionJob"
       STATUSES = %w[ blocked failed finished queued running scheduled ].freeze
 
       def self.statuses
@@ -25,6 +26,14 @@ module R3x
           .first(limit)
       end
 
+      def find!(job_id)
+        @jobs = [ find_job!(job_id) ]
+
+        build_run(@jobs.first) || raise(KeyError, "Unknown workflow run '#{job_id}'")
+      rescue ActiveRecord::RecordNotFound
+        raise KeyError, "Unknown workflow run '#{job_id}'"
+      end
+
       private
         attr_reader :limit, :status, :workflow_key
 
@@ -33,6 +42,7 @@ module R3x
           return if workflow_key.blank?
 
           failed_execution = failed_executions_by_job_id[job.id]
+          payload = JobPayload.new(job.arguments)
 
           {
             active_job_id: job.active_job_id,
@@ -41,22 +51,25 @@ module R3x
             error: failed_execution&.error,
             finished_at: job.finished_at,
             job_id: job.id,
-            known_workflow: workflow_keys.include?(workflow_key),
+            known_workflow: catalog.workflow_keys.include?(workflow_key),
             mission_control_path: "/ops/jobs",
             queue_name: job.queue_name,
             recorded_at: recorded_at_for(job, failed_execution: failed_execution),
             scheduled_at: scheduled_executions_by_job_id[job.id]&.scheduled_at || job.scheduled_at,
             status: status_for(job),
-            trigger_key: trigger_key_for(job),
+            trigger_key: trigger_key_for(job, payload: payload),
             workflow_key: workflow_key,
             workflow_title: workflow_key.titleize
           }
         end
 
+        def find_job!(job_id)
+          SolidQueue::Job.find(job_id)
+        end
+
         def jobs
           @jobs ||= begin
-            SolidQueue::Job
-              .where(class_name: relevant_class_names)
+            jobs_scope
               .order(created_at: :desc)
               .limit(query_limit)
               .to_a
@@ -65,69 +78,20 @@ module R3x
           end
         end
 
-        def relevant_class_names
-          if workflow_key.present?
-            [ workflow_class_name, LEGACY_CLASS_NAME ].compact.uniq
-          else
-            workflow_classes.map(&:name) + [ LEGACY_CLASS_NAME ]
-          end
-        end
-
-        def workflow_class_name
-          workflow_classes.find { |workflow_class| workflow_class.workflow_key == workflow_key }&.name
-        end
-
         def workflow_key_for(job)
-          return class_names_to_keys[job.class_name] unless job.class_name == LEGACY_CLASS_NAME
+          payload = JobPayload.new(job.arguments)
+          return payload.legacy_workflow_key if job.class_name == LEGACY_CLASS_NAME
+          return nil if job.class_name == CHANGE_DETECTION_CLASS_NAME
 
-          arguments = normalize_arguments(job.arguments)
-          arguments.first.presence || options_for(arguments)["workflow_key"] || options_for(arguments)[:workflow_key]
+          catalog.class_names_to_keys[job.class_name]
         end
 
-        def trigger_key_for(job)
-          arguments = normalize_arguments(job.arguments)
-
+        def trigger_key_for(job, payload:)
           if job.class_name == LEGACY_CLASS_NAME
-            options = options_for(arguments)
+            options = payload.options
             options["trigger_key"] || options[:trigger_key]
           else
-            arguments.first
-          end
-        end
-
-        def options_for(arguments)
-          arguments.second.is_a?(Hash) ? arguments.second : {}
-        end
-
-        def normalize_arguments(arguments)
-          Array(arguments).map { |argument| normalize_argument(argument) }
-        end
-
-        def normalize_argument(argument)
-          case argument
-          when Array
-            argument.map { |item| normalize_argument(item) }
-          when Hash
-            normalize_hash(argument)
-          else
-            argument
-          end
-        end
-
-        def normalize_hash(argument)
-          argument.each_with_object({}) do |(key, value), normalized|
-            normalized[key] = normalize_argument(value)
-          end.tap do |normalized|
-            symbolize_marked_keys!(normalized, "_aj_ruby2_keywords")
-            symbolize_marked_keys!(normalized, "_aj_symbol_keys")
-          end
-        end
-
-        def symbolize_marked_keys!(hash, marker)
-          Array(hash.delete(marker)).each do |key|
-            next unless hash.key?(key)
-
-            hash[key.to_sym] = hash.delete(key)
+            payload.workflow_arguments.first
           end
         end
 
@@ -185,17 +149,44 @@ module R3x
           model.where(job_id: jobs.map(&:id)).index_by(&:job_id)
         end
 
-        def workflow_classes
-          @workflow_classes ||= R3x::Workflow::Registry.all
+        def catalog
+          @catalog ||= WorkflowCatalog.new
         end
 
-        def workflow_keys
-          @workflow_keys ||= workflow_classes.map(&:workflow_key)
+        def jobs_scope
+          scope = SolidQueue::Job.where(class_name: relevant_class_names)
+          return scope if status.blank?
+
+          scope.where(id: status_job_ids)
         end
 
-        def class_names_to_keys
-          @class_names_to_keys ||= workflow_classes.each_with_object({}) do |workflow_class, mapping|
-            mapping[workflow_class.name] = workflow_class.workflow_key
+        def relevant_class_names
+          if workflow_key.present?
+            catalog.class_names_for(workflow_key) + [ LEGACY_CLASS_NAME ]
+          else
+            catalog.class_names_to_keys.keys + [ LEGACY_CLASS_NAME ]
+          end.uniq
+        end
+
+        def status_job_ids
+          case status
+          when "blocked"
+            SolidQueue::BlockedExecution.select(:job_id)
+          when "failed"
+            SolidQueue::FailedExecution.select(:job_id)
+          when "finished"
+            SolidQueue::Job
+              .where.not(finished_at: nil)
+              .where.not(id: SolidQueue::FailedExecution.select(:job_id))
+              .select(:id)
+          when "queued"
+            SolidQueue::ReadyExecution.select(:job_id)
+          when "running"
+            SolidQueue::ClaimedExecution.select(:job_id)
+          when "scheduled"
+            SolidQueue::ScheduledExecution.select(:job_id)
+          else
+            raise ArgumentError, "Unsupported status: #{status}"
           end
         end
 

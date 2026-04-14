@@ -33,7 +33,8 @@ module R3x
       def dashboard_relative_time(time)
         return "Never" if time.blank?
 
-        "#{time_ago_in_words(time)} ago"
+        suffix = time.future? ? "from now" : "ago"
+        "#{time_ago_in_words(time)} #{suffix}"
       end
 
       def dashboard_timestamp(time)
@@ -48,11 +49,30 @@ module R3x
       end
 
       def dashboard_trigger_label(trigger_entry)
-        trigger = trigger_entry.fetch(:trigger)
-        return "Manual" if trigger.manual?
-        return trigger.type.to_s.humanize unless trigger.respond_to?(:cron)
+        mode = trigger_entry.fetch(:mode)
+        cron = trigger_entry[:cron]
 
-        "#{trigger.type.to_s.humanize}: #{trigger.cron}"
+        return "Schedule: #{cron}" if cron.present?
+
+        {
+          "change_detecting" => "Change detection",
+          "manual" => "Manual",
+          "observed" => "Observed trigger"
+        }.fetch(mode.to_s, mode.to_s.humanize)
+      end
+
+      def dashboard_trigger_kind(trigger_entry)
+        {
+          "change_detecting" => "Change detection",
+          "manual" => "Manual",
+          "observed" => "Observed",
+          "schedule" => "Schedule",
+          "scheduled" => "Schedule"
+        }.fetch(trigger_entry.fetch(:mode).to_s, trigger_entry.fetch(:mode).to_s.humanize)
+      end
+
+      def dashboard_trigger_details(trigger_entry)
+        trigger_entry[:cron].presence || trigger_entry[:unique_key]
       end
 
       def dashboard_workflow_link(run)
@@ -62,7 +82,52 @@ module R3x
       end
 
       def dashboard_error_summary(text)
-        text.to_s.lines.first.to_s.strip.presence || "Unknown error"
+        summary = if text.is_a?(Hash)
+          text["message"] || text[:message] || text["error"] || text[:error] || text.inspect
+        else
+          extract_error_message(text.to_s)
+        end
+
+        truncate(summary.presence || "Unknown error", length: 160, separator: " ")
+      end
+
+      def dashboard_error_body(text)
+        return "No error details recorded." if text.blank?
+
+        if text.is_a?(Hash)
+          text.inspect
+        else
+          text.to_s
+        end
+      end
+
+      def dashboard_icon(name)
+        icon_name, variant = {
+          alert: [ "exclamation-triangle", :outline ],
+          history: [ "clock", :outline ],
+          launch: [ "play", :solid ],
+          tune: [ "cog-6-tooth", :outline ],
+          workflow: [ "queue-list", :outline ]
+        }.fetch(name)
+
+        content_tag(
+          :span,
+          raw(Heroicon::Icon.render(name: icon_name, variant: variant, options: { class: "icon" }, path_options: {})),
+          class: "icon"
+        )
+      end
+
+      def dashboard_icon_label(name, text)
+        safe_join([ dashboard_icon(name), content_tag(:span, text) ], " ")
+      end
+
+      private
+        def extract_error_message(text)
+          first_line = text.lines.first.to_s.strip
+          return Regexp.last_match(1) if first_line.match(/"message"\s*=>\s*"([^"]+)"/)
+          return Regexp.last_match(1) if first_line.match(/"message"\s*:\s*"([^"]+)"/)
+
+          first_line
       end
     end
   end

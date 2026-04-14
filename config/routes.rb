@@ -4,8 +4,10 @@ Rails.application.routes.draw do
   scope module: "r3x/dashboard" do
     root "workflows#index"
 
-    resources :workflows, only: %i[ index show ], param: :workflow_key
-    resources :workflow_runs, only: :index, path: "workflow-runs"
+    resources :workflows, only: %i[ index show ], param: :workflow_key do
+      post :run_trigger, on: :member
+    end
+    resources :workflow_runs, only: %i[ index show ], path: "workflow-runs"
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

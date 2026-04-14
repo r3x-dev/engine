@@ -3,17 +3,11 @@ module R3x
     class ApplicationController < R3x::WebController
       layout "r3x/dashboard"
 
-      before_action :load_workflows
-
       helper_method :finished_runs_retention_label, :mission_control_path
 
       rescue_from KeyError, with: :render_not_found
 
       private
-        def load_workflows
-          R3x::Workflow::Boot.load!
-        end
-
         def finished_runs_retention_label
           duration = Rails.configuration.solid_queue.clear_finished_jobs_after
           return "unknown" unless duration.respond_to?(:parts)

@@ -1,44 +1,36 @@
 require "test_helper"
 
 class DashboardTest < ActionDispatch::IntegrationTest
-  setup do
-    @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
-    ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
-    R3x::Workflow::PackLoader.load!(force: true)
-    clear_tables
+  include ActiveJob::TestHelper
+  WORKFLOW_JOB_CLASS_NAME = R3x::TestSupport::DashboardWorkflowJob.name.freeze
 
-    workflow_class = R3x::Workflow::Registry.fetch("test_workflow")
-    @trigger = workflow_class.triggers.first
+  setup do
+    clear_tables
+    clear_enqueued_jobs
+    @trigger = "schedule:abc123".freeze
     SolidQueue::RecurringTask.create!(
-      key: "workflow:test_workflow:#{@trigger.unique_key}",
-      schedule: @trigger.cron,
-      class_name: workflow_class.name,
-      arguments: [ @trigger.unique_key ],
+      key: "workflow:test_workflow:#{@trigger}",
+      schedule: "0 * * * *",
+      class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
       queue_name: "default",
       static: false
     )
-    @job = SolidQueue::Job.create!(
-      queue_name: "default",
-      class_name: workflow_class.name,
-      arguments: [ @trigger.unique_key ],
+    @job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
       finished_at: 1.minute.ago,
       created_at: 10.minutes.ago,
       updated_at: 1.minute.ago
     )
     R3x::TriggerState.create!(
       workflow_key: "test_workflow",
-      trigger_key: @trigger.unique_key,
+      trigger_key: @trigger,
       trigger_type: "schedule",
       state: {},
       last_checked_at: 2.minutes.ago,
       last_triggered_at: 1.minute.ago
     )
-  end
-
-  teardown do
-    clear_tables
-    ENV["R3X_WORKFLOW_PATHS"] = @original_workflow_paths
-    R3x::Workflow::Registry.reset!
   end
 
   test "root renders workflows dashboard" do
@@ -47,23 +39,40 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "R3x Dashboard"
     assert_includes response.body, "Test Workflow"
-    assert_includes response.body, "/ops/jobs"
+    assert_includes response.body, "Workflow runtime from the database"
+    assert_includes response.body, "Run now"
   end
 
   test "workflow detail renders trigger state and recent runs" do
     get "/workflows/test_workflow"
 
     assert_response :success
-    assert_includes response.body, "Latest visible run"
-    assert_includes response.body, @trigger.unique_key
+    assert_includes response.body, "Triggers"
+    assert_includes response.body, @trigger
     assert_includes response.body, "Last checked"
+    assert_includes response.body, "Run now"
+  end
+
+  test "workflow detail shows latest failure shortcut when a failed run exists" do
+    failed_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
+      created_at: 5.minutes.ago,
+      updated_at: 30.seconds.ago
+    )
+    SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom", created_at: 30.seconds.ago)
+
+    get "/workflows/test_workflow"
+
+    assert_response :success
+    assert_includes response.body, "Latest failure"
+    assert_includes response.body, "/workflow-runs/#{failed_job.id}"
   end
 
   test "recent runs supports filtering" do
-    failed_job = SolidQueue::Job.create!(
-      queue_name: "default",
-      class_name: R3x::Workflow::Registry.fetch("test_workflow").name,
-      arguments: [ @trigger.unique_key ],
+    failed_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
       created_at: 5.minutes.ago,
       updated_at: 30.seconds.ago
     )
@@ -73,8 +82,26 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Recent Runs"
+    assert_includes response.body, "Back to workflow"
     assert_includes response.body, "boom"
     refute_match(/No workflow runs match/, response.body)
+  end
+
+  test "workflow run detail shows full error and navigation" do
+    failed_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
+      created_at: 5.minutes.ago,
+      updated_at: 30.seconds.ago
+    )
+    SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom\nstack line 1\nstack line 2", created_at: 30.seconds.ago)
+
+    get "/workflow-runs/#{failed_job.id}"
+
+    assert_response :success
+    assert_includes response.body, "Failure Details"
+    assert_includes response.body, "stack line 1"
+    assert_includes response.body, "Back to workflow"
   end
 
   test "ops jobs route stays available" do
@@ -83,15 +110,33 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "workflow detail can enqueue run now from recurring task" do
+    assert_enqueued_jobs 1, only: R3x::RunWorkflowJob do
+      post "/workflows/test_workflow/run_trigger"
+    end
+
+    assert_redirected_to "/workflows/test_workflow"
+  end
+
+  test "workflow detail can enqueue run now for change detection task" do
+    SolidQueue::RecurringTask.create!(
+      key: "workflow:feed_watch:feed:123",
+      schedule: "*/5 * * * *",
+      class_name: "R3x::ChangeDetectionJob",
+      arguments: [ "feed_watch", { "trigger_key" => "feed:123" } ],
+      queue_name: "feed",
+      static: false
+    )
+
+    assert_enqueued_jobs 1, only: R3x::ChangeDetectionJob do
+      post "/workflows/feed_watch/run_trigger", params: { trigger_key: "feed:123" }
+    end
+
+    assert_redirected_to "/workflows/feed_watch"
+  end
+
   private
     def clear_tables
-      SolidQueue::RecurringTask.delete_all
-      SolidQueue::BlockedExecution.delete_all
-      SolidQueue::ClaimedExecution.delete_all
-      SolidQueue::FailedExecution.delete_all
-      SolidQueue::ReadyExecution.delete_all
-      SolidQueue::ScheduledExecution.delete_all
-      SolidQueue::Job.delete_all
-      R3x::TriggerState.delete_all
+      TestDbCleanup.clear_runtime_tables!
     end
 end

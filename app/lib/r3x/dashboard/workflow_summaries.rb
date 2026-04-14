@@ -4,50 +4,68 @@ module R3x
   module Dashboard
     class WorkflowSummaries
       def all
-        workflow_classes.map { |workflow_class| build_summary(workflow_class) }
+        catalog.all.map { |workflow| build_summary(workflow.fetch(:workflow_key)) }
       end
 
       def find!(workflow_key)
-        build_summary(R3x::Workflow::Registry.fetch(workflow_key))
+        catalog.find!(workflow_key)
+
+        build_summary(workflow_key)
       end
 
       private
-        def build_summary(workflow_class)
-          workflow_key = workflow_class.workflow_key
+        def build_summary(workflow_key)
           trigger_states = trigger_states_by_workflow_key.fetch(workflow_key, [])
           recurring_tasks = recurring_tasks_by_workflow_key.fetch(workflow_key, [])
-          trigger_entries = workflow_class.triggers.map do |trigger|
-            build_trigger_entry(
-              workflow_key: workflow_key,
-              trigger: trigger,
-              trigger_states: trigger_states,
-              recurring_tasks: recurring_tasks
-            )
-          end
+          trigger_entries = trigger_entries_for(workflow_key:, trigger_states:, recurring_tasks:)
           last_run = WorkflowRuns.new(workflow_key: workflow_key, limit: 1).all.first
+          class_name = recurring_tasks.filter_map { |task| workflow_class_name(task) }.first || last_run&.dig(:class_name)
 
           {
-            class_name: workflow_class.name,
+            class_name: class_name,
             health: health_for(last_run: last_run, trigger_states: trigger_states),
             last_run: last_run,
             mission_control_path: "/ops/jobs",
             next_trigger_at: trigger_entries.filter_map { |entry| entry[:next_trigger_at] }.min,
             title: workflow_key.titleize,
+            trigger_count: trigger_entries.size,
             trigger_entries: trigger_entries,
-            workflow_class: workflow_class,
             workflow_key: workflow_key
           }
         end
 
-        def build_trigger_entry(workflow_key:, trigger:, trigger_states:, recurring_tasks:)
+        def trigger_entries_for(workflow_key:, trigger_states:, recurring_tasks:)
+          trigger_keys = recurring_tasks.filter_map do |task|
+            parse_task_key(task.key)&.fetch(:trigger_key)
+          end
+
+          trigger_keys |= trigger_states.map(&:trigger_key)
+
+          trigger_keys.sort.map do |trigger_key|
+            build_trigger_entry(
+              workflow_key: workflow_key,
+              trigger_key: trigger_key,
+              trigger_states: trigger_states,
+              recurring_tasks: recurring_tasks
+            )
+          end
+        end
+
+        def build_trigger_entry(workflow_key:, trigger_key:, trigger_states:, recurring_tasks:)
+          recurring_task = recurring_tasks.find { |task| parse_task_key(task.key)&.fetch(:trigger_key) == trigger_key }
+          trigger_state = trigger_states.find { |state| state.trigger_key == trigger_key }
+
           {
-            change_detecting: trigger.change_detecting?,
-            cron: trigger.respond_to?(:cron) ? trigger.cron : nil,
-            next_trigger_at: next_trigger_at_for(trigger),
-            recurring_task: recurring_tasks.find { |task| task.key == recurring_task_key(workflow_key, trigger) },
-            trigger: trigger,
-            trigger_state: trigger_states.find { |state| state.trigger_key == trigger.unique_key },
-            unique_key: trigger.unique_key
+            change_detecting: change_detecting_trigger?(recurring_task, trigger_state),
+            cron: recurring_task&.schedule,
+            mode: trigger_mode_for(recurring_task, trigger_state),
+            next_trigger_at: next_trigger_at_for(recurring_task),
+            queue_name: recurring_task&.queue_name || latest_queue_name(workflow_key),
+            recurring_task: recurring_task,
+            run_now_available: recurring_task.present?,
+            trigger_state: trigger_state,
+            unique_key: trigger_key,
+            workflow_key: workflow_key
           }
         end
 
@@ -86,19 +104,15 @@ module R3x
           }
         end
 
-        def next_trigger_at_for(trigger)
-          return unless trigger.cron_schedulable?
+        def next_trigger_at_for(recurring_task)
+          return if recurring_task.blank?
 
-          parsed = Fugit.parse(trigger.cron, multi: :fail)
+          parsed = Fugit.parse(recurring_task.schedule, multi: :fail)
           return unless parsed.is_a?(Fugit::Cron)
 
           parsed.next_time(Time.current).to_t
         rescue ArgumentError
           nil
-        end
-
-        def recurring_task_key(workflow_key, trigger)
-          "workflow:#{workflow_key}:#{trigger.unique_key}"
         end
 
         def recurring_tasks_by_workflow_key
@@ -107,20 +121,21 @@ module R3x
               .where("key LIKE ?", "workflow:%")
               .order(:key)
               .to_a
-              .group_by { |task| workflow_key_for(task.key) }
+              .each_with_object({}) do |task, grouped|
+                parsed_key = parse_task_key(task.key)
+                next if parsed_key.nil?
+
+                grouped[parsed_key.fetch(:workflow_key)] ||= []
+                grouped[parsed_key.fetch(:workflow_key)] << task
+              end
           rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
             {}
           end
         end
 
-        def workflow_key_for(task_key)
-          task_key.to_s.split(":", 3)[1]
-        end
-
         def trigger_states_by_workflow_key
           @trigger_states_by_workflow_key ||= begin
             R3x::TriggerState
-              .where(workflow_key: workflow_classes.map(&:workflow_key))
               .order(:workflow_key, :trigger_key)
               .group_by(&:workflow_key)
           rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
@@ -128,8 +143,39 @@ module R3x
           end
         end
 
-        def workflow_classes
-          @workflow_classes ||= R3x::Workflow::Registry.all
+        def catalog
+          @catalog ||= WorkflowCatalog.new
+        end
+
+        def parse_task_key(task_key)
+          prefix, workflow_key, trigger_key = task_key.to_s.split(":", 3)
+          return unless prefix == "workflow" && workflow_key.present? && trigger_key.present?
+
+          { workflow_key: workflow_key, trigger_key: trigger_key }
+        end
+
+        def workflow_class_name(task)
+          return if task.class_name == WorkflowCatalog::CHANGE_DETECTION_CLASS_NAME
+
+          task.class_name.presence
+        end
+
+        def change_detecting_trigger?(recurring_task, trigger_state)
+          return true if recurring_task&.class_name == WorkflowCatalog::CHANGE_DETECTION_CLASS_NAME
+
+          trigger_state&.trigger_type.present? && !%w[ manual schedule ].include?(trigger_state.trigger_type) && recurring_task.blank?
+        end
+
+        def trigger_mode_for(recurring_task, trigger_state)
+          return "change_detecting" if change_detecting_trigger?(recurring_task, trigger_state)
+          return "scheduled" if recurring_task.present?
+          return trigger_state.trigger_type if trigger_state&.trigger_type.present?
+
+          "observed"
+        end
+
+        def latest_queue_name(workflow_key)
+          WorkflowRuns.new(workflow_key: workflow_key, limit: 1).all.first&.dig(:queue_name)
         end
     end
   end

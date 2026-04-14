@@ -3,12 +3,15 @@
 <section class="page-header">
   <div>
     <h2>Recent Runs</h2>
-    <p>Visible workflow runs from the current <code>Solid Queue</code> retention window.</p>
+    <p>Visible runs in the current queue retention window.</p>
   </div>
 
   <div class="actions">
-    <%= link_to "Workflows", workflows_path, class: "button" %>
-    <%= link_to "Mission Control", mission_control_path, class: "button" %>
+    <% if @workflow_filter.present? %>
+      <%= link_to "Back to workflow", workflow_path(@workflow_filter), class: "button subtle" %>
+    <% else %>
+      <%= link_to "All workflows", workflows_path, class: "button subtle" %>
+    <% end %>
   </div>
 </section>
 
@@ -17,7 +20,7 @@
     <div class="field">
       <%= form.label :workflow, "Workflow" %>
       <%= form.select :workflow,
-                      options_for_select(@workflow_options.map { |workflow| [ workflow.workflow_key.titleize, workflow.workflow_key ] }, @workflow_filter),
+                      options_for_select(@workflow_options.map { |workflow| [ workflow[:title], workflow[:workflow_key] ] }, @workflow_filter),
                       { include_blank: "All workflows" } %>
     </div>
 
@@ -36,5 +39,5 @@
 </section>
 
 <section class="panel stack">
-  <%= render "r3x/dashboard/workflow_runs/table", runs: @runs %>
+  <%= render "r3x/dashboard/workflow_runs/table", runs: @runs, empty_message: "No workflow runs match the current filters." %>
 </section>

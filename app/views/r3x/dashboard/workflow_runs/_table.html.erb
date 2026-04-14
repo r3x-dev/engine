@@ -1,6 +1,6 @@
 <div class="table-wrap">
   <% if runs.empty? %>
-    <div class="empty">No workflow runs match the current filters.</div>
+    <div class="empty"><%= local_assigns.fetch(:empty_message, "No workflow runs match the current filters.") %></div>
   <% else %>
     <table>
       <thead>
@@ -37,13 +37,12 @@
             <td>
               <% if run[:error].present? %>
                 <div><%= dashboard_error_summary(run[:error]) %></div>
+                <div class="meta"><%= link_to "View error", workflow_run_path(run[:job_id]) %></div>
               <% else %>
-                <span class="muted">No error details</span>
+                <div class="meta"><%= link_to "View run", workflow_run_path(run[:job_id]) %></div>
               <% end %>
 
-              <div class="meta">
-                <%= link_to "Mission Control", run[:mission_control_path] %>
-              </div>
+              <div class="meta">Job <code><%= run[:job_id] %></code></div>
             </td>
           </tr>
         <% end %>
