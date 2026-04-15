@@ -7,11 +7,13 @@ Also includes a small server-rendered workflow dashboard at `/` and Mission Cont
 
 ## Development Setup
 
-After cloning the repository, enable the pre-commit hooks:
+After cloning the repository, run:
 
 ```bash
-git config --local core.hooksPath .githooks
+just setup
 ```
+
+This installs dependencies, prepares the database, configures the pre-commit hooks, and writes a local absolute Bundler path for the checkout (`$PWD/.bundle`). Keep that setting per-clone and local; do not use a shared relative `BUNDLE_PATH`, because Ruby LSP boots through its own `.ruby-lsp/Gemfile` and needs to resolve the same bundle as the app.
 
 This ensures that `bin/ci` runs automatically before each commit to catch issues early.
 
@@ -19,8 +21,7 @@ This ensures that `bin/ci` runs automatically before each commit to catch issues
 
 ```bash
 mise install
-bundle install
-bin/rails db:setup
+just setup
 bin/rails server
 ```
 
