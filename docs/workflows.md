@@ -48,6 +48,25 @@ These notes apply to workflow code in general.
 - If a cached block becomes confusing or hides too much behavior, remove it instead of stacking more
   flags or conditions around it.
 
+## Schedule Timezones
+
+- `trigger :schedule` accepts an optional `timezone:`.
+- Timezones may be IANA names like `Europe/Paris` or Rails names like `Pacific Time (US & Canada)`.
+- Rails-style names are normalized to canonical TZInfo names before scheduling.
+- If `timezone:` is omitted, `R3X_TIMEZONE` is used when present.
+- If the cron string already embeds a timezone, that embedded timezone wins over `R3X_TIMEZONE`.
+- Use one of these styles, not both:
+
+  ```ruby
+  trigger :schedule, cron: "every day at 9am Europe/Paris"
+  ```
+
+  ```ruby
+  trigger :schedule, cron: "every day at 9am", timezone: "Europe/Paris"
+  ```
+
+- If both `timezone:` and the cron string specify timezones, configuration fails fast.
+
 ## Logging
 
 - Prefer `logger.debug { ... }` for debug logs so the message is lazy evaluated.
