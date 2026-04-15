@@ -10,10 +10,7 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
 ARG RUBY_VERSION=4.0.2
-ARG GIT_CODE_VERSION=dev
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
-
-ARG GIT_CODE_VERSION
 
 # Rails app lives here
 WORKDIR /rails
@@ -29,8 +26,7 @@ RUN apt-get update -qq && \
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
-    GIT_CODE_VERSION="${GIT_CODE_VERSION}"
+    LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
 # Shared build stage for installing gems
 FROM base AS build-base
@@ -80,6 +76,9 @@ COPY . .
 
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
+ARG GIT_CODE_VERSION=dev
+ENV GIT_CODE_VERSION="${GIT_CODE_VERSION}"
+
 # Final stage for app image
 FROM base AS production
 
@@ -93,6 +92,9 @@ USER 1000:1000
 # Copy built artifacts: gems, application
 COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --chown=rails:rails --from=build /rails /rails
+
+ARG GIT_CODE_VERSION=dev
+ENV GIT_CODE_VERSION="${GIT_CODE_VERSION}"
 
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
