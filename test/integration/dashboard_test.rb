@@ -5,6 +5,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
   WORKFLOW_JOB_CLASS_NAME = R3x::TestSupport::DashboardWorkflowJob.name.freeze
 
   setup do
+    @original_logs_provider = ENV["R3X_LOGS_PROVIDER"]
+    @original_victoria_logs_url = ENV["R3X_VICTORIA_LOGS_URL"]
     clear_tables
     clear_enqueued_jobs
     @trigger = "schedule:abc123".freeze
@@ -33,6 +35,11 @@ class DashboardTest < ActionDispatch::IntegrationTest
     )
   end
 
+  teardown do
+    ENV["R3X_LOGS_PROVIDER"] = @original_logs_provider
+    ENV["R3X_VICTORIA_LOGS_URL"] = @original_victoria_logs_url
+  end
+
   test "root renders workflows dashboard" do
     get "/"
 
@@ -44,6 +51,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
   end
 
   test "workflow detail renders trigger state and recent runs" do
+    ENV.delete("R3X_LOGS_PROVIDER")
+
     get "/workflows/test_workflow"
 
     assert_response :success
@@ -51,6 +60,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, @trigger
     assert_includes response.body, "Last checked"
     assert_includes response.body, "Run now"
+    refute_includes response.body, "Recent logs"
   end
 
   test "workflow detail shows latest failure shortcut when a failed run exists" do
@@ -104,6 +114,9 @@ class DashboardTest < ActionDispatch::IntegrationTest
   end
 
   test "workflow run detail shows full error and navigation" do
+    ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+    ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
     failed_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [ @trigger ],
@@ -112,13 +125,54 @@ class DashboardTest < ActionDispatch::IntegrationTest
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom\nstack line 1\nstack line 2", created_at: 30.seconds.ago)
 
-    get "/workflow-runs/#{failed_job.id}"
+    get "/workflow-runs/#{failed_job.id}", params: { logs: 1 }
 
     assert_response :success
     assert_includes response.body, "Failure Details"
+    assert_includes response.body, "Run logs"
     assert_includes response.body, "stack line 1"
     assert_includes response.body, "Back to workflow"
     assert_includes response.body, '<section class="panel stack" style="margin-top: 18px;">'
+  end
+
+  test "recent runs shows log shortcut when logs are configured" do
+    ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+    ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+    get "/workflow-runs"
+
+    assert_response :success
+    assert_includes response.body, "View logs"
+  end
+
+  test "recent runs hides log shortcut when provider-specific config is missing" do
+    ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+    ENV.delete("R3X_VICTORIA_LOGS_URL")
+
+    get "/workflow-runs"
+
+    assert_response :success
+    refute_includes response.body, "View logs"
+  end
+
+  test "workflow detail only loads logs on demand" do
+    ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+    ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+    stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
+      .to_return(status: 200, body: "")
+
+    get "/workflows/test_workflow"
+
+    assert_response :success
+    assert_includes response.body, "Load logs"
+    refute_includes response.body, "Recent logs"
+
+    get "/workflows/test_workflow", params: { logs: 1 }
+
+    assert_response :success
+    assert_includes response.body, "Hide logs"
+    assert_includes response.body, "Recent logs"
   end
 
   test "ops jobs route stays available" do

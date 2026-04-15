@@ -42,6 +42,10 @@
                 <div class="meta"><%= link_to "View run", workflow_run_path(run[:job_id]) %></div>
               <% end %>
 
+              <% if logs_configured? %>
+                <div class="meta"><%= link_to "View logs", workflow_run_path(run[:job_id], logs: 1, anchor: "run-logs") %></div>
+              <% end %>
+
               <div class="meta">Job <code><%= run[:job_id] %></code></div>
             </td>
           </tr>

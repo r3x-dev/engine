@@ -106,6 +106,7 @@ module R3x
           alert: [ "exclamation-triangle", :outline ],
           history: [ "clock", :outline ],
           launch: [ "play", :solid ],
+          logs: [ "document-text", :outline ],
           tune: [ "cog-6-tooth", :outline ],
           workflow: [ "queue-list", :outline ]
         }.fetch(name)
@@ -119,6 +120,10 @@ module R3x
 
       def dashboard_icon_label(name, text)
         safe_join([ dashboard_icon(name), content_tag(:span, text) ], " ")
+      end
+
+      def dashboard_log_metadata(entry)
+        [ entry[:pod_name], entry[:container_name] ].compact.join(" / ")
       end
 
       private
