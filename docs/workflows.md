@@ -13,6 +13,29 @@ These notes apply to workflow code in general.
 - Keep steps small and meaningful. A step should mark a real unit of progress, not just wrap every
   line.
 
+## Step Semantics
+
+- `step` is a resumable boundary, not a value-return helper.
+- Do not assign the result of a `step` block to a variable and assume it is the block result.
+- Put data-fetching logic in a normal helper, then use `step` around the resumable work that consumes
+  that data.
+- If you see `true.select` or `nil.select` in a workflow crash, check whether a `step` block was used
+  as if it returned the fetched value.
+
+  ```ruby
+  # Good
+  raw_events = fetch_from_apify
+
+  step :process_events do |step|
+    process_events(Array.wrap(raw_events), step)
+  end
+
+  # Bad
+  raw_events = step :fetch_events do
+    fetch_from_apify
+  end
+  ```
+
 ## Available Helpers
 
 - `ctx`
@@ -47,6 +70,8 @@ These notes apply to workflow code in general.
   - leave the helper in place if it remains useful for future debugging
 - If a cached block becomes confusing or hides too much behavior, remove it instead of stacking more
   flags or conditions around it.
+- When a workflow suddenly sees a boolean or `nil` where an array should be, inspect the nearest
+  `step` boundary first before blaming the external API.
 
 ## Schedule Timezones
 
