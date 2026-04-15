@@ -68,14 +68,14 @@ module R3x
           {
             class: "R3x::ChangeDetectionJob",
             args: [ workflow_class.workflow_key, { "trigger_key" => trigger.unique_key } ],
-            schedule: trigger.cron,
+            schedule: trigger.schedule,
             queue: queue_name
           }
         else
           {
             class: workflow_class.name,
             args: [ trigger.unique_key ],
-            schedule: trigger.cron,
+            schedule: trigger.schedule,
             queue: queue_name
           }
         end

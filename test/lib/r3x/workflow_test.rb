@@ -38,6 +38,9 @@ module R3x
     end
 
     test "trigger :schedule accepts valid cron expression" do
+      original_timezone = ENV["R3X_TIMEZONE"]
+      ENV.delete("R3X_TIMEZONE")
+
       klass = Class.new(R3x::Workflow::Base) do
         def self.name
           "Test"
@@ -49,9 +52,16 @@ module R3x
       assert schedule
       assert_equal :schedule, schedule.type
       assert_equal "0 13 * * *", schedule.cron
+      assert_nil schedule.timezone
+      assert_equal "0 13 * * *", schedule.schedule
+    ensure
+      ENV["R3X_TIMEZONE"] = original_timezone
     end
 
     test "trigger :schedule accepts human readable cron" do
+      original_timezone = ENV["R3X_TIMEZONE"]
+      ENV.delete("R3X_TIMEZONE")
+
       klass = Class.new(R3x::Workflow::Base) do
         def self.name
           "Test"
@@ -62,6 +72,80 @@ module R3x
       schedule = klass.schedulable_triggers.first
       assert schedule
       assert_equal "every day at 13:00", schedule.cron
+      assert_nil schedule.timezone
+      assert_equal "every day at 13:00", schedule.schedule
+    ensure
+      ENV["R3X_TIMEZONE"] = original_timezone
+    end
+
+    test "trigger :schedule accepts timezone" do
+      klass = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Test"
+        end
+
+        trigger :schedule, cron: "0 13 * * *", timezone: "Europe/Paris"
+      end
+
+      schedule = klass.schedulable_triggers.first
+      assert schedule
+      assert_equal "Europe/Paris", schedule.timezone
+      assert_equal "0 13 * * * Europe/Paris", schedule.schedule
+    end
+
+    test "trigger :schedule normalizes Rails timezone names to TZInfo names" do
+      klass = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Test"
+        end
+
+        trigger :schedule, cron: "0 13 * * *", timezone: "Pacific Time (US & Canada)"
+      end
+
+      schedule = klass.schedulable_triggers.first
+      assert schedule
+      assert_equal "America/Los_Angeles", schedule.timezone
+      assert_equal "0 13 * * * America/Los_Angeles", schedule.schedule
+    end
+
+    test "trigger :schedule uses default timezone from env" do
+      original_timezone = ENV["R3X_TIMEZONE"]
+      ENV["R3X_TIMEZONE"] = "UTC"
+
+      klass = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Test"
+        end
+
+        trigger :schedule, cron: "0 13 * * *"
+      end
+
+      schedule = klass.schedulable_triggers.first
+      assert schedule
+      assert_equal "UTC", schedule.timezone
+      assert_equal "0 13 * * * UTC", schedule.schedule
+    ensure
+      ENV["R3X_TIMEZONE"] = original_timezone
+    end
+
+    test "trigger :schedule uses timezone embedded in cron" do
+      original_timezone = ENV["R3X_TIMEZONE"]
+      ENV["R3X_TIMEZONE"] = "UTC"
+
+      klass = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Test"
+        end
+
+        trigger :schedule, cron: "every day at 13:00 Europe/Paris"
+      end
+
+      schedule = klass.schedulable_triggers.first
+      assert schedule
+      assert_equal "Europe/Paris", schedule.timezone
+      assert_equal "every day at 13:00 Europe/Paris", schedule.schedule
+    ensure
+      ENV["R3X_TIMEZONE"] = original_timezone
     end
 
     test "trigger :schedule rejects invalid cron" do
@@ -75,6 +159,67 @@ module R3x
       end
 
       assert_includes error.message, "Cron is not a valid cron expression"
+    end
+
+    test "trigger :schedule rejects invalid timezone" do
+      error = assert_raises(ConfigurationError) do
+        Class.new(R3x::Workflow::Base) do
+          def self.name
+            "Test"
+          end
+
+          trigger :schedule, cron: "0 13 * * *", timezone: "Mars/Olympus"
+        end
+      end
+
+      assert_includes error.message, "Timezone timezone: 'Mars/Olympus' is not a valid timezone"
+    end
+
+    test "trigger :schedule rejects invalid default timezone from env" do
+      original_timezone = ENV["R3X_TIMEZONE"]
+      ENV["R3X_TIMEZONE"] = "Mars/Olympus"
+
+      error = assert_raises(ConfigurationError) do
+        Class.new(R3x::Workflow::Base) do
+          def self.name
+            "Test"
+          end
+
+          trigger :schedule, cron: "0 13 * * *"
+        end
+      end
+
+      assert_includes error.message, "Timezone timezone: 'Mars/Olympus' is not a valid timezone"
+    ensure
+      ENV["R3X_TIMEZONE"] = original_timezone
+    end
+
+    test "trigger :schedule rejects conflicting timezone option and embedded cron timezone" do
+      error = assert_raises(ConfigurationError) do
+        Class.new(R3x::Workflow::Base) do
+          def self.name
+            "Test"
+          end
+
+          trigger :schedule, cron: "0 13 * * * Europe/Paris", timezone: "UTC"
+        end
+      end
+
+      assert_includes error.message, "use either timezone: or a timezone embedded in cron, not both"
+    end
+
+    test "trigger :schedule rejects matching timezone option and embedded cron timezone" do
+      error = assert_raises(ConfigurationError) do
+        Class.new(R3x::Workflow::Base) do
+          def self.name
+            "Test"
+          end
+
+          trigger :schedule, cron: "0 13 * * * Europe/Paris", timezone: "Europe/Paris"
+        end
+      end
+
+      assert_includes error.message, "use either timezone: or a timezone embedded in cron, not both"
     end
 
     test "unknown trigger type raises error" do
