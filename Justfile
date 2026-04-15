@@ -8,3 +8,6 @@ up:
 
 tests:
   {{RAILS_BIN}} test
+
+test_dockerignore:
+  rsync -avn . /dev/shm --exclude-from .dockerignore
