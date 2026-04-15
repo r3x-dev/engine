@@ -6,4 +6,3 @@ idiomatic_version_file_enable_tools = ["ruby"]
 
 [env]
 RAILS_ENV = "development"
-BUNDLE_PATH = ".bundle"
