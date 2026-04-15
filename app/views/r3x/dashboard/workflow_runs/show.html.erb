@@ -13,14 +13,6 @@
     <% else %>
       <%= link_to "Recent runs", workflow_runs_path, class: "button subtle" %>
     <% end %>
-
-    <% if logs_configured? %>
-      <% if logs_requested? %>
-        <%= link_to dashboard_icon_label(:logs, "Hide logs"), workflow_run_path(@run[:job_id]), class: "button subtle" %>
-      <% else %>
-        <%= link_to dashboard_icon_label(:logs, "Load logs"), workflow_run_path(@run[:job_id], logs: 1, anchor: "run-logs"), class: "button subtle" %>
-      <% end %>
-    <% end %>
   </div>
 </section>
 
@@ -78,7 +70,6 @@
 <section class="panel stack" style="margin-top: 18px;">
   <div>
     <h3 class="section-title">Failure Details</h3>
-    <p class="section-copy">Full error output captured for this run.</p>
   </div>
 
   <% if @run[:error].present? %>
@@ -94,6 +85,34 @@
                logs: @logs,
                title: "Run logs",
                description: "Indexed application logs correlated with this persisted workflow run.",
-               empty_message: "No indexed logs were found for this run in its execution window." %>
+               empty_message: "No indexed logs were found for this run in its execution window.",
+               action_label: dashboard_icon_label(:logs, "Hide logs"),
+               action_path: workflow_run_path(@run[:job_id]) %>
   </div>
+<% elsif logs_configured? %>
+  <section class="panel stack logs-placeholder-panel" style="margin-top: 18px;" id="run-logs">
+    <div>
+      <h3 class="section-title">Run logs</h3>
+      <p class="section-copy">Indexed application logs correlated with this persisted workflow run.</p>
+    </div>
+
+    <div class="logs-placeholder" aria-label="Run logs unavailable until loaded">
+      <div class="logs-placeholder-preview" aria-hidden="true">
+        <div class="logs-placeholder-row">
+          <span class="logs-placeholder-chip"></span>
+          <span class="logs-placeholder-line logs-placeholder-line-long"></span>
+        </div>
+        <div class="logs-placeholder-row">
+          <span class="logs-placeholder-chip"></span>
+          <span class="logs-placeholder-line logs-placeholder-line-medium"></span>
+        </div>
+        <div class="logs-placeholder-row">
+          <span class="logs-placeholder-chip"></span>
+          <span class="logs-placeholder-line logs-placeholder-line-short"></span>
+        </div>
+      </div>
+
+      <%= link_to dashboard_icon_label(:logs, "Load logs"), workflow_run_path(@run[:job_id], logs: 1, anchor: "run-logs"), class: "button subtle logs-placeholder-action" %>
+    </div>
+  </section>
 <% end %>

@@ -135,6 +135,23 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, '<section class="panel stack" style="margin-top: 18px;">'
   end
 
+  test "workflow run detail shows log placeholder before loading" do
+    ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+    ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+    stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
+      .to_return(status: 200, body: "")
+
+    get "/workflow-runs/#{@job.id}"
+
+    assert_response :success
+    assert_includes response.body, "Run logs"
+    assert_includes response.body, "Load logs"
+    assert_includes response.body, "logs-placeholder"
+    refute_includes response.body, "Hide logs"
+    refute_includes response.body, "No indexed logs were found for this run in its execution window."
+  end
+
   test "recent runs shows log shortcut when logs are configured" do
     ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
     ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
