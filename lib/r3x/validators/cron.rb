@@ -10,7 +10,7 @@ module R3x
       end
 
       def validate(record)
-        value = record.public_send(@cron_field)
+        value = schedule_value(record)
         return if @allow_blank && (value.nil? || value.empty?)
 
         parsed = Fugit.parse(value, multi: :fail)
@@ -30,6 +30,16 @@ module R3x
         end
       rescue ArgumentError => e
         raise ArgumentError, "#{field_name}: '#{value}' is not a valid cron expression (#{e.message})"
+      end
+
+      private
+
+      def schedule_value(record)
+        return record.schedule if record.respond_to?(:schedule)
+
+        record.public_send(@cron_field)
+      rescue ArgumentError
+        record.public_send(@cron_field)
       end
     end
   end

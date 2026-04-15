@@ -7,6 +7,7 @@ module R3x
         included do
           validates :cron, presence: true
           validates_with Validators::Cron
+          validates_with Validators::Timezone, timezone_field: :timezone
         end
 
         def cron_schedulable?
@@ -15,6 +16,14 @@ module R3x
 
         def cron
           raise NotImplementedError, "#{self.class.name} must implement #cron"
+        end
+
+        def timezone
+          nil
+        end
+
+        def schedule
+          [ cron, timezone ].compact.join(" ")
         end
       end
     end
