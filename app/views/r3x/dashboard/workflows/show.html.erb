@@ -20,6 +20,13 @@
       <%= link_to dashboard_icon_label(:alert, "Latest failure"), workflow_run_path(@latest_failure[:job_id]), class: "button subtle" %>
     <% end %>
     <%= link_to dashboard_icon_label(:history, "Recent runs"), workflow_runs_path(workflow: @workflow[:workflow_key]), class: "button subtle" %>
+    <% if logs_configured? %>
+      <% if logs_requested? %>
+        <%= link_to dashboard_icon_label(:logs, "Hide logs"), workflow_path(@workflow[:workflow_key]), class: "button subtle" %>
+      <% else %>
+        <%= link_to dashboard_icon_label(:logs, "Load logs"), workflow_path(@workflow[:workflow_key], logs: 1, anchor: "workflow-logs"), class: "button subtle" %>
+      <% end %>
+    <% end %>
   </div>
 </section>
 
@@ -111,3 +118,13 @@
 
   <%= render "r3x/dashboard/workflow_runs/table", runs: @runs, empty_message: "No recent runs are visible for this workflow yet." %>
 </section>
+
+<% if logs_requested? %>
+  <div id="workflow-logs">
+    <%= render "r3x/dashboard/shared/logs",
+               logs: @logs,
+               title: "Recent logs",
+               description: "Latest indexed logs for this workflow across runtime execution and trigger checks.",
+               empty_message: "No indexed logs were found for this workflow in the recent lookback window." %>
+  </div>
+<% end %>

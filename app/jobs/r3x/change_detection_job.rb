@@ -5,23 +5,29 @@ module R3x
     def perform(workflow_key, options = nil)
       workflow_key, options = normalize_arguments(workflow_key, options)
       trigger_key = options.fetch(:trigger_key)
+      trigger_state = nil
 
-      workflow_class = R3x::Workflow::Registry.fetch(workflow_key)
-      trigger = find_trigger(workflow_class: workflow_class, trigger_key: trigger_key)
-      trigger_state = load_trigger_state(workflow_key: workflow_key, trigger_key: trigger_key, trigger_type: trigger.type)
-      result = normalize_result(
-        trigger.detect_changes(
-          workflow_key: workflow_key,
-          state: trigger_state.state.deep_symbolize_keys
+      with_log_tags(
+        "r3x.workflow_key=#{workflow_key}",
+        "r3x.trigger_key=#{trigger_key}"
+      ) do
+        workflow_class = R3x::Workflow::Registry.fetch(workflow_key)
+        trigger = find_trigger(workflow_class: workflow_class, trigger_key: trigger_key)
+        trigger_state = load_trigger_state(workflow_key: workflow_key, trigger_key: trigger_key, trigger_type: trigger.type)
+        result = normalize_result(
+          trigger.detect_changes(
+            workflow_key: workflow_key,
+            state: trigger_state.state.deep_symbolize_keys
+          )
         )
-      )
 
-      TriggerState.transaction do
-        if result[:changed]
-          workflow_class.perform_later(trigger_key, trigger_payload: result[:payload])
+        TriggerState.transaction do
+          if result[:changed]
+            workflow_class.perform_later(trigger_key, trigger_payload: result[:payload])
+          end
+
+          trigger_state.record_check!(result)
         end
-
-        trigger_state.record_check!(result)
       end
     rescue => e
       trigger_state.record_error!(e) if defined?(trigger_state) && trigger_state&.persisted?
