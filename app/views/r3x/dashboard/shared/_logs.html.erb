@@ -1,7 +1,13 @@
 <section class="panel stack" style="margin-top: 18px;">
-  <div>
-    <h3 class="section-title"><%= local_assigns.fetch(:title) %></h3>
-    <p class="section-copy"><%= local_assigns.fetch(:description) %></p>
+  <div class="page-header">
+    <div>
+      <h3 class="section-title"><%= local_assigns.fetch(:title) %></h3>
+      <p class="section-copy"><%= local_assigns.fetch(:description) %></p>
+    </div>
+
+    <% if local_assigns[:action_label].present? && local_assigns[:action_path].present? %>
+      <%= link_to local_assigns.fetch(:action_label), local_assigns.fetch(:action_path), class: "button subtle" %>
+    <% end %>
   </div>
 
   <% if !logs[:configured] %>
