@@ -22,6 +22,8 @@ module R3x
       assert schedule
       assert_equal :schedule, schedule.type
       assert_equal "0 * * * *", schedule.cron
+      assert_nil schedule.timezone
+      assert_equal "0 * * * *", schedule.schedule
     end
 
     test "raises KeyError for unknown workflow" do
