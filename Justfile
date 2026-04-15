@@ -1,9 +1,9 @@
 RAILS_BIN := "bundle exec rails"
 
 setup:
+  bundle config set --local path "$PWD/.bundle"
   git config --local core.hooksPath .githooks
   bin/setup --skip-server
-  bundle config set --local path "$PWD/.bundle"
 
 up:
   {{RAILS_BIN}} s
