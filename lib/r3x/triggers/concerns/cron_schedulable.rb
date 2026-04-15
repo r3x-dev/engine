@@ -7,7 +7,7 @@ module R3x
         included do
           validates :cron, presence: true
           validates_with Validators::Cron
-          validates_with Validators::Timezone, timezone_field: :timezone, allow_blank: true
+          validates_with Validators::Timezone, timezone_field: :timezone
         end
 
         def cron_schedulable?

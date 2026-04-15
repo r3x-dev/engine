@@ -4,11 +4,11 @@ module R3x
   module Validators
     class TimezoneTest < ActiveSupport::TestCase
       class DummyModel
-        include ActiveModel::Validations
+          include ActiveModel::Validations
 
-        attr_reader :timezone
+          attr_reader :timezone
 
-        validates_with R3x::Validators::Timezone, timezone_field: :timezone, allow_blank: true
+          validates_with R3x::Validators::Timezone, timezone_field: :timezone
 
         def initialize(timezone:)
           @timezone = timezone
@@ -25,6 +25,26 @@ module R3x
         assert_nothing_raised do
           R3x::Validators::Timezone.validate!("Pacific Time (US & Canada)")
         end
+      end
+
+      test "accepts ActiveSupport timezone objects" do
+        timezone = ActiveSupport::TimeZone["Pacific Time (US & Canada)"]
+
+        assert_nothing_raised do
+          R3x::Validators::Timezone.validate!(timezone)
+        end
+
+        assert_equal "America/Los_Angeles", R3x::Validators::Timezone.normalize(timezone)
+      end
+
+      test "accepts TZInfo timezone objects" do
+        timezone = TZInfo::Timezone.get("America/Los_Angeles")
+
+        assert_nothing_raised do
+          R3x::Validators::Timezone.validate!(timezone)
+        end
+
+        assert_equal "America/Los_Angeles", R3x::Validators::Timezone.normalize(timezone)
       end
 
       test "rejects invalid timezone" do
@@ -48,7 +68,7 @@ module R3x
         assert_equal "UTC", R3x::Validators::Timezone.normalize("Etc/UTC")
       end
 
-      test "allows blank when allow_blank is set" do
+      test "allows blank timezone" do
         assert DummyModel.new(timezone: "").valid?
         assert DummyModel.new(timezone: nil).valid?
       end
