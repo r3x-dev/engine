@@ -16,4 +16,4 @@ hooks:
       command: mise trust
 
     - type: command
-      command: bundle install && bundle exec rails db:prepare
+      command: just setup

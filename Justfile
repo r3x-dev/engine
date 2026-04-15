@@ -2,6 +2,7 @@ RAILS_BIN := "bundle exec rails"
 
 setup:
   git config --local core.hooksPath .githooks
+  bin/setup --skip-server
 
 up:
   {{RAILS_BIN}} s
