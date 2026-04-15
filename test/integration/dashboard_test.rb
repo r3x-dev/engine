@@ -69,6 +69,22 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "/workflow-runs/#{failed_job.id}"
   end
 
+  test "workflows index links last run to run details when the latest run failed" do
+    failed_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
+      created_at: 5.minutes.ago,
+      updated_at: 30.seconds.ago
+    )
+    SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom", created_at: 30.seconds.ago)
+
+    get "/"
+
+    assert_response :success
+    assert_includes response.body, "Failed"
+    assert_includes response.body, "/workflow-runs/#{failed_job.id}"
+  end
+
   test "recent runs supports filtering" do
     failed_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
@@ -102,6 +118,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Failure Details"
     assert_includes response.body, "stack line 1"
     assert_includes response.body, "Back to workflow"
+    assert_includes response.body, '<section class="panel stack" style="margin-top: 18px;">'
   end
 
   test "ops jobs route stays available" do
