@@ -40,44 +40,42 @@
   </div>
 </section>
 
-<section class="grid two" style="margin-top: 18px;">
-  <section class="panel stack">
-    <div>
-      <h3 class="section-title">Metadata</h3>
-      <p class="section-copy">Identifiers and timing information for this run.</p>
-    </div>
+<section class="panel stack" style="margin-top: 18px;">
+  <div>
+    <h3 class="section-title">Metadata</h3>
+    <p class="section-copy">Identifiers and timing information for this run.</p>
+  </div>
 
-    <div><strong>Workflow:</strong> <%= dashboard_workflow_link(@run) %></div>
-    <div><strong>Class:</strong> <code><%= @run[:class_name] %></code></div>
-    <div><strong>Trigger key:</strong> <code><%= @run[:trigger_key] || "manual/default" %></code></div>
-    <div><strong>Job id:</strong> <code><%= @run[:job_id] %></code></div>
+  <div><strong>Workflow:</strong> <%= dashboard_workflow_link(@run) %></div>
+  <div><strong>Class:</strong> <code><%= @run[:class_name] %></code></div>
+  <div><strong>Trigger key:</strong> <code><%= @run[:trigger_key] || "manual/default" %></code></div>
+  <div><strong>Job id:</strong> <code><%= @run[:job_id] %></code></div>
 
-    <% if @run[:active_job_id].present? %>
-      <div><strong>Active Job id:</strong> <code><%= @run[:active_job_id] %></code></div>
-    <% end %>
+  <% if @run[:active_job_id].present? %>
+    <div><strong>Active Job id:</strong> <code><%= @run[:active_job_id] %></code></div>
+  <% end %>
 
-    <div><strong>Enqueued at:</strong> <%= dashboard_timestamp(@run[:enqueued_at]) %></div>
-    <div><strong>Recorded at:</strong> <%= dashboard_timestamp(@run[:recorded_at]) %></div>
+  <div><strong>Enqueued at:</strong> <%= dashboard_timestamp(@run[:enqueued_at]) %></div>
+  <div><strong>Recorded at:</strong> <%= dashboard_timestamp(@run[:recorded_at]) %></div>
 
-    <% if @run[:scheduled_at].present? %>
-      <div><strong>Scheduled at:</strong> <%= dashboard_timestamp(@run[:scheduled_at]) %></div>
-    <% end %>
+  <% if @run[:scheduled_at].present? %>
+    <div><strong>Scheduled at:</strong> <%= dashboard_timestamp(@run[:scheduled_at]) %></div>
+  <% end %>
 
-    <% if @run[:finished_at].present? %>
-      <div><strong>Finished at:</strong> <%= dashboard_timestamp(@run[:finished_at]) %></div>
-    <% end %>
-  </section>
+  <% if @run[:finished_at].present? %>
+    <div><strong>Finished at:</strong> <%= dashboard_timestamp(@run[:finished_at]) %></div>
+  <% end %>
+</section>
 
-  <section class="panel stack">
-    <div>
-      <h3 class="section-title">Failure Details</h3>
-      <p class="section-copy">Full error output captured for this run.</p>
-    </div>
+<section class="panel stack" style="margin-top: 18px;">
+  <div>
+    <h3 class="section-title">Failure Details</h3>
+    <p class="section-copy">Full error output captured for this run.</p>
+  </div>
 
-    <% if @run[:error].present? %>
-      <pre class="error-block"><%= dashboard_error_body(@run[:error]) %></pre>
-    <% else %>
-      <div class="empty">No error details were recorded for this run.</div>
-    <% end %>
-  </section>
+  <% if @run[:error].present? %>
+    <pre class="error-block"><%= dashboard_error_body(@run[:error]) %></pre>
+  <% else %>
+    <div class="empty">No error details were recorded for this run.</div>
+  <% end %>
 </section>
