@@ -53,10 +53,20 @@
 
             <td>
               <% if workflow[:last_run].present? %>
-                <span class="pill <%= dashboard_tone_for(workflow[:last_run][:status]) %>">
-                  <%= dashboard_status_label(workflow[:last_run][:status]) %>
-                </span>
-                <div class="meta"><%= dashboard_timestamp(workflow[:last_run][:recorded_at]) %></div>
+                <% last_run = workflow[:last_run] %>
+                <% if last_run[:job_id].present? %>
+                  <%= link_to workflow_run_path(last_run[:job_id]) do %>
+                    <span class="pill <%= dashboard_tone_for(last_run[:status]) %>">
+                      <%= dashboard_status_label(last_run[:status]) %>
+                    </span>
+                    <div class="meta"><%= dashboard_timestamp(last_run[:recorded_at]) %></div>
+                  <% end %>
+                <% else %>
+                  <span class="pill <%= dashboard_tone_for(last_run[:status]) %>">
+                    <%= dashboard_status_label(last_run[:status]) %>
+                  </span>
+                  <div class="meta"><%= dashboard_timestamp(last_run[:recorded_at]) %></div>
+                <% end %>
               <% else %>
                 <span class="muted">No runs yet</span>
               <% end %>
