@@ -404,6 +404,72 @@
         font-size: 0.84rem;
       }
 
+      .logs-placeholder {
+        position: relative;
+        min-height: 240px;
+        padding: 18px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        background:
+          linear-gradient(180deg, rgba(127, 127, 127, 0.06), rgba(127, 127, 127, 0.12)),
+          var(--panel-subtle);
+      }
+
+      .logs-placeholder-preview {
+        display: grid;
+        gap: 12px;
+        width: min(100%, 620px);
+        opacity: 0.38;
+        filter: blur(1.6px);
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .logs-placeholder-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+
+      .logs-placeholder-chip {
+        display: inline-flex;
+        width: 68px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--panel-subtle);
+        flex: 0 0 auto;
+      }
+
+      .logs-placeholder-line {
+        display: inline-flex;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--panel-subtle);
+      }
+
+      .logs-placeholder-line-short {
+        width: 32%;
+      }
+
+      .logs-placeholder-line-medium {
+        width: 54%;
+      }
+
+      .logs-placeholder-line-long {
+        width: 74%;
+      }
+
+      .logs-placeholder-action {
+        position: absolute;
+        inset: 50% auto auto 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: var(--shadow);
+      }
+
       @media (max-width: 960px) {
         .grid.two,
         .stats {
