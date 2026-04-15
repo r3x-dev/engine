@@ -3,7 +3,7 @@ module R3x
     class ApplicationController < R3x::WebController
       layout "r3x/dashboard"
 
-      helper_method :finished_runs_retention_label, :mission_control_path
+      helper_method :finished_runs_retention_label, :logs_configured?, :logs_requested?, :mission_control_path
 
       rescue_from KeyError, with: :render_not_found
 
@@ -22,6 +22,14 @@ module R3x
 
         def mission_control_path
           "/ops/jobs"
+        end
+
+        def logs_configured?
+          Logs.configured?
+        end
+
+        def logs_requested?
+          logs_configured? && params[:logs] == "1"
         end
 
         def render_not_found

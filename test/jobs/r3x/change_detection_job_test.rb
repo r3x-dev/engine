@@ -122,7 +122,37 @@ module R3x
       assert_equal "detection failed", state.last_error_message
     end
 
+    test "tags change detection logs with workflow and trigger identifiers" do
+      fake_trigger = R3x::TestSupport::FakeChangeDetectingTrigger.new(
+        identity: "feed",
+        detector: ->(**) do
+          Rails.logger.info("checking trigger")
+          { changed: false, state: {}, payload: nil }
+        end
+      )
+
+      register_change_detecting_workflow(fake_trigger)
+
+      output = capture_logged_output do
+        ChangeDetectionJob.perform_now("test_change_detecting_feed", trigger_key: fake_trigger.unique_key)
+      end
+
+      assert_includes output, "r3x.workflow_key=test_change_detecting_feed"
+      assert_includes output, "r3x.trigger_key=#{fake_trigger.unique_key}"
+      assert_includes output, "checking trigger"
+    end
+
     private
+
+    def capture_logged_output
+      io = StringIO.new
+      original_logger = Rails.logger
+      Rails.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(io))
+      yield
+      io.string
+    ensure
+      Rails.logger = original_logger
+    end
 
     def register_change_detecting_workflow(fake_trigger)
       workflow_class = Class.new(R3x::Workflow::Base) do

@@ -13,6 +13,14 @@
     <% else %>
       <%= link_to "Recent runs", workflow_runs_path, class: "button subtle" %>
     <% end %>
+
+    <% if logs_configured? %>
+      <% if logs_requested? %>
+        <%= link_to dashboard_icon_label(:logs, "Hide logs"), workflow_run_path(@run[:job_id]), class: "button subtle" %>
+      <% else %>
+        <%= link_to dashboard_icon_label(:logs, "Load logs"), workflow_run_path(@run[:job_id], logs: 1, anchor: "run-logs"), class: "button subtle" %>
+      <% end %>
+    <% end %>
   </div>
 </section>
 
@@ -79,3 +87,13 @@
     <div class="empty">No error details were recorded for this run.</div>
   <% end %>
 </section>
+
+<% if logs_requested? %>
+  <div id="run-logs">
+    <%= render "r3x/dashboard/shared/logs",
+               logs: @logs,
+               title: "Run logs",
+               description: "Indexed application logs correlated with this persisted workflow run.",
+               empty_message: "No indexed logs were found for this run in its execution window." %>
+  </div>
+<% end %>

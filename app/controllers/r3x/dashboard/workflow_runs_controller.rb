@@ -11,6 +11,7 @@ module R3x
 
       def show
         @run = WorkflowRuns.new.find!(params[:id])
+        @logs = Logs.new.run_logs(@run) if logs_requested?
       end
     end
   end

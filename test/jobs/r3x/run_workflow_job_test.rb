@@ -138,5 +138,46 @@ module R3x
     ensure
       Workflow::Registry.reset!
     end
+
+    test "tags nested workflow execution with workflow and run identifiers" do
+      job = RunWorkflowJob.new
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "TestTaggedLogs"
+        end
+
+        trigger :manual
+
+        def run
+          Rails.logger.info("hello from tagged workflow")
+        end
+      end
+
+      Workflow::Registry.register(workflow_class)
+      manual_trigger = workflow_class.triggers.first
+
+      output = capture_logged_output do
+        RunWorkflowJob.perform_now("test_tagged_logs", trigger_key: manual_trigger.unique_key)
+      end
+
+      assert_includes output, "r3x.run_active_job_id="
+      assert_includes output, "r3x.workflow_key=test_tagged_logs"
+      assert_includes output, "r3x.trigger_key=#{manual_trigger.unique_key}"
+      assert_includes output, "hello from tagged workflow"
+    ensure
+      Workflow::Registry.reset!
+    end
+
+    private
+
+    def capture_logged_output
+      io = StringIO.new
+      original_logger = Rails.logger
+      Rails.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(io))
+      yield
+      io.string
+    ensure
+      Rails.logger = original_logger
+    end
   end
 end

@@ -19,16 +19,20 @@ module R3x
       end
 
       def perform(trigger_key = nil, trigger_payload: nil)
-        context = R3x::Workflow::Executor.build_context(
-          workflow_class: self.class,
-          trigger_key: trigger_key,
-          trigger_payload: trigger_payload
-        )
-        @ctx = context
+        with_log_tags(*workflow_log_tags(trigger_key)) do
+          begin
+            context = R3x::Workflow::Executor.build_context(
+              workflow_class: self.class,
+              trigger_key: trigger_key,
+              trigger_payload: trigger_payload
+            )
+            @ctx = context
 
-        run
-      ensure
-        @ctx = nil
+            run
+          ensure
+            @ctx = nil
+          end
+        end
       end
 
       def with_cache(force: false, &block)
@@ -54,6 +58,13 @@ module R3x
       private
 
       attr_reader :ctx
+
+      def workflow_log_tags(trigger_key)
+        [
+          "r3x.workflow_key=#{self.class.workflow_key}",
+          ("r3x.trigger_key=#{trigger_key}" if trigger_key.present?)
+        ]
+      end
 
       def cache_key_for(block)
         source = cache_block_source(block)

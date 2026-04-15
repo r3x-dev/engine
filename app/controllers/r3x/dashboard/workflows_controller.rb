@@ -9,6 +9,7 @@ module R3x
         @workflow = WorkflowSummaries.new.find!(params[:workflow_key])
         @runs = WorkflowRuns.new(workflow_key: params[:workflow_key], limit: 25).all
         @latest_failure = WorkflowRuns.new(workflow_key: params[:workflow_key], status: "failed", limit: 1).all.first
+        @logs = Logs.new.workflow_logs(params[:workflow_key]) if logs_requested?
       end
 
       def run_trigger

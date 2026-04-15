@@ -8,7 +8,13 @@ module R3x
       trigger_payload = options[:trigger_payload]
 
       workflow_class = R3x::Workflow::Registry.fetch(workflow_key)
-      workflow_class.perform_now(trigger_key, trigger_payload: trigger_payload)
+
+      with_log_tags(
+        "r3x.workflow_key=#{workflow_key}",
+        ("r3x.trigger_key=#{trigger_key}" if trigger_key.present?)
+      ) do
+        workflow_class.perform_now(trigger_key, trigger_payload: trigger_payload)
+      end
     end
 
     private
