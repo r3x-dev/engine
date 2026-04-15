@@ -154,10 +154,10 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
+            # stable release channel
+            type=raw,value=stable
             # full length sha
             type=sha,format=long,prefix=
-          flavor: |
-            latest=true
 
       - name: Build and push production image
         uses: docker/build-push-action@v7
