@@ -33,6 +33,16 @@
 # Ignore CI service files.
 /.github
 
+# Ignore CI-only and local development tooling.
+/.githooks
+/.ruby-lsp
+/.rubocop.yml
+/Justfile
+/opencode.json
+/config/bundler-audit.yml
+/config/ci.rb
+/test
+
 # Ignore Kamal files.
 /config/deploy*.yml
 /.kamal
