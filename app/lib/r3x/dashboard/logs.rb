@@ -4,6 +4,8 @@ module R3x
       RUN_LOG_LIMIT = 150
       WORKFLOW_LOG_LIMIT = 200
       WORKFLOW_LOOKBACK = 24.hours
+      TAG_PATTERN = /\A(?:\[(?<tag>[^\]]+)\]\s*)+/
+      HIDDEN_TAG_PREFIXES = %w[r3x.].freeze
 
       class << self
         def configured?(provider_name: current_provider_name)
@@ -39,7 +41,8 @@ module R3x
           build_query(%(_msg:"r3x.run_active_job_id=#{active_job_id}")),
           start_at: run[:enqueued_at] || 1.hour.ago,
           end_at: run[:finished_at] || Time.current,
-          limit: RUN_LOG_LIMIT
+          limit: RUN_LOG_LIMIT,
+          context: log_context_for(run)
         )
       end
 
@@ -50,7 +53,8 @@ module R3x
           build_query(%(_msg:"r3x.workflow_key=#{workflow_key}")),
           start_at: WORKFLOW_LOOKBACK.ago,
           end_at: Time.current,
-          limit: WORKFLOW_LOG_LIMIT
+          limit: WORKFLOW_LOG_LIMIT,
+          context: { workflow_key: workflow_key }
         )
       end
 
@@ -76,7 +80,7 @@ module R3x
           }
         end
 
-        def query_logs(query, start_at:, end_at:, limit:)
+        def query_logs(query, start_at:, end_at:, limit:, context: {})
           {
             configured: true,
             entries: logs_client.query(
@@ -84,7 +88,7 @@ module R3x
               start_at: start_at,
               end_at: end_at,
               limit: limit
-            ).map { |entry| normalize_entry(entry) }.sort_by { |entry| entry[:time] || Time.at(0) },
+            ).map { |entry| normalize_entry(entry, context: context) }.sort_by { |entry| entry[:time] || Time.at(0) },
             error: nil,
             provider: provider_name
           }
@@ -103,13 +107,44 @@ module R3x
           end
         end
 
-        def normalize_entry(entry)
+        def normalize_entry(entry, context: {})
+          message, tags = extract_message_and_tags(entry["_msg"], context: context)
+
           {
             container_name: entry["kubernetes.container_name"],
-            message: entry["_msg"].to_s,
+            message: message,
             pod_name: entry["kubernetes.pod_name"],
+            tags: tags,
             time: parse_time(entry["_time"])
           }
+        end
+
+        def log_context_for(run)
+          {
+            active_job_id: run[:active_job_id],
+            class_name: run[:class_name],
+            trigger_key: run[:trigger_key],
+            workflow_key: run[:workflow_key]
+          }
+        end
+
+        def extract_message_and_tags(message, context: {})
+          message = message.to_s
+          match = message.match(TAG_PATTERN)
+          return [ message, [] ] unless match
+
+          raw_tags = match[0].scan(/\[([^\]]+)\]/).flatten
+          visible_tags = raw_tags.reject { |tag| hidden_tag?(tag, context: context) }
+          stripped_message = message.delete_prefix(match[0]).strip
+
+          [ stripped_message.presence || message, visible_tags ]
+        end
+
+        def hidden_tag?(tag, context: {})
+          return true if HIDDEN_TAG_PREFIXES.any? { |prefix| tag.start_with?(prefix) }
+          return true if context[:class_name].present? && tag == context[:class_name]
+
+          false
         end
 
         def parse_time(value)

@@ -457,6 +457,9 @@ module R3x
       end
 
       assert_includes output, "Running workflow trigger_type=manual"
+      assert_includes output, "r3x.run_active_job_id="
+      assert_includes output, "r3x.workflow_key=logged_workflow"
+      assert_includes output, "r3x.trigger_key="
       assert_includes output, "r3x.job_outcome=success"
       assert_includes output, "Workflow run completed"
     end
