@@ -26,7 +26,7 @@ module R3x
       test "returns unavailable state when provider is missing" do
         logs = Logs.new(provider_name: nil)
 
-        result = logs.workflow_logs("test_workflow")
+        result = logs.run_logs(active_job_id: "aj-123")
 
         assert_equal false, result[:configured]
         assert_empty result[:entries]
@@ -36,30 +36,12 @@ module R3x
         original_url = ENV["R3X_VICTORIA_LOGS_URL"]
         ENV.delete("R3X_VICTORIA_LOGS_URL")
 
-        result = Logs.new(provider_name: "victorialogs").workflow_logs("test_workflow")
+        result = Logs.new(provider_name: "victorialogs").run_logs(active_job_id: "aj-123")
 
         assert_equal false, result[:configured]
         assert_empty result[:entries]
       ensure
         ENV["R3X_VICTORIA_LOGS_URL"] = original_url
-      end
-
-      test "queries workflow logs by workflow key" do
-        client = FakeLogsClient.new(entries: [
-          {
-            "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => "[r3x.workflow_key=test_workflow] hello",
-            "kubernetes.container_name" => "app",
-            "kubernetes.pod_name" => "r3x-jobs-123"
-          }
-        ])
-
-        result = Logs.new(provider_name: "victorialogs", client: client).workflow_logs("test_workflow")
-
-        assert_equal true, result[:configured]
-        assert_nil result[:error]
-        assert_equal 1, result[:entries].size
-        assert_includes client.calls.first[:query], '_msg:"r3x.workflow_key=test_workflow"'
       end
 
       test "queries run logs by run active job id" do
@@ -110,10 +92,17 @@ module R3x
         assert_equal [], entry[:tags]
       end
 
+      test "returns provider error when provider is unsupported" do
+        result = Logs.new(provider_name: "unknown").run_logs(active_job_id: "aj-123")
+
+        assert_equal true, result[:configured]
+        assert_equal "Unsupported logs provider: unknown", result[:error]
+      end
+
       test "returns provider error when query fails" do
         client = FakeLogsClient.new(error: Faraday::ConnectionFailed.new("boom"))
 
-        result = Logs.new(provider_name: "victorialogs", client: client).workflow_logs("test_workflow")
+        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(active_job_id: "aj-123")
 
         assert_equal true, result[:configured]
         assert_equal "boom", result[:error]

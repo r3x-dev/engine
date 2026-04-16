@@ -5,6 +5,7 @@ module R3x
     class << self
       def schedule_all!
         current_keys = []
+        scheduled_logs = []
         task_options = []
         stale_count = 0
 
@@ -35,9 +36,13 @@ module R3x
             task.save!
 
             workflow_key, trigger_key = workflow_and_trigger_for(key)
-            Rails.logger.tagged("r3x.workflow_key=#{workflow_key}", "r3x.trigger_key=#{trigger_key}") do
-              logger.info "Scheduled recurring task class=#{options[:class]} schedule=#{options[:schedule]} queue=#{options[:queue]}"
-            end
+            scheduled_logs << [ workflow_key, trigger_key, options ]
+          end
+        end
+
+        scheduled_logs.each do |workflow_key, trigger_key, options|
+          Rails.logger.tagged("r3x.workflow_key=#{workflow_key}", "r3x.trigger_key=#{trigger_key}") do
+            logger.info "Scheduled recurring task class=#{options[:class]} schedule=#{options[:schedule]} queue=#{options[:queue]}"
           end
         end
 

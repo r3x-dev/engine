@@ -19,8 +19,6 @@ module R3x
 
       def perform(trigger_key = nil, trigger_payload: nil)
         with_log_tags(*workflow_log_tags(trigger_key)) do
-          context = nil
-
           begin
             context = R3x::Workflow::Executor.build_context(
               workflow_class: self.class,
@@ -74,7 +72,6 @@ module R3x
 
       def workflow_log_tags(trigger_key)
         [
-          "r3x.workflow_key=#{self.class.workflow_key}",
           ("r3x.trigger_key=#{trigger_key}" if trigger_key.present?)
         ]
       end
