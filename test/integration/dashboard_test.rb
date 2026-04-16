@@ -172,24 +172,25 @@ class DashboardTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "View logs"
   end
 
-  test "workflow detail only loads logs on demand" do
+  test "workflow detail does not show logs shortcut" do
     ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
     ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
-
-    stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
-      .to_return(status: 200, body: "")
 
     get "/workflows/test_workflow"
 
     assert_response :success
-    assert_includes response.body, "Load logs"
+    refute_includes response.body, "Load logs"
+    refute_includes response.body, "Hide logs"
     refute_includes response.body, "Recent logs"
+  end
 
-    get "/workflows/test_workflow", params: { logs: 1 }
+  test "workflow detail recent runs lead with trigger and omit workflow queue columns" do
+    get "/workflows/test_workflow"
 
     assert_response :success
-    assert_includes response.body, "Hide logs"
-    assert_includes response.body, "Recent logs"
+    assert_match(/<th>Trigger<\/th>.*<th>Status<\/th>.*<th>Observed<\/th>.*<th>Details<\/th>/m, response.body)
+    refute_includes response.body, "<th>Workflow</th>"
+    refute_includes response.body, "<th>Queue</th>"
   end
 
   test "ops jobs route stays available" do
