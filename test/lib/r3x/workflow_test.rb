@@ -665,5 +665,269 @@ module R3x
       ENV["R3X_SKIP_CACHE"] = original_skip_cache
       Rails.define_singleton_method(:env, original_env)
     end
+
+    test "ctx durable_set stores membership across calls" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "durable_set_workflow",
+          payload: nil
+        ),
+        workflow_key: "durable_set_workflow"
+      )
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        durable_set = context.durable_set
+
+        refute durable_set.include?("item-1")
+        durable_set.add("item-1")
+        assert durable_set.include?("item-1")
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "ctx durable_set scopes keys by set name" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "named_durable_set_workflow",
+          payload: nil
+        ),
+        workflow_key: "named_durable_set_workflow"
+      )
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        default_set = context.durable_set
+        sent_set = context.durable_set(:sent)
+
+        default_set.add("item-1")
+
+        assert default_set.include?("item-1")
+        refute sent_set.include?("item-1")
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "ctx durable_set scopes keys by workflow" do
+      trigger = R3x::Triggers::Manual.new
+      first_context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "workflow_one", payload: nil),
+        workflow_key: "workflow_one"
+      )
+      second_context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "workflow_two", payload: nil),
+        workflow_key: "workflow_two"
+      )
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        first_context.durable_set.add("item-1")
+
+        assert first_context.durable_set.include?("item-1")
+        refute second_context.durable_set.include?("item-1")
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "ctx durable_set uses ninety day default ttl" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "default_ttl_workflow",
+          payload: nil
+        ),
+        workflow_key: "default_ttl_workflow"
+      )
+      cache = Class.new do
+        attr_reader :writes
+
+        def initialize
+          @writes = []
+        end
+
+        def write(key, value, expires_in:, unless_exist: false)
+          writes << { key: key, value: value, expires_in: expires_in, unless_exist: unless_exist }
+          true
+        end
+      end.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        context.durable_set.add("item-1")
+
+        assert_equal 90.days, cache.writes.last[:expires_in]
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "ctx durable_set rejects ttl above configured Solid Cache max_age" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "ttl_validation_workflow",
+          payload: nil
+        ),
+        workflow_key: "ttl_validation_workflow"
+      )
+      original_cache_store = Rails.application.config.method(:cache_store)
+      original_config_for = Rails.application.method(:config_for)
+
+      Rails.application.config.define_singleton_method(:cache_store) { :solid_cache_store }
+      Rails.application.define_singleton_method(:config_for) do |name|
+        return { store_options: { max_age: 90.days.to_i } } if name == :cache
+
+        original_config_for.call(name)
+      end
+
+      error = assert_raises(ArgumentError) do
+        context.durable_set(ttl: 91.days)
+      end
+
+      assert_equal "ttl can't exceed Solid Cache max_age configured in config/cache.yml", error.message
+    ensure
+      Rails.application.config.define_singleton_method(:cache_store, original_cache_store)
+      Rails.application.define_singleton_method(:config_for, original_config_for)
+    end
+
+    test "ctx durable_set rejects per-call ttl above configured Solid Cache max_age" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "per_call_ttl_validation_workflow",
+          payload: nil
+        ),
+        workflow_key: "per_call_ttl_validation_workflow"
+      )
+      original_cache_store = Rails.application.config.method(:cache_store)
+      original_config_for = Rails.application.method(:config_for)
+
+      Rails.application.config.define_singleton_method(:cache_store) { :solid_cache_store }
+      Rails.application.define_singleton_method(:config_for) do |name|
+        return { store_options: { max_age: 90.days.to_i } } if name == :cache
+
+        original_config_for.call(name)
+      end
+
+      durable_set = context.durable_set
+
+      error = assert_raises(ArgumentError) do
+        durable_set.add("item-1", ttl: 91.days)
+      end
+
+      assert_equal "ttl can't exceed Solid Cache max_age configured in config/cache.yml", error.message
+    ensure
+      Rails.application.config.define_singleton_method(:cache_store, original_cache_store)
+      Rails.application.define_singleton_method(:config_for, original_config_for)
+    end
+
+    test "ctx durable_set add? returns true for new members and false for existing" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "add_predicate_workflow",
+          payload: nil
+        ),
+        workflow_key: "add_predicate_workflow"
+      )
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        durable_set = context.durable_set
+
+        assert durable_set.add?("item-1")
+        refute durable_set.add?("item-1")
+        assert durable_set.include?("item-1")
+
+        assert durable_set.add?("item-2")
+        refute durable_set.add?("item-2")
+        assert durable_set.include?("item-2")
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "ctx durable_set add? uses atomic cache writes" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "atomic_add_predicate_workflow",
+          payload: nil
+        ),
+        workflow_key: "atomic_add_predicate_workflow"
+      )
+      cache = Class.new do
+        attr_reader :writes
+
+        def initialize
+          @writes = []
+          @written = false
+        end
+
+        def exist?(_key)
+          raise "add? must not check existence separately"
+        end
+
+        def write(key, value, expires_in:, unless_exist: false)
+          writes << { key: key, value: value, expires_in: expires_in, unless_exist: unless_exist }
+          return false if unless_exist && @written
+
+          @written = true
+        end
+      end.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        durable_set = context.durable_set
+
+        assert durable_set.add?("item-1")
+        refute durable_set.add?("item-1")
+        assert_equal [ true, true ], cache.writes.map { |write| write[:unless_exist] }
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "ctx durable_set deletes members" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "delete_durable_set_workflow",
+          payload: nil
+        ),
+        workflow_key: "delete_durable_set_workflow"
+      )
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        durable_set = context.durable_set
+        durable_set.add("item-1")
+
+        assert durable_set.include?("item-1")
+
+        durable_set.delete("item-1")
+
+        refute durable_set.include?("item-1")
+      ensure
+        Rails.cache = original_cache
+      end
+    end
   end
 end
