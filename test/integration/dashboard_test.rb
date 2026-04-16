@@ -198,6 +198,15 @@ class DashboardTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "View logs"
   end
 
+  test "workflow run detail reports unsupported log provider" do
+    ENV["R3X_LOGS_PROVIDER"] = "unknown"
+
+    get "/workflow-runs/#{@job.id}", params: { logs: 1 }
+
+    assert_response :success
+    assert_includes response.body, "Log query failed: Unsupported logs provider: unknown"
+  end
+
   test "workflow detail does not show logs shortcut" do
     ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
     ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"

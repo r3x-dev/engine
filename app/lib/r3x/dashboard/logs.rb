@@ -2,18 +2,18 @@ module R3x
   module Dashboard
     class Logs
       RUN_LOG_LIMIT = 150
-      WORKFLOW_LOG_LIMIT = 200
-      WORKFLOW_LOOKBACK = 24.hours
       TAG_PATTERN = /\A(?:\[(?<tag>[^\]]+)\]\s*)+/
       HIDDEN_TAG_PREFIXES = %w[r3x.].freeze
 
       class << self
         def configured?(provider_name: current_provider_name)
           case normalize_provider_name(provider_name)
+          when nil
+            false
           when "victorialogs"
             R3x::Env.fetch("R3X_VICTORIA_LOGS_URL").present?
           else
-            false
+            true
           end
         end
 
@@ -42,19 +42,7 @@ module R3x
           start_at: run[:enqueued_at] || 1.hour.ago,
           end_at: run[:finished_at] || Time.current,
           limit: RUN_LOG_LIMIT,
-          context: log_context_for(run)
-        )
-      end
-
-      def workflow_logs(workflow_key)
-        return unavailable_logs unless configured?
-
-        query_logs(
-          build_query(%(_msg:"r3x.workflow_key=#{workflow_key}")),
-          start_at: WORKFLOW_LOOKBACK.ago,
-          end_at: Time.current,
-          limit: WORKFLOW_LOG_LIMIT,
-          context: { workflow_key: workflow_key }
+          context: { class_name: run[:class_name] }
         )
       end
 
@@ -116,15 +104,6 @@ module R3x
             pod_name: entry["kubernetes.pod_name"],
             tags: tags,
             time: parse_time(entry["_time"])
-          }
-        end
-
-        def log_context_for(run)
-          {
-            active_job_id: run[:active_job_id],
-            class_name: run[:class_name],
-            trigger_key: run[:trigger_key],
-            workflow_key: run[:workflow_key]
           }
         end
 

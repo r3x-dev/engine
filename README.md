@@ -30,7 +30,7 @@ Then open http://localhost:3000/ to view the workflow dashboard.
 - `/` shows registered workflows, trigger state, and recent visible runs.
 - `/workflow-runs` shows recent runs from the current `Solid Queue` retention window.
 - `/ops/jobs` opens Mission Control Jobs for queue inspection and operational actions.
-- If `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL` are configured, workflow and run detail pages also show indexed logs correlated by workflow and Active Job identifiers.
+- If `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL` are configured, run detail pages can show indexed logs correlated by Active Job identifiers.
 
 ## Test
 
