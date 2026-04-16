@@ -54,12 +54,14 @@ These notes apply to workflow code in general.
   - `R3X_SKIP_CACHE=true` does the same override at the env level.
   - In production, `with_cache` still raises by default unless `R3X_SKIP_CACHE=true` is set.
   - Use `with_cache(force: true)` when you need to refresh a stale cached value.
-- `ctx.durable_set(name = :default, ttl: 60.days)`
+- `ctx.durable_set(name = :default, ttl: 90.days)`
   - Returns a workflow-scoped durable set backed by `Rails.cache`.
   - Good for remembering which items were already processed, sent, uploaded, or otherwise handled
     across workflow runs.
   - Members are scoped by workflow key and set name, so different workflows and different sets do
     not collide.
+  - When the app uses `:solid_cache_store`, custom `ttl:` values must not exceed
+    `config/cache.yml` `store_options.max_age`.
   - Use `include?`, `add`, and `delete` on the returned set.
   - Prefer this for best-effort dedup across runs; prefer a real table only when you need permanent
     history or hard uniqueness guarantees.

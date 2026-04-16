@@ -737,6 +737,99 @@ module R3x
       end
     end
 
+    test "ctx durable_set uses ninety day default ttl" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "default_ttl_workflow",
+          payload: nil
+        ),
+        workflow_key: "default_ttl_workflow"
+      )
+      cache = Class.new do
+        attr_reader :writes
+
+        def initialize
+          @writes = []
+        end
+
+        def write(key, value, expires_in:, unless_exist: false)
+          writes << { key: key, value: value, expires_in: expires_in, unless_exist: unless_exist }
+          true
+        end
+      end.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        context.durable_set.add("item-1")
+
+        assert_equal 90.days, cache.writes.last[:expires_in]
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "ctx durable_set rejects ttl above configured Solid Cache max_age" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "ttl_validation_workflow",
+          payload: nil
+        ),
+        workflow_key: "ttl_validation_workflow"
+      )
+      original_cache_store = Rails.application.config.method(:cache_store)
+      original_config_for = Rails.application.method(:config_for)
+
+      Rails.application.config.define_singleton_method(:cache_store) { :solid_cache_store }
+      Rails.application.define_singleton_method(:config_for) do |name|
+        return { store_options: { max_age: 90.days.to_i } } if name == :cache
+
+        original_config_for.call(name)
+      end
+
+      error = assert_raises(ArgumentError) do
+        context.durable_set(ttl: 91.days)
+      end
+
+      assert_equal "ttl can't exceed Solid Cache max_age configured in config/cache.yml", error.message
+    ensure
+      Rails.application.config.define_singleton_method(:cache_store, original_cache_store)
+      Rails.application.define_singleton_method(:config_for, original_config_for)
+    end
+
+    test "ctx durable_set rejects per-call ttl above configured Solid Cache max_age" do
+      context = R3x::Workflow::Context.new(
+        trigger: R3x::TriggerManager::Execution.new(
+          trigger: R3x::Triggers::Manual.new,
+          workflow_key: "per_call_ttl_validation_workflow",
+          payload: nil
+        ),
+        workflow_key: "per_call_ttl_validation_workflow"
+      )
+      original_cache_store = Rails.application.config.method(:cache_store)
+      original_config_for = Rails.application.method(:config_for)
+
+      Rails.application.config.define_singleton_method(:cache_store) { :solid_cache_store }
+      Rails.application.define_singleton_method(:config_for) do |name|
+        return { store_options: { max_age: 90.days.to_i } } if name == :cache
+
+        original_config_for.call(name)
+      end
+
+      durable_set = context.durable_set
+
+      error = assert_raises(ArgumentError) do
+        durable_set.add("item-1", ttl: 91.days)
+      end
+
+      assert_equal "ttl can't exceed Solid Cache max_age configured in config/cache.yml", error.message
+    ensure
+      Rails.application.config.define_singleton_method(:cache_store, original_cache_store)
+      Rails.application.define_singleton_method(:config_for, original_config_for)
+    end
+
     test "ctx durable_set add? returns true for new members and false for existing" do
       context = R3x::Workflow::Context.new(
         trigger: R3x::TriggerManager::Execution.new(
