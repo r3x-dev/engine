@@ -439,6 +439,52 @@ module R3x
       R3x::Workflow::PackLoader.singleton_class.send(:define_method, :load!, original_load)
     end
 
+    test "perform logs workflow run outcome" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::LoggedWorkflow"
+        end
+
+        trigger :manual
+
+        def run
+          { "status" => "ok" }
+        end
+      end
+
+      output = capture_logged_output do
+        workflow_class.perform_now(workflow_class.triggers.first.unique_key)
+      end
+
+      assert_includes output, "Running workflow trigger_type=manual"
+      assert_includes output, "r3x.job_outcome=success"
+      assert_includes output, "Workflow run completed"
+    end
+
+    test "perform logs workflow failure outcome" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::FailingWorkflow"
+        end
+
+        trigger :manual
+
+        def run
+          raise ArgumentError, "boom"
+        end
+      end
+
+      output = capture_logged_output do
+        assert_raises(ArgumentError) do
+          workflow_class.perform_now(workflow_class.triggers.first.unique_key)
+        end
+      end
+
+      assert_includes output, "r3x.job_outcome=failed"
+      assert_includes output, "Workflow run failed"
+      assert_includes output, "error_class=ArgumentError"
+    end
+
     test "prevents overriding perform method in subclasses" do
       error = assert_raises(ArgumentError) do
         Class.new(R3x::Workflow::Base) do
