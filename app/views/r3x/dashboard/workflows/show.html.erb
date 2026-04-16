@@ -19,14 +19,6 @@
     <% if @latest_failure.present? %>
       <%= link_to dashboard_icon_label(:alert, "Latest failure"), workflow_run_path(@latest_failure[:job_id]), class: "button subtle" %>
     <% end %>
-    <%= link_to dashboard_icon_label(:history, "Recent runs"), workflow_runs_path(workflow: @workflow[:workflow_key]), class: "button subtle" %>
-    <% if logs_configured? %>
-      <% if logs_requested? %>
-        <%= link_to dashboard_icon_label(:logs, "Hide logs"), workflow_path(@workflow[:workflow_key]), class: "button subtle" %>
-      <% else %>
-        <%= link_to dashboard_icon_label(:logs, "Load logs"), workflow_path(@workflow[:workflow_key], logs: 1, anchor: "workflow-logs"), class: "button subtle" %>
-      <% end %>
-    <% end %>
   </div>
 </section>
 
@@ -116,15 +108,51 @@
     </div>
   </div>
 
-  <%= render "r3x/dashboard/workflow_runs/table", runs: @runs, empty_message: "No recent runs are visible for this workflow yet." %>
-</section>
+  <div class="table-wrap">
+    <% if @runs.empty? %>
+      <div class="empty">No recent runs are visible for this workflow yet.</div>
+    <% else %>
+      <table>
+        <thead>
+          <tr>
+            <th>Trigger</th>
+            <th>Status</th>
+            <th>Observed</th>
+            <th>Details</th>
+          </tr>
+        </thead>
 
-<% if logs_requested? %>
-  <div id="workflow-logs">
-    <%= render "r3x/dashboard/shared/logs",
-               logs: @logs,
-               title: "Recent logs",
-               description: "Latest indexed logs for this workflow across runtime execution and trigger checks.",
-               empty_message: "No indexed logs were found for this workflow in the recent lookback window." %>
+        <tbody>
+          <% @runs.each do |run| %>
+            <tr>
+              <td><code><%= run[:trigger_key] || "manual/default" %></code></td>
+
+              <td>
+                <span class="pill <%= dashboard_tone_for(run[:status]) %>">
+                  <%= dashboard_status_label(run[:status]) %>
+                </span>
+              </td>
+
+              <td><%= dashboard_timestamp(run[:recorded_at]) %></td>
+
+              <td>
+                <% if run[:error].present? %>
+                  <div><%= dashboard_error_summary(run[:error]) %></div>
+                  <div class="meta"><%= link_to "View error", workflow_run_path(run[:job_id]) %></div>
+                <% else %>
+                  <div class="meta"><%= link_to "View run", workflow_run_path(run[:job_id]) %></div>
+                <% end %>
+
+                <% if logs_configured? %>
+                  <div class="meta"><%= link_to "View logs", workflow_run_path(run[:job_id], logs: 1, anchor: "run-logs") %></div>
+                <% end %>
+
+                <div class="meta">Job <code><%= run[:job_id] %></code></div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
   </div>
-<% end %>
+</section>
