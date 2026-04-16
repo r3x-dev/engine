@@ -31,7 +31,13 @@ module R3x
       end
 
       def logger
-        Rails.logger.tagged(self.class.name)
+        Rails.logger.tagged(logger_tag_name)
+      end
+
+      private
+
+      def logger_tag_name
+        self.is_a?(Module) ? name : self.class.name
       end
     end
   end

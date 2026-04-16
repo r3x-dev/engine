@@ -11,5 +11,15 @@ WebMock.disable_net_connect!
 module ActiveSupport
   class TestCase
     # Add more helper methods to be used by all tests here...
+
+    def capture_logged_output
+      io = StringIO.new
+      original_logger = Rails.logger
+      Rails.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(io))
+      yield
+      io.string
+    ensure
+      Rails.logger = original_logger
+    end
   end
 end

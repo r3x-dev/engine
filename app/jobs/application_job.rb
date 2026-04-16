@@ -1,4 +1,6 @@
 class ApplicationJob < ActiveJob::Base
+  include R3x::Concerns::Logger
+
   around_perform :tag_log_context
 
   private

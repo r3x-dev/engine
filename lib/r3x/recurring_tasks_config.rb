@@ -6,6 +6,7 @@ module R3x
       def schedule_all!
         current_keys = []
         task_options = []
+        stale_count = 0
 
         Workflow::Registry.all.each do |workflow_class|
           triggers = workflow_class.schedulable_triggers
@@ -21,7 +22,9 @@ module R3x
         end
 
         SolidQueue::RecurringTask.transaction do
-          SolidQueue::RecurringTask.dynamic.where("key LIKE 'workflow:%'").where.not(key: current_keys).delete_all
+          stale_scope = SolidQueue::RecurringTask.dynamic.where("key LIKE 'workflow:%'").where.not(key: current_keys)
+          stale_count = stale_scope.count
+          stale_scope.delete_all
 
           task_options.each do |key, options|
             task = SolidQueue::RecurringTask.dynamic.find_or_initialize_by(key: key)
@@ -30,10 +33,18 @@ module R3x
             task.schedule = options[:schedule]
             task.queue_name = options[:queue]
             task.save!
+
+            workflow_key, trigger_key = workflow_and_trigger_for(key)
+            Rails.logger.tagged("r3x.workflow_key=#{workflow_key}", "r3x.trigger_key=#{trigger_key}") do
+              logger.info "Scheduled recurring task class=#{options[:class]} schedule=#{options[:schedule]} queue=#{options[:queue]}"
+            end
           end
         end
 
-        logger.info("Scheduled #{current_keys.size} dynamic recurring tasks")
+        logger.info("Scheduled #{current_keys.size} dynamic recurring tasks stale_removed=#{stale_count}")
+      rescue => e
+        logger.error("Recurring task scheduling failed error_class=#{e.class} error_message=#{e.message}")
+        raise
       end
 
       def to_h
@@ -79,6 +90,11 @@ module R3x
             queue: queue_name
           }
         end
+      end
+
+      def workflow_and_trigger_for(key)
+        _, workflow_key, *trigger_key_parts = key.split(":")
+        [ workflow_key, trigger_key_parts.join(":") ]
       end
     end
   end

@@ -39,5 +39,15 @@ module R3x
       assert_equal true, result["test"]
       assert_equal "Test workflow executed successfully", result["message"]
     end
+
+    test "logs loaded workflows with workflow tags" do
+      output = capture_logged_output do
+        R3x::Workflow::PackLoader.load!(force: true)
+      end
+
+      assert_includes output, "R3x::Workflow::PackLoader"
+      assert_includes output, "r3x.workflow_key=test_workflow"
+      assert_includes output, "Loaded workflow class=Workflows::TestWorkflow"
+    end
   end
 end
