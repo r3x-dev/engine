@@ -93,6 +93,15 @@ module R3x
         assert_instance_of R3x::Client::Google::Gmail, gmail
       end
 
+      test "client proxy builds google translate client from credentials env" do
+        trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
+        trigger_execution = R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "test")
+        ctx = Context.new(trigger: trigger_execution, workflow_key: "test")
+        translate = ctx.client.google_translate(credentials_env: "GOOGLE_CREDENTIALS_MISSING")
+
+        assert_instance_of R3x::Client::Google::Translate, translate
+      end
+
       test "client proxy builds discord webhook client" do
         with_env("DISCORD_WEBHOOK_URL_TEST" => "https://discord.test/webhook") do
           ctx = Context.new(
