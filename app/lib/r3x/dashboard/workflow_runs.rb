@@ -53,11 +53,13 @@ module R3x
             job_id: job.id,
             known_workflow: catalog.workflow_keys.include?(workflow_key),
             mission_control_path: "/ops/jobs",
+            priority: job.priority,
             queue_name: job.queue_name,
             recorded_at: recorded_at_for(job, failed_execution: failed_execution),
             scheduled_at: scheduled_executions_by_job_id[job.id]&.scheduled_at || job.scheduled_at,
             status: status_for(job),
             trigger_key: trigger_key_for(job, payload: payload),
+            trigger_payload: trigger_payload_for(payload: payload),
             workflow_key: workflow_key,
             workflow_title: workflow_key.titleize
           }
@@ -93,6 +95,10 @@ module R3x
           else
             payload.workflow_arguments.first
           end
+        end
+
+        def trigger_payload_for(payload:)
+          payload.trigger_payload
         end
 
         def status_for(job)

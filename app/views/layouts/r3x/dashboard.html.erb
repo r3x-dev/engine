@@ -387,36 +387,32 @@
 
       .log-list {
         display: grid;
+        gap: 2px;
         border: 1px solid var(--line);
         background: var(--panel-subtle);
+        padding: 10px 12px;
+        overflow-x: auto;
       }
 
       .log-entry {
-        display: grid;
-        gap: 6px;
-        padding: 10px 12px;
-      }
-
-      .log-entry + .log-entry {
-        border-top: 1px solid var(--line);
-      }
-
-      .log-meta {
         display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        align-items: center;
-        color: var(--muted);
-        font-size: 0.84rem;
-      }
-
-      .log-message {
+        gap: 12px;
+        align-items: start;
+        min-width: 100%;
+        width: max-content;
         color: var(--text);
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         font-size: 0.85rem;
         line-height: 1.5;
-        white-space: pre-wrap;
-        word-break: break-word;
+      }
+
+      .log-time {
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .log-message {
+        white-space: pre;
       }
 
       .logs-placeholder {

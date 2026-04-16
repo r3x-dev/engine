@@ -7,7 +7,9 @@ Rails.application.routes.draw do
     resources :workflows, only: %i[ index show ], param: :workflow_key do
       post :run_trigger, on: :member
     end
-    resources :workflow_runs, only: %i[ index show ], path: "workflow-runs"
+    resources :workflow_runs, only: %i[ index show ], path: "workflow-runs" do
+      resource :rerun, only: :create, controller: "workflow_run_reruns"
+    end
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
