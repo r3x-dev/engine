@@ -48,6 +48,30 @@ module R3x
         )
       end
 
+      def dashboard_absolute_timestamp(time)
+        return content_tag(:span, "Never", class: "muted") if time.blank?
+
+        formatted_time = time.strftime("%Y-%m-%d %H:%M:%S %Z")
+
+        time_tag(
+          time,
+          formatted_time,
+          datetime: time.iso8601,
+          title: dashboard_relative_time(time)
+        )
+      end
+
+      def dashboard_log_time(time)
+        return content_tag(:span, "--:--:--", class: "muted") if time.blank?
+
+        time_tag(
+          time,
+          time.strftime("%H:%M:%S"),
+          datetime: time.iso8601,
+          title: time.strftime("%Y-%m-%d %H:%M:%S %Z")
+        )
+      end
+
       def dashboard_trigger_label(trigger_entry)
         mode = trigger_entry.fetch(:mode)
         cron = trigger_entry[:cron]
@@ -120,10 +144,6 @@ module R3x
 
       def dashboard_icon_label(name, text)
         safe_join([ dashboard_icon(name), content_tag(:span, text) ], " ")
-      end
-
-      def dashboard_log_metadata(entry)
-        [ entry[:pod_name], entry[:container_name], *Array(entry[:tags]) ].compact_blank.join(" / ")
       end
 
       private

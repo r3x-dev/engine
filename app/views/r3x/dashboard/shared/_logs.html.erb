@@ -19,16 +19,10 @@
   <% else %>
     <div class="log-list">
       <% logs[:entries].each do |entry| %>
-        <% metadata = dashboard_log_metadata(entry) %>
-        <article class="log-entry">
-          <div class="log-meta">
-            <span><%= dashboard_timestamp(entry[:time]) %></span>
-            <% if metadata.present? %>
-              <code><%= metadata %></code>
-            <% end %>
-          </div>
-          <div class="log-message"><%= entry[:message] %></div>
-        </article>
+        <div class="log-entry">
+          <span class="log-time"><%= dashboard_log_time(entry[:time]) %></span>
+          <span class="log-message"><%= entry[:message] %></span>
+        </div>
       <% end %>
     </div>
   <% end %>

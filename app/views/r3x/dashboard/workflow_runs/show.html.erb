@@ -7,6 +7,12 @@
   </div>
 
   <div class="actions">
+    <% if @run[:known_workflow] && %w[failed finished].include?(@run[:status]) %>
+      <%= form_with url: workflow_run_rerun_path(@run[:job_id]), method: :post, local: true, class: "inline-form" do |form| %>
+        <%= form.button dashboard_icon_label(:launch, "Rerun"), class: "button success" %>
+      <% end %>
+    <% end %>
+
     <% if @run[:known_workflow] %>
       <%= link_to "Back to workflow", workflow_path(@run[:workflow_key]), class: "button subtle" %>
       <%= link_to "Workflow runs", workflow_runs_path(workflow: @run[:workflow_key]), class: "button subtle" %>
@@ -55,15 +61,15 @@
     <div><strong>Active Job id:</strong> <code><%= @run[:active_job_id] %></code></div>
   <% end %>
 
-  <div><strong>Enqueued at:</strong> <%= dashboard_timestamp(@run[:enqueued_at]) %></div>
-  <div><strong>Recorded at:</strong> <%= dashboard_timestamp(@run[:recorded_at]) %></div>
+  <div><strong>Enqueued at:</strong> <%= dashboard_absolute_timestamp(@run[:enqueued_at]) %></div>
+  <div><strong>Recorded at:</strong> <%= dashboard_absolute_timestamp(@run[:recorded_at]) %></div>
 
   <% if @run[:scheduled_at].present? %>
-    <div><strong>Scheduled at:</strong> <%= dashboard_timestamp(@run[:scheduled_at]) %></div>
+    <div><strong>Scheduled at:</strong> <%= dashboard_absolute_timestamp(@run[:scheduled_at]) %></div>
   <% end %>
 
   <% if @run[:finished_at].present? %>
-    <div><strong>Finished at:</strong> <%= dashboard_timestamp(@run[:finished_at]) %></div>
+    <div><strong>Finished at:</strong> <%= dashboard_absolute_timestamp(@run[:finished_at]) %></div>
   <% end %>
 </section>
 
