@@ -30,6 +30,21 @@ module R3x
         assert_equal "schedule:abc123", run[:trigger_key]
       end
 
+      test "maps trigger payload for workflow jobs" do
+        payload = { "changed_ids" => [ "a1" ] }
+        job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123", { trigger_payload: payload } ],
+          finished_at: 2.minutes.ago,
+          created_at: 5.minutes.ago,
+          updated_at: 2.minutes.ago
+        )
+
+        run = WorkflowRuns.new.all.find { |entry| entry[:job_id] == job.id }
+
+        assert_equal payload, run[:trigger_payload]
+      end
+
       test "maps failed jobs from failed execution table" do
         job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
@@ -58,6 +73,21 @@ module R3x
 
         assert_equal "test_workflow", run[:workflow_key]
         assert_equal "manual:legacy", run[:trigger_key]
+      end
+
+      test "supports legacy run_workflow_job trigger payload" do
+        payload = { "doc_id" => "99" }
+        job = DashboardJobRows.create_job!(
+          job_class_name: "R3x::RunWorkflowJob",
+          arguments: [ "test_workflow", { "trigger_key" => "manual:legacy", "trigger_payload" => payload } ],
+          finished_at: 1.minute.ago,
+          created_at: 5.minutes.ago,
+          updated_at: 1.minute.ago
+        )
+
+        run = WorkflowRuns.new.all.find { |entry| entry[:job_id] == job.id }
+
+        assert_equal payload, run[:trigger_payload]
       end
 
       test "ignores legacy run_workflow_job keyword argument rows" do

@@ -136,6 +136,73 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, '<section class="panel stack" style="margin-top: 18px;">'
   end
 
+  test "workflow run detail shows absolute metadata timestamps" do
+    get "/workflow-runs/#{@job.id}"
+
+    assert_response :success
+    assert_match(/Enqueued at:<\/strong> <time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
+    refute_match(/Enqueued at:<\/strong> <time[^>]*>about /, response.body)
+  end
+
+  test "workflow run detail shows rerun action for terminal runs" do
+    get "/workflow-runs/#{@job.id}"
+
+    assert_response :success
+    assert_includes response.body, "Rerun"
+    assert_includes response.body, "/workflow-runs/#{@job.id}/rerun"
+  end
+
+  test "workflow run detail hides rerun action for non-terminal runs" do
+    queued_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
+      created_at: 30.seconds.ago,
+      updated_at: 30.seconds.ago
+    )
+
+    get "/workflow-runs/#{queued_job.id}"
+
+    assert_response :success
+    refute_includes response.body, "Rerun"
+    refute_includes response.body, "/workflow-runs/#{queued_job.id}/rerun"
+  end
+
+  test "workflow run rerun returns not found for non-terminal runs" do
+    queued_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
+      created_at: 30.seconds.ago,
+      updated_at: 30.seconds.ago
+    )
+
+    post "/workflow-runs/#{queued_job.id}/rerun"
+
+    assert_response :not_found
+  end
+
+  test "workflow run detail rerun enqueues run workflow job with original payload" do
+    payload = { "article_id" => "42", "change" => "updated" }
+    rerun_source_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger, { trigger_payload: payload } ],
+      queue_name: "critical",
+      finished_at: 10.seconds.ago,
+      created_at: 2.minutes.ago,
+      updated_at: 10.seconds.ago
+    )
+
+    assert_enqueued_with(
+      job: R3x::RunWorkflowJob,
+      args: [ "test_workflow", { trigger_key: @trigger, trigger_payload: payload } ],
+      queue: "critical",
+      priority: 0
+    ) do
+      post "/workflow-runs/#{rerun_source_job.id}/rerun"
+    end
+
+    assert_redirected_to "/workflow-runs/#{rerun_source_job.id}"
+  end
+
   test "workflow run detail renders compact log messages without repeated correlation tags" do
     ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
     ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
@@ -155,7 +222,11 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Running workflow trigger_type=schedule"
-    assert_includes response.body, "r3x-jobs-123 / app"
+    assert_includes response.body, "12:00:01"
+    assert_includes response.body, "log-time"
+    assert_includes response.body, "log-message"
+    refute_includes response.body, "log-meta"
+    refute_includes response.body, "r3x-jobs-123 / app"
     refute_includes response.body, "[r3x.run_active_job_id="
     refute_includes response.body, "[r3x.workflow_key=test_workflow]"
     refute_includes response.body, "[#{WORKFLOW_JOB_CLASS_NAME}]"
@@ -257,6 +328,24 @@ class DashboardTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to "/workflows/feed_watch"
+  end
+
+  test "workflow run rerun uses run workflow job for change-detection trigger keys" do
+    feed_trigger = "feed:123"
+    source_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ feed_trigger, { trigger_payload: { "changed_ids" => [ "a1" ] } } ],
+      queue_name: "feed",
+      priority: 3,
+      finished_at: 10.seconds.ago,
+      created_at: 2.minutes.ago,
+      updated_at: 10.seconds.ago
+    )
+
+    assert_enqueued_jobs 1, only: R3x::RunWorkflowJob do
+      post "/workflow-runs/#{source_job.id}/rerun"
+    end
+    assert_enqueued_jobs 0, only: R3x::ChangeDetectionJob
   end
 
   private

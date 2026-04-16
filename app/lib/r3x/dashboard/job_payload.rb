@@ -25,6 +25,10 @@ module R3x
         nil
       end
 
+      def trigger_payload
+        options["trigger_payload"] || options[:trigger_payload]
+      end
+
       private
         attr_reader :raw_arguments
 
