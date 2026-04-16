@@ -123,7 +123,7 @@ module R3x
       end
 
       def dashboard_log_metadata(entry)
-        [ entry[:pod_name], entry[:container_name] ].compact.join(" / ")
+        [ entry[:pod_name], entry[:container_name], *Array(entry[:tags]) ].compact_blank.join(" / ")
       end
 
       private

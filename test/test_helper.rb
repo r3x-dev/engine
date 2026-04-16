@@ -15,11 +15,16 @@ module ActiveSupport
     def capture_logged_output
       io = StringIO.new
       original_logger = Rails.logger
-      Rails.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(io))
+      original_active_job_logger = ActiveJob::Base.logger
+      test_logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(io))
+
+      Rails.logger = test_logger
+      ActiveJob::Base.logger = test_logger
       yield
       io.string
     ensure
       Rails.logger = original_logger
+      ActiveJob::Base.logger = original_active_job_logger
     end
   end
 end

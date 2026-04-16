@@ -1,6 +1,4 @@
 class ApplicationJob < ActiveJob::Base
-  include R3x::Concerns::Logger
-
   around_perform :tag_log_context
 
   private
@@ -14,7 +12,6 @@ class ApplicationJob < ActiveJob::Base
 
     def log_tags
       [
-        ("r3x.active_job_id=#{job_id}" if job_id.present?),
         ("r3x.run_active_job_id=#{job_id}" if job_id.present?)
       ]
     end

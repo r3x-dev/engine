@@ -5,7 +5,6 @@ module R3x
     class Base < ApplicationJob
       include ActiveJob::Continuable
       include Dsl
-      include R3x::Concerns::Logger
 
       CACHE_TTL = 1.day
 

@@ -387,12 +387,18 @@
 
       .log-list {
         display: grid;
-        gap: 12px;
+        border: 1px solid var(--line);
+        background: var(--panel-subtle);
       }
 
       .log-entry {
         display: grid;
-        gap: 8px;
+        gap: 6px;
+        padding: 10px 12px;
+      }
+
+      .log-entry + .log-entry {
+        border-top: 1px solid var(--line);
       }
 
       .log-meta {
@@ -402,6 +408,15 @@
         align-items: center;
         color: var(--muted);
         font-size: 0.84rem;
+      }
+
+      .log-message {
+        color: var(--text);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
       }
 
       .logs-placeholder {

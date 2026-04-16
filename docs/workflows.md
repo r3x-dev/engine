@@ -98,9 +98,10 @@ These notes apply to workflow code in general.
 - Use block form when the log string is expensive to build or includes interpolated values.
 - For `info`, `warn`, and `error`, use eager string logging when the message should always be
   emitted.
-- Workflow and job execution already carry tagged context such as `r3x.workflow_key`, `r3x.trigger_key`,
-  and `r3x.run_active_job_id` for indexed log correlation in the dashboard. Prefer logging through the
-  existing Rails logger so those tags stay attached to emitted lines.
+- Workflow execution already carries tagged context such as `r3x.run_active_job_id` and `r3x.trigger_key`
+  for indexed log correlation in the dashboard. Orchestration jobs also tag lines with `r3x.workflow_key`
+  where that broader workflow-level context is useful. Prefer logging through the existing Rails logger so
+  those tags stay attached to emitted lines.
 
 ## LLM Output
 
