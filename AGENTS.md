@@ -30,9 +30,10 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `lib/r3x/trigger_manager.rb` + `lib/r3x/trigger_manager/`: trigger infrastructure — `R3x::TriggerManager::Collection` (manages workflow triggers as a hash keyed by `unique_key`) and `R3x::TriggerManager::Execution` (wraps a trigger for runtime use).
 - `app/lib/r3x/`: runtime support code such as client wrappers and shared concerns.
 - `app/lib/r3x/client/victoria_logs.rb`: thin VictoriaLogs HTTP client used by the dashboard when log viewing is enabled.
-- `app/lib/r3x/client/google/credentials.rb`: shared Google credentials loader used by Gmail and Google Sheets integrations.
+- `app/lib/r3x/client/google/credentials.rb`: shared Google credentials loader used by Gmail, Google Sheets, and Google Translate integrations.
 - `lib/r3x/gem_loader.rb`: tiny helper for one-time lazy `require` of heavy optional gems used by integrations and workflow helpers.
 - `app/lib/r3x/client/google/gmail.rb`: Gmail API client used by workflows via `ctx.client.gmail(...)`.
+- `app/lib/r3x/client/google/translate.rb`: Google Translate client used by workflows via `ctx.client.google_translate(...)`.
 - `lib/r3x/workflow/llm_schema.rb`: lazy wrapper around `RubyLLM::Schema` for workflows that need structured LLM output.
 - `R3x::Client::Google` is a project namespace; when referencing the third-party Google gem namespace, use `::Google` to avoid constant collisions.
 - `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves a workflow key and dispatches to the workflow job class, and `R3x::ChangeDetectionJob`, which evaluates change-detecting triggers before enqueueing workflow runs.
