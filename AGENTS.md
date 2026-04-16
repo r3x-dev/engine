@@ -30,9 +30,10 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `lib/r3x/trigger_manager.rb` + `lib/r3x/trigger_manager/`: trigger infrastructure — `R3x::TriggerManager::Collection` (manages workflow triggers as a hash keyed by `unique_key`) and `R3x::TriggerManager::Execution` (wraps a trigger for runtime use).
 - `app/lib/r3x/`: runtime support code such as client wrappers and shared concerns.
 - `app/lib/r3x/client/victoria_logs.rb`: thin VictoriaLogs HTTP client used by the dashboard when log viewing is enabled.
-- `app/lib/r3x/client/google/credentials.rb`: shared Google credentials loader used by Gmail and Google Sheets integrations.
+- `app/lib/r3x/client/google/credentials.rb`: shared Google credentials loader used by Gmail, Google Sheets, and Google Translate integrations.
 - `lib/r3x/gem_loader.rb`: tiny helper for one-time lazy `require` of heavy optional gems used by integrations and workflow helpers.
 - `app/lib/r3x/client/google/gmail.rb`: Gmail API client used by workflows via `ctx.client.gmail(...)`.
+- `app/lib/r3x/client/google/translate.rb`: Google Translate client used by workflows via `ctx.client.google_translate(...)`.
 - `lib/r3x/workflow/llm_schema.rb`: lazy wrapper around `RubyLLM::Schema` for workflows that need structured LLM output.
 - `R3x::Client::Google` is a project namespace; when referencing the third-party Google gem namespace, use `::Google` to avoid constant collisions.
 - `app/jobs/r3x/`: job entrypoints, especially `R3x::RunWorkflowJob`, which resolves a workflow key and dispatches to the workflow job class, and `R3x::ChangeDetectionJob`, which evaluates change-detecting triggers before enqueueing workflow runs.
@@ -40,6 +41,8 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `workflows/`: user workflow packs. These are not the framework itself; they are loaded by the framework.
 - `workflows/<pack>/test/`: self-contained tests for a specific workflow pack. Keep pack-local tests beside the workflow code, and use `test/fixtures/workflows/` for framework-level fixtures.
 - `lib/r3x/workflow/boot.rb`: explicit workflow boot helper used by process entrypoints.
+- `lib/r3x/workflow/durable_set.rb`: workflow-scoped durable set backed by `Rails.cache`, intended
+  for remembering processed item keys across workflow runs.
 - `test/fixtures/workflows/`: fixture workflows for framework tests. Prefer these over hardcoding real workflows in tests.
 
 ## Runtime Flow
@@ -47,6 +50,11 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - Workflows subclass `R3x::Workflow::Base`, declare triggers via the DSL, and implement `#run`.
 - Workflow code can define structured LLM schemas via `R3x::Workflow::LlmSchema.define { ... }`, which lazy-loads `ruby_llm-schema` instead of requiring it for all processes at boot.
 - `R3x::Workflow::Base` is also an `ApplicationJob`; its `#perform` delegates trigger/context setup to `R3x::Workflow::Executor`, stores the context on the job, and then calls `#run` on the current job instance.
+- Workflow code can use `ctx.durable_set(name = :default, ttl: 90.days)` to get a durable,
+  workflow-scoped set for best-effort cross-run dedup of processed items.
+- When the app uses `:solid_cache_store`, keep `durable_set` `ttl:` at or below
+  `config/cache.yml` `store_options.max_age` so cache retention does not silently shorten the
+  dedup window.
 - Workflow-declared DSL objects must validate themselves before being registered; invalid DSL configuration should raise `R3x::ConfigurationError` with collected validation errors.
 - `R3x::Workflow::PackLoader` discovers workflow entrypoints named `workflow.rb` from directories listed in `R3X_WORKFLOW_PATHS`, loads them, and registers their classes in `R3x::Workflow::Registry`.
 - `R3x::RecurringTasksConfig` turns schedulable workflow triggers into Solid Queue dynamic recurring tasks via `SolidQueue::RecurringTask`. All triggers have a `unique_key` (based on type + options hash) used for identification and duplicate detection. `schedule_all!` persists dynamic tasks and sweeps stale ones.
@@ -264,6 +272,8 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - Prefer capability-based APIs over branching on symbolic types when behavior can be expressed through an object interface.
 - **Good**: `triggers.select(&:cron_schedulable?)`
 - **Bad**: `triggers.select { |t| t.type == :schedule }`
+- Prefer instance variables only for state the object needs across method calls or as part of its long-lived identity.
+- Do not keep one-time derived configuration in instance variables when it is only used during initialization or validation; keep it local or behind a small helper method instead.
 - When multiple classes share a capability, extract a small concern or module with an explicit predicate and required methods.
 - **Good**: `include R3x::Triggers::Concerns::CronSchedulable`
 - Framework code should avoid hardcoding knowledge of concrete subtypes. Prefer polymorphism, capability predicates, and object-owned methods like `to_h`.
