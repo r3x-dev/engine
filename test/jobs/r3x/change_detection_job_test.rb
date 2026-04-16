@@ -142,17 +142,47 @@ module R3x
       assert_includes output, "checking trigger"
     end
 
-    private
+    test "logs changed outcome before enqueueing workflow" do
+      fake_trigger = R3x::TestSupport::FakeChangeDetectingTrigger.new(
+        identity: "feed",
+        detector: ->(workflow_key:, state:) do
+          { changed: true, state: state.merge(cursor: "v2"), payload: { "entries" => [ { "title" => "Hello" } ] } }
+        end
+      )
 
-    def capture_logged_output
-      io = StringIO.new
-      original_logger = Rails.logger
-      Rails.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(io))
-      yield
-      io.string
-    ensure
-      Rails.logger = original_logger
+      register_change_detecting_workflow(fake_trigger)
+
+      output = capture_logged_output do
+        ChangeDetectionJob.perform_now("test_change_detecting_feed", trigger_key: fake_trigger.unique_key)
+      end
+
+      assert_includes output, "Change detected; enqueueing workflow class=TestChangeDetectingFeed"
+      assert_includes output, "r3x.job_outcome=changed"
+      assert_includes output, "Change detection completed"
     end
+
+    test "logs failed outcome when change detection raises" do
+      fake_trigger = R3x::TestSupport::FakeChangeDetectingTrigger.new(
+        identity: "feed",
+        detector: ->(**) do
+          raise ArgumentError, "detection failed"
+        end
+      )
+
+      register_change_detecting_workflow(fake_trigger)
+
+      output = capture_logged_output do
+        assert_raises(ArgumentError) do
+          ChangeDetectionJob.perform_now("test_change_detecting_feed", trigger_key: fake_trigger.unique_key)
+        end
+      end
+
+      assert_includes output, "r3x.job_outcome=failed"
+      assert_includes output, "Change detection failed"
+      assert_includes output, "error_class=ArgumentError"
+    end
+
+    private
 
     def register_change_detecting_workflow(fake_trigger)
       workflow_class = Class.new(R3x::Workflow::Base) do

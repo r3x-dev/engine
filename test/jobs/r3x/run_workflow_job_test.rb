@@ -168,16 +168,33 @@ module R3x
       Workflow::Registry.reset!
     end
 
-    private
+    test "logs workflow dispatch outcome" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "TestDispatchLogs"
+        end
 
-    def capture_logged_output
-      io = StringIO.new
-      original_logger = Rails.logger
-      Rails.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(io))
-      yield
-      io.string
+        trigger :manual
+
+        def run
+          { "status" => "ok" }
+        end
+      end
+
+      Workflow::Registry.register(workflow_class)
+      manual_trigger = workflow_class.triggers.first
+
+      output = capture_logged_output do
+        RunWorkflowJob.perform_now("test_dispatch_logs", trigger_key: manual_trigger.unique_key)
+      end
+
+      assert_includes output, "Dispatching workflow class=TestDispatchLogs"
+      assert_includes output, "r3x.job_outcome=success"
+      assert_includes output, "Workflow dispatch completed"
     ensure
-      Rails.logger = original_logger
+      Workflow::Registry.reset!
     end
+
+    private
   end
 end

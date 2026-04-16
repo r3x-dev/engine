@@ -20,6 +20,8 @@ module R3x
 
       def perform(trigger_key = nil, trigger_payload: nil)
         with_log_tags(*workflow_log_tags(trigger_key)) do
+          context = nil
+
           begin
             context = R3x::Workflow::Executor.build_context(
               workflow_class: self.class,
@@ -28,7 +30,19 @@ module R3x
             )
             @ctx = context
 
-            run
+            logger.info "Running workflow trigger_type=#{context.trigger.type}"
+
+            run.tap do
+              with_log_tags("r3x.job_outcome=success") do
+                logger.info "Workflow run completed"
+              end
+            end
+          rescue => e
+            with_log_tags("r3x.job_outcome=failed") do
+              logger.error "Workflow run failed error_class=#{e.class} error_message=#{e.message}"
+            end
+
+            raise
           ensure
             @ctx = nil
           end

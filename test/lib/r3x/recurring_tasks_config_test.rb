@@ -85,6 +85,21 @@ module R3x
       assert_equal "0 * * * *", task.schedule
     end
 
+    test "schedule_all! logs workflow and trigger context" do
+      ENV.delete("R3X_TIMEZONE")
+      workflow_class = R3x::Workflow::Registry.fetch("test_workflow")
+      schedule_trigger = workflow_class.schedulable_triggers.first
+
+      output = capture_logged_output do
+        RecurringTasksConfig.schedule_all!
+      end
+
+      assert_includes output, "R3x::RecurringTasksConfig"
+      assert_includes output, "r3x.workflow_key=test_workflow"
+      assert_includes output, "r3x.trigger_key=#{schedule_trigger.unique_key}"
+      assert_includes output, "Scheduled recurring task"
+    end
+
     test "to_h appends timezone to schedule when trigger declares one" do
       workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name

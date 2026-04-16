@@ -2,6 +2,7 @@ module R3x
   module Workflow
     module PackLoader
       extend self
+      extend R3x::Concerns::Logger
 
       WORKFLOW_ENTRYPOINT_FILENAME = "workflow.rb"
       MUTEX = Mutex.new
@@ -12,10 +13,27 @@ module R3x
           return if LOADED.true? && !force
 
           R3x::Workflow::Registry.reset!
+          loaded = []
+
           workflow_files.each do |entrypoint|
-            require entrypoint
-            register_workflow(entrypoint)
+            begin
+              require entrypoint
+              workflow_class = register_workflow(entrypoint)
+              loaded << workflow_class
+
+              Rails.logger.tagged("r3x.workflow_key=#{workflow_class.workflow_key}") do
+                logger.info "Loaded workflow class=#{workflow_class.name} entrypoint=#{entrypoint}"
+              end
+            rescue => e
+              Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") do
+                logger.error "Workflow load failed error_class=#{e.class} error_message=#{e.message}"
+              end
+
+              raise
+            end
           end
+
+          logger.info "Loaded #{loaded.size} workflow packs"
           LOADED.make_true
         end
       end
@@ -47,6 +65,7 @@ module R3x
         class_name = "Workflows::#{dir_name.camelize}"
         workflow_class = class_name.constantize
         R3x::Workflow::Registry.register(workflow_class)
+        workflow_class
       end
     end
   end

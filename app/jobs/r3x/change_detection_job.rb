@@ -13,6 +13,8 @@ module R3x
       ) do
         workflow_class = R3x::Workflow::Registry.fetch(workflow_key)
         trigger = find_trigger(workflow_class: workflow_class, trigger_key: trigger_key)
+        logger.info "Checking change-detecting trigger type=#{trigger.type}"
+
         trigger_state = load_trigger_state(workflow_key: workflow_key, trigger_key: trigger_key, trigger_type: trigger.type)
         result = normalize_result(
           trigger.detect_changes(
@@ -21,16 +23,35 @@ module R3x
           )
         )
 
+        logger.info "Evaluated change-detecting trigger changed=#{result[:changed]}"
+
         TriggerState.transaction do
           if result[:changed]
+            with_log_tags("r3x.job_outcome=changed") do
+              logger.info "Change detected; enqueueing workflow class=#{workflow_class.name}"
+            end
+
             workflow_class.perform_later(trigger_key, trigger_payload: result[:payload])
           end
 
           trigger_state.record_check!(result)
         end
+
+        with_log_tags("r3x.job_outcome=#{result[:changed] ? "changed" : "unchanged"}") do
+          logger.info "Change detection completed"
+        end
       end
     rescue => e
       trigger_state.record_error!(e) if defined?(trigger_state) && trigger_state&.persisted?
+
+      with_log_tags(
+        "r3x.workflow_key=#{workflow_key}",
+        ("r3x.trigger_key=#{trigger_key}" if defined?(trigger_key) && trigger_key.present?),
+        "r3x.job_outcome=failed"
+      ) do
+        logger.error "Change detection failed error_class=#{e.class} error_message=#{e.message}"
+      end
+
       raise
     end
 
