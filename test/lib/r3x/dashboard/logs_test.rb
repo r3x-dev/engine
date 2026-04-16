@@ -84,6 +84,32 @@ module R3x
         assert_includes client.calls.first[:query], '_msg:"r3x.run_active_job_id=aj-123"'
       end
 
+      test "run logs strip repeated correlation tags from the message body" do
+        client = FakeLogsClient.new(entries: [
+          {
+            "_time" => "2026-04-15T12:00:01Z",
+            "_msg" => "[r3x.run_active_job_id=aj-123] [r3x.workflow_key=test_workflow] [r3x.trigger_key=schedule:123] [Workflows::TestWorkflow] Running workflow trigger_type=schedule",
+            "kubernetes.container_name" => "app",
+            "kubernetes.pod_name" => "r3x-jobs-123"
+          }
+        ])
+
+        run = {
+          active_job_id: "aj-123",
+          class_name: "Workflows::TestWorkflow",
+          enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
+          trigger_key: "schedule:123",
+          workflow_key: "test_workflow"
+        }
+
+        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        entry = result[:entries].first
+
+        assert_equal "Running workflow trigger_type=schedule", entry[:message]
+        assert_equal [], entry[:tags]
+      end
+
       test "returns provider error when query fails" do
         client = FakeLogsClient.new(error: Faraday::ConnectionFailed.new("boom"))
 

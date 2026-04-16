@@ -21,6 +21,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     @job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [ @trigger ],
+      active_job_id: "aj-123",
       finished_at: 1.minute.ago,
       created_at: 10.minutes.ago,
       updated_at: 1.minute.ago
@@ -133,6 +134,31 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "stack line 1"
     assert_includes response.body, "Back to workflow"
     assert_includes response.body, '<section class="panel stack" style="margin-top: 18px;">'
+  end
+
+  test "workflow run detail renders compact log messages without repeated correlation tags" do
+    ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+    ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+    stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
+      .to_return(
+        status: 200,
+        body: {
+          "_time" => "2026-04-15T12:00:01Z",
+          "_msg" => "[r3x.run_active_job_id=#{@job.active_job_id}] [r3x.workflow_key=test_workflow] [r3x.trigger_key=#{@trigger}] [#{WORKFLOW_JOB_CLASS_NAME}] Running workflow trigger_type=schedule",
+          "kubernetes.container_name" => "app",
+          "kubernetes.pod_name" => "r3x-jobs-123"
+        }.to_json + "\n"
+      )
+
+    get "/workflow-runs/#{@job.id}", params: { logs: 1 }
+
+    assert_response :success
+    assert_includes response.body, "Running workflow trigger_type=schedule"
+    assert_includes response.body, "r3x-jobs-123 / app"
+    refute_includes response.body, "[r3x.run_active_job_id="
+    refute_includes response.body, "[r3x.workflow_key=test_workflow]"
+    refute_includes response.body, "[#{WORKFLOW_JOB_CLASS_NAME}]"
   end
 
   test "workflow run detail shows log placeholder before loading" do
