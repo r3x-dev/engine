@@ -249,6 +249,85 @@ class DashboardTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "No indexed logs were found for this run in its execution window."
   end
 
+  test "running workflow run logs auto-refresh while visible" do
+    ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+    ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+    running_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
+      active_job_id: "aj-running",
+      created_at: 1.minute.ago,
+      updated_at: 30.seconds.ago
+    )
+    claim_job!(running_job)
+
+    stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
+      .to_return(
+        status: 200,
+        body: {
+          "_time" => "2026-04-15T12:00:01Z",
+          "_msg" => "[r3x.run_active_job_id=aj-running] Still working"
+        }.to_json + "\n"
+      )
+
+    get "/workflow-runs/#{running_job.id}", params: { logs: 1 }
+
+    assert_response :success
+    assert_includes response.body, 'data-r3x-log-refresh="true"'
+    assert_includes response.body, "Auto-refresh: on"
+    assert_includes response.body, "Every 5s while running"
+    assert_includes response.body, "/workflow-runs/#{running_job.id}/logs"
+    assert_includes response.body, "Still working"
+  end
+
+  test "terminal workflow run logs do not auto-refresh" do
+    ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+    ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+    stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
+      .to_return(status: 200, body: "")
+
+    get "/workflow-runs/#{@job.id}", params: { logs: 1 }
+
+    assert_response :success
+    assert_includes response.body, 'data-r3x-log-refresh="false"'
+    assert_select "button[data-r3x-log-refresh-toggle]", count: 0
+    assert_select "[data-r3x-log-refresh-status]", count: 0
+  end
+
+  test "workflow run logs endpoint renders only refreshable panel" do
+    ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+    ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+    running_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
+      active_job_id: "aj-running-panel",
+      created_at: 1.minute.ago,
+      updated_at: 30.seconds.ago
+    )
+    claim_job!(running_job)
+
+    stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
+      .to_return(
+        status: 200,
+        body: {
+          "_time" => "2026-04-15T12:00:02Z",
+          "_msg" => "[r3x.run_active_job_id=aj-running-panel] Fresh line"
+        }.to_json + "\n"
+      )
+
+    get "/workflow-runs/#{running_job.id}/logs"
+
+    assert_response :success
+    assert_includes response.body, 'id="run-logs"'
+    assert_includes response.body, 'data-r3x-log-refresh="true"'
+    assert_includes response.body, "Fresh line"
+    refute_includes response.body, "<html"
+    refute_includes response.body, "R3x Dashboard"
+  end
+
   test "recent runs shows log shortcut when logs are configured" do
     ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
     ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
@@ -351,5 +430,19 @@ class DashboardTest < ActionDispatch::IntegrationTest
   private
     def clear_tables
       TestDbCleanup.clear_runtime_tables!
+    end
+
+    def claim_job!(job)
+      process = SolidQueue::Process.create!(
+        kind: "Worker",
+        last_heartbeat_at: Time.current,
+        pid: Process.pid,
+        hostname: "test",
+        metadata: "{}",
+        name: "test-worker-#{job.id}",
+        created_at: Time.current
+      )
+
+      SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: 30.seconds.ago)
     end
 end
