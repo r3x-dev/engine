@@ -1,0 +1,13 @@
+default: &default
+  scheduler:
+    dynamic_tasks_enabled: true
+    polling_interval: 5
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default
