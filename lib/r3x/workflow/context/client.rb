@@ -34,6 +34,10 @@ module R3x
           R3x::Client::Google::Gmail.new(credentials_env: credentials_env)
         end
 
+        def ocr(api_key_env:)
+          R3x::Client::Ocr.new(api_key_env: api_key_env)
+        end
+
         def google_translate(credentials_env:)
           R3x::Client::Google::Translate.new(credentials_env: credentials_env)
         end
