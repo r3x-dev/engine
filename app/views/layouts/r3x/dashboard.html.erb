@@ -415,8 +415,94 @@
         white-space: pre;
       }
 
+      .log-severity {
+        min-width: 52px;
+        justify-content: center;
+        padding: 2px 8px;
+        font-size: 0.7rem;
+        line-height: 1.4;
+      }
+
+      .log-entry-danger .log-message {
+        color: var(--danger-text);
+      }
+
+      .log-entry-warn .log-message {
+        color: var(--warn-text);
+      }
+
+      .log-last-updated {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        margin: 0;
+        white-space: nowrap;
+      }
+
       .log-actions {
         justify-content: flex-end;
+      }
+
+      .log-live-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 34px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        background: var(--panel-subtle);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .log-live-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: currentColor;
+        opacity: 0.7;
+      }
+
+      .log-live-label {
+        font-weight: 600;
+      }
+
+      .log-live-ellipsis {
+        display: inline-grid;
+        grid-auto-flow: column;
+        gap: 1px;
+        min-width: 1.5em;
+      }
+
+      .log-live-ellipsis span {
+        opacity: 0.25;
+        animation: log-live-pulse 1.2s infinite ease-in-out;
+      }
+
+      .log-live-ellipsis span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      .log-live-ellipsis span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+
+      .log-live-indicator[data-state="refreshing"] {
+        color: var(--accent);
+      }
+
+      .log-live-indicator[data-state="paused"] {
+        color: var(--warn-text);
+      }
+
+      @keyframes log-live-pulse {
+        0%, 80%, 100% {
+          opacity: 0.25;
+        }
+
+        40% {
+          opacity: 1;
+        }
       }
 
       .log-refresh-control {
@@ -546,6 +632,21 @@
           if (status) status.textContent = message
         }
 
+        const setLastUpdated = () => {
+          const label = panel()?.querySelector("[data-r3x-log-last-updated]")
+          if (!label) return
+
+          const latestTime = panel()?.querySelector(".log-entry:last-child .log-time time")?.textContent || "--:--:--"
+          label.textContent = `Last updated ${latestTime}`
+        }
+
+        const setLiveState = (state) => {
+          const indicator = panel()?.querySelector("[data-r3x-log-live-indicator]")
+          if (!indicator) return
+
+          indicator.dataset.state = state
+        }
+
         const syncControls = () => {
           const currentPanel = panel()
           const select = currentPanel?.querySelector("[data-r3x-log-refresh-select]")
@@ -554,7 +655,24 @@
           const option = currentOption()
           select.value = option
           select.disabled = !refreshable(currentPanel)
-          setStatus(option === "off" ? "Auto-refresh off" : `Every ${option} while running`)
+
+          if (!refreshable(currentPanel)) {
+            setLiveState("paused")
+            setLastUpdated()
+            setStatus("Run finished")
+            return
+          }
+
+          if (option === "off") {
+            setLiveState("paused")
+            setLastUpdated()
+            setStatus("Auto-refresh off")
+            return
+          }
+
+          setLiveState("idle")
+          setLastUpdated()
+          setStatus(`Every ${option} while running`)
         }
 
         const stop = () => {
@@ -578,10 +696,12 @@
           if (!refreshable(currentPanel) || !refreshInterval()) return
 
           if (document.hidden) {
+            setLiveState("idle")
             schedule()
             return
           }
 
+          setLiveState("refreshing")
           setStatus("Refreshing...")
 
           try {
@@ -601,6 +721,7 @@
               schedule()
             }
           } catch (_) {
+            setLiveState("paused")
             setStatus("Refresh failed; retrying")
             schedule()
           }

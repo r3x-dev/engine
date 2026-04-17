@@ -92,6 +92,25 @@ module R3x
         assert_equal [], entry[:tags]
       end
 
+      test "run logs infer severity from normalized message content" do
+        client = FakeLogsClient.new(entries: [
+          { "_time" => "2026-04-15T12:00:01Z", "_msg" => "Camera alert: driveway offline" },
+          { "_time" => "2026-04-15T12:00:02Z", "_msg" => "Retry scheduled after timeout" },
+          { "_time" => "2026-04-15T12:00:03Z", "_msg" => "Workflow run completed" },
+          { "_time" => "2026-04-15T12:00:04Z", "_msg" => "Still working" }
+        ])
+
+        run = {
+          active_job_id: "aj-123",
+          enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+        }
+
+        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+
+        assert_equal %w[danger warn ok muted], result[:entries].map { |entry| entry[:severity] }
+      end
+
       test "returns provider error when provider is unsupported" do
         result = Logs.new(provider_name: "unknown").run_logs(active_job_id: "aj-123")
 
