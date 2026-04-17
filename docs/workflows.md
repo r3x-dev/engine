@@ -63,8 +63,29 @@ These notes apply to workflow code in general.
   - When the app uses `:solid_cache_store`, custom `ttl:` values must not exceed
     `config/cache.yml` `store_options.max_age`.
   - Use `include?`, `add`, and `delete` on the returned set.
-  - Prefer this for best-effort dedup across runs; prefer a real table only when you need permanent
-    history or hard uniqueness guarantees.
+- Prefer this for best-effort dedup across runs; prefer a real table only when you need permanent
+  history or hard uniqueness guarantees.
+
+## Inline Parsing
+
+- For small extraction chains, prefer `presence` and chained fallbacks over repeated `blank?`
+  branches.
+- Keep simple parsing close to the data source unless the logic is genuinely reusable.
+- Good:
+
+  ```ruby
+  body = normalize_text(node.at_xpath("./description")&.inner_html).presence ||
+    normalize_text(node.at_xpath("./encoded")&.inner_html).presence ||
+    normalize_text(node.at_xpath("./title")&.text)
+  ```
+
+- Bad:
+
+  ```ruby
+  body = normalize_text(node.at_xpath("./description")&.inner_html)
+  body = normalize_text(node.at_xpath("./encoded")&.inner_html) if body.blank?
+  body = normalize_text(node.at_xpath("./title")&.text) if body.blank?
+  ```
 
 ## Fail Fast
 
