@@ -3,14 +3,11 @@
 <div id="run-logs"
      data-r3x-log-refresh="<%= refreshable %>"
      data-r3x-log-refresh-url="<%= workflow_run_logs_path(run[:job_id]) if refreshable %>"
-     data-r3x-log-refresh-interval-value="5000"
-     data-r3x-run-status="<%= run[:status] %>">
+      data-r3x-run-status="<%= run[:status] %>">
   <%= render "r3x/dashboard/shared/logs",
              logs: logs,
              title: "Run logs",
              description: "Indexed application logs correlated with this persisted workflow run.",
              empty_message: "No indexed logs were found for this run in its execution window.",
-             refreshable: refreshable,
-             action_label: dashboard_icon_label(:logs, "Hide logs"),
-             action_path: workflow_run_path(run[:job_id]) %>
+              refreshable: refreshable %>
 </div>

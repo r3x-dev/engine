@@ -419,8 +419,15 @@
         justify-content: flex-end;
       }
 
-      .log-refresh-toggle {
+      .log-refresh-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
         white-space: nowrap;
+      }
+
+      .log-refresh-select {
+        min-width: 120px;
       }
 
       .log-refresh-state {
@@ -429,72 +436,6 @@
         min-height: 34px;
         margin: 0;
         white-space: nowrap;
-      }
-
-      .logs-placeholder {
-        position: relative;
-        min-height: 240px;
-        padding: 18px;
-        overflow: hidden;
-        border: 1px solid var(--line);
-        background:
-          linear-gradient(180deg, rgba(127, 127, 127, 0.06), rgba(127, 127, 127, 0.12)),
-          var(--panel-subtle);
-      }
-
-      .logs-placeholder-preview {
-        display: grid;
-        gap: 12px;
-        width: min(100%, 620px);
-        opacity: 0.38;
-        filter: blur(1.6px);
-        pointer-events: none;
-        user-select: none;
-      }
-
-      .logs-placeholder-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 14px;
-        background: var(--panel);
-        border: 1px solid var(--line);
-        box-shadow: var(--shadow);
-      }
-
-      .logs-placeholder-chip {
-        display: inline-flex;
-        width: 68px;
-        height: 10px;
-        border-radius: 999px;
-        background: var(--panel-subtle);
-        flex: 0 0 auto;
-      }
-
-      .logs-placeholder-line {
-        display: inline-flex;
-        height: 10px;
-        border-radius: 999px;
-        background: var(--panel-subtle);
-      }
-
-      .logs-placeholder-line-short {
-        width: 32%;
-      }
-
-      .logs-placeholder-line-medium {
-        width: 54%;
-      }
-
-      .logs-placeholder-line-long {
-        width: 74%;
-      }
-
-      .logs-placeholder-action {
-        position: absolute;
-        inset: 50% auto auto 50%;
-        transform: translate(-50%, -50%);
-        box-shadow: var(--shadow);
       }
 
       @media (max-width: 960px) {
@@ -560,40 +501,60 @@
     <script>
       (() => {
         const storageKey = "r3x.dashboard.runLogs.autoRefresh"
+        const defaultOption = "30s"
+        const intervalByOption = {
+          off: null,
+          "5s": 5000,
+          "30s": 30000,
+          "1m": 60000,
+          "5m": 300000
+        }
+        const legacyOptionByValue = {
+          on: "5s"
+        }
         let timeoutId
 
         const panel = () => document.getElementById("run-logs")
 
-        const enabled = () => {
+        const normalizeOption = (value) => {
+          if (Object.prototype.hasOwnProperty.call(intervalByOption, value)) return value
+          if (Object.prototype.hasOwnProperty.call(legacyOptionByValue, value)) return legacyOptionByValue[value]
+          return defaultOption
+        }
+
+        const currentOption = () => {
           try {
-            return localStorage.getItem(storageKey) !== "off"
+            return normalizeOption(localStorage.getItem(storageKey))
           } catch (_) {
-            return true
+            return defaultOption
           }
         }
 
-        const setEnabled = (value) => {
+        const setOption = (value) => {
           try {
-            localStorage.setItem(storageKey, value ? "on" : "off")
+            localStorage.setItem(storageKey, normalizeOption(value))
           } catch (_) {
           }
         }
 
         const refreshable = (element) => element?.dataset.r3xLogRefresh === "true" && element.dataset.r3xRunStatus === "running"
 
+        const refreshInterval = () => intervalByOption[currentOption()]
+
         const setStatus = (message) => {
           const status = panel()?.querySelector("[data-r3x-log-refresh-status]")
           if (status) status.textContent = message
         }
 
-        const syncToggle = () => {
-          const button = panel()?.querySelector("[data-r3x-log-refresh-toggle]")
-          if (!button) return
+        const syncControls = () => {
+          const currentPanel = panel()
+          const select = currentPanel?.querySelector("[data-r3x-log-refresh-select]")
+          if (!select) return
 
-          const isEnabled = enabled()
-          button.textContent = `Auto-refresh: ${isEnabled ? "on" : "off"}`
-          button.setAttribute("aria-pressed", isEnabled ? "true" : "false")
-          setStatus(isEnabled ? "Every 5s while running" : "Auto-refresh off")
+          const option = currentOption()
+          select.value = option
+          select.disabled = !refreshable(currentPanel)
+          setStatus(option === "off" ? "Auto-refresh off" : `Every ${option} while running`)
         }
 
         const stop = () => {
@@ -604,15 +565,17 @@
         const schedule = () => {
           stop()
 
-          if (!enabled() || !refreshable(panel())) return
+          if (!refreshable(panel())) return
 
-          const interval = Number(panel().dataset.r3xLogRefreshIntervalValue) || 5000
+          const interval = refreshInterval()
+          if (!interval) return
+
           timeoutId = setTimeout(refresh, interval)
         }
 
         const refresh = async () => {
           const currentPanel = panel()
-          if (!enabled() || !refreshable(currentPanel)) return
+          if (!refreshable(currentPanel) || !refreshInterval()) return
 
           if (document.hidden) {
             schedule()
@@ -632,7 +595,7 @@
             if (!response.ok) throw new Error(`Refresh failed: ${response.status}`)
 
             currentPanel.outerHTML = await response.text()
-            syncToggle()
+            syncControls()
 
             if (refreshable(panel())) {
               schedule()
@@ -643,21 +606,20 @@
           }
         }
 
-        document.addEventListener("click", (event) => {
-          const button = event.target.closest("[data-r3x-log-refresh-toggle]")
-          if (!button) return
+        document.addEventListener("change", (event) => {
+          const select = event.target.closest("[data-r3x-log-refresh-select]")
+          if (!select) return
 
-          setEnabled(!enabled())
-          syncToggle()
+          stop()
+          setOption(select.value)
+          syncControls()
 
-          if (enabled()) {
+          if (refreshInterval()) {
             refresh()
-          } else {
-            stop()
           }
         })
 
-        syncToggle()
+        syncControls()
         schedule()
       })()
     </script>
