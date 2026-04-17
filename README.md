@@ -41,7 +41,7 @@ bin/rails test
 ## Operational Notes
 
 - Workflow classes are enqueued directly as Active Job classes so workflows can use `ActiveJob::Continuable` and `step` on the real workflow job instance.
-- `bin/jobs` supports role-specific pods via `R3X_JOB_ROLE=worker|scheduler|all`. Worker pods only load workflow classes, while scheduler-only pods can point `SOLID_QUEUE_CONFIG` at `config/queue.scheduler.yml`.
+- `bin/jobs` supports role-specific pods via `R3X_JOB_ROLE=worker|scheduler|all`. Worker pods only load workflow classes and should point `SOLID_QUEUE_CONFIG` at `config/queue.worker.yml`, while scheduler-only pods can point `SOLID_QUEUE_CONFIG` at `config/queue.scheduler.yml`.
 - Production `Solid Queue` shutdown is intentionally longer-lived and can be tuned with `R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS` so Kubernetes rollouts can wait for long workflow runs to finish gracefully.
 - Tradeoff: queued workflow runs persist the concrete workflow class name in Solid Queue.
 - If a workflow class is renamed or removed before an older queued run executes, that older run may fail deserialization.
