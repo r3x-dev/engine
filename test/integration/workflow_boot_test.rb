@@ -221,6 +221,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
     cli_marker_path = Rails.root.join("tmp/jobs_cli_#{SecureRandom.hex(4)}.txt")
     load_marker_path = Rails.root.join("tmp/jobs_load_#{SecureRandom.hex(4)}.txt")
     schedule_marker_path = Rails.root.join("tmp/jobs_schedule_#{SecureRandom.hex(4)}.txt")
+    config_marker_path = Rails.root.join("tmp/jobs_config_#{SecureRandom.hex(4)}.txt")
     FileUtils.mkdir_p(script_path.dirname)
     File.write(script_path, <<~RUBY)
       require_relative "../config/environment"
@@ -245,6 +246,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
       class SolidQueue::Cli
         def self.start(*)
           File.write(#{cli_marker_path.to_s.inspect}, "1")
+          File.write(#{config_marker_path.to_s.inspect}, ENV["SOLID_QUEUE_CONFIG"].to_s)
         end
       end
 
@@ -260,11 +262,13 @@ class WorkflowBootTest < ActiveSupport::TestCase
     assert File.exist?(cli_marker_path), "expected jobs entrypoint to start cli: #{command_output}"
     assert File.exist?(load_marker_path), "expected jobs entrypoint to call load!: #{command_output}"
     refute File.exist?(schedule_marker_path), "expected jobs entrypoint not to call load_and_schedule!: #{command_output}"
+    assert_equal "config/queue.worker.yml", File.read(config_marker_path)
   ensure
     FileUtils.rm_f(script_path) if script_path
     FileUtils.rm_f(cli_marker_path) if cli_marker_path
     FileUtils.rm_f(load_marker_path) if load_marker_path
     FileUtils.rm_f(schedule_marker_path) if schedule_marker_path
+    FileUtils.rm_f(config_marker_path) if config_marker_path
   end
 
   test "jobs entrypoint loads and schedules workflows for scheduler role" do
@@ -272,6 +276,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
     cli_marker_path = Rails.root.join("tmp/jobs_cli_#{SecureRandom.hex(4)}.txt")
     load_marker_path = Rails.root.join("tmp/jobs_load_#{SecureRandom.hex(4)}.txt")
     schedule_marker_path = Rails.root.join("tmp/jobs_schedule_#{SecureRandom.hex(4)}.txt")
+    config_marker_path = Rails.root.join("tmp/jobs_config_#{SecureRandom.hex(4)}.txt")
     FileUtils.mkdir_p(script_path.dirname)
     File.write(script_path, <<~RUBY)
       require_relative "../config/environment"
@@ -296,6 +301,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
       class SolidQueue::Cli
         def self.start(*)
           File.write(#{cli_marker_path.to_s.inspect}, "1")
+          File.write(#{config_marker_path.to_s.inspect}, ENV["SOLID_QUEUE_CONFIG"].to_s)
         end
       end
 
@@ -311,11 +317,47 @@ class WorkflowBootTest < ActiveSupport::TestCase
     assert File.exist?(cli_marker_path), "expected jobs entrypoint to start cli: #{command_output}"
     refute File.exist?(load_marker_path), "expected jobs entrypoint not to call load! directly: #{command_output}"
     assert File.exist?(schedule_marker_path), "expected jobs entrypoint to call load_and_schedule!: #{command_output}"
+    assert_equal "config/queue.scheduler.yml", File.read(config_marker_path)
   ensure
     FileUtils.rm_f(script_path) if script_path
     FileUtils.rm_f(cli_marker_path) if cli_marker_path
     FileUtils.rm_f(load_marker_path) if load_marker_path
     FileUtils.rm_f(schedule_marker_path) if schedule_marker_path
+    FileUtils.rm_f(config_marker_path) if config_marker_path
+  end
+
+  test "jobs entrypoint keeps explicit solid queue config override" do
+    script_path = Rails.root.join("tmp/jobs_entrypoint_test_#{SecureRandom.hex(4)}.rb")
+    config_marker_path = Rails.root.join("tmp/jobs_config_#{SecureRandom.hex(4)}.txt")
+    FileUtils.mkdir_p(script_path.dirname)
+    File.write(script_path, <<~RUBY)
+      require_relative "../config/environment"
+      require "solid_queue/cli"
+
+      class SolidQueue::Cli
+        def self.start(*)
+          File.write(#{config_marker_path.to_s.inspect}, ENV["SOLID_QUEUE_CONFIG"].to_s)
+        end
+      end
+
+      load "bin/jobs"
+    RUBY
+
+    command_output = run_command(
+      "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
+      env: {
+        "RAILS_ENV" => "production",
+        "R3X_JOB_ROLE" => "worker",
+        "SOLID_QUEUE_CONFIG" => "config/custom.yml",
+        "SOLID_QUEUE_IN_PUMA" => nil
+      }
+    )
+
+    assert $?.success?, "jobs command failed: #{command_output}"
+    assert_equal "config/custom.yml", File.read(config_marker_path)
+  ensure
+    FileUtils.rm_f(script_path) if script_path
+    FileUtils.rm_f(config_marker_path) if config_marker_path
   end
 
   test "jobs entrypoint rejects unsupported job roles" do
