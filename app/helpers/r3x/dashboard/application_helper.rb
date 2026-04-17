@@ -72,6 +72,12 @@ module R3x
         )
       end
 
+      def dashboard_log_state_empty_message(refreshable:, empty_message:)
+        return "Waiting for first log line..." if refreshable
+
+        empty_message
+      end
+
       def dashboard_trigger_label(trigger_entry)
         mode = trigger_entry.fetch(:mode)
         cron = trigger_entry[:cron]

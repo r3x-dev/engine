@@ -139,6 +139,14 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, '<section class="panel stack" style="margin-top: 18px;">'
   end
 
+  test "workflow run detail hides failure details when run succeeded" do
+    get "/workflow-runs/#{@job.id}"
+
+    assert_response :success
+    refute_includes response.body, "Failure Details"
+    refute_includes response.body, "No error details were recorded for this run."
+  end
+
   test "workflow run detail shows absolute metadata timestamps" do
     get "/workflow-runs/#{@job.id}"
 
@@ -228,6 +236,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "12:00:01"
     assert_includes response.body, "log-time"
     assert_includes response.body, "log-message"
+    assert_includes response.body, "log-severity"
+    assert_includes response.body, "Info"
     refute_includes response.body, "log-meta"
     refute_includes response.body, "r3x-jobs-123 / app"
     refute_includes response.body, "[r3x.run_active_job_id="
@@ -250,6 +260,29 @@ class DashboardTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "Hide logs"
     refute_includes response.body, "Load logs"
     assert_select "section.logs-placeholder-panel", count: 0
+  end
+
+  test "running workflow run logs show waiting state before first line arrives" do
+    ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+    ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+    running_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
+      active_job_id: "aj-running-empty",
+      created_at: 1.minute.ago,
+      updated_at: 30.seconds.ago
+    )
+    claim_job!(running_job)
+
+    stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
+      .to_return(status: 200, body: "")
+
+    get "/workflow-runs/#{running_job.id}"
+
+    assert_response :success
+    assert_includes response.body, "Waiting for first log line..."
+    assert_includes response.body, "Last updated --:--:--"
   end
 
   test "running workflow run logs auto-refresh while visible" do
@@ -279,7 +312,11 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, 'data-r3x-log-refresh="true"'
     assert_includes response.body, "data-r3x-log-refresh-select"
+    assert_includes response.body, "data-r3x-log-live-indicator"
+    assert_includes response.body, "Live"
     assert_includes response.body, 'value="30s" selected="selected"'
+    assert_includes response.body, "data-r3x-log-last-updated"
+    assert_includes response.body, "12:00:01"
     assert_includes response.body, "Every 30s while running"
     assert_includes response.body, "/workflow-runs/#{running_job.id}/logs"
     assert_includes response.body, "Still working"
@@ -340,6 +377,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "View logs"
+    refute_includes response.body, "logs=1"
   end
 
   test "recent runs hides log shortcut when provider-specific config is missing" do

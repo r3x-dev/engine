@@ -21,6 +21,11 @@ module R3x
         assert_includes rendered, "2026-04-15 12:00:01"
         refute_includes rendered, ">about"
       end
+
+      test "dashboard log state empty message prefers waiting copy for refreshable panels" do
+        assert_equal "Waiting for first log line...", dashboard_log_state_empty_message(refreshable: true, empty_message: "No indexed logs were found.")
+        assert_equal "No indexed logs were found.", dashboard_log_state_empty_message(refreshable: false, empty_message: "No indexed logs were found.")
+      end
     end
   end
 end
