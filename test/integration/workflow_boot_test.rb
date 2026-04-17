@@ -275,6 +275,43 @@ class WorkflowBootTest < ActiveSupport::TestCase
     FileUtils.rm_f(skip_recurring_marker_path) if skip_recurring_marker_path
   end
 
+  test "jobs-worker entrypoint sets worker role defaults" do
+    script_path = Rails.root.join("tmp/jobs_worker_entrypoint_test_#{SecureRandom.hex(4)}.rb")
+    role_marker_path = Rails.root.join("tmp/jobs_worker_role_#{SecureRandom.hex(4)}.txt")
+    config_marker_path = Rails.root.join("tmp/jobs_worker_config_#{SecureRandom.hex(4)}.txt")
+    skip_recurring_marker_path = Rails.root.join("tmp/jobs_worker_skip_#{SecureRandom.hex(4)}.txt")
+    FileUtils.mkdir_p(script_path.dirname)
+    File.write(script_path, <<~RUBY)
+      require_relative "../config/environment"
+      require "solid_queue/cli"
+
+      class SolidQueue::Cli
+        def self.start(*)
+          File.write(#{role_marker_path.to_s.inspect}, ENV["R3X_JOB_ROLE"].to_s)
+          File.write(#{config_marker_path.to_s.inspect}, ENV["SOLID_QUEUE_CONFIG"].to_s)
+          File.write(#{skip_recurring_marker_path.to_s.inspect}, ENV["SOLID_QUEUE_SKIP_RECURRING"].to_s)
+        end
+      end
+
+      load "bin/jobs-worker"
+    RUBY
+
+    command_output = run_command(
+      "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
+      env: { "RAILS_ENV" => "production", "R3X_JOB_ROLE" => nil, "SOLID_QUEUE_IN_PUMA" => nil }
+    )
+
+    assert $?.success?, "jobs-worker command failed: #{command_output}"
+    assert_equal "worker", File.read(role_marker_path)
+    assert_equal "config/queue.worker.yml", File.read(config_marker_path)
+    assert_equal "true", File.read(skip_recurring_marker_path)
+  ensure
+    FileUtils.rm_f(script_path) if script_path
+    FileUtils.rm_f(role_marker_path) if role_marker_path
+    FileUtils.rm_f(config_marker_path) if config_marker_path
+    FileUtils.rm_f(skip_recurring_marker_path) if skip_recurring_marker_path
+  end
+
   test "jobs entrypoint loads and schedules workflows for scheduler role" do
     script_path = Rails.root.join("tmp/jobs_entrypoint_test_#{SecureRandom.hex(4)}.rb")
     cli_marker_path = Rails.root.join("tmp/jobs_cli_#{SecureRandom.hex(4)}.txt")
@@ -327,6 +364,39 @@ class WorkflowBootTest < ActiveSupport::TestCase
     FileUtils.rm_f(cli_marker_path) if cli_marker_path
     FileUtils.rm_f(load_marker_path) if load_marker_path
     FileUtils.rm_f(schedule_marker_path) if schedule_marker_path
+    FileUtils.rm_f(config_marker_path) if config_marker_path
+  end
+
+  test "jobs-scheduler entrypoint sets scheduler role defaults" do
+    script_path = Rails.root.join("tmp/jobs_scheduler_entrypoint_test_#{SecureRandom.hex(4)}.rb")
+    role_marker_path = Rails.root.join("tmp/jobs_scheduler_role_#{SecureRandom.hex(4)}.txt")
+    config_marker_path = Rails.root.join("tmp/jobs_scheduler_config_#{SecureRandom.hex(4)}.txt")
+    FileUtils.mkdir_p(script_path.dirname)
+    File.write(script_path, <<~RUBY)
+      require_relative "../config/environment"
+      require "solid_queue/cli"
+
+      class SolidQueue::Cli
+        def self.start(*)
+          File.write(#{role_marker_path.to_s.inspect}, ENV["R3X_JOB_ROLE"].to_s)
+          File.write(#{config_marker_path.to_s.inspect}, ENV["SOLID_QUEUE_CONFIG"].to_s)
+        end
+      end
+
+      load "bin/jobs-scheduler"
+    RUBY
+
+    command_output = run_command(
+      "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
+      env: { "RAILS_ENV" => "production", "R3X_JOB_ROLE" => nil, "SOLID_QUEUE_IN_PUMA" => nil }
+    )
+
+    assert $?.success?, "jobs-scheduler command failed: #{command_output}"
+    assert_equal "scheduler", File.read(role_marker_path)
+    assert_equal "config/queue.scheduler.yml", File.read(config_marker_path)
+  ensure
+    FileUtils.rm_f(script_path) if script_path
+    FileUtils.rm_f(role_marker_path) if role_marker_path
     FileUtils.rm_f(config_marker_path) if config_marker_path
   end
 
