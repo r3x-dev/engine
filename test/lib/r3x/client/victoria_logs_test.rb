@@ -41,6 +41,24 @@ module R3x
         assert_equal "first", result.first["_msg"]
         assert_equal "second", result.second["_msg"]
       end
+
+      test "preserves sub-second precision for start and end timestamps" do
+        ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+        start_at = Time.zone.parse("2026-04-17T14:02:10.658368Z")
+        end_at = Time.zone.parse("2026-04-17T14:09:42.734160Z")
+
+        stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
+          .with(body: hash_including(
+            "start" => "2026-04-17T14:02:10.658368Z",
+            "end" => "2026-04-17T14:09:42.734160Z"
+          ))
+          .to_return(status: 200, body: "")
+
+        VictoriaLogs.new.query(query: "_msg:test", start_at: start_at, end_at: end_at)
+
+        assert_requested :post, "http://victoria-logs.test:9428/select/logsql/query"
+      end
     end
   end
 end
