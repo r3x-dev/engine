@@ -1,33 +1,45 @@
 {
-  // https://docs.renovatebot.com/configuration-options/
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "labels": ["dependencies"],
-  "packageRules": [
-    {
-      "description": "Auto-merge only patch updates for gems when tests pass",
-      "matchUpdateTypes": ["patch"],
-      "matchPackagePatterns": ["*"],
-      "automerge": true,
-      "automergeType": "branch",
-      "automergeStrategy": "squash",
-      "requiredStatusChecks": ["test"]
-    },
-    {
-      "description": "Minor and major updates - PR only, no auto-merge",
-      "matchUpdateTypes": ["minor", "major"],
-      "matchPackagePatterns": ["*"],
-      "automerge": false
-    },
-    {
-      "description": "Auto-merge GitHub Actions updates when tests pass",
-      "matchManagers": ["github-actions"],
-      "automerge": true,
-      "automergeType": "branch",
-      "automergeStrategy": "squash",
-      "requiredStatusChecks": ["test"]
-    }
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:recommended',
   ],
-  "prHourlyLimit": 0,
-  "prConcurrentLimit": 10
+  labels: [
+    'dependencies',
+  ],
+  packageRules: [
+    {
+      description: 'Auto-merge only patch updates for gems when tests pass',
+      matchUpdateTypes: [
+        'patch',
+      ],
+      automerge: true,
+      automergeType: 'branch',
+      automergeStrategy: 'squash',
+      matchPackageNames: [
+        '*',
+      ],
+    },
+    {
+      description: 'Minor and major updates - PR only, no auto-merge',
+      matchUpdateTypes: [
+        'minor',
+        'major',
+      ],
+      automerge: false,
+      matchPackageNames: [
+        '*',
+      ],
+    },
+    {
+      description: 'Auto-merge GitHub Actions updates when tests pass',
+      matchManagers: [
+        'github-actions',
+      ],
+      automerge: true,
+      automergeType: 'branch',
+      automergeStrategy: 'squash',
+    },
+  ],
+  prHourlyLimit: 0,
+  prConcurrentLimit: 10,
 }
