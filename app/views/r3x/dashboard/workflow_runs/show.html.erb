@@ -85,32 +85,6 @@
   <% end %>
 </section>
 
-<% if logs_requested? %>
+<% if logs_configured? %>
   <%= render "r3x/dashboard/workflow_runs/logs_panel", run: @run, logs: @logs %>
-<% elsif logs_configured? %>
-  <section class="panel stack logs-placeholder-panel" style="margin-top: 18px;" id="run-logs">
-    <div>
-      <h3 class="section-title">Run logs</h3>
-      <p class="section-copy">Indexed application logs correlated with this persisted workflow run.</p>
-    </div>
-
-    <div class="logs-placeholder" aria-label="Run logs unavailable until loaded">
-      <div class="logs-placeholder-preview" aria-hidden="true">
-        <div class="logs-placeholder-row">
-          <span class="logs-placeholder-chip"></span>
-          <span class="logs-placeholder-line logs-placeholder-line-long"></span>
-        </div>
-        <div class="logs-placeholder-row">
-          <span class="logs-placeholder-chip"></span>
-          <span class="logs-placeholder-line logs-placeholder-line-medium"></span>
-        </div>
-        <div class="logs-placeholder-row">
-          <span class="logs-placeholder-chip"></span>
-          <span class="logs-placeholder-line logs-placeholder-line-short"></span>
-        </div>
-      </div>
-
-      <%= link_to dashboard_icon_label(:logs, "Load logs"), workflow_run_path(@run[:job_id], logs: 1, anchor: "run-logs"), class: "button subtle logs-placeholder-action" %>
-    </div>
-  </section>
 <% end %>
