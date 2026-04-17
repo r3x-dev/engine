@@ -5,8 +5,17 @@
       <p class="section-copy"><%= local_assigns.fetch(:description) %></p>
     </div>
 
-    <% if local_assigns[:action_label].present? && local_assigns[:action_path].present? %>
-      <%= link_to local_assigns.fetch(:action_label), local_assigns.fetch(:action_path), class: "button subtle" %>
+    <% if local_assigns[:refreshable] || (local_assigns[:action_label].present? && local_assigns[:action_path].present?) %>
+      <div class="actions log-actions">
+        <% if local_assigns[:refreshable] %>
+          <button type="button" class="button subtle log-refresh-toggle" data-r3x-log-refresh-toggle aria-pressed="true">Auto-refresh: on</button>
+          <span class="meta log-refresh-state" data-r3x-log-refresh-status>Every 5s while running</span>
+        <% end %>
+
+        <% if local_assigns[:action_label].present? && local_assigns[:action_path].present? %>
+          <%= link_to local_assigns.fetch(:action_label), local_assigns.fetch(:action_path), class: "button subtle" %>
+        <% end %>
+      </div>
     <% end %>
   </div>
 
