@@ -14,7 +14,9 @@ module R3x
       def run_actor(actor_id, input: nil, **options)
         logger.debug { "Apify run_actor #{actor_id}" }
 
-        response = connection.post("/v2/acts/#{actor_id}/runs", input, options.compact)
+        response = connection.post("/v2/acts/#{actor_id}/runs", input) do |request|
+          request.params = options.compact
+        end
         response.body.fetch("data")
       end
 
