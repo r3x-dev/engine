@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+ENV["R3X_JOB_ROLE"] = "scheduler"
+
+load File.expand_path("jobs", __dir__)
