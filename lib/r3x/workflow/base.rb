@@ -70,6 +70,14 @@ module R3x
 
       attr_reader :ctx
 
+      def workflow_dedup_key(value = nil, candidates: nil)
+        R3x::Workflow::DedupKey.build(
+          workflow_key: self.class.workflow_key,
+          value: value,
+          candidates: candidates
+        )
+      end
+
       def workflow_log_tags(trigger_key)
         [
           ("r3x.trigger_key=#{trigger_key}" if trigger_key.present?)

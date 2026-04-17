@@ -3,6 +3,14 @@ require_relative "../../support/fake_change_detecting_trigger"
 
 module R3x
   class WorkflowTest < ActiveSupport::TestCase
+    class DedupHelperWorkflow < R3x::Workflow::Base
+      trigger :schedule, cron: "0 * * * *"
+
+      def run
+        workflow_dedup_key(candidates: [ nil, "post-123" ])
+      end
+    end
+
     test "workflow_key is derived from class name by convention" do
       klass = Class.new(R3x::Workflow::Base) do
         def self.name
@@ -21,6 +29,10 @@ module R3x
       end
 
       assert_equal "test", klass.workflow_key
+    end
+
+    test "base exposes workflow_dedup_key helper" do
+      assert_equal "wf:dedup_helper_workflow:post-123", DedupHelperWorkflow.new.run
     end
 
     test "trigger :schedule requires cron option" do
