@@ -28,8 +28,10 @@
 /tmp/storage/*
 !/tmp/storage/.keep
 
-# Ignore master key for decrypting credentials and more.
+# Secrets are env-only in this repo.
+# Keep any local Rails credentials artifacts out of git.
 /config/master.key
+/config/credentials*.yml.enc
 
 # Ignore vendor/bundle (local gem installs)
 /vendor/bundle
