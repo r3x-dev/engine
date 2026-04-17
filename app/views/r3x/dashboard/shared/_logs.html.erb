@@ -7,6 +7,13 @@
 
     <% if local_assigns[:refreshable] %>
       <div class="actions log-actions">
+        <span class="log-live-indicator" data-r3x-log-live-indicator data-state="idle" aria-live="polite">
+          <span class="log-live-dot" aria-hidden="true"></span>
+          <span class="log-live-label">Live</span>
+          <span class="log-live-ellipsis" aria-hidden="true">
+            <span>.</span><span>.</span><span>.</span>
+          </span>
+        </span>
         <div class="log-refresh-control">
           <select class="log-refresh-select" data-r3x-log-refresh-select aria-label="Auto-refresh">
             <option value="off">Off</option>
@@ -16,6 +23,9 @@
             <option value="5m">5m</option>
           </select>
         </div>
+        <span class="meta log-last-updated" data-r3x-log-last-updated>
+          Last updated <%= logs[:entries].last&.dig(:time).present? ? dashboard_log_time(logs[:entries].last[:time]) : "--:--:--" %>
+        </span>
         <span class="meta log-refresh-state" data-r3x-log-refresh-status>Every 30s while running</span>
       </div>
     <% end %>
@@ -26,12 +36,13 @@
   <% elsif logs[:error].present? %>
     <div class="empty">Log query failed: <%= logs[:error] %></div>
   <% elsif logs[:entries].empty? %>
-    <div class="empty"><%= local_assigns.fetch(:empty_message) %></div>
+    <div class="empty"><%= dashboard_log_state_empty_message(refreshable: local_assigns[:refreshable], empty_message: local_assigns.fetch(:empty_message)) %></div>
   <% else %>
     <div class="log-list">
       <% logs[:entries].each do |entry| %>
-        <div class="log-entry">
+        <div class="log-entry log-entry-<%= entry[:severity] %>">
           <span class="log-time"><%= dashboard_log_time(entry[:time]) %></span>
+          <span class="pill <%= entry[:severity] %> log-severity"><%= entry[:severity] == "danger" ? "Error" : entry[:severity] == "warn" ? "Warn" : entry[:severity] == "ok" ? "OK" : "Info" %></span>
           <span class="log-message"><%= entry[:message] %></span>
         </div>
       <% end %>

@@ -102,9 +102,20 @@ module R3x
             container_name: entry["kubernetes.container_name"],
             message: message,
             pod_name: entry["kubernetes.pod_name"],
+            severity: infer_severity(message, tags: tags),
             tags: tags,
             time: parse_time(entry["_time"])
           }
+        end
+
+        def infer_severity(message, tags: [])
+          text = [ *Array(tags), message.to_s ].join(" ").downcase
+
+          return "danger" if text.match?(/\b(error|failed|failure|exception|fatal|panic|alert)\b/)
+          return "warn" if text.match?(/\b(warn|warning|retry|degraded|timeout)\b/)
+          return "ok" if text.match?(/\b(success|completed|ok|healthy)\b/)
+
+          "muted"
         end
 
         def extract_message_and_tags(message, context: {})

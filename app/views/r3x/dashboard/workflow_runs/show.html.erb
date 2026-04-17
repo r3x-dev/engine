@@ -73,17 +73,15 @@
   <% end %>
 </section>
 
-<section class="panel stack" style="margin-top: 18px;">
-  <div>
-    <h3 class="section-title">Failure Details</h3>
-  </div>
+<% if @run[:error].present? %>
+  <section class="panel stack" style="margin-top: 18px;">
+    <div>
+      <h3 class="section-title">Failure Details</h3>
+    </div>
 
-  <% if @run[:error].present? %>
     <pre class="error-block"><%= dashboard_error_body(@run[:error]) %></pre>
-  <% else %>
-    <div class="empty">No error details were recorded for this run.</div>
-  <% end %>
-</section>
+  </section>
+<% end %>
 
 <% if logs_configured? %>
   <%= render "r3x/dashboard/workflow_runs/logs_panel", run: @run, logs: @logs %>
