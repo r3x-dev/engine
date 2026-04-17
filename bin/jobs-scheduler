@@ -1,5 +1,10 @@
 #!/usr/bin/env ruby
 
-ENV["R3X_JOB_ROLE"] = "scheduler"
+ENV["SOLID_QUEUE_CONFIG"] ||= "config/queue.scheduler.yml"
 
-load File.expand_path("jobs", __dir__)
+require_relative "../config/environment"
+require "solid_queue/cli"
+
+R3x::Workflow::Boot.load_and_schedule!
+
+SolidQueue::Cli.start(ARGV)

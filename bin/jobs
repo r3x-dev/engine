@@ -3,25 +3,9 @@
 require_relative "../config/environment"
 require "solid_queue/cli"
 
-solid_queue_in_puma = ActiveModel::Type::Boolean.new.cast(ENV["SOLID_QUEUE_IN_PUMA"])
-job_role = ENV.fetch("R3X_JOB_ROLE", "all")
-
-ENV["SOLID_QUEUE_CONFIG"] ||= case job_role
-when "worker"
-  "config/queue.worker.yml"
-when "scheduler"
-  "config/queue.scheduler.yml"
-when "all"
-  nil
-else
-  raise ArgumentError, "Unsupported R3X_JOB_ROLE: #{job_role}"
-end
-
-ENV["SOLID_QUEUE_SKIP_RECURRING"] = "true" if job_role == "worker" && ENV["SOLID_QUEUE_SKIP_RECURRING"].blank?
-
-if solid_queue_in_puma || job_role == "worker"
+if ActiveModel::Type::Boolean.new.cast(ENV["SOLID_QUEUE_IN_PUMA"])
   R3x::Workflow::Boot.load!
-elsif job_role == "all" || job_role == "scheduler"
+else
   R3x::Workflow::Boot.load_and_schedule!
 end
 
