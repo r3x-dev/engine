@@ -126,7 +126,10 @@ class DashboardTest < ActionDispatch::IntegrationTest
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom\nstack line 1\nstack line 2", created_at: 30.seconds.ago)
 
-    get "/workflow-runs/#{failed_job.id}", params: { logs: 1 }
+    stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
+      .to_return(status: 200, body: "")
+
+    get "/workflow-runs/#{failed_job.id}"
 
     assert_response :success
     assert_includes response.body, "Failure Details"
@@ -218,7 +221,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
         }.to_json + "\n"
       )
 
-    get "/workflow-runs/#{@job.id}", params: { logs: 1 }
+    get "/workflow-runs/#{@job.id}"
 
     assert_response :success
     assert_includes response.body, "Running workflow trigger_type=schedule"
@@ -232,7 +235,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "[#{WORKFLOW_JOB_CLASS_NAME}]"
   end
 
-  test "workflow run detail shows log placeholder before loading" do
+  test "workflow run detail renders logs immediately when configured" do
     ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
     ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
 
@@ -243,10 +246,10 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Run logs"
-    assert_includes response.body, "Load logs"
-    assert_includes response.body, "logs-placeholder"
+    assert_includes response.body, "No indexed logs were found for this run in its execution window."
     refute_includes response.body, "Hide logs"
-    refute_includes response.body, "No indexed logs were found for this run in its execution window."
+    refute_includes response.body, "Load logs"
+    assert_select "section.logs-placeholder-panel", count: 0
   end
 
   test "running workflow run logs auto-refresh while visible" do
@@ -271,12 +274,13 @@ class DashboardTest < ActionDispatch::IntegrationTest
         }.to_json + "\n"
       )
 
-    get "/workflow-runs/#{running_job.id}", params: { logs: 1 }
+    get "/workflow-runs/#{running_job.id}"
 
     assert_response :success
     assert_includes response.body, 'data-r3x-log-refresh="true"'
-    assert_includes response.body, "Auto-refresh: on"
-    assert_includes response.body, "Every 5s while running"
+    assert_includes response.body, "data-r3x-log-refresh-select"
+    assert_includes response.body, 'value="30s" selected="selected"'
+    assert_includes response.body, "Every 30s while running"
     assert_includes response.body, "/workflow-runs/#{running_job.id}/logs"
     assert_includes response.body, "Still working"
   end
@@ -288,11 +292,11 @@ class DashboardTest < ActionDispatch::IntegrationTest
     stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
       .to_return(status: 200, body: "")
 
-    get "/workflow-runs/#{@job.id}", params: { logs: 1 }
+    get "/workflow-runs/#{@job.id}"
 
     assert_response :success
     assert_includes response.body, 'data-r3x-log-refresh="false"'
-    assert_select "button[data-r3x-log-refresh-toggle]", count: 0
+    assert_select "select[data-r3x-log-refresh-select]", count: 0
     assert_select "[data-r3x-log-refresh-status]", count: 0
   end
 
