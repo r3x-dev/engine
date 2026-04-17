@@ -399,6 +399,10 @@ class WorkflowBootTest < ActiveSupport::TestCase
   private
 
   def run_command(command, env: {})
+    if env["RAILS_ENV"] == "production"
+      env = { "SECRET_KEY_BASE" => "workflow-boot-test-secret" }.merge(env.compact)
+    end
+
     env_string = env.map { |key, value| "#{key}=#{Shellwords.escape(value)}" }.join(" ")
     full_command = [ env_string, command ].reject(&:blank?).join(" ")
 
