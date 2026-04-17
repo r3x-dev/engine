@@ -41,7 +41,7 @@ bin/rails test
 ## Operational Notes
 
 - Workflow classes are enqueued directly as Active Job classes so workflows can use `ActiveJob::Continuable` and `step` on the real workflow job instance.
-- `bin/jobs` remains the generic Solid Queue entrypoint. For split-process deployments, prefer `bin/jobs-worker` and `bin/jobs-scheduler` so the pod role is encoded in the command rather than a separate env var. They still honor explicit `SOLID_QUEUE_CONFIG` overrides when needed.
+- `bin/jobs` remains the generic Solid Queue entrypoint for the default `config/queue.yml` behavior. For split-process deployments, use `bin/jobs-worker` and `bin/jobs-scheduler`; they encode the role in the command, default the matching queue config, and keep worker-only recurring suppression out of the generic path.
 - Production `Solid Queue` shutdown is intentionally longer-lived and can be tuned with `R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS` so Kubernetes rollouts can wait for long workflow runs to finish gracefully.
 - Tradeoff: queued workflow runs persist the concrete workflow class name in Solid Queue.
 - If a workflow class is renamed or removed before an older queued run executes, that older run may fail deserialization.

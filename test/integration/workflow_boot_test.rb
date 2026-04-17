@@ -216,13 +216,13 @@ class WorkflowBootTest < ActiveSupport::TestCase
     FileUtils.rm_f(schedule_marker_path) if schedule_marker_path
   end
 
-  test "jobs entrypoint only loads workflows for worker role" do
-    script_path = Rails.root.join("tmp/jobs_entrypoint_test_#{SecureRandom.hex(4)}.rb")
-    cli_marker_path = Rails.root.join("tmp/jobs_cli_#{SecureRandom.hex(4)}.txt")
-    load_marker_path = Rails.root.join("tmp/jobs_load_#{SecureRandom.hex(4)}.txt")
-    schedule_marker_path = Rails.root.join("tmp/jobs_schedule_#{SecureRandom.hex(4)}.txt")
-    config_marker_path = Rails.root.join("tmp/jobs_config_#{SecureRandom.hex(4)}.txt")
-    skip_recurring_marker_path = Rails.root.join("tmp/jobs_skip_recurring_#{SecureRandom.hex(4)}.txt")
+  test "jobs-worker entrypoint only loads workflows and sets worker defaults" do
+    script_path = Rails.root.join("tmp/jobs_worker_entrypoint_test_#{SecureRandom.hex(4)}.rb")
+    cli_marker_path = Rails.root.join("tmp/jobs_worker_cli_#{SecureRandom.hex(4)}.txt")
+    load_marker_path = Rails.root.join("tmp/jobs_worker_load_#{SecureRandom.hex(4)}.txt")
+    schedule_marker_path = Rails.root.join("tmp/jobs_worker_schedule_#{SecureRandom.hex(4)}.txt")
+    config_marker_path = Rails.root.join("tmp/jobs_worker_config_#{SecureRandom.hex(4)}.txt")
+    skip_recurring_marker_path = Rails.root.join("tmp/jobs_worker_skip_#{SecureRandom.hex(4)}.txt")
     FileUtils.mkdir_p(script_path.dirname)
     File.write(script_path, <<~RUBY)
       require_relative "../config/environment"
@@ -247,47 +247,6 @@ class WorkflowBootTest < ActiveSupport::TestCase
       class SolidQueue::Cli
         def self.start(*)
           File.write(#{cli_marker_path.to_s.inspect}, "1")
-          File.write(#{config_marker_path.to_s.inspect}, ENV["SOLID_QUEUE_CONFIG"].to_s)
-          File.write(#{skip_recurring_marker_path.to_s.inspect}, ENV["SOLID_QUEUE_SKIP_RECURRING"].to_s)
-        end
-      end
-
-      load "bin/jobs"
-    RUBY
-
-    command_output = run_command(
-      "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
-      env: { "RAILS_ENV" => "production", "R3X_JOB_ROLE" => "worker", "SOLID_QUEUE_IN_PUMA" => nil }
-    )
-
-    assert $?.success?, "jobs command failed: #{command_output}"
-    assert File.exist?(cli_marker_path), "expected jobs entrypoint to start cli: #{command_output}"
-    assert File.exist?(load_marker_path), "expected jobs entrypoint to call load!: #{command_output}"
-    refute File.exist?(schedule_marker_path), "expected jobs entrypoint not to call load_and_schedule!: #{command_output}"
-    assert_equal "config/queue.worker.yml", File.read(config_marker_path)
-    assert_equal "true", File.read(skip_recurring_marker_path)
-  ensure
-    FileUtils.rm_f(script_path) if script_path
-    FileUtils.rm_f(cli_marker_path) if cli_marker_path
-    FileUtils.rm_f(load_marker_path) if load_marker_path
-    FileUtils.rm_f(schedule_marker_path) if schedule_marker_path
-    FileUtils.rm_f(config_marker_path) if config_marker_path
-    FileUtils.rm_f(skip_recurring_marker_path) if skip_recurring_marker_path
-  end
-
-  test "jobs-worker entrypoint sets worker role defaults" do
-    script_path = Rails.root.join("tmp/jobs_worker_entrypoint_test_#{SecureRandom.hex(4)}.rb")
-    role_marker_path = Rails.root.join("tmp/jobs_worker_role_#{SecureRandom.hex(4)}.txt")
-    config_marker_path = Rails.root.join("tmp/jobs_worker_config_#{SecureRandom.hex(4)}.txt")
-    skip_recurring_marker_path = Rails.root.join("tmp/jobs_worker_skip_#{SecureRandom.hex(4)}.txt")
-    FileUtils.mkdir_p(script_path.dirname)
-    File.write(script_path, <<~RUBY)
-      require_relative "../config/environment"
-      require "solid_queue/cli"
-
-      class SolidQueue::Cli
-        def self.start(*)
-          File.write(#{role_marker_path.to_s.inspect}, ENV["R3X_JOB_ROLE"].to_s)
           File.write(#{config_marker_path.to_s.inspect}, ENV["SOLID_QUEUE_CONFIG"].to_s)
           File.write(#{skip_recurring_marker_path.to_s.inspect}, ENV["SOLID_QUEUE_SKIP_RECURRING"].to_s)
         end
@@ -298,26 +257,30 @@ class WorkflowBootTest < ActiveSupport::TestCase
 
     command_output = run_command(
       "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
-      env: { "RAILS_ENV" => "production", "R3X_JOB_ROLE" => nil, "SOLID_QUEUE_IN_PUMA" => nil }
+      env: { "RAILS_ENV" => "production", "SOLID_QUEUE_IN_PUMA" => nil }
     )
 
     assert $?.success?, "jobs-worker command failed: #{command_output}"
-    assert_equal "worker", File.read(role_marker_path)
+    assert File.exist?(cli_marker_path), "expected jobs-worker entrypoint to start cli: #{command_output}"
+    assert File.exist?(load_marker_path), "expected jobs-worker entrypoint to call load!: #{command_output}"
+    refute File.exist?(schedule_marker_path), "expected jobs-worker entrypoint not to call load_and_schedule!: #{command_output}"
     assert_equal "config/queue.worker.yml", File.read(config_marker_path)
     assert_equal "true", File.read(skip_recurring_marker_path)
   ensure
     FileUtils.rm_f(script_path) if script_path
-    FileUtils.rm_f(role_marker_path) if role_marker_path
+    FileUtils.rm_f(cli_marker_path) if cli_marker_path
+    FileUtils.rm_f(load_marker_path) if load_marker_path
+    FileUtils.rm_f(schedule_marker_path) if schedule_marker_path
     FileUtils.rm_f(config_marker_path) if config_marker_path
     FileUtils.rm_f(skip_recurring_marker_path) if skip_recurring_marker_path
   end
 
-  test "jobs entrypoint loads and schedules workflows for scheduler role" do
-    script_path = Rails.root.join("tmp/jobs_entrypoint_test_#{SecureRandom.hex(4)}.rb")
-    cli_marker_path = Rails.root.join("tmp/jobs_cli_#{SecureRandom.hex(4)}.txt")
-    load_marker_path = Rails.root.join("tmp/jobs_load_#{SecureRandom.hex(4)}.txt")
-    schedule_marker_path = Rails.root.join("tmp/jobs_schedule_#{SecureRandom.hex(4)}.txt")
-    config_marker_path = Rails.root.join("tmp/jobs_config_#{SecureRandom.hex(4)}.txt")
+  test "jobs-scheduler entrypoint schedules workflows and sets scheduler defaults" do
+    script_path = Rails.root.join("tmp/jobs_scheduler_entrypoint_test_#{SecureRandom.hex(4)}.rb")
+    cli_marker_path = Rails.root.join("tmp/jobs_scheduler_cli_#{SecureRandom.hex(4)}.txt")
+    load_marker_path = Rails.root.join("tmp/jobs_scheduler_load_#{SecureRandom.hex(4)}.txt")
+    schedule_marker_path = Rails.root.join("tmp/jobs_scheduler_schedule_#{SecureRandom.hex(4)}.txt")
+    config_marker_path = Rails.root.join("tmp/jobs_scheduler_config_#{SecureRandom.hex(4)}.txt")
     FileUtils.mkdir_p(script_path.dirname)
     File.write(script_path, <<~RUBY)
       require_relative "../config/environment"
@@ -346,18 +309,18 @@ class WorkflowBootTest < ActiveSupport::TestCase
         end
       end
 
-      load "bin/jobs"
+      load "bin/jobs-scheduler"
     RUBY
 
     command_output = run_command(
       "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
-      env: { "RAILS_ENV" => "production", "R3X_JOB_ROLE" => "scheduler", "SOLID_QUEUE_IN_PUMA" => nil }
+      env: { "RAILS_ENV" => "production", "SOLID_QUEUE_IN_PUMA" => nil }
     )
 
-    assert $?.success?, "jobs command failed: #{command_output}"
-    assert File.exist?(cli_marker_path), "expected jobs entrypoint to start cli: #{command_output}"
-    refute File.exist?(load_marker_path), "expected jobs entrypoint not to call load! directly: #{command_output}"
-    assert File.exist?(schedule_marker_path), "expected jobs entrypoint to call load_and_schedule!: #{command_output}"
+    assert $?.success?, "jobs-scheduler command failed: #{command_output}"
+    assert File.exist?(cli_marker_path), "expected jobs-scheduler entrypoint to start cli: #{command_output}"
+    refute File.exist?(load_marker_path), "expected jobs-scheduler entrypoint not to call load! directly: #{command_output}"
+    assert File.exist?(schedule_marker_path), "expected jobs-scheduler entrypoint to call load_and_schedule!: #{command_output}"
     assert_equal "config/queue.scheduler.yml", File.read(config_marker_path)
   ensure
     FileUtils.rm_f(script_path) if script_path
@@ -367,40 +330,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
     FileUtils.rm_f(config_marker_path) if config_marker_path
   end
 
-  test "jobs-scheduler entrypoint sets scheduler role defaults" do
-    script_path = Rails.root.join("tmp/jobs_scheduler_entrypoint_test_#{SecureRandom.hex(4)}.rb")
-    role_marker_path = Rails.root.join("tmp/jobs_scheduler_role_#{SecureRandom.hex(4)}.txt")
-    config_marker_path = Rails.root.join("tmp/jobs_scheduler_config_#{SecureRandom.hex(4)}.txt")
-    FileUtils.mkdir_p(script_path.dirname)
-    File.write(script_path, <<~RUBY)
-      require_relative "../config/environment"
-      require "solid_queue/cli"
-
-      class SolidQueue::Cli
-        def self.start(*)
-          File.write(#{role_marker_path.to_s.inspect}, ENV["R3X_JOB_ROLE"].to_s)
-          File.write(#{config_marker_path.to_s.inspect}, ENV["SOLID_QUEUE_CONFIG"].to_s)
-        end
-      end
-
-      load "bin/jobs-scheduler"
-    RUBY
-
-    command_output = run_command(
-      "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
-      env: { "RAILS_ENV" => "production", "R3X_JOB_ROLE" => nil, "SOLID_QUEUE_IN_PUMA" => nil }
-    )
-
-    assert $?.success?, "jobs-scheduler command failed: #{command_output}"
-    assert_equal "scheduler", File.read(role_marker_path)
-    assert_equal "config/queue.scheduler.yml", File.read(config_marker_path)
-  ensure
-    FileUtils.rm_f(script_path) if script_path
-    FileUtils.rm_f(role_marker_path) if role_marker_path
-    FileUtils.rm_f(config_marker_path) if config_marker_path
-  end
-
-  test "jobs entrypoint keeps explicit solid queue config override" do
+  test "jobs-worker entrypoint keeps explicit solid queue config override" do
     script_path = Rails.root.join("tmp/jobs_entrypoint_test_#{SecureRandom.hex(4)}.rb")
     config_marker_path = Rails.root.join("tmp/jobs_config_#{SecureRandom.hex(4)}.txt")
     FileUtils.mkdir_p(script_path.dirname)
@@ -414,14 +344,13 @@ class WorkflowBootTest < ActiveSupport::TestCase
         end
       end
 
-      load "bin/jobs"
+      load "bin/jobs-worker"
     RUBY
 
     command_output = run_command(
       "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
       env: {
         "RAILS_ENV" => "production",
-        "R3X_JOB_ROLE" => "worker",
         "SOLID_QUEUE_CONFIG" => "config/custom.yml",
         "SOLID_QUEUE_IN_PUMA" => nil
       }
@@ -434,7 +363,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
     FileUtils.rm_f(config_marker_path) if config_marker_path
   end
 
-  test "jobs entrypoint keeps explicit skip recurring override" do
+  test "jobs-worker entrypoint keeps explicit skip recurring override" do
     script_path = Rails.root.join("tmp/jobs_entrypoint_test_#{SecureRandom.hex(4)}.rb")
     skip_recurring_marker_path = Rails.root.join("tmp/jobs_skip_recurring_#{SecureRandom.hex(4)}.txt")
     FileUtils.mkdir_p(script_path.dirname)
@@ -448,14 +377,13 @@ class WorkflowBootTest < ActiveSupport::TestCase
         end
       end
 
-      load "bin/jobs"
+      load "bin/jobs-worker"
     RUBY
 
     command_output = run_command(
       "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
       env: {
         "RAILS_ENV" => "production",
-        "R3X_JOB_ROLE" => "worker",
         "SOLID_QUEUE_SKIP_RECURRING" => "false",
         "SOLID_QUEUE_IN_PUMA" => nil
       }
@@ -466,27 +394,6 @@ class WorkflowBootTest < ActiveSupport::TestCase
   ensure
     FileUtils.rm_f(script_path) if script_path
     FileUtils.rm_f(skip_recurring_marker_path) if skip_recurring_marker_path
-  end
-
-  test "jobs entrypoint rejects unsupported job roles" do
-    script_path = Rails.root.join("tmp/jobs_entrypoint_test_#{SecureRandom.hex(4)}.rb")
-    FileUtils.mkdir_p(script_path.dirname)
-    File.write(script_path, <<~RUBY)
-      require_relative "../config/environment"
-      require "solid_queue/cli"
-
-      load "bin/jobs"
-    RUBY
-
-    command_output = run_command(
-      "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
-      env: { "RAILS_ENV" => "production", "R3X_JOB_ROLE" => "bogus", "SOLID_QUEUE_IN_PUMA" => nil }
-    )
-
-    refute $?.success?, "expected jobs command to fail: #{command_output}"
-    assert_includes command_output, "Unsupported R3X_JOB_ROLE: bogus"
-  ensure
-    FileUtils.rm_f(script_path) if script_path
   end
 
   private
