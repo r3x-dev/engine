@@ -17,6 +17,8 @@ else
   raise ArgumentError, "Unsupported R3X_JOB_ROLE: #{job_role}"
 end
 
+ENV["SOLID_QUEUE_SKIP_RECURRING"] = "true" if job_role == "worker" && ENV["SOLID_QUEUE_SKIP_RECURRING"].blank?
+
 if solid_queue_in_puma || job_role == "worker"
   R3x::Workflow::Boot.load!
 elsif job_role == "all" || job_role == "scheduler"
