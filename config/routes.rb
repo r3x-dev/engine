@@ -8,6 +8,7 @@ Rails.application.routes.draw do
       post :run_trigger, on: :member
     end
     resources :workflow_runs, only: %i[ index show ], path: "workflow-runs" do
+      resource :logs, only: :show, controller: "workflow_run_logs"
       resource :rerun, only: :create, controller: "workflow_run_reruns"
     end
   end

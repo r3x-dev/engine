@@ -415,6 +415,22 @@
         white-space: pre;
       }
 
+      .log-actions {
+        justify-content: flex-end;
+      }
+
+      .log-refresh-toggle {
+        white-space: nowrap;
+      }
+
+      .log-refresh-state {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        margin: 0;
+        white-space: nowrap;
+      }
+
       .logs-placeholder {
         position: relative;
         min-height: 240px;
@@ -540,5 +556,110 @@
 
       <%= yield %>
     </div>
+
+    <script>
+      (() => {
+        const storageKey = "r3x.dashboard.runLogs.autoRefresh"
+        let timeoutId
+
+        const panel = () => document.getElementById("run-logs")
+
+        const enabled = () => {
+          try {
+            return localStorage.getItem(storageKey) !== "off"
+          } catch (_) {
+            return true
+          }
+        }
+
+        const setEnabled = (value) => {
+          try {
+            localStorage.setItem(storageKey, value ? "on" : "off")
+          } catch (_) {
+          }
+        }
+
+        const refreshable = (element) => element?.dataset.r3xLogRefresh === "true" && element.dataset.r3xRunStatus === "running"
+
+        const setStatus = (message) => {
+          const status = panel()?.querySelector("[data-r3x-log-refresh-status]")
+          if (status) status.textContent = message
+        }
+
+        const syncToggle = () => {
+          const button = panel()?.querySelector("[data-r3x-log-refresh-toggle]")
+          if (!button) return
+
+          const isEnabled = enabled()
+          button.textContent = `Auto-refresh: ${isEnabled ? "on" : "off"}`
+          button.setAttribute("aria-pressed", isEnabled ? "true" : "false")
+          setStatus(isEnabled ? "Every 5s while running" : "Auto-refresh off")
+        }
+
+        const stop = () => {
+          clearTimeout(timeoutId)
+          timeoutId = undefined
+        }
+
+        const schedule = () => {
+          stop()
+
+          if (!enabled() || !refreshable(panel())) return
+
+          const interval = Number(panel().dataset.r3xLogRefreshIntervalValue) || 5000
+          timeoutId = setTimeout(refresh, interval)
+        }
+
+        const refresh = async () => {
+          const currentPanel = panel()
+          if (!enabled() || !refreshable(currentPanel)) return
+
+          if (document.hidden) {
+            schedule()
+            return
+          }
+
+          setStatus("Refreshing...")
+
+          try {
+            const response = await fetch(currentPanel.dataset.r3xLogRefreshUrl, {
+              headers: {
+                "Accept": "text/html",
+                "X-Requested-With": "XMLHttpRequest"
+              }
+            })
+
+            if (!response.ok) throw new Error(`Refresh failed: ${response.status}`)
+
+            currentPanel.outerHTML = await response.text()
+            syncToggle()
+
+            if (refreshable(panel())) {
+              schedule()
+            }
+          } catch (_) {
+            setStatus("Refresh failed; retrying")
+            schedule()
+          }
+        }
+
+        document.addEventListener("click", (event) => {
+          const button = event.target.closest("[data-r3x-log-refresh-toggle]")
+          if (!button) return
+
+          setEnabled(!enabled())
+          syncToggle()
+
+          if (enabled()) {
+            refresh()
+          } else {
+            stop()
+          }
+        })
+
+        syncToggle()
+        schedule()
+      })()
+    </script>
   </body>
 </html>

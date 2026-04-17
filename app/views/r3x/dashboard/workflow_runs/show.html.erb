@@ -86,15 +86,7 @@
 </section>
 
 <% if logs_requested? %>
-  <div id="run-logs">
-    <%= render "r3x/dashboard/shared/logs",
-               logs: @logs,
-               title: "Run logs",
-               description: "Indexed application logs correlated with this persisted workflow run.",
-               empty_message: "No indexed logs were found for this run in its execution window.",
-               action_label: dashboard_icon_label(:logs, "Hide logs"),
-               action_path: workflow_run_path(@run[:job_id]) %>
-  </div>
+  <%= render "r3x/dashboard/workflow_runs/logs_panel", run: @run, logs: @logs %>
 <% elsif logs_configured? %>
   <section class="panel stack logs-placeholder-panel" style="margin-top: 18px;" id="run-logs">
     <div>
