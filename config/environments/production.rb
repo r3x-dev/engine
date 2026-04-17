@@ -1,5 +1,11 @@
 require "active_support/core_ext/integer/time"
 
+shutdown_timeout_seconds = Integer(ENV.fetch("R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS", 900))
+
+unless shutdown_timeout_seconds.positive?
+  raise ArgumentError, "R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS must be positive"
+end
+
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
@@ -64,6 +70,7 @@ Rails.application.configure do
 
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.clear_finished_jobs_after = 2.weeks
+  config.solid_queue.shutdown_timeout = shutdown_timeout_seconds.seconds
 
   # Intentionally uses ActiveModel::Type::Boolean instead of R3x::Env.fetch_boolean.
   # A typo in this env var should fail-open (auth stays enabled) rather than crash
