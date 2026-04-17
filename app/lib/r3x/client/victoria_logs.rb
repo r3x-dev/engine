@@ -41,7 +41,7 @@ module R3x
         def format_time(value)
           return if value.blank?
 
-          value.respond_to?(:iso8601) ? value.iso8601 : value.to_s
+          value.respond_to?(:iso8601) ? value.iso8601(6) : value.to_s
         end
 
         def parse_json_lines(body)
