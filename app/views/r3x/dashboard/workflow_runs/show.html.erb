@@ -53,10 +53,16 @@
       <strong><%= dashboard_absolute_timestamp(@run[:enqueued_at]) %></strong>
     </div>
 
-    <% if @run[:finished_at].present? %>
+    <% terminal_time = if @run[:finished_at].present?
+                         @run[:finished_at]
+                       elsif @run[:status] == "failed"
+                         @run[:recorded_at]
+                       end %>
+
+    <% if terminal_time.present? %>
       <div class="detail-item">
         <span class="label">Finished</span>
-        <strong><%= dashboard_absolute_timestamp(@run[:finished_at]) %></strong>
+        <strong><%= dashboard_absolute_timestamp(terminal_time) %></strong>
       </div>
     <% end %>
 

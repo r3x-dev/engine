@@ -1,3 +1,6 @@
+<% show_workflow = local_assigns.fetch(:show_workflow, true) %>
+<% lead_with_trigger = local_assigns.fetch(:lead_with_trigger, !show_workflow) %>
+
 <div class="table-wrap">
   <% if runs.empty? %>
     <div class="empty"><%= local_assigns.fetch(:empty_message, "No workflow runs match the current filters.") %></div>
@@ -5,11 +8,18 @@
     <table>
       <thead>
         <tr>
-          <th>Workflow</th>
+          <% if show_workflow %>
+            <th>Workflow</th>
+          <% end %>
+          <% if lead_with_trigger %>
+            <th>Trigger</th>
+          <% end %>
           <th>Status</th>
           <th>Observed</th>
-          <th>Trigger</th>
-          <th>Queue</th>
+          <% unless lead_with_trigger %>
+            <th>Trigger</th>
+          <% end %>
+          <th>Run ID</th>
           <th>Details</th>
         </tr>
       </thead>
@@ -17,10 +27,16 @@
       <tbody>
         <% runs.each do |run| %>
           <tr>
-            <td>
-              <%= dashboard_workflow_link(run) %>
-              <div class="meta"><code><%= run[:class_name] %></code></div>
-            </td>
+            <% if show_workflow %>
+              <td>
+                <%= dashboard_workflow_link(run) %>
+                <div class="meta"><code><%= run[:class_name] %></code></div>
+              </td>
+            <% end %>
+
+            <% if lead_with_trigger %>
+              <td><code><%= run[:trigger_key] || "manual/default" %></code></td>
+            <% end %>
 
             <td>
               <span class="pill <%= dashboard_tone_for(run[:status]) %>">
@@ -30,8 +46,10 @@
 
             <td><%= dashboard_timestamp(run[:recorded_at]) %></td>
 
-            <td><code><%= run[:trigger_key] || "manual/default" %></code></td>
-            <td><code><%= run[:queue_name] %></code></td>
+            <% unless lead_with_trigger %>
+              <td><code><%= run[:trigger_key] || "manual/default" %></code></td>
+            <% end %>
+            <td><code><%= run[:job_id] %></code></td>
 
             <td>
               <% if run[:error].present? %>
@@ -44,8 +62,6 @@
               <% if logs_configured? %>
                 <div class="meta"><%= link_to "View logs", workflow_run_path(run[:job_id], anchor: "run-logs") %></div>
               <% end %>
-
-              <div class="meta">Job <code><%= run[:job_id] %></code></div>
             </td>
           </tr>
         <% end %>
