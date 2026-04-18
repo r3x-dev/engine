@@ -183,6 +183,7 @@ These notes apply to workflow code in general.
 
 - Network calls and other flaky external interactions should be wrapped with the `retryable` gem
   (already in the Gemfile).
+- Prefer `Retryable.retryable(...)` over manual `begin/rescue/retry` loops in workflow code.
 - Use it for HTTP requests, API calls, file downloads, or any operation where transient failures
   are expected and safe to retry.
 - Basic usage:
@@ -219,6 +220,24 @@ These notes apply to workflow code in general.
 
   Retryable.retryable(tries: 3, on: Faraday::TimeoutError, log_method: log_method) do
     http.get("/endpoint")
+  end
+  ```
+
+- For fixed backoff windows (for example 1 minute and then 3 minutes), use a `sleep` lambda and log
+  the wait:
+
+  ```ruby
+  delays = [1.minute, 3.minutes]
+  tries = delays.size + 1
+
+  sleep_strategy = lambda do |retries|
+    delay = delays.fetch(retries, delays.last)
+    logger.info("Retrying in #{delay.inspect} (next attempt #{retries + 2}/#{tries})")
+    delay
+  end
+
+  Retryable.retryable(tries: tries, matching: /high demand/i, sleep: sleep_strategy) do
+    call_llm
   end
   ```
 
