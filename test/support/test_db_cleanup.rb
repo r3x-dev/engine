@@ -8,9 +8,11 @@ module TestDbCleanup
       SolidQueue::BlockedExecution.delete_all
       SolidQueue::ClaimedExecution.delete_all
       SolidQueue::FailedExecution.delete_all
+      SolidQueue::RecurringExecution.delete_all
       SolidQueue::ReadyExecution.delete_all
       SolidQueue::ScheduledExecution.delete_all
       SolidQueue::Job.delete_all
+      SolidQueue::Process.delete_all
       SolidQueue::RecurringTask.delete_all
       R3x::TriggerState.delete_all
     rescue ActiveRecord::StatementTimeout => error
