@@ -173,6 +173,10 @@
         padding: 16px;
       }
 
+      .panel-spaced {
+        margin-top: 18px;
+      }
+
       .page-header {
         display: flex;
         justify-content: space-between;
@@ -206,6 +210,10 @@
         border: 1px solid var(--line);
       }
 
+      .stat strong {
+        display: block;
+      }
+
       .stat .label {
         display: block;
         color: var(--muted);
@@ -227,6 +235,65 @@
       .stack {
         display: grid;
         gap: 12px;
+      }
+
+      .meta-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+
+      .meta-card {
+        padding: 14px;
+        background: var(--panel-subtle);
+        border: 1px solid var(--line);
+      }
+
+      .meta-card-title {
+        margin: 0 0 12px;
+        font-size: 0.95rem;
+        letter-spacing: -0.01em;
+      }
+
+      .meta-list {
+        margin: 0;
+        display: grid;
+        gap: 10px;
+      }
+
+      .meta-list div {
+        display: grid;
+        gap: 4px;
+      }
+
+      .meta-list dt {
+        color: var(--muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .meta-list dd {
+        margin: 0;
+      }
+
+      .meta-list.compact {
+        gap: 12px;
+      }
+
+      .metadata-details {
+        padding-top: 4px;
+        border-top: 1px solid var(--line);
+      }
+
+      .metadata-details summary {
+        cursor: pointer;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      .metadata-details[open] summary {
+        margin-bottom: 12px;
       }
 
       .table-wrap {
