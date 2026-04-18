@@ -1,11 +1,22 @@
 #!/bin/bash -e
 
-# If running the rails server or jobs entrypoints then create or migrate existing database
+runtime_command=false
+
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
-  ./bin/rails db:prepare
+  runtime_command=true
 fi
 
 if [[ " $* " == *" ./bin/jobs "* ]] || [[ " $* " == *" ./bin/jobs-worker "* ]] || [[ " $* " == *" ./bin/jobs-scheduler "* ]]; then
+  runtime_command=true
+fi
+
+if [ "${RAILS_ENV:-production}" == "production" ] && [ "$runtime_command" == "true" ] && [ -z "${SECRET_KEY_BASE:-}" ]; then
+  echo "Missing SECRET_KEY_BASE for production runtime" >&2
+  exit 1
+fi
+
+# If running the rails server or jobs entrypoints then create or migrate existing database
+if [ "$runtime_command" == "true" ]; then
   ./bin/rails db:prepare
 fi
 
