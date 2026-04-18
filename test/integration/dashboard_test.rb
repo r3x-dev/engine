@@ -137,6 +137,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "stack line 1"
     assert_includes response.body, "Back to workflow"
     assert_includes response.body, 'class="panel stack panel-spaced"'
+    assert_match(/<span class="label">Finished<\/span>\s*<strong><time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
   end
 
   test "workflow run detail hides failure details when run succeeded" do
@@ -156,6 +157,20 @@ class DashboardTest < ActionDispatch::IntegrationTest
     refute_match(/<span class="label">Enqueued<\/span>\s*<strong><time[^>]*>about /, response.body)
     assert_match(/<span class="label">Finished<\/span>\s*<strong><time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
     refute_includes response.body, "Recorded"
+  end
+
+  test "workflow run detail hides finished timestamp for non-terminal runs" do
+    queued_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
+      created_at: 30.seconds.ago,
+      updated_at: 30.seconds.ago
+    )
+
+    get "/workflow-runs/#{queued_job.id}"
+
+    assert_response :success
+    refute_match(/<span class="label">Finished<\/span>/, response.body)
   end
 
   test "workflow run detail shows rerun action for terminal runs" do
@@ -418,9 +433,18 @@ class DashboardTest < ActionDispatch::IntegrationTest
     get "/workflows/test_workflow"
 
     assert_response :success
-    assert_match(/<th>Trigger<\/th>.*<th>Status<\/th>.*<th>Observed<\/th>.*<th>Run ID<\/th>.*<th>Details<\/th>/m, response.body)
+    assert_equal [ "Trigger", "Status", "Observed", "Run ID", "Details" ], css_select("table").last.css("thead th").map(&:text)
     refute_includes response.body, "<th>Workflow</th>"
     refute_includes response.body, "<th>Queue</th>"
+  end
+
+  test "recent runs table uses run id column instead of queue and inline job label" do
+    get "/workflow-runs"
+
+    assert_response :success
+    assert_equal [ "Workflow", "Status", "Observed", "Trigger", "Run ID", "Details" ], css_select("table").last.css("thead th").map(&:text)
+    refute_includes response.body, "<th>Queue</th>"
+    refute_includes response.body, "Job <code>"
   end
 
   test "ops jobs route stays available" do
