@@ -4,6 +4,7 @@ module R3x
       RUN_LOG_LIMIT = 150
       TAG_PATTERN = /\A(?:\[(?<tag>[^\]]+)\]\s*)+/
       HIDDEN_TAG_PREFIXES = %w[r3x.].freeze
+      LOG_LEVELS = %w[debug info warn error fatal unknown].freeze
 
       class << self
         def configured?(provider_name: current_provider_name)
@@ -96,35 +97,58 @@ module R3x
         end
 
         def normalize_entry(entry, context: {})
-          message, tags = extract_message_and_tags(entry["_msg"], context: context)
+          payload = parse_message_payload(entry["_msg"], context: context)
 
           {
             container_name: entry["kubernetes.container_name"],
-            message: message,
+            level: payload.fetch(:level),
+            message: payload.fetch(:message),
             pod_name: entry["kubernetes.pod_name"],
-            severity: infer_severity(message, tags: tags),
-            tags: tags,
+            tags: payload.fetch(:tags),
             time: parse_time(entry["_time"])
           }
         end
 
-        def infer_severity(message, tags: [])
-          text = [ *Array(tags), message.to_s ].join(" ").downcase
+        def parse_message_payload(raw_message, context: {})
+          parsed = MultiJson.load(raw_message.to_s)
 
-          return "danger" if text.match?(/\b(error|failed|failure|exception|fatal|panic|alert)\b/)
-          return "warn" if text.match?(/\b(warn|warning|retry|degraded|timeout)\b/)
-          return "ok" if text.match?(/\b(success|completed|ok|healthy)\b/)
+          unless parsed.is_a?(Hash)
+            raise MultiJson::ParseError, "Expected log payload to decode to a hash"
+          end
 
-          "muted"
+          message, tags = extract_message_and_tags(parsed["message"], tags: parsed["tags"], context: context)
+
+          {
+            level: normalize_level(parsed["level"]),
+            message: message,
+            tags: tags
+          }
+        rescue MultiJson::ParseError
+          message, tags = extract_message_and_tags(raw_message, context: context)
+
+          {
+            level: "unknown",
+            message: message,
+            tags: tags
+          }
         end
 
-        def extract_message_and_tags(message, context: {})
+        def normalize_level(value)
+          level = value.to_s.downcase
+          level = "unknown" if level == "any"
+          return level if LOG_LEVELS.include?(level)
+
+          "unknown"
+        end
+
+        def extract_message_and_tags(message, tags: nil, context: {})
+          visible_tags = Array(tags).map(&:to_s).reject { |tag| hidden_tag?(tag, context: context) }
           message = message.to_s
           match = message.match(TAG_PATTERN)
-          return [ message, [] ] unless match
+          return [ message, visible_tags ] unless match
 
           raw_tags = match[0].scan(/\[([^\]]+)\]/).flatten
-          visible_tags = raw_tags.reject { |tag| hidden_tag?(tag, context: context) }
+          visible_tags = (visible_tags + raw_tags.reject { |tag| hidden_tag?(tag, context: context) }).uniq
           stripped_message = message.delete_prefix(match[0]).strip
 
           [ stripped_message.presence || message, visible_tags ]

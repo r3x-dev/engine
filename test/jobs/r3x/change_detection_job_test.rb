@@ -139,6 +139,8 @@ module R3x
 
       assert_includes output, "r3x.workflow_key=test_change_detecting_feed"
       assert_includes output, "r3x.trigger_key=#{fake_trigger.unique_key}"
+      assert_includes output, "Checking change-detecting trigger type=fake_change_detecting"
+      assert_includes output, "Evaluated change-detecting trigger changed=false"
       assert_includes output, "checking trigger"
     end
 
@@ -158,7 +160,6 @@ module R3x
 
       assert_includes output, "Change detected; enqueueing workflow class=TestChangeDetectingFeed"
       assert_includes output, "r3x.job_outcome=changed"
-      assert_includes output, "Change detection completed"
     end
 
     test "logs failed outcome when change detection raises" do

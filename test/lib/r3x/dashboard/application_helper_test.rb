@@ -37,6 +37,13 @@ module R3x
         assert_equal "Waiting for first log line...", dashboard_log_state_empty_message(refreshable: true, empty_message: "No indexed logs were found.")
         assert_equal "No indexed logs were found.", dashboard_log_state_empty_message(refreshable: false, empty_message: "No indexed logs were found.")
       end
+
+      test "dashboard log level helpers map labels and tones" do
+        assert_equal "WARN", dashboard_log_level_label("warn")
+        assert_equal "warn", dashboard_log_level_tone("warn")
+        assert_equal "danger", dashboard_log_level_tone("fatal")
+        assert_equal "muted", dashboard_log_level_tone("unknown")
+      end
     end
   end
 end

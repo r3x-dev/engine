@@ -545,7 +545,7 @@
         white-space: pre;
       }
 
-      .log-severity {
+      .log-level {
         min-width: 52px;
         justify-content: center;
         padding: 2px 8px;
@@ -553,7 +553,13 @@
         line-height: 1.4;
       }
 
-      .log-entry-danger .log-message {
+      .log-entry-debug .log-message,
+      .log-entry-unknown .log-message {
+        color: var(--muted);
+      }
+
+      .log-entry-error .log-message,
+      .log-entry-fatal .log-message {
         color: var(--danger-text);
       }
 
