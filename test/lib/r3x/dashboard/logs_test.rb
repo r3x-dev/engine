@@ -71,7 +71,10 @@ module R3x
         client = FakeLogsClient.new(entries: [
           {
             "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => "[r3x.run_active_job_id=aj-123] [r3x.workflow_key=test_workflow] [r3x.trigger_key=schedule:123] [Workflows::TestWorkflow] Running workflow trigger_type=schedule",
+            "_msg" => MultiJson.dump(
+              "level" => "info",
+              "message" => "[r3x.run_active_job_id=aj-123] [r3x.workflow_key=test_workflow] [r3x.trigger_key=schedule:123] [Workflows::TestWorkflow] Running workflow trigger_type=schedule"
+            ),
             "kubernetes.container_name" => "app",
             "kubernetes.pod_name" => "r3x-jobs-123"
           }
@@ -89,15 +92,50 @@ module R3x
         result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
         entry = result[:entries].first
 
-        assert_equal(
+        assert_equal "Running workflow trigger_type=schedule", entry[:message]
+        assert_equal "info", entry[:level]
+        assert_equal [], entry[:tags]
+      end
+
+      test "run logs read explicit level from structured payload" do
+        client = FakeLogsClient.new(entries: [
+          { "_time" => "2026-04-15T12:00:01Z", "_msg" => MultiJson.dump("level" => "error", "message" => "Camera alert: driveway offline") },
+          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJson.dump("level" => "warn", "message" => "Retry scheduled after timeout") },
+          { "_time" => "2026-04-15T12:00:03Z", "_msg" => MultiJson.dump("level" => "info", "message" => "Workflow run completed") },
+          { "_time" => "2026-04-15T12:00:04Z", "_msg" => MultiJson.dump("level" => "debug", "message" => "Still working") }
+        ])
+
+        run = {
+          active_job_id: "aj-123",
+          enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+        }
+
+        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+
+        assert_equal %w[error warn info debug], result[:entries].map { |entry| entry[:level] }
+      end
+
+      test "run logs mark legacy plain text lines as unknown level" do
+        client = FakeLogsClient.new(entries: [
           {
-            container_name: "app",
-            message: "Running workflow trigger_type=schedule",
-            pod_name: "r3x-jobs-123",
-            time: Time.zone.parse("2026-04-15T12:00:01Z")
-          },
-          entry
-        )
+            "_time" => "2026-04-15T12:00:01Z",
+            "_msg" => "[r3x.run_active_job_id=aj-123] [Workflows::TestWorkflow] Still working"
+          }
+        ])
+
+        run = {
+          active_job_id: "aj-123",
+          class_name: "Workflows::TestWorkflow",
+          enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+        }
+
+        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        entry = result[:entries].first
+
+        assert_equal "unknown", entry[:level]
+        assert_equal "Still working", entry[:message]
       end
 
       test "returns provider error when provider is unsupported" do

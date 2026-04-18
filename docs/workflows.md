@@ -137,6 +137,11 @@ These notes apply to workflow code in general.
   for indexed log correlation in the dashboard. Orchestration jobs also tag lines with `r3x.workflow_key`
   where that broader workflow-level context is useful. Prefer logging through the existing Rails logger so
   those tags stay attached to emitted lines.
+- `R3X_LOG_FORMAT` controls the emitted app log format: use `json`, `text`, or `auto`.
+- `auto` is the default. It emits JSON when `R3X_LOGS_PROVIDER=victorialogs`, and otherwise keeps a flat
+  text format for local readability.
+- Dashboard run logs now read the explicit `level` from structured log payloads. They do not infer levels
+  from free-form message text.
 
 ## LLM Output
 

@@ -168,7 +168,7 @@ module R3x
       Workflow::Registry.reset!
     end
 
-    test "logs workflow dispatch outcome" do
+    test "logs workflow dispatch failures" do
       workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
           "TestDispatchLogs"
@@ -177,7 +177,7 @@ module R3x
         trigger :manual
 
         def run
-          { "status" => "ok" }
+          raise ArgumentError, "boom"
         end
       end
 
@@ -185,12 +185,14 @@ module R3x
       manual_trigger = workflow_class.triggers.first
 
       output = capture_logged_output do
-        RunWorkflowJob.perform_now("test_dispatch_logs", trigger_key: manual_trigger.unique_key)
+        assert_raises(ArgumentError) do
+          RunWorkflowJob.perform_now("test_dispatch_logs", trigger_key: manual_trigger.unique_key)
+        end
       end
 
       assert_includes output, "Dispatching workflow class=TestDispatchLogs"
-      assert_includes output, "r3x.job_outcome=success"
-      assert_includes output, "Workflow dispatch completed"
+      assert_includes output, "r3x.job_outcome=failed"
+      assert_includes output, "Workflow dispatch failed"
     ensure
       Workflow::Registry.reset!
     end

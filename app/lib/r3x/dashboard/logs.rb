@@ -2,7 +2,9 @@ module R3x
   module Dashboard
     class Logs
       RUN_LOG_LIMIT = 150
-      TAG_PATTERN = /\A(?:\[[^\]]+\]\s*)+/
+      TAG_PATTERN = /\A(?:\[(?<tag>[^\]]+)\]\s*)+/
+      HIDDEN_TAG_PREFIXES = %w[r3x.].freeze
+      LOG_LEVELS = %w[debug info warn error fatal unknown].freeze
 
       class << self
         def configured?(provider_name: current_provider_name)
@@ -41,7 +43,8 @@ module R3x
           build_query(%(_msg:"r3x.run_active_job_id=#{active_job_id}")),
           start_at: run[:enqueued_at] || 1.hour.ago,
           end_at: run[:finished_at] || Time.current,
-          limit: RUN_LOG_LIMIT
+          limit: RUN_LOG_LIMIT,
+          context: { class_name: run[:class_name] }
         )
       end
 
@@ -68,7 +71,7 @@ module R3x
         }
       end
 
-      def query_logs(query, start_at:, end_at:, limit:)
+      def query_logs(query, start_at:, end_at:, limit:, context: {})
         {
           configured: true,
           entries: logs_client.query(
@@ -76,7 +79,7 @@ module R3x
             start_at: start_at,
             end_at: end_at,
             limit: limit
-          ).map { |entry| normalize_entry(entry) }.sort_by { |entry| entry[:time] || Time.at(0) },
+          ).map { |entry| normalize_entry(entry, context: context) }.sort_by { |entry| entry[:time] || Time.at(0) },
           error: nil,
           provider: provider_name
         }
@@ -95,25 +98,69 @@ module R3x
         end
       end
 
-      def normalize_entry(entry)
-        message = extract_message(entry["_msg"])
+      def normalize_entry(entry, context: {})
+        payload = parse_message_payload(entry["_msg"], context: context)
 
         {
           container_name: entry["kubernetes.container_name"],
-          message: message,
+          level: payload.fetch(:level),
+          message: payload.fetch(:message),
           pod_name: entry["kubernetes.pod_name"],
+          tags: payload.fetch(:tags),
           time: parse_time(entry["_time"])
         }
       end
 
-      def extract_message(message)
+      def parse_message_payload(raw_message, context: {})
+        parsed = MultiJson.load(raw_message.to_s)
+
+        unless parsed.is_a?(Hash)
+          raise MultiJson::ParseError, "Expected log payload to decode to a hash"
+        end
+
+        message, tags = extract_message_and_tags(parsed["message"], tags: parsed["tags"], context: context)
+
+        {
+          level: normalize_level(parsed["level"]),
+          message: message,
+          tags: tags
+        }
+      rescue MultiJson::ParseError
+        message, tags = extract_message_and_tags(raw_message, context: context)
+
+        {
+          level: "unknown",
+          message: message,
+          tags: tags
+        }
+      end
+
+      def normalize_level(value)
+        level = value.to_s.downcase
+        level = "unknown" if level == "any"
+        return level if LOG_LEVELS.include?(level)
+
+        "unknown"
+      end
+
+      def extract_message_and_tags(message, tags: nil, context: {})
+        visible_tags = Array(tags).map(&:to_s).reject { |tag| hidden_tag?(tag, context: context) }
         message = message.to_s
         match = message.match(TAG_PATTERN)
-        return message unless match
+        return [ message, visible_tags ] unless match
 
+        raw_tags = match[0].scan(/\[([^\]]+)\]/).flatten
+        visible_tags = (visible_tags + raw_tags.reject { |tag| hidden_tag?(tag, context: context) }).uniq
         stripped_message = message.delete_prefix(match[0]).strip
 
-        stripped_message.presence || message
+        [ stripped_message.presence || message, visible_tags ]
+      end
+
+      def hidden_tag?(tag, context: {})
+        return true if HIDDEN_TAG_PREFIXES.any? { |prefix| tag.start_with?(prefix) }
+        return true if context[:class_name].present? && tag == context[:class_name]
+
+        false
       end
 
       def parse_time(value)
