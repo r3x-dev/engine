@@ -136,7 +136,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Run logs"
     assert_includes response.body, "stack line 1"
     assert_includes response.body, "Back to workflow"
-    assert_includes response.body, '<section class="panel stack" style="margin-top: 18px;">'
+    assert_includes response.body, 'class="panel stack panel-spaced"'
   end
 
   test "workflow run detail hides failure details when run succeeded" do
@@ -151,8 +151,9 @@ class DashboardTest < ActionDispatch::IntegrationTest
     get "/workflow-runs/#{@job.id}"
 
     assert_response :success
-    assert_match(/Enqueued at:<\/strong> <time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
-    refute_match(/Enqueued at:<\/strong> <time[^>]*>about /, response.body)
+    assert_includes response.body, "Timeline"
+    assert_match(/<dt>Enqueued<\/dt>\s*<dd><time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
+    refute_match(/<dt>Enqueued<\/dt>\s*<dd><time[^>]*>about /, response.body)
   end
 
   test "workflow run detail shows rerun action for terminal runs" do

@@ -31,7 +31,7 @@ Then open http://localhost:3000/ to view the workflow dashboard.
 
 - This repo is `ENV`-only for secrets and runtime configuration.
 - Do not use Rails encrypted credentials for app secrets in this project.
-- In production, provide `SECRET_KEY_BASE` explicitly in the environment.
+- In production, provide `SECRET_KEY_BASE` explicitly in the environment. Generate one with `bin/rails secret`.
 - Integration secrets should also be provided via environment variables such as `GOOGLE_CREDENTIALS_*`, `DISCORD_WEBHOOK_URL_*`, and similar `*_env` references used by the app.
 
 - `/` shows registered workflows, trigger state, and recent visible runs.
