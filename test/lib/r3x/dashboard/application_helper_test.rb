@@ -22,6 +22,17 @@ module R3x
         refute_includes rendered, ">about"
       end
 
+      test "dashboard absolute timestamp respects R3X_TIMEZONE" do
+        original_timezone = ENV["R3X_TIMEZONE"]
+        ENV["R3X_TIMEZONE"] = "America/New_York"
+
+        rendered = dashboard_absolute_timestamp(Time.zone.parse("2026-04-15T12:00:01Z"))
+
+        assert_includes rendered, "2026-04-15 08:00:01 EDT"
+      ensure
+        ENV["R3X_TIMEZONE"] = original_timezone
+      end
+
       test "dashboard log state empty message prefers waiting copy for refreshable panels" do
         assert_equal "Waiting for first log line...", dashboard_log_state_empty_message(refreshable: true, empty_message: "No indexed logs were found.")
         assert_equal "No indexed logs were found.", dashboard_log_state_empty_message(refreshable: false, empty_message: "No indexed logs were found.")

@@ -40,23 +40,26 @@ module R3x
       def dashboard_timestamp(time)
         return content_tag(:span, "Never", class: "muted") if time.blank?
 
+        displayed_time = dashboard_display_time(time)
+
         time_tag(
-          time,
+          displayed_time,
           dashboard_relative_time(time),
-          datetime: time.iso8601,
-          title: time.strftime("%Y-%m-%d %H:%M:%S %Z")
+          datetime: displayed_time.iso8601,
+          title: displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z")
         )
       end
 
       def dashboard_absolute_timestamp(time)
         return content_tag(:span, "Never", class: "muted") if time.blank?
 
-        formatted_time = time.strftime("%Y-%m-%d %H:%M:%S %Z")
+        displayed_time = dashboard_display_time(time)
+        formatted_time = displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z")
 
         time_tag(
-          time,
+          displayed_time,
           formatted_time,
-          datetime: time.iso8601,
+          datetime: displayed_time.iso8601,
           title: dashboard_relative_time(time)
         )
       end
@@ -64,11 +67,13 @@ module R3x
       def dashboard_log_time(time)
         return content_tag(:span, "--:--:--", class: "muted") if time.blank?
 
+        displayed_time = dashboard_display_time(time)
+
         time_tag(
-          time,
-          time.strftime("%H:%M:%S"),
-          datetime: time.iso8601,
-          title: time.strftime("%Y-%m-%d %H:%M:%S %Z")
+          displayed_time,
+          displayed_time.strftime("%H:%M:%S"),
+          datetime: displayed_time.iso8601,
+          title: displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z")
         )
       end
 
@@ -153,6 +158,17 @@ module R3x
       end
 
       private
+        def dashboard_display_time(time)
+          time.in_time_zone(dashboard_time_zone_name)
+        end
+
+        def dashboard_time_zone_name
+          @dashboard_time_zone_name ||= begin
+            timezone_name = R3x::Env.fetch("R3X_TIMEZONE")
+            timezone_name.present? ? R3x::Validators::Timezone.normalize(timezone_name) : Time.zone.tzinfo.identifier
+          end
+        end
+
         def extract_error_message(text)
           first_line = text.lines.first.to_s.strip
           return Regexp.last_match(1) if first_line.match(/"message"\s*=>\s*"([^"]+)"/)
