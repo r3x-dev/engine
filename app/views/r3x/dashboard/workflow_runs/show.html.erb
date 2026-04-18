@@ -1,14 +1,24 @@
-<% content_for :title, "Run #{ @run[:job_id] }" %>
+<% content_for :title, @run[:workflow_title] %>
 
 <%
-  primary_time_label = @run[:finished_at].present? ? "Finished" : "Recorded"
-  primary_time_value = @run[:finished_at].presence || @run[:recorded_at]
+  trigger_key = @run[:trigger_key] || "manual/default"
 %>
 
 <section class="page-header">
   <div>
-    <h2>Run <code><%= @run[:job_id] %></code></h2>
-    <p>Detailed runtime view for a persisted workflow execution.</p>
+    <div class="run-heading">
+      <h2 class="page-title">
+        <% if @run[:known_workflow] %>
+          <%= link_to @run[:workflow_title], workflow_path(@run[:workflow_key]), class: "title-link" %>
+        <% else %>
+          <%= @run[:workflow_title] %>
+        <% end %>
+      </h2>
+
+      <span class="pill <%= dashboard_tone_for(@run[:status]) %>">
+        <%= dashboard_status_label(@run[:status]) %>
+      </span>
+    </div>
   </div>
 
   <div class="actions">
@@ -27,93 +37,53 @@
   </div>
 </section>
 
-<section class="panel">
-  <div class="stats">
-    <div class="stat">
-      <span class="label">Workflow</span>
-      <strong><%= @run[:workflow_title] %></strong>
-    </div>
-
-    <div class="stat">
-      <span class="label">Status</span>
-      <strong><%= dashboard_status_label(@run[:status]) %></strong>
-    </div>
-
-    <div class="stat">
-      <span class="label">Queue</span>
-      <strong><code><%= @run[:queue_name] %></code></strong>
-    </div>
-
-    <div class="stat">
-      <span class="label"><%= primary_time_label %></span>
-      <strong><%= dashboard_relative_time(primary_time_value) %></strong>
-      <div class="meta"><%= dashboard_absolute_timestamp(primary_time_value) %></div>
-    </div>
-  </div>
-</section>
-
 <section class="panel stack panel-spaced">
   <div>
-    <h3 class="section-title">Metadata</h3>
-    <p class="section-copy">Only the details that help explain what this run was and when it happened.</p>
+    <h3 class="section-title">Run Details</h3>
   </div>
 
-  <div class="meta-grid">
-    <section class="meta-card">
-      <h4 class="meta-card-title">Run</h4>
-      <dl class="meta-list">
-        <div>
-          <dt>Workflow</dt>
-          <dd><%= dashboard_workflow_link(@run) %></dd>
-        </div>
-        <div>
-          <dt>Trigger</dt>
-          <dd><code><%= @run[:trigger_key] || "manual/default" %></code></dd>
-        </div>
-        <div>
-          <dt>Job id</dt>
-          <dd><code><%= @run[:job_id] %></code></dd>
-        </div>
-      </dl>
-    </section>
+  <div class="detail-grid">
+    <div class="detail-item">
+      <span class="label">Trigger</span>
+      <strong><code><%= trigger_key %></code></strong>
+    </div>
 
-    <section class="meta-card">
-      <h4 class="meta-card-title">Timeline</h4>
-      <dl class="meta-list">
-        <div>
-          <dt>Enqueued</dt>
-          <dd><%= dashboard_absolute_timestamp(@run[:enqueued_at]) %></dd>
-        </div>
-        <% if @run[:scheduled_at].present? %>
-          <div>
-            <dt>Scheduled</dt>
-            <dd><%= dashboard_absolute_timestamp(@run[:scheduled_at]) %></dd>
-          </div>
-        <% end %>
-        <div>
-          <dt>Recorded</dt>
-          <dd><%= dashboard_absolute_timestamp(@run[:recorded_at]) %></dd>
-        </div>
-        <% if @run[:finished_at].present? %>
-          <div>
-            <dt>Finished</dt>
-            <dd><%= dashboard_absolute_timestamp(@run[:finished_at]) %></dd>
-          </div>
-        <% end %>
-      </dl>
-    </section>
+    <div class="detail-item">
+      <span class="label">Enqueued</span>
+      <strong><%= dashboard_absolute_timestamp(@run[:enqueued_at]) %></strong>
+    </div>
+
+    <% if @run[:finished_at].present? %>
+      <div class="detail-item">
+        <span class="label">Finished</span>
+        <strong><%= dashboard_absolute_timestamp(@run[:finished_at]) %></strong>
+      </div>
+    <% end %>
+
+    <% if @run[:scheduled_at].present? %>
+      <div class="detail-item">
+        <span class="label">Scheduled</span>
+        <strong><%= dashboard_absolute_timestamp(@run[:scheduled_at]) %></strong>
+      </div>
+    <% end %>
+
   </div>
 
-  <details class="metadata-details">
+  <details class="technical-details">
     <summary>Technical details</summary>
-    <dl class="meta-list compact">
-      <div>
+
+    <dl class="technical-grid">
+      <div class="technical-item">
+        <dt>Run ID</dt>
+        <dd><code><%= @run[:job_id] %></code></dd>
+      </div>
+      <div class="technical-item">
         <dt>Class</dt>
         <dd><code><%= @run[:class_name] %></code></dd>
       </div>
       <% if @run[:active_job_id].present? %>
-        <div>
-          <dt>Active Job id</dt>
+        <div class="technical-item">
+          <dt>Active Job ID</dt>
           <dd><code><%= @run[:active_job_id] %></code></dd>
         </div>
       <% end %>

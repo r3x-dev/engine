@@ -2,7 +2,7 @@
 
 <section class="page-header">
   <div>
-    <h2><%= @workflow[:title] %></h2>
+    <h2 class="page-title"><%= @workflow[:title] %></h2>
     <p>
       <% if @workflow[:class_name].present? %>
         <code><%= @workflow[:class_name] %></code>
@@ -118,6 +118,7 @@
             <th>Trigger</th>
             <th>Status</th>
             <th>Observed</th>
+            <th>Run ID</th>
             <th>Details</th>
           </tr>
         </thead>
@@ -135,6 +136,8 @@
 
               <td><%= dashboard_timestamp(run[:recorded_at]) %></td>
 
+              <td><code><%= run[:job_id] %></code></td>
+
               <td>
                 <% if run[:error].present? %>
                   <div><%= dashboard_error_summary(run[:error]) %></div>
@@ -146,8 +149,6 @@
                 <% if logs_configured? %>
                   <div class="meta"><%= link_to "View logs", workflow_run_path(run[:job_id], anchor: "run-logs") %></div>
                 <% end %>
-
-                <div class="meta">Job <code><%= run[:job_id] %></code></div>
               </td>
             </tr>
           <% end %>

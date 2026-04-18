@@ -151,9 +151,11 @@ class DashboardTest < ActionDispatch::IntegrationTest
     get "/workflow-runs/#{@job.id}"
 
     assert_response :success
-    assert_includes response.body, "Timeline"
-    assert_match(/<dt>Enqueued<\/dt>\s*<dd><time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
-    refute_match(/<dt>Enqueued<\/dt>\s*<dd><time[^>]*>about /, response.body)
+    assert_includes response.body, "Run Details"
+    assert_match(/<span class="label">Enqueued<\/span>\s*<strong><time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
+    refute_match(/<span class="label">Enqueued<\/span>\s*<strong><time[^>]*>about /, response.body)
+    assert_match(/<span class="label">Finished<\/span>\s*<strong><time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
+    refute_includes response.body, "Recorded"
   end
 
   test "workflow run detail shows rerun action for terminal runs" do
@@ -416,7 +418,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     get "/workflows/test_workflow"
 
     assert_response :success
-    assert_match(/<th>Trigger<\/th>.*<th>Status<\/th>.*<th>Observed<\/th>.*<th>Details<\/th>/m, response.body)
+    assert_match(/<th>Trigger<\/th>.*<th>Status<\/th>.*<th>Observed<\/th>.*<th>Run ID<\/th>.*<th>Details<\/th>/m, response.body)
     refute_includes response.body, "<th>Workflow</th>"
     refute_includes response.body, "<th>Queue</th>"
   end
