@@ -16,7 +16,11 @@ module ActiveSupport
       io = StringIO.new
       original_logger = Rails.logger
       original_active_job_logger = ActiveJob::Base.logger
-      test_logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(io))
+      test_logger = ActiveSupport::TaggedLogging.new(
+        ActiveSupport::Logger.new(io).tap do |logger|
+          logger.formatter = Rails.application.config.log_formatter
+        end
+      )
 
       Rails.logger = test_logger
       ActiveJob::Base.logger = test_logger

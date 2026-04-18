@@ -40,9 +40,10 @@
   <% else %>
     <div class="log-list">
       <% logs[:entries].each do |entry| %>
-        <div class="log-entry log-entry-<%= entry[:severity] %>">
+        <% level_tone = dashboard_log_level_tone(entry[:level]) %>
+        <div class="log-entry log-entry-<%= entry[:level] %>">
           <span class="log-time"><%= dashboard_log_time(entry[:time]) %></span>
-          <span class="pill <%= entry[:severity] %> log-severity"><%= entry[:severity] == "danger" ? "Error" : entry[:severity] == "warn" ? "Warn" : entry[:severity] == "ok" ? "OK" : "Info" %></span>
+          <span class="pill <%= level_tone %> log-level"><%= dashboard_log_level_label(entry[:level]) %></span>
           <span class="log-message"><%= entry[:message] %></span>
         </div>
       <% end %>
