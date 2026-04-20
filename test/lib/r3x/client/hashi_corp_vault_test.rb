@@ -385,6 +385,62 @@ module R3x
         refute_includes result.to_s, "test-token"
       end
 
+      test "diagnose skips renewal for non-renewable token" do
+        ENV["R3X_VAULT_ADDR"] = "https://vault.test"
+        ENV["R3X_VAULT_TOKEN"] = "test-token"
+        ENV["R3X_VAULT_SECRETS_PATH"] = "secret/data/env/r3x"
+        reset_vault_singleton
+
+        stub_request(:get, "https://vault.test/v1/auth/token/lookup-self")
+          .to_return(
+            status: 200,
+            body: {
+              data: {
+                display_name: "token-r3x-env",
+                policies: [ "r3x-env-read" ],
+                ttl: 3600,
+                renewable: false,
+                period: nil,
+                explicit_max_ttl: 0,
+                id: "test-token"
+              }
+            }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        stub_request(:post, "https://vault.test/v1/sys/capabilities-self")
+          .to_return(
+            status: 200,
+            body: {
+              "secret/data/env/r3x" => [ "read" ],
+              "auth/token/lookup-self" => [ "read" ],
+              "auth/token/renew-self" => [ "update" ]
+            }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        stub_request(:get, "https://vault.test/v1/secret/data/env/r3x")
+          .to_return(
+            status: 200,
+            body: {
+              data: {
+                data: {
+                  "GEMINI_API_KEY" => "secret-gemini-key"
+                }
+              }
+            }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        result = HashiCorpVault.diagnose
+
+        assert_equal false, result[:token]["renewable"]
+        assert_nil result[:renewal]
+        assert_equal [ "GEMINI_API_KEY" ], result[:secret][:keys]
+
+        assert_not_requested :post, "https://vault.test/v1/auth/token/renew-self"
+      end
+
       test "raises when token lookup fails" do
         ENV["R3X_VAULT_ADDR"] = "https://vault.test"
         ENV["R3X_VAULT_TOKEN"] = "test-token"

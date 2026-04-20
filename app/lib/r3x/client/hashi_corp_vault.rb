@@ -108,14 +108,15 @@ module R3x
       def diagnose(path:)
         capabilities_paths = [ path, "auth/token/lookup-self", "auth/token/renew-self" ]
         capabilities = capabilities_self(capabilities_paths)
+        token = lookup_summary
 
         {
           auth_method: auth_method,
           vault_addr: vault_addr,
           secret_path: path,
-          token: lookup_summary,
+          token: token,
           capabilities: capabilities,
-          renewal: renewal_supported?(capabilities) ? renewal_summary : nil,
+          renewal: renewal_supported?(capabilities, token) ? renewal_summary : nil,
           secret: {
             keys: read(path).keys.sort
           }
@@ -225,8 +226,8 @@ module R3x
         )
       end
 
-      def renewal_supported?(capabilities)
-        capabilities.fetch("auth/token/renew-self", []).include?("update")
+      def renewal_supported?(capabilities, token)
+        capabilities.fetch("auth/token/renew-self", []).include?("update") && token["renewable"]
       end
 
       def raise_request_error(response)
