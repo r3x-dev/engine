@@ -16,21 +16,20 @@ module R3x
           loaded = []
 
           workflow_files.each do |entrypoint|
-            begin
-              require entrypoint
-              workflow_class = register_workflow(entrypoint)
-              loaded << workflow_class
+            ensure_legacy_llm_schema_support(entrypoint)
+            require entrypoint
+            workflow_class = register_workflow(entrypoint)
+            loaded << workflow_class
 
-              Rails.logger.tagged("r3x.workflow_key=#{workflow_class.workflow_key}") do
-                logger.info "Loaded workflow class=#{workflow_class.name} entrypoint=#{entrypoint}"
-              end
-            rescue => e
-              Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") do
-                logger.error "Workflow load failed error_class=#{e.class} error_message=#{e.message}"
-              end
-
-              raise
+            Rails.logger.tagged("r3x.workflow_key=#{workflow_class.workflow_key}") do
+              logger.info "Loaded workflow class=#{workflow_class.name} entrypoint=#{entrypoint}"
             end
+          rescue => e
+            Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") do
+              logger.error "Workflow load failed error_class=#{e.class} error_message=#{e.message}"
+            end
+
+            raise
           end
 
           logger.info "Loaded #{loaded.size} workflow packs"
@@ -58,6 +57,12 @@ module R3x
 
           files
         end.uniq
+      end
+
+      def ensure_legacy_llm_schema_support(entrypoint)
+        return unless File.read(entrypoint).include?("RubyLLM::Schema")
+
+        R3x::GemLoader.require("ruby_llm/schema")
       end
 
       def register_workflow(entrypoint_file)
