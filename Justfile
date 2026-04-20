@@ -11,5 +11,8 @@ up:
 tests:
   {{RAILS_BIN}} test
 
+vault_check:
+  R3X_SKIP_VAULT_ENV_LOAD=true {{RAILS_BIN}} runner 'puts MultiJson.dump(R3x::Client::HashiCorpVault.diagnose, pretty: true)'
+
 test_dockerignore:
   rsync -avn . /dev/shm --exclude-from .dockerignore
