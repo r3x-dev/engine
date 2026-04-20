@@ -56,10 +56,14 @@ module R3x
     end
 
     def self.load_from_vault(path)
-      unless R3x::Client::HashiCorpVault.configured?
+      return {} if path.blank?
+
+      unless R3x::Env.present?("R3X_VAULT_ADDR")
         logger.info "Vault auth not configured - skipping Vault"
         return {}
       end
+
+      R3x::Client::HashiCorpVault.validate_auth_configuration!
 
       logger.info "Loading secrets from Vault: #{path}"
       secrets = R3x::Client::HashiCorpVault.read(path)
@@ -75,7 +79,7 @@ module R3x
 
       logger.info "Loaded #{loaded.size} secrets from Vault"
       loaded
-    rescue RuntimeError
+    rescue ArgumentError, RuntimeError
       raise
     rescue => e
       logger.warn "Vault error: #{e.message}"

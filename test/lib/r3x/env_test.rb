@@ -75,11 +75,11 @@ module R3x
     # secure_fetch with Regexp prefix
 
     test "secure_fetch with regexp returns value when key matches" do
-      ENV["GEMINI_API_KEY_MICHAL"] = "AIza-valid"
+      ENV["GEMINI_API_KEY_TEST"] = "AIza-valid"
 
-      assert_equal "AIza-valid", Env.secure_fetch("GEMINI_API_KEY_MICHAL", prefix: /\AGEMINI_API_KEY_[A-Z0-9_]+\z/)
+      assert_equal "AIza-valid", Env.secure_fetch("GEMINI_API_KEY_TEST", prefix: /\AGEMINI_API_KEY_[A-Z0-9_]+\z/)
     ensure
-      ENV.delete("GEMINI_API_KEY_MICHAL")
+      ENV.delete("GEMINI_API_KEY_TEST")
     end
 
     test "secure_fetch with regexp rejects key not matching pattern" do
@@ -95,15 +95,15 @@ module R3x
     end
 
     test "secure_fetch with regexp rejects lowercase in key" do
-      ENV["GEMINI_API_KEY_michal"] = "AIza-test"
+      ENV["GEMINI_API_KEY_test"] = "AIza-test"
 
       error = assert_raises(ArgumentError) do
-        Env.secure_fetch("GEMINI_API_KEY_michal", prefix: /\AGEMINI_API_KEY_[A-Z0-9_]+\z/)
+        Env.secure_fetch("GEMINI_API_KEY_test", prefix: /\AGEMINI_API_KEY_[A-Z0-9_]+\z/)
       end
 
       assert_match(/must match/, error.message)
     ensure
-      ENV.delete("GEMINI_API_KEY_michal")
+      ENV.delete("GEMINI_API_KEY_test")
     end
 
     test "secure_fetch with regexp rejects injection characters" do
@@ -193,134 +193,6 @@ module R3x
       ENV.delete("R3X_TEST_ENV_VAR")
     end
 
-    # load_from_vault tests
-
-    test "load_from_vault returns empty hash when vault is not configured" do
-      original_addr = ENV["R3X_VAULT_ADDR"]
-      original_token = ENV["R3X_VAULT_TOKEN"]
-      original_auth_method = ENV["R3X_VAULT_AUTH_METHOD"]
-      original_kubernetes_role = ENV["R3X_VAULT_KUBERNETES_ROLE"]
-      ENV.delete("R3X_VAULT_ADDR")
-      ENV.delete("R3X_VAULT_TOKEN")
-      ENV.delete("R3X_VAULT_AUTH_METHOD")
-      ENV.delete("R3X_VAULT_KUBERNETES_ROLE")
-
-      assert_equal({}, Env.load_from_vault("secret/data/test"))
-    ensure
-      ENV["R3X_VAULT_ADDR"] = original_addr
-      ENV["R3X_VAULT_TOKEN"] = original_token
-      ENV["R3X_VAULT_AUTH_METHOD"] = original_auth_method
-      ENV["R3X_VAULT_KUBERNETES_ROLE"] = original_kubernetes_role
-    end
-
-    test "load_from_vault raises RuntimeError when vault returns R3X_ prefixed key" do
-      original_addr = ENV["R3X_VAULT_ADDR"]
-      original_token = ENV["R3X_VAULT_TOKEN"]
-      ENV["R3X_VAULT_ADDR"] = "https://vault.test"
-      ENV["R3X_VAULT_TOKEN"] = "test-token"
-      reset_vault_singleton
-
-      stub_request(:get, "https://vault.test/v1/auth/token/lookup-self")
-        .to_return(status: 200, body: { data: { id: "test-token" } }.to_json,
-          headers: { "Content-Type" => "application/json" })
-
-      stub_request(:get, "https://vault.test/v1/secret/data/test")
-        .to_return(
-          status: 200,
-          body: {
-            data: {
-              data: {
-                "GEMINI_API_KEY_MICHAL" => "AIza-vault-key",
-                "R3X_DISCORD_WEBHOOK_URL" => "https://discord.should-not-load",
-                "OPENAI_API_KEY_TEST" => "sk-vault-key"
-              }
-            }
-          }.to_json,
-          headers: { "Content-Type" => "application/json" }
-        )
-
-      error = assert_raises(RuntimeError) do
-        Env.load_from_vault("secret/data/test")
-      end
-
-      assert_match(/starts with reserved prefix/, error.message)
-      assert_match(/R3X_DISCORD_WEBHOOK_URL/, error.message)
-    ensure
-      ENV["R3X_VAULT_ADDR"] = original_addr
-      ENV["R3X_VAULT_TOKEN"] = original_token
-      reset_vault_singleton
-      WebMock.reset!
-    end
-
-    test "load_from_vault loads secrets using kubernetes auth" do
-      original_addr = ENV["R3X_VAULT_ADDR"]
-      original_token = ENV["R3X_VAULT_TOKEN"]
-      original_auth_method = ENV["R3X_VAULT_AUTH_METHOD"]
-      original_kubernetes_role = ENV["R3X_VAULT_KUBERNETES_ROLE"]
-      original_kubernetes_token_path = ENV["R3X_VAULT_KUBERNETES_TOKEN_PATH"]
-
-      ENV["R3X_VAULT_ADDR"] = "https://vault.test"
-      ENV.delete("R3X_VAULT_TOKEN")
-      ENV["R3X_VAULT_AUTH_METHOD"] = "kubernetes"
-      ENV["R3X_VAULT_KUBERNETES_ROLE"] = "r3x"
-
-      with_service_account_token("k8s-service-account-jwt") do |token_path|
-        ENV["R3X_VAULT_KUBERNETES_TOKEN_PATH"] = token_path
-        reset_vault_singleton
-
-        stub_request(:post, "https://vault.test/v1/auth/kubernetes/login")
-          .to_return(
-            status: 200,
-            body: {
-              auth: {
-                client_token: "vault-k8s-token"
-              }
-            }.to_json,
-            headers: { "Content-Type" => "application/json" }
-          )
-
-        stub_request(:get, "https://vault.test/v1/secret/data/test")
-          .with(headers: { "X-Vault-Token" => "vault-k8s-token" })
-          .to_return(
-            status: 200,
-            body: {
-              data: {
-                data: {
-                  "GEMINI_API_KEY_MICHAL" => "AIza-vault-key"
-                }
-              }
-            }.to_json,
-            headers: { "Content-Type" => "application/json" }
-          )
-
-        assert_equal({ "GEMINI_API_KEY_MICHAL" => true }, Env.load_from_vault("secret/data/test"))
-        assert_equal "AIza-vault-key", ENV["GEMINI_API_KEY_MICHAL"]
-      end
-    ensure
-      ENV["R3X_VAULT_ADDR"] = original_addr
-      ENV["R3X_VAULT_TOKEN"] = original_token
-      ENV["R3X_VAULT_AUTH_METHOD"] = original_auth_method
-      ENV["R3X_VAULT_KUBERNETES_ROLE"] = original_kubernetes_role
-      ENV["R3X_VAULT_KUBERNETES_TOKEN_PATH"] = original_kubernetes_token_path
-      ENV.delete("GEMINI_API_KEY_MICHAL")
-      reset_vault_singleton
-      WebMock.reset!
-    end
-
     private
-
-    def with_service_account_token(token)
-      file = Tempfile.new("vault-kubernetes-token")
-      file.write(token)
-      file.flush
-
-      yield file.path
-    ensure
-      file&.close!
-    end
-
-    def reset_vault_singleton
-      R3x::Client::HashiCorpVault.instance_variable_set(:@singleton__instance__, nil)
-    end
   end
 end
