@@ -13,6 +13,10 @@ module ActiveSupport
   class TestCase
     # Add more helper methods to be used by all tests here...
 
+    parallel_workers = ENV["PARALLEL_WORKERS"]&.to_i
+    parallelize(workers: parallel_workers, with: :processes) if parallel_workers.to_i > 1
+    parallelize(workers: :number_of_processors, with: :processes) if parallel_workers.nil?
+
     def capture_logged_output
       io = StringIO.new
       original_logger = Rails.logger
