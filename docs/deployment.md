@@ -50,7 +50,9 @@ encoded in the command and the matching queue config is selected by default.
 
 ## Vault Secrets
 
-The built-in Vault loader is optional. When enabled, configure:
+The built-in Vault loader is optional. It supports two auth modes.
+
+Default token auth:
 
 ```sh
 R3X_VAULT_ADDR=http://vault.kube-system:8200
@@ -58,12 +60,39 @@ R3X_VAULT_TOKEN=<renewable-token>
 R3X_VAULT_SECRETS_PATH=secret/data/env/r3x
 ```
 
+Recommended Kubernetes auth for in-cluster workloads:
+
+```sh
+R3X_VAULT_ADDR=http://vault.kube-system:8200
+R3X_VAULT_SECRETS_PATH=secret/data/env/r3x
+R3X_VAULT_AUTH_METHOD=kubernetes
+R3X_VAULT_KUBERNETES_ROLE=r3x
+R3X_VAULT_KUBERNETES_AUTH_PATH=auth/kubernetes
+R3X_VAULT_KUBERNETES_TOKEN_PATH=/var/run/secrets/kubernetes.io/serviceaccount/token
+```
+
 At boot, the app reads the configured KV v2 path and loads returned keys into
 `ENV`. Keys starting with `R3X_` are rejected so app-internal configuration does
 not come from the secret payload.
 
+With Kubernetes auth, the app reads the pod service account token, calls
+`auth/kubernetes/login`, and uses the returned Vault token for subsequent reads.
+That Vault token is cached only in-process, so a pod restart naturally performs a
+fresh login.
+
 Use `R3X_SKIP_VAULT_ENV_LOAD=true` only for diagnostics or token renewal tasks
 that must boot Rails even when the Vault token is broken.
+
+### Kubernetes Auth Notes
+
+- Keep `automountServiceAccountToken: true` on pods that must bootstrap secrets
+  from Vault through Kubernetes auth.
+- Bind the Vault Kubernetes role to the dedicated service account used by the
+  workload.
+- Scope the Vault policy to the exact paths the app needs, for example
+  `secret/data/env/r3x`.
+- `just vault_check` works with both auth modes.
+- `just vault_renew` is only meaningful for token auth with a renewable token.
 
 ## Vault Token Renewal
 
@@ -92,6 +121,10 @@ The recommended Kubernetes pattern is a dedicated CronJob outside Solid Queue:
 
 Keep renewal outside the web and Solid Queue worker lifecycle so an expired
 application token does not depend on normal workflow execution to repair itself.
+
+When using Kubernetes auth for the app pods, this renewal path becomes an
+optional fallback for operators and non-Kubernetes consumers that still rely on a
+static Vault token.
 
 ## Operations
 

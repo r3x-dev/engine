@@ -20,9 +20,20 @@
       ],
     },
     {
-      description: 'Minor and major updates - PR only, no auto-merge',
+      description: 'Auto-merge minor updates when tests pass',
       matchUpdateTypes: [
         'minor',
+      ],
+      automerge: true,
+      automergeType: 'branch',
+      automergeStrategy: 'squash',
+      matchPackageNames: [
+        '*',
+      ],
+    },
+    {
+      description: 'Major updates - PR only, no auto-merge',
+      matchUpdateTypes: [
         'major',
       ],
       automerge: false,
