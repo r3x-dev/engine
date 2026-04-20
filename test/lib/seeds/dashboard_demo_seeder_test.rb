@@ -17,14 +17,14 @@ module Seeds
       runs = R3x::Dashboard::WorkflowRuns.new.all.select { |run| run[:workflow_key].start_with?("demo_") }
 
       assert_equal [
+        "demo_feed_watch",
         "demo_inventory_sync",
         "demo_invoice_dispatch",
-        "demo_retention_cleanup",
-        "demo_summerhouse_monitoring",
-        "demo_vendor_feed_watch"
+        "demo_monitoring",
+        "demo_retention_cleanup"
       ], R3x::Dashboard::WorkflowCatalog.new.workflow_keys
 
-      assert_equal %w[ failed finished finished running scheduled ], runs.map { |run| run[:status] }.sort
+      assert_equal %w[failed finished finished running scheduled], runs.map { |run| run[:status] }.sort
       assert_equal 5, SolidQueue::RecurringTask.where("key LIKE ?", "workflow:demo_%").count
       assert_equal 5, R3x::TriggerState.where("workflow_key LIKE ?", "demo_%").count
     end
@@ -41,17 +41,18 @@ module Seeds
     end
 
     private
-      def runtime_counts
-        {
-          claimed: SolidQueue::ClaimedExecution.count,
-          failed: SolidQueue::FailedExecution.count,
-          jobs: SolidQueue::Job.count,
-          processes: SolidQueue::Process.count,
-          ready: SolidQueue::ReadyExecution.count,
-          recurring_tasks: SolidQueue::RecurringTask.count,
-          scheduled: SolidQueue::ScheduledExecution.count,
-          trigger_states: R3x::TriggerState.count
-        }
-      end
+
+    def runtime_counts
+      {
+        claimed: SolidQueue::ClaimedExecution.count,
+        failed: SolidQueue::FailedExecution.count,
+        jobs: SolidQueue::Job.count,
+        processes: SolidQueue::Process.count,
+        ready: SolidQueue::ReadyExecution.count,
+        recurring_tasks: SolidQueue::RecurringTask.count,
+        scheduled: SolidQueue::ScheduledExecution.count,
+        trigger_states: R3x::TriggerState.count
+      }
+    end
   end
 end
