@@ -2,6 +2,7 @@ require "test_helper"
 
 class DashboardTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
+
   WORKFLOW_JOB_CLASS_NAME = R3x::TestSupport::DashboardWorkflowJob.name.freeze
 
   setup do
@@ -387,14 +388,14 @@ class DashboardTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "R3x Dashboard"
   end
 
-  test "recent runs shows log shortcut when logs are configured" do
+  test "recent runs keeps run detail shortcut when logs are configured" do
     ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
     ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
 
     get "/workflow-runs"
 
     assert_response :success
-    assert_includes response.body, "View logs"
+    assert_includes response.body, "View run"
     refute_includes response.body, "logs=1"
   end
 
@@ -497,21 +498,22 @@ class DashboardTest < ActionDispatch::IntegrationTest
   end
 
   private
-    def clear_tables
-      TestDbCleanup.clear_runtime_tables!
-    end
 
-    def claim_job!(job)
-      process = SolidQueue::Process.create!(
-        kind: "Worker",
-        last_heartbeat_at: Time.current,
-        pid: Process.pid,
-        hostname: "test",
-        metadata: "{}",
-        name: "test-worker-#{job.id}",
-        created_at: Time.current
-      )
+  def clear_tables
+    TestDbCleanup.clear_runtime_tables!
+  end
 
-      SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: 30.seconds.ago)
-    end
+  def claim_job!(job)
+    process = SolidQueue::Process.create!(
+      kind: "Worker",
+      last_heartbeat_at: Time.current,
+      pid: Process.pid,
+      hostname: "test",
+      metadata: "{}",
+      name: "test-worker-#{job.id}",
+      created_at: Time.current
+    )
+
+    SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: 30.seconds.ago)
+  end
 end

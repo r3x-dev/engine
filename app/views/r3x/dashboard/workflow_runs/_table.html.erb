@@ -58,10 +58,6 @@
               <% else %>
                 <div class="meta"><%= link_to "View run", workflow_run_path(run[:job_id]) %></div>
               <% end %>
-
-              <% if logs_configured? %>
-                <div class="meta"><%= link_to "View logs", workflow_run_path(run[:job_id], anchor: "run-logs") %></div>
-              <% end %>
             </td>
           </tr>
         <% end %>

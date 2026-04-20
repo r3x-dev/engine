@@ -14,19 +14,22 @@ module VaultTestHelpers
   ].freeze
 
   def self.included(base)
-    base.setup do
-      @original_vault_env = snapshot_vault_env
-      reset_vault_singleton
-    end
-
-    base.teardown do
-      restore_vault_env
-      WebMock.reset!
-      reset_vault_singleton
-    end
+    base.setup :prepare_vault_test_env
+    base.teardown :cleanup_vault_test_env
   end
 
   private
+
+  def prepare_vault_test_env
+    @original_vault_env = snapshot_vault_env
+    reset_vault_singleton
+  end
+
+  def cleanup_vault_test_env
+    restore_vault_env
+    WebMock.reset!
+    reset_vault_singleton
+  end
 
   def snapshot_vault_env
     ENV_KEYS.index_with { |key| ENV[key] }
