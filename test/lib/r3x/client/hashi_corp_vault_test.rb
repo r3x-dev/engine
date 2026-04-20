@@ -117,6 +117,33 @@ module R3x
         end
       end
 
+      test "raises helpful guidance when kubernetes auth login is denied" do
+        ENV["R3X_VAULT_ADDR"] = "https://vault.test"
+        ENV.delete("R3X_VAULT_TOKEN")
+        ENV["R3X_VAULT_AUTH_METHOD"] = "kubernetes"
+        ENV["R3X_VAULT_KUBERNETES_ROLE"] = "r3x"
+
+        with_service_account_token(kubernetes_jwt(namespace: "default", service_account_name: "r3x")) do |token_path|
+          ENV["R3X_VAULT_KUBERNETES_TOKEN_PATH"] = token_path
+          reset_vault_singleton
+
+          stub_request(:post, "https://vault.test/v1/auth/kubernetes/login")
+            .to_return(
+              status: 403,
+              body: { errors: [ "permission denied" ] }.to_json,
+              headers: { "Content-Type" => "application/json" }
+            )
+
+          error = assert_raises(RuntimeError) do
+            HashiCorpVault.read("secret/data/env/r3x")
+          end
+
+          assert_equal <<~MESSAGE.strip, error.message
+            Vault Kubernetes auth login failed with status 403: ["permission denied"]. Vault could not exchange the Kubernetes service account token for a Vault token. Check the auth/kubernetes backend configuration (reviewer JWT, Kubernetes host, CA certificate, and issuer settings) and verify that role "r3x" is bound to the expected service account and namespace (default/r3x).
+          MESSAGE
+        end
+      end
+
       test "raises when vault config is blank string" do
         ENV["R3X_VAULT_ADDR"] = ""
         ENV["R3X_VAULT_TOKEN"] = ""
@@ -512,6 +539,26 @@ module R3x
       end
 
       private
+
+      def kubernetes_jwt(namespace:, service_account_name:)
+        encode_jwt_payload({
+          "sub" => "system:serviceaccount:#{namespace}:#{service_account_name}",
+          "kubernetes.io" => {
+            "namespace" => namespace,
+            "serviceaccount" => {
+              "name" => service_account_name
+            }
+          }
+        })
+      end
+
+      def encode_jwt_payload(payload)
+        [ "header", urlsafe_base64(payload.to_json), "signature" ].join(".")
+      end
+
+      def urlsafe_base64(value)
+        Base64.urlsafe_encode64(value, padding: false)
+      end
 
       def with_service_account_token(token)
         file = Tempfile.new("vault-kubernetes-token")

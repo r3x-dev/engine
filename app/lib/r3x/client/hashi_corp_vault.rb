@@ -1,3 +1,4 @@
+require "base64"
 require "singleton"
 
 module R3x
@@ -175,7 +176,7 @@ module R3x
           jwt: kubernetes_service_account_token
         })
 
-        raise_request_error(response) unless response.success?
+        raise_kubernetes_login_error(response) unless response.success?
 
         auth = response.body.is_a?(Hash) && response.body["auth"]
         raise "Vault response missing kubernetes auth data" unless auth.is_a?(Hash)
@@ -230,10 +231,51 @@ module R3x
         capabilities.fetch("auth/token/renew-self", []).include?("update") && token["renewable"]
       end
 
-      def raise_request_error(response)
-        errors = response.body.is_a?(Hash) ? response.body["errors"] : response.body
+      def raise_kubernetes_login_error(response)
+        identity = kubernetes_service_account_identity
+        scope = if identity
+          " (#{identity.fetch(:namespace)}/#{identity.fetch(:service_account_name)})"
+        end
 
-        raise "Vault request failed with status #{response.status}: #{errors}"
+        raise "Vault Kubernetes auth login failed with status #{response.status}: #{request_errors(response)}. " \
+          "Vault could not exchange the Kubernetes service account token for a Vault token. " \
+          "Check the auth/kubernetes backend configuration (reviewer JWT, Kubernetes host, CA certificate, and issuer settings) " \
+          "and verify that role #{kubernetes_role.inspect} is bound to the expected service account and namespace#{scope}."
+      end
+
+      def kubernetes_service_account_identity
+        claims = kubernetes_service_account_claims
+
+        namespace = claims.dig("kubernetes.io", "namespace")
+        service_account_name = claims.dig("kubernetes.io", "serviceaccount", "name")
+
+        return if namespace.blank? || service_account_name.blank?
+
+        {
+          namespace: namespace,
+          service_account_name: service_account_name
+        }
+      rescue ArgumentError, MultiJson::ParseError
+        nil
+      end
+
+      def kubernetes_service_account_claims
+        _header, payload, _signature = kubernetes_service_account_token.split(".", 3)
+        raise ArgumentError, "JWT payload missing" if payload.blank?
+
+        MultiJson.load(Base64.urlsafe_decode64(pad_base64(payload)))
+      end
+
+      def pad_base64(value)
+        value.ljust((value.length + 3) & ~3, "=")
+      end
+
+      def request_errors(response)
+        response.body.is_a?(Hash) ? response.body["errors"] : response.body
+      end
+
+      def raise_request_error(response)
+        raise "Vault request failed with status #{response.status}: #{request_errors(response)}"
       end
     end
   end
