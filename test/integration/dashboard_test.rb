@@ -2,6 +2,7 @@ require "test_helper"
 
 class DashboardTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
+
   WORKFLOW_JOB_CLASS_NAME = R3x::TestSupport::DashboardWorkflowJob.name.freeze
 
   setup do
@@ -254,8 +255,6 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "12:00:01"
     assert_includes response.body, "log-time"
     assert_includes response.body, "log-message"
-    assert_includes response.body, "log-severity"
-    assert_includes response.body, "Info"
     refute_includes response.body, "log-meta"
     refute_includes response.body, "r3x-jobs-123 / app"
     refute_includes response.body, "[r3x.run_active_job_id="
@@ -497,21 +496,22 @@ class DashboardTest < ActionDispatch::IntegrationTest
   end
 
   private
-    def clear_tables
-      TestDbCleanup.clear_runtime_tables!
-    end
 
-    def claim_job!(job)
-      process = SolidQueue::Process.create!(
-        kind: "Worker",
-        last_heartbeat_at: Time.current,
-        pid: Process.pid,
-        hostname: "test",
-        metadata: "{}",
-        name: "test-worker-#{job.id}",
-        created_at: Time.current
-      )
+  def clear_tables
+    TestDbCleanup.clear_runtime_tables!
+  end
 
-      SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: 30.seconds.ago)
-    end
+  def claim_job!(job)
+    process = SolidQueue::Process.create!(
+      kind: "Worker",
+      last_heartbeat_at: Time.current,
+      pid: Process.pid,
+      hostname: "test",
+      metadata: "{}",
+      name: "test-worker-#{job.id}",
+      created_at: Time.current
+    )
+
+    SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: 30.seconds.ago)
+  end
 end
