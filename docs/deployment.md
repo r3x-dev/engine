@@ -71,16 +71,29 @@ R3X_VAULT_KUBERNETES_AUTH_PATH=auth/kubernetes
 R3X_VAULT_KUBERNETES_TOKEN_PATH=/var/run/secrets/kubernetes.io/serviceaccount/token
 ```
 
-At boot, the app reads the configured KV v2 path and loads returned keys into
-`ENV`. Keys starting with `R3X_` are rejected so app-internal configuration does
-not come from the secret payload.
+At boot, if `R3X_VAULT_SECRETS_PATH` is set, the app treats Vault bootstrap as
+intentional and reads that KV v2 path into `ENV`. Keys starting with `R3X_` are
+rejected so app-internal configuration does not come from the secret payload.
 
-With Kubernetes auth, the app reads the pod service account token, calls
-`auth/kubernetes/login`, and uses the returned Vault token for subsequent reads.
-That Vault token is cached only in-process, so a pod restart naturally performs a
-fresh login.
+If `R3X_VAULT_SECRETS_PATH` is set and `R3X_VAULT_ADDR` is missing, Vault is
+skipped. If `R3X_VAULT_ADDR` is set but the selected auth mode is invalid or
+incomplete, boot fails fast with an error instead of silently continuing without
+secrets.
 
-Use `R3X_SKIP_VAULT_ENV_LOAD=true` only for diagnostics or token renewal tasks
+With Kubernetes auth, the app does not get a Vault token from Kubernetes. It
+gets a Kubernetes service account JWT from the pod filesystem, by default from
+`/var/run/secrets/kubernetes.io/serviceaccount/token`, or from
+`R3X_VAULT_KUBERNETES_TOKEN_PATH` when overridden. The app sends that JWT and
+`R3X_VAULT_KUBERNETES_ROLE` to Vault at
+`v1/<R3X_VAULT_KUBERNETES_AUTH_PATH>/login`.
+
+Vault validates the JWT against its configured Kubernetes auth backend and, if
+the role bindings match, returns a Vault client token in the response `auth`
+payload. The app caches that Vault token only in-process and uses it for the
+subsequent Vault API calls in that process. A pod restart naturally performs a
+fresh Kubernetes login.
+
+Use `R3X_SKIP_VAULT_ENV_LOAD=true` only for diagnostics or other operator tasks
 that must boot Rails even when the Vault token is broken.
 
 ### Kubernetes Auth Notes
@@ -91,40 +104,7 @@ that must boot Rails even when the Vault token is broken.
   workload.
 - Scope the Vault policy to the exact paths the app needs, for example
   `secret/data/env/r3x`.
-- `just vault_check` works with both auth modes.
-- `just vault_renew` is only meaningful for token auth with a renewable token.
-
-## Vault Token Renewal
-
-If `R3X_VAULT_TOKEN` is a static Vault token, issue it as a renewable periodic
-token. For the current Kubernetes deployment, the token period is `72h`, so renew
-it every `24h`.
-
-Renewal extends the token lease in Vault. It does not rotate the token string,
-so the Kubernetes Secret value does not need to change after a successful renew.
-If the token fully expires or is revoked, renewal cannot recover it; issue a new
-token and update the backing secret.
-
-The recommended Kubernetes pattern is a dedicated CronJob outside Solid Queue:
-
-- Schedule: once daily, for example `17 3 * * *`
-- Command:
-  ```sh
-  ./bin/rails runner 'puts MultiJson.dump(R3x::Client::HashiCorpVault.renew_self, pretty: true)'
-  ```
-- Environment:
-  ```sh
-  R3X_SKIP_VAULT_ENV_LOAD=true
-  R3X_VAULT_ADDR=http://vault.kube-system:8200
-  R3X_VAULT_TOKEN=<from Kubernetes Secret>
-  ```
-
-Keep renewal outside the web and Solid Queue worker lifecycle so an expired
-application token does not depend on normal workflow execution to repair itself.
-
-When using Kubernetes auth for the app pods, this renewal path becomes an
-optional fallback for operators and non-Kubernetes consumers that still rely on a
-static Vault token.
+- `just vault_check` works with both auth modes and is read-only.
 
 ## Operations
 
@@ -132,17 +112,8 @@ Local checks from this repo:
 
 ```sh
 just vault_check
-just vault_renew
 ```
 
-Kubernetes checks:
-
-```sh
-kubectl -n default get cronjob | grep r3x
-kubectl -n default create job --from=cronjob/<r3x-vault-renew-name> r3x-vault-renew-manual
-kubectl -n default logs job/r3x-vault-renew-manual
-```
-
-`just vault_check` prints sanitized token metadata, capabilities, renewal
-summary, and configured secret key names. It does not print the token or secret
-values.
+`just vault_check` prints sanitized token metadata, capabilities, and
+configured secret key names. It does not renew the token and it does not print
+the token or secret values.
