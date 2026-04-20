@@ -1,6 +1,6 @@
 module Demo
   module Dashboard
-    class WorkshopMonitoringJob < BaseJob
+    class MonitoringJob < BaseJob
       queue_as :default
     end
   end
