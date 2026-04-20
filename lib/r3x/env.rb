@@ -57,7 +57,7 @@ module R3x
 
     def self.load_from_vault(path)
       unless R3x::Client::HashiCorpVault.configured?
-        logger.info "R3X_VAULT_ADDR or R3X_VAULT_TOKEN not set - skipping Vault"
+        logger.info "Vault auth not configured - skipping Vault"
         return {}
       end
 

@@ -14,6 +14,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - If `Solid Queue` or `Solid Cache` is ever moved to a separate database, or replaced with a non-database backend/store, revisit any code that relies on transactional integrity between app writes and job enqueueing. In that setup, `enqueue_after_transaction_commit` and related tests become important again.
 - Production database configuration is environment-driven: prefer `R3X_DATABASE_URL`, and fall back to `R3X_DATABASE_PATH` for SQLite-style file paths.
 - Secrets are ENV-only in this repo. Do not rely on Rails encrypted credentials or `RAILS_MASTER_KEY`; provide `SECRET_KEY_BASE` and integration secrets through environment variables.
+- The optional Vault env bootstrap supports either a direct `R3X_VAULT_TOKEN` or in-cluster `auth/kubernetes` login via `R3X_VAULT_AUTH_METHOD=kubernetes` plus `R3X_VAULT_KUBERNETES_ROLE`.
 - The default local UI surface is the server-rendered workflow dashboard mounted at `/`.
 - Mission Control Jobs remains available at `/ops/jobs` for queue inspection and operational actions.
 - The dashboard is DB-first: workflow pages and recent runs are derived from current `Solid Queue` tables plus `trigger_states`, so they only show workflows and runs that have persisted runtime artifacts.

@@ -1,4 +1,5 @@
 require "test_helper"
+require "tempfile"
 
 module R3x
   module Client
@@ -7,6 +8,10 @@ module R3x
         @original_vault_addr = ENV["R3X_VAULT_ADDR"]
         @original_vault_token = ENV["R3X_VAULT_TOKEN"]
         @original_vault_secrets_path = ENV["R3X_VAULT_SECRETS_PATH"]
+        @original_vault_auth_method = ENV["R3X_VAULT_AUTH_METHOD"]
+        @original_vault_kubernetes_role = ENV["R3X_VAULT_KUBERNETES_ROLE"]
+        @original_vault_kubernetes_auth_path = ENV["R3X_VAULT_KUBERNETES_AUTH_PATH"]
+        @original_vault_kubernetes_token_path = ENV["R3X_VAULT_KUBERNETES_TOKEN_PATH"]
         reset_vault_singleton
       end
 
@@ -14,6 +19,10 @@ module R3x
         ENV["R3X_VAULT_ADDR"] = @original_vault_addr
         ENV["R3X_VAULT_TOKEN"] = @original_vault_token
         ENV["R3X_VAULT_SECRETS_PATH"] = @original_vault_secrets_path
+        ENV["R3X_VAULT_AUTH_METHOD"] = @original_vault_auth_method
+        ENV["R3X_VAULT_KUBERNETES_ROLE"] = @original_vault_kubernetes_role
+        ENV["R3X_VAULT_KUBERNETES_AUTH_PATH"] = @original_vault_kubernetes_auth_path
+        ENV["R3X_VAULT_KUBERNETES_TOKEN_PATH"] = @original_vault_kubernetes_token_path
         WebMock.reset!
         reset_vault_singleton
       end
@@ -48,6 +57,8 @@ module R3x
       test "raises when required vault config is missing" do
         ENV["R3X_VAULT_ADDR"] = nil
         ENV["R3X_VAULT_TOKEN"] = nil
+        ENV["R3X_VAULT_AUTH_METHOD"] = nil
+        ENV["R3X_VAULT_KUBERNETES_ROLE"] = nil
         reset_vault_singleton
 
         error = assert_raises(ArgumentError) do
@@ -55,6 +66,55 @@ module R3x
         end
 
         assert_equal "Missing R3X_VAULT_ADDR", error.message
+      end
+
+      test "reads kv v2 data from vault using kubernetes auth" do
+        ENV["R3X_VAULT_ADDR"] = "https://vault.test"
+        ENV.delete("R3X_VAULT_TOKEN")
+        ENV["R3X_VAULT_AUTH_METHOD"] = "kubernetes"
+        ENV["R3X_VAULT_KUBERNETES_ROLE"] = "r3x"
+
+        with_service_account_token("k8s-service-account-jwt") do |token_path|
+          ENV["R3X_VAULT_KUBERNETES_TOKEN_PATH"] = token_path
+          reset_vault_singleton
+
+          stub_request(:post, "https://vault.test/v1/auth/kubernetes/login")
+            .with(
+              body: ->(body) { MultiJson.load(body) == { "role" => "r3x", "jwt" => "k8s-service-account-jwt" } }
+            )
+            .to_return(
+              status: 200,
+              body: {
+                auth: {
+                  client_token: "vault-k8s-token",
+                  renewable: true,
+                  policies: [ "r3x-env-read" ]
+                }
+              }.to_json,
+              headers: { "Content-Type" => "application/json" }
+            )
+
+          stub_request(:get, "https://vault.test/v1/secret/data/env/r3x")
+            .with(headers: { "X-Vault-Token" => "vault-k8s-token" })
+            .to_return(
+              status: 200,
+              body: {
+                data: {
+                  data: {
+                    api_key: "test-api-key"
+                  },
+                  metadata: { version: 1 }
+                }
+              }.to_json,
+              headers: { "Content-Type" => "application/json" }
+            )
+
+          result = HashiCorpVault.read("secret/data/env/r3x")
+
+          assert_equal({
+            "api_key" => "test-api-key"
+          }, result)
+        end
       end
 
       test "raises when vault config is blank string" do
@@ -347,6 +407,17 @@ module R3x
       test "configured? returns true when both env vars are set" do
         ENV["R3X_VAULT_ADDR"] = "https://vault.test"
         ENV["R3X_VAULT_TOKEN"] = "test-token"
+        ENV.delete("R3X_VAULT_AUTH_METHOD")
+        ENV.delete("R3X_VAULT_KUBERNETES_ROLE")
+
+        assert_equal true, HashiCorpVault.configured?
+      end
+
+      test "configured? returns true when kubernetes auth is configured" do
+        ENV["R3X_VAULT_ADDR"] = "https://vault.test"
+        ENV.delete("R3X_VAULT_TOKEN")
+        ENV["R3X_VAULT_AUTH_METHOD"] = "kubernetes"
+        ENV["R3X_VAULT_KUBERNETES_ROLE"] = "r3x"
 
         assert_equal true, HashiCorpVault.configured?
       end
@@ -372,7 +443,29 @@ module R3x
         assert_equal false, HashiCorpVault.configured?
       end
 
+      test "configured? raises for unsupported auth method" do
+        ENV["R3X_VAULT_ADDR"] = "https://vault.test"
+        ENV.delete("R3X_VAULT_TOKEN")
+        ENV["R3X_VAULT_AUTH_METHOD"] = "kerberos"
+
+        error = assert_raises(ArgumentError) do
+          HashiCorpVault.configured?
+        end
+
+        assert_equal 'Unsupported Vault auth method: "kerberos"', error.message
+      end
+
       private
+
+      def with_service_account_token(token)
+        file = Tempfile.new("vault-kubernetes-token")
+        file.write(token)
+        file.flush
+
+        yield file.path
+      ensure
+        file&.close!
+      end
 
       def reset_vault_singleton
         HashiCorpVault.instance_variable_set(:@singleton__instance__, nil)
