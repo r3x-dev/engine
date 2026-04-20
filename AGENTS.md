@@ -14,7 +14,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - If `Solid Queue` or `Solid Cache` is ever moved to a separate database, or replaced with a non-database backend/store, revisit any code that relies on transactional integrity between app writes and job enqueueing. In that setup, `enqueue_after_transaction_commit` and related tests become important again.
 - Production database configuration is environment-driven: prefer `R3X_DATABASE_URL`, and fall back to `R3X_DATABASE_PATH` for SQLite-style file paths.
 - Secrets are ENV-only in this repo. Do not rely on Rails encrypted credentials or `RAILS_MASTER_KEY`; provide `SECRET_KEY_BASE` and integration secrets through environment variables.
-- The optional Vault env bootstrap supports either a direct `R3X_VAULT_TOKEN` or in-cluster `auth/kubernetes` login via `R3X_VAULT_AUTH_METHOD=kubernetes` plus `R3X_VAULT_KUBERNETES_ROLE`.
+- The optional Vault env bootstrap supports either a direct `R3X_VAULT_TOKEN` or in-cluster `auth/kubernetes` login via `R3X_VAULT_AUTH_METHOD=kubernetes` plus `R3X_VAULT_KUBERNETES_ROLE`. The Vault client code is split between the main client, `HashiCorpVault::Config`, and `HashiCorpVault::Auth::*` helpers so auth-specific env parsing and Kubernetes login logic stay out of the endpoint methods. If `R3X_VAULT_SECRETS_PATH` is set and `R3X_VAULT_ADDR` is also set, invalid or incomplete Vault auth configuration should fail fast during boot rather than silently skipping secrets.
 - The default local UI surface is the server-rendered workflow dashboard mounted at `/`.
 - Mission Control Jobs remains available at `/ops/jobs` for queue inspection and operational actions.
 - The dashboard is DB-first: workflow pages and recent runs are derived from current `Solid Queue` tables plus `trigger_states`, so they only show workflows and runs that have persisted runtime artifacts.
@@ -27,6 +27,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `app/controllers/r3x/dashboard/`: server-rendered dashboard controllers for workflows and recent runs.
 - `app/views/r3x/dashboard/` + `app/views/layouts/r3x/dashboard.html.erb`: dashboard UI templates and layout.
 - `app/lib/r3x/dashboard/`: read-only query objects that build workflow summaries, recent runs, and optional indexed log views from `Solid Queue`, `TriggerState`, and configured log providers, plus the dashboard-side enqueuer used for `Run now`.
+- `app/lib/r3x/client/hashi_corp_vault/`: Vault client helpers for config parsing and auth mode implementations (`Config`, `Auth::Token`, `Auth::Kubernetes`).
 - `lib/r3x/workflow/executor.rb`: shared workflow execution helper that resolves the trigger and builds `Workflow::Context` for a loaded workflow class.
 - `lib/r3x/dsl/`: shared DSL infrastructure, especially validation concerns and configuration errors used by workflow-declared objects.
 - `lib/r3x/trigger_manager.rb` + `lib/r3x/trigger_manager/`: trigger infrastructure — `R3x::TriggerManager::Collection` (manages workflow triggers as a hash keyed by `unique_key`) and `R3x::TriggerManager::Execution` (wraps a trigger for runtime use).
