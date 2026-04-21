@@ -97,6 +97,29 @@ module R3x
         assert_equal [], entry[:tags]
       end
 
+      test "run logs preserve bracketed literal prefixes" do
+        client = FakeLogsClient.new(entries: [
+          {
+            "_time" => "2026-04-15T12:00:01Z",
+            "_msg" => MultiJson.dump(
+              "level" => "info",
+              "message" => "[DRY-RUN]: Email send skipped"
+            )
+          }
+        ])
+
+        run = {
+          active_job_id: "aj-123",
+          enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+        }
+
+        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+
+        assert_equal "[DRY-RUN]: Email send skipped", result[:entries].first[:message]
+        assert_equal [], result[:entries].first[:tags]
+      end
+
       test "run logs read explicit level from structured payload" do
         client = FakeLogsClient.new(entries: [
           { "_time" => "2026-04-15T12:00:01Z", "_msg" => MultiJson.dump("level" => "error", "message" => "Camera alert: driveway offline") },

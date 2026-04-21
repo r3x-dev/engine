@@ -4,7 +4,7 @@ require "time"
 
 module R3x
   class LogFormatter < ::Logger::Formatter
-    TAG_PATTERN = /\A(?:\[(?<tag>[^\]]+)\]\s*)+/
+    TAG_PATTERN = /\A(?:\[(?<tag>[^\]]+)\]\s+)+/
 
     def call(severity, time, progname, msg)
       payload = payload_for(severity, time, progname, msg)

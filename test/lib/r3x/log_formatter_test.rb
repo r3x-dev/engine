@@ -36,5 +36,19 @@ module R3x
       assert_equal "plain message", payload.fetch("message")
       refute payload.key?("tags")
     end
+
+    test "preserves bracketed literal prefixes in plain messages" do
+      io = StringIO.new
+      logger = ActiveSupport::Logger.new(io).tap do |base_logger|
+        base_logger.formatter = LogFormatter.new
+      end
+
+      logger.info("[DRY-RUN]: email not sent")
+
+      payload = MultiJson.load(io.string)
+
+      assert_equal "[DRY-RUN]: email not sent", payload.fetch("message")
+      refute payload.key?("tags")
+    end
   end
 end
