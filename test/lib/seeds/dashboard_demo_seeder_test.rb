@@ -12,7 +12,12 @@ module Seeds
     end
 
     test "seeds predictable demo workflows and runs" do
-      DashboardDemoSeeder.new.seed!
+      stdout, = capture_io do
+        @runs = DashboardDemoSeeder.new.seed!
+      end
+
+      assert_equal "", stdout
+      assert_equal 5, @runs.size
 
       runs = R3x::Dashboard::WorkflowRuns.new.all.select { |run| run[:workflow_key].start_with?("demo_") }
 
@@ -38,6 +43,23 @@ module Seeds
       seeder.seed!
 
       assert_equal first_counts, runtime_counts
+    end
+
+    test "prints summary when explicitly requested" do
+      seeder = DashboardDemoSeeder.new
+      runs = seeder.seed!
+
+      stdout, = capture_io do
+        seeder.print_summary(runs)
+      end
+
+      assert_includes stdout, "Seeded dashboard demo data for local UI review:"
+      assert_includes stdout, "  /workflow-runs"
+      assert_includes stdout, "Demo Feed Watch"
+      assert_includes stdout, "Demo Inventory Sync"
+      assert_includes stdout, "Demo Invoice Dispatch"
+      assert_includes stdout, "Demo Monitoring"
+      assert_includes stdout, "Demo Retention Cleanup"
     end
 
     private

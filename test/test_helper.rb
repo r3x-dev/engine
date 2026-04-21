@@ -12,10 +12,8 @@ WebMock.disable_net_connect!
 module ActiveSupport
   class TestCase
     # Add more helper methods to be used by all tests here...
-
-    parallel_workers = ENV["PARALLEL_WORKERS"]&.to_i
-    parallelize(workers: parallel_workers, with: :processes) if parallel_workers.to_i > 1
-    parallelize(workers: :number_of_processors, with: :processes) if parallel_workers.nil?
+    # The suite stays serial on purpose: SQLite plus shared Solid Queue tables
+    # produce more lock contention and hangs than speedup under Minitest processes.
 
     def capture_logged_output
       io = StringIO.new

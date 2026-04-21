@@ -1,10 +1,6 @@
 #!/usr/bin/env ruby
 
-ENV["SOLID_QUEUE_CONFIG"] ||= "config/queue.scheduler.yml"
-
 require_relative "../config/environment"
 require "solid_queue/cli"
 
-R3x::Workflow::Boot.load_and_schedule!
-
-SolidQueue::Cli.start(ARGV)
+R3x::Workflow::Entrypoint.start_jobs_scheduler!
