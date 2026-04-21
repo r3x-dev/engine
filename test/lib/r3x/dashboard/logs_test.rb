@@ -20,7 +20,8 @@ module R3x
         end
 
         private
-          attr_reader :entries, :error
+
+        attr_reader :entries, :error
       end
 
       test "returns unavailable state when provider is missing" do
@@ -88,27 +89,15 @@ module R3x
         result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
         entry = result[:entries].first
 
-        assert_equal "Running workflow trigger_type=schedule", entry[:message]
-        assert_equal [], entry[:tags]
-      end
-
-      test "run logs infer severity from normalized message content" do
-        client = FakeLogsClient.new(entries: [
-          { "_time" => "2026-04-15T12:00:01Z", "_msg" => "Camera alert: driveway offline" },
-          { "_time" => "2026-04-15T12:00:02Z", "_msg" => "Retry scheduled after timeout" },
-          { "_time" => "2026-04-15T12:00:03Z", "_msg" => "Workflow run completed" },
-          { "_time" => "2026-04-15T12:00:04Z", "_msg" => "Still working" }
-        ])
-
-        run = {
-          active_job_id: "aj-123",
-          enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
-          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
-        }
-
-        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
-
-        assert_equal %w[danger warn ok muted], result[:entries].map { |entry| entry[:severity] }
+        assert_equal(
+          {
+            container_name: "app",
+            message: "Running workflow trigger_type=schedule",
+            pod_name: "r3x-jobs-123",
+            time: Time.zone.parse("2026-04-15T12:00:01Z")
+          },
+          entry
+        )
       end
 
       test "returns provider error when provider is unsupported" do

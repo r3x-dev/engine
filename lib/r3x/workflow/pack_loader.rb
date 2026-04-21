@@ -16,21 +16,19 @@ module R3x
           loaded = []
 
           workflow_files.each do |entrypoint|
-            begin
-              require entrypoint
-              workflow_class = register_workflow(entrypoint)
-              loaded << workflow_class
+            require entrypoint
+            workflow_class = register_workflow(entrypoint)
+            loaded << workflow_class
 
-              Rails.logger.tagged("r3x.workflow_key=#{workflow_class.workflow_key}") do
-                logger.info "Loaded workflow class=#{workflow_class.name} entrypoint=#{entrypoint}"
-              end
-            rescue => e
-              Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") do
-                logger.error "Workflow load failed error_class=#{e.class} error_message=#{e.message}"
-              end
-
-              raise
+            Rails.logger.tagged("r3x.workflow_key=#{workflow_class.workflow_key}") do
+              logger.info "Loaded workflow class=#{workflow_class.name} entrypoint=#{entrypoint}"
             end
+          rescue => e
+            Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") do
+              logger.error "Workflow load failed error_class=#{e.class} error_message=#{e.message}"
+            end
+
+            raise
           end
 
           logger.info "Loaded #{loaded.size} workflow packs"
