@@ -208,6 +208,7 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - When fixing a bug, write a failing test first that reproduces the issue, then fix the code.
 - **Flow**: Write test → verify it fails → fix code → verify test passes.
 - This ensures the bug is actually fixed and prevents regressions.
+- Apply this red/green flow broadly to bug fixes and behavioral regressions, not just parser or formatter changes. Keep a regression test that proves the user-visible or externally observable behavior that broke.
 
 ## Logging
 
