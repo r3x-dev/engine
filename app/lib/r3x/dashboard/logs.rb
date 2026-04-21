@@ -120,6 +120,16 @@ module R3x
           raise ArgumentError, "Expected log payload to decode to a hash, got #{parsed.class}"
         end
 
+        unless parsed.key?("level") && parsed.key?("message")
+          message, tags = extract_message_and_tags(raw_message, context: context)
+
+          return {
+            level: "unknown",
+            message: message,
+            tags: tags
+          }
+        end
+
         message, tags = extract_message_and_tags(parsed["message"], tags: parsed["tags"], context: context)
 
         {

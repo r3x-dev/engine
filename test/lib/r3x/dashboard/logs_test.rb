@@ -161,6 +161,29 @@ module R3x
         assert_equal "valid line", result[:entries].second[:message]
       end
 
+      test "run logs preserve json messages that are not log envelopes" do
+        raw_message = MultiJson.dump("event" => "email_sent", "count" => 2)
+        client = FakeLogsClient.new(entries: [
+          { "_time" => "2026-04-15T12:00:01Z", "_msg" => raw_message },
+          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJson.dump("level" => "info", "message" => "valid line") }
+        ])
+
+        run = {
+          active_job_id: "aj-123",
+          enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+        }
+
+        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+
+        assert_equal true, result[:configured]
+        assert_nil result[:error]
+        assert_equal 2, result[:entries].size
+        assert_equal "unknown", result[:entries].first[:level]
+        assert_equal raw_message, result[:entries].first[:message]
+        assert_equal "valid line", result[:entries].second[:message]
+      end
+
       test "run logs skip entries with invalid level" do
         client = FakeLogsClient.new(entries: [
           { "_time" => "2026-04-15T12:00:01Z", "_msg" => MultiJson.dump("level" => "trace", "message" => "bad level") },
