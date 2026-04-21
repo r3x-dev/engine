@@ -5,11 +5,13 @@ module R3x
     setup do
       @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
       ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
+      @legacy_workflow_dir = Rails.root.join("tmp/legacy_schema_workflow_#{SecureRandom.hex(4)}")
       R3x::Workflow::PackLoader.load!(force: true)
     end
 
     teardown do
       ENV["R3X_WORKFLOW_PATHS"] = @original_workflow_paths
+      FileUtils.rm_rf(@legacy_workflow_dir) if @legacy_workflow_dir
     end
 
     test "loads workflow from external path by convention" do
@@ -48,6 +50,36 @@ module R3x
       assert_includes output, "R3x::Workflow::PackLoader"
       assert_includes output, "r3x.workflow_key=test_workflow"
       assert_includes output, "Loaded workflow class=Workflows::TestWorkflow"
+    end
+
+    test "loads legacy workflows that still inherit from RubyLLM::Schema" do
+      FileUtils.mkdir_p(@legacy_workflow_dir.join("legacy_schema"))
+      File.write(@legacy_workflow_dir.join("legacy_schema/workflow.rb"), <<~RUBY)
+        module Workflows
+          class LegacySchema < R3x::Workflow::Base
+            class OutputSchema < RubyLLM::Schema
+              string :status
+            end
+
+            trigger :schedule, cron: "0 * * * *"
+
+            def run
+              { "status" => "ok" }
+            end
+          end
+        end
+      RUBY
+
+      ENV["R3X_WORKFLOW_PATHS"] = [
+        Rails.root.join("test/fixtures/workflows"),
+        @legacy_workflow_dir
+      ].join(File::PATH_SEPARATOR)
+
+      assert_nothing_raised do
+        R3x::Workflow::PackLoader.load!(force: true)
+      end
+
+      assert_equal Workflows::LegacySchema, R3x::Workflow::Registry.fetch("legacy_schema")
     end
   end
 end
