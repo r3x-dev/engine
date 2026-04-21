@@ -139,7 +139,7 @@ module R3x
         assert_equal %w[error warn info debug], result[:entries].map { |entry| entry[:level] }
       end
 
-      test "run logs skip malformed json entries" do
+      test "run logs preserve plaintext entries during json rollout" do
         client = FakeLogsClient.new(entries: [
           { "_time" => "2026-04-15T12:00:01Z", "_msg" => "not json at all" },
           { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJson.dump("level" => "info", "message" => "valid line") }
@@ -155,8 +155,10 @@ module R3x
 
         assert_equal true, result[:configured]
         assert_nil result[:error]
-        assert_equal 1, result[:entries].size
-        assert_equal "valid line", result[:entries].first[:message]
+        assert_equal 2, result[:entries].size
+        assert_equal "unknown", result[:entries].first[:level]
+        assert_equal "not json at all", result[:entries].first[:message]
+        assert_equal "valid line", result[:entries].second[:message]
       end
 
       test "run logs skip entries with invalid level" do

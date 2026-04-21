@@ -127,6 +127,14 @@ module R3x
           message: message,
           tags: tags
         }
+      rescue MultiJson::ParseError
+        message, tags = extract_message_and_tags(raw_message, context: context)
+
+        {
+          level: "unknown",
+          message: message,
+          tags: tags
+        }
       end
 
       def normalize_level(value)
