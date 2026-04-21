@@ -16,7 +16,6 @@ module R3x
           loaded = []
 
           workflow_files.each do |entrypoint|
-            ensure_legacy_llm_schema_support(entrypoint)
             require entrypoint
             workflow_class = register_workflow(entrypoint)
             loaded << workflow_class
@@ -57,12 +56,6 @@ module R3x
 
           files
         end.uniq
-      end
-
-      def ensure_legacy_llm_schema_support(entrypoint)
-        return unless File.read(entrypoint).include?("RubyLLM::Schema")
-
-        R3x::GemLoader.require("ruby_llm/schema")
       end
 
       def register_workflow(entrypoint_file)
