@@ -1,11 +1,6 @@
 #!/usr/bin/env ruby
 
-ENV["SOLID_QUEUE_CONFIG"] ||= "config/queue.worker.yml"
-ENV["SOLID_QUEUE_SKIP_RECURRING"] = "true" if ENV["SOLID_QUEUE_SKIP_RECURRING"].to_s.empty?
-
 require_relative "../config/environment"
 require "solid_queue/cli"
 
-R3x::Workflow::Boot.load!
-
-SolidQueue::Cli.start(ARGV)
+R3x::Workflow::Entrypoint.start_jobs_worker!
