@@ -14,11 +14,7 @@ module R3x
         workflow_class = R3x::Workflow::Registry.fetch(workflow_key)
         logger.info "Dispatching workflow class=#{workflow_class.name}"
 
-        workflow_class.perform_now(trigger_key, trigger_payload: trigger_payload).tap do
-          with_log_tags("r3x.job_outcome=success") do
-            logger.info "Workflow dispatch completed"
-          end
-        end
+        workflow_class.perform_now(trigger_key, trigger_payload: trigger_payload)
       rescue => e
         with_log_tags("r3x.job_outcome=failed") do
           logger.error "Workflow dispatch failed error_class=#{e.class} error_message=#{e.message}"

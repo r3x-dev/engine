@@ -98,6 +98,7 @@ module R3x
       assert_includes output, "r3x.workflow_key=test_workflow"
       assert_includes output, "r3x.trigger_key=#{schedule_trigger.unique_key}"
       assert_includes output, "Scheduled recurring task"
+      assert_includes output, "dynamic recurring tasks"
     end
 
     test "to_h appends timezone to schedule when trigger declares one" do
