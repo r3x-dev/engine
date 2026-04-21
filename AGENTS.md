@@ -71,9 +71,11 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - Because the app currently uses `Solid Queue` as a database-backed backend on the same Active Record database connection, code may intentionally rely on a database transaction covering both `TriggerState` updates and `perform_later`. Do not assume those guarantees survive a future backend or database split.
 - `R3x::RunWorkflowJob` fetches the workflow from the registry and calls `workflow_class.perform_now(trigger_key, trigger_payload: ...)` for compatibility with callers that still dispatch by workflow key.
 - `ApplicationJob`, `R3x::RunWorkflowJob`, `R3x::Workflow::Base`, and `R3x::ChangeDetectionJob` add stable tagged log context so indexed logs can be correlated back to run pages. The workflow job itself keeps the per-run tags minimal (`r3x.run_active_job_id` and `r3x.trigger_key`), while orchestration jobs still emit `r3x.workflow_key` for broader workflow-level correlation.
+- App logs are always emitted as structured JSON with explicit `level`, `message`, and tag data so the dashboard can read real log levels directly.
 - Known limitation: because queued workflow runs persist the concrete workflow class name, renaming or removing a workflow class across deploys can strand older queued runs with job deserialization failures. This is currently an accepted tradeoff for preserving `ActiveJob::Continuable` on the workflow job itself.
 - The dashboard's run history is DB-first and parses `Solid Queue` / `Active Job` payloads directly. It still accepts the underlying tradeoff that finished runs are retention-bound and that workflows with no persisted runtime artifacts are invisible to the dashboard.
 - The dashboard log view is also retention-bound, but by the configured log backend rather than `Solid Queue`; it is read-only and fail-soft, so missing log provider config or query failures should not break the main dashboard pages.
+- Dashboard log rendering should consume explicit levels from structured log payloads. Do not reintroduce regex-based level inference from message text.
 - Trigger discovery is filesystem-backed through `lib/r3x/triggers/*.rb`, so trigger file names, constants, and supported types must stay aligned.
 
 ## Working with Workflows

@@ -137,6 +137,9 @@ These notes apply to workflow code in general.
   for indexed log correlation in the dashboard. Orchestration jobs also tag lines with `r3x.workflow_key`
   where that broader workflow-level context is useful. Prefer logging through the existing Rails logger so
   those tags stay attached to emitted lines.
+- App logs are always emitted as structured JSON with explicit `level`, `message`, and `tags`.
+- Dashboard run logs read the explicit `level` from structured log payloads. They do not infer levels
+  from free-form message text.
 
 ## LLM Output
 

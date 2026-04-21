@@ -13,7 +13,7 @@ module R3x
 
       def deliver(content:)
         if R3x::Policy.dry_run_for(:discord)
-          logger.info { "[DRY-RUN]: content: #{content}" }
+          logger.info "[DRY-RUN]: content: #{content}"
 
           return { "mode" => "dry_run" }
         end

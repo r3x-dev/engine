@@ -6,7 +6,7 @@
 #     include R3x::Concerns::Logger
 #
 #     def do_something
-#       logger.info("message")  # => [MyClass] message
+#       logger.info("message")  # tagged via Rails.logger with the class name
 #     end
 #   end
 #
@@ -15,7 +15,7 @@
 #     extend R3x::Concerns::Logger
 #
 #     def self.do_something
-#       logger.info("message")  # => [MyClass] message
+#       logger.info("message")  # tagged via Rails.logger with the class name
 #     end
 #   end
 #
