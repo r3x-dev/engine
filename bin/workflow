@@ -1,13 +1,12 @@
 #!/usr/bin/env ruby
 require_relative "../config/environment"
 require "thor"
-require "amazing_print"
 
 logger = ActiveSupport::Logger.new(STDOUT)
 logger.level = Logger::INFO
 Rails.logger = ActiveSupport::TaggedLogging.new(logger)
 
-class WorkflowCLI < Thor
+class WorkflowCli < Thor
   def self.exit_on_failure? = true
   namespace :workflow
 
@@ -20,83 +19,24 @@ class WorkflowCLI < Thor
   option :verbose, type: :boolean, aliases: "-v", desc: "Enable verbose logging (debug level)"
   def execute(path)
     Rails.logger.level = Logger::DEBUG if options[:verbose]
-
-    ENV["R3X_DRY_RUN"] = "true" if options[:dry_run]
-    ENV["R3X_SKIP_CACHE"] = "true" if options[:skip_cache]
-
-    puts run_message(path)
-
-    result = load_workflow(path).new.perform
-
-    if result.is_a?(String)
-      puts result
-    else
-      ap result
-    end
+    cli.run(path, dry_run: options[:dry_run], skip_cache: options[:skip_cache])
   end
 
   desc "list", "List available workflows"
   def list
-    R3x::Workflow::PackLoader.load!
-    workflows = R3x::Workflow::Registry.all
-
-    if workflows.empty?
-      puts "No workflows found."
-      return
-    end
-
-    puts "Available workflows:"
-    workflows.each do |wf|
-      triggers = wf.triggers.map { |t| t.type }.uniq.join(", ")
-      puts "  #{wf.workflow_key}  (triggers: #{triggers})"
-    end
+    cli.list
   end
 
   desc "info KEY", "Show details for a specific workflow"
   def info(key)
-    R3x::Workflow::PackLoader.load!
-    workflow_class = R3x::Workflow::Registry.fetch(key)
-
-    puts "Workflow: #{key}"
-    puts "  Class:    #{workflow_class}"
-    puts "  Triggers:"
-    workflow_class.triggers.each do |t|
-      puts "    #{t.type}  key=#{t.unique_key}"
-    end
+    cli.info(key)
   end
 
   private
 
-  def run_message(path)
-    return "Dry run without cache: #{path}" if options[:dry_run] && options[:skip_cache]
-    return "Dry run: #{path}" if options[:dry_run]
-    return "Running without cache: #{path}" if options[:skip_cache]
-
-    "Running: #{path}"
-  end
-
-  def workflow_file_path(path)
-    full_path = File.expand_path(path)
-    raise ArgumentError, "Workflow file not found: #{path}" unless File.exist?(full_path)
-    raise ArgumentError, "Not a file: #{path}" unless File.file?(full_path)
-
-    full_path
-  end
-
-  def load_workflow(path)
-    full_path = workflow_file_path(path)
-
-    require full_path
-
-    workflow = ObjectSpace.each_object(Class).find do |klass|
-      klass < R3x::Workflow::Base &&
-        klass.name.present? &&
-        Object.const_source_location(klass.name)&.first == full_path
-    end
-    raise ArgumentError, "No workflow class found in #{path}" unless workflow
-
-    workflow
+  def cli
+    @cli ||= R3x::Workflow::Cli.new
   end
 end
 
-WorkflowCLI.start(ARGV)
+WorkflowCli.start(ARGV)

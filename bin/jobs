@@ -3,10 +3,4 @@
 require_relative "../config/environment"
 require "solid_queue/cli"
 
-if ActiveModel::Type::Boolean.new.cast(ENV["SOLID_QUEUE_IN_PUMA"])
-  R3x::Workflow::Boot.load!
-else
-  R3x::Workflow::Boot.load_and_schedule!
-end
-
-SolidQueue::Cli.start(ARGV)
+R3x::Workflow::Entrypoint.start_jobs!

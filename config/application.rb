@@ -44,12 +44,6 @@ module R3x
     config.api_only = true
     config.mission_control.jobs.base_controller_class = "R3x::WebController"
 
-    server do
-      if ActiveModel::Type::Boolean.new.cast(ENV["SOLID_QUEUE_IN_PUMA"]) || Rails.env.development?
-        R3x::Workflow::Boot.load_and_schedule!
-      else
-        R3x::Workflow::Boot.load!
-      end
-    end
+    server { R3x::Workflow::Entrypoint.boot_server!(rails_env: Rails.env) }
   end
 end

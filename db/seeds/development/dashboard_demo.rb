@@ -1,3 +1,4 @@
 require_relative "../support/dashboard_demo_seeder"
 
-Seeds::DashboardDemoSeeder.new.seed!
+seeder = Seeds::DashboardDemoSeeder.new
+seeder.print_summary(seeder.seed!)

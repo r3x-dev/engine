@@ -12,8 +12,16 @@ module Seeds
         create_trigger_state!(definition)
         create_run!(definition)
       end
+    end
 
-      print_summary(runs)
+    def print_summary(runs)
+      puts "Seeded dashboard demo data for local UI review:" # rubocop:disable Rails/Output
+      puts "  /" # rubocop:disable Rails/Output
+      puts "  /workflow-runs" # rubocop:disable Rails/Output
+
+      runs.each do |run|
+        puts "  /workflow-runs/#{run.fetch(:job_id)}  #{run.fetch(:status)}  #{run.fetch(:workflow_key).titleize}" # rubocop:disable Rails/Output
+      end
     end
 
     private
@@ -235,16 +243,6 @@ module Seeds
         def perform(*)
         end
       end.new(*arguments).serialize
-    end
-
-    def print_summary(runs)
-      puts "Seeded dashboard demo data for local UI review:" # rubocop:disable Rails/Output
-      puts "  /" # rubocop:disable Rails/Output
-      puts "  /workflow-runs" # rubocop:disable Rails/Output
-
-      runs.each do |run|
-        puts "  /workflow-runs/#{run.fetch(:job_id)}  #{run.fetch(:status)}  #{run.fetch(:workflow_key).titleize}" # rubocop:disable Rails/Output
-      end
     end
   end
 end
