@@ -325,7 +325,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
         status: 200,
         body: {
           "_time" => "2026-04-15T12:00:01Z",
-          "_msg" => "[r3x.run_active_job_id=aj-running] Still working"
+          "_msg" => MultiJson.dump("level" => "info", "message" => "[r3x.run_active_job_id=aj-running] Still working")
         }.to_json + "\n"
       )
 
@@ -377,7 +377,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
         status: 200,
         body: {
           "_time" => "2026-04-15T12:00:02Z",
-          "_msg" => "[r3x.run_active_job_id=aj-running-panel] Fresh line"
+          "_msg" => MultiJson.dump("level" => "info", "message" => "[r3x.run_active_job_id=aj-running-panel] Fresh line")
         }.to_json + "\n"
       )
 

@@ -2,9 +2,7 @@ module R3x
   module Dashboard
     class Logs
       RUN_LOG_LIMIT = 150
-      TAG_PATTERN = /\A(?:\[(?<tag>[^\]]+)\]\s*)+/
       HIDDEN_TAG_PREFIXES = %w[r3x.].freeze
-      LOG_LEVELS = %w[debug info warn error fatal unknown].freeze
 
       class << self
         def configured?(provider_name: current_provider_name)
@@ -72,14 +70,16 @@ module R3x
       end
 
       def query_logs(query, start_at:, end_at:, limit:, context: {})
+        raw_entries = logs_client.query(
+          query: query,
+          start_at: start_at,
+          end_at: end_at,
+          limit: limit
+        )
+
         {
           configured: true,
-          entries: logs_client.query(
-            query: query,
-            start_at: start_at,
-            end_at: end_at,
-            limit: limit
-          ).map { |entry| normalize_entry(entry, context: context) }.sort_by { |entry| entry[:time] || Time.at(0) },
+          entries: raw_entries.filter_map { |entry| normalize_entry(entry, context: context) }.sort_by { |entry| entry[:time] || Time.at(0) },
           error: nil,
           provider: provider_name
         }
@@ -109,13 +109,15 @@ module R3x
           tags: payload.fetch(:tags),
           time: parse_time(entry["_time"])
         }
+      rescue
+        nil
       end
 
       def parse_message_payload(raw_message, context: {})
         parsed = MultiJson.load(raw_message.to_s)
 
         unless parsed.is_a?(Hash)
-          raise MultiJson::ParseError, "Expected log payload to decode to a hash"
+          raise ArgumentError, "Expected log payload to decode to a hash, got #{parsed.class}"
         end
 
         message, tags = extract_message_and_tags(parsed["message"], tags: parsed["tags"], context: context)
@@ -125,28 +127,19 @@ module R3x
           message: message,
           tags: tags
         }
-      rescue MultiJson::ParseError
-        message, tags = extract_message_and_tags(raw_message, context: context)
-
-        {
-          level: "unknown",
-          message: message,
-          tags: tags
-        }
       end
 
       def normalize_level(value)
         level = value.to_s.downcase
-        level = "unknown" if level == "any"
-        return level if LOG_LEVELS.include?(level)
+        return level if %w[debug info warn error fatal unknown].include?(level)
 
-        "unknown"
+        raise ArgumentError, "Unsupported log level: #{value.inspect}"
       end
 
       def extract_message_and_tags(message, tags: nil, context: {})
         visible_tags = Array(tags).map(&:to_s).reject { |tag| hidden_tag?(tag, context: context) }
         message = message.to_s
-        match = message.match(TAG_PATTERN)
+        match = message.match(R3x::LogFormatter::TAG_PATTERN)
         return [ message, visible_tags ] unless match
 
         raw_tags = match[0].scan(/\[([^\]]+)\]/).flatten

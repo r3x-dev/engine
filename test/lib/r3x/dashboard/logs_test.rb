@@ -49,7 +49,7 @@ module R3x
         client = FakeLogsClient.new(entries: [
           {
             "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => "[r3x.run_active_job_id=aj-123] hello"
+            "_msg" => MultiJson.dump("level" => "info", "message" => "hello")
           }
         ])
 
@@ -116,26 +116,44 @@ module R3x
         assert_equal %w[error warn info debug], result[:entries].map { |entry| entry[:level] }
       end
 
-      test "run logs mark legacy plain text lines as unknown level" do
+      test "run logs skip malformed json entries" do
         client = FakeLogsClient.new(entries: [
-          {
-            "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => "[r3x.run_active_job_id=aj-123] [Workflows::TestWorkflow] Still working"
-          }
+          { "_time" => "2026-04-15T12:00:01Z", "_msg" => "not json at all" },
+          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJson.dump("level" => "info", "message" => "valid line") }
         ])
 
         run = {
           active_job_id: "aj-123",
-          class_name: "Workflows::TestWorkflow",
           enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
         }
 
         result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
-        entry = result[:entries].first
 
-        assert_equal "unknown", entry[:level]
-        assert_equal "Still working", entry[:message]
+        assert_equal true, result[:configured]
+        assert_nil result[:error]
+        assert_equal 1, result[:entries].size
+        assert_equal "valid line", result[:entries].first[:message]
+      end
+
+      test "run logs skip entries with invalid level" do
+        client = FakeLogsClient.new(entries: [
+          { "_time" => "2026-04-15T12:00:01Z", "_msg" => MultiJson.dump("level" => "trace", "message" => "bad level") },
+          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJson.dump("level" => "info", "message" => "valid line") }
+        ])
+
+        run = {
+          active_job_id: "aj-123",
+          enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+        }
+
+        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+
+        assert_equal true, result[:configured]
+        assert_nil result[:error]
+        assert_equal 1, result[:entries].size
+        assert_equal "valid line", result[:entries].first[:message]
       end
 
       test "returns provider error when provider is unsupported" do
