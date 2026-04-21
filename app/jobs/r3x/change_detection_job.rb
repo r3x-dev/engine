@@ -22,7 +22,6 @@ module R3x
             state: trigger_state.state.deep_symbolize_keys
           )
         )
-
         logger.info "Evaluated change-detecting trigger changed=#{result[:changed]}"
 
         TriggerState.transaction do
@@ -35,10 +34,6 @@ module R3x
           end
 
           trigger_state.record_check!(result)
-        end
-
-        with_log_tags("r3x.job_outcome=#{result[:changed] ? "changed" : "unchanged"}") do
-          logger.info "Change detection completed"
         end
       end
     rescue => e

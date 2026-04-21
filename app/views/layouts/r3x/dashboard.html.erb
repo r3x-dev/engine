@@ -545,6 +545,28 @@
         white-space: pre;
       }
 
+      .log-level {
+        min-width: 52px;
+        justify-content: center;
+        padding: 2px 8px;
+        font-size: 0.7rem;
+        line-height: 1.4;
+      }
+
+      .log-entry-debug .log-message,
+      .log-entry-unknown .log-message {
+        color: var(--muted);
+      }
+
+      .log-entry-error .log-message,
+      .log-entry-fatal .log-message {
+        color: var(--danger-text);
+      }
+
+      .log-entry-warn .log-message {
+        color: var(--warn-text);
+      }
+
       .log-last-updated {
         display: inline-flex;
         align-items: center;

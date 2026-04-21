@@ -77,6 +77,23 @@ module R3x
         )
       end
 
+      def dashboard_log_level_label(level)
+        level.to_s.upcase
+      end
+
+      def dashboard_log_level_tone(level)
+        case level.to_s
+        when "info"
+          "info"
+        when "warn"
+          "warn"
+        when "error", "fatal"
+          "danger"
+        else
+          "muted"
+        end
+      end
+
       def dashboard_log_state_empty_message(refreshable:, empty_message:)
         return "Waiting for first log line..." if refreshable
 
