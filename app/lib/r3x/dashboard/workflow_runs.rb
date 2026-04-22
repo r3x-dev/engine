@@ -10,7 +10,8 @@ module R3x
         STATUSES
       end
 
-      def initialize(workflow_key: nil, status: nil, limit: DEFAULT_LIMIT)
+      def initialize(workflow_key: nil, status: nil, limit: DEFAULT_LIMIT, job_ids: nil)
+        @job_ids = Array(job_ids).presence
         @workflow_key = workflow_key.presence
         @status = status.presence&.to_s
         @limit = limit.to_i.positive? ? limit.to_i : DEFAULT_LIMIT
@@ -35,7 +36,7 @@ module R3x
       end
 
       private
-        attr_reader :limit, :status, :workflow_key
+        attr_reader :job_ids, :limit, :status, :workflow_key
 
         def build_run(job)
           workflow_key = workflow_key_for(job)
@@ -71,10 +72,10 @@ module R3x
 
         def jobs
           @jobs ||= begin
-            jobs_scope
-              .order(created_at: :desc)
-              .limit(query_limit)
-              .to_a
+            scope = jobs_scope
+            scope = scope.where(id: job_ids) if job_ids.present?
+            scope = scope.order(created_at: :desc).limit(query_limit) unless job_ids.present?
+            scope.to_a
           rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
             []
           end
@@ -197,6 +198,7 @@ module R3x
         end
 
         def query_limit
+          return nil if job_ids.present?
           return limit unless workflow_key.present? || status.present?
 
           [ limit * 10, DEFAULT_LIMIT ].max

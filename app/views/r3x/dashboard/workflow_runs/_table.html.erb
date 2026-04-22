@@ -1,5 +1,4 @@
-<% show_workflow = local_assigns.fetch(:show_workflow, true) %>
-<% lead_with_trigger = local_assigns.fetch(:lead_with_trigger, !show_workflow) %>
+<% columns = local_assigns.fetch(:columns, %i[workflow result observed trigger run_id open]) %>
 
 <div class="table-wrap">
   <% if runs.empty? %>
@@ -8,57 +7,64 @@
     <table>
       <thead>
         <tr>
-          <% if show_workflow %>
+          <% if columns.include?(:workflow) %>
             <th>Workflow</th>
           <% end %>
-          <% if lead_with_trigger %>
+          <% if columns.include?(:result) %>
+            <th>Result</th>
+          <% end %>
+          <% if columns.include?(:observed) %>
+            <th>Observed</th>
+          <% end %>
+          <% if columns.include?(:trigger) %>
             <th>Trigger</th>
           <% end %>
-          <th>Status</th>
-          <th>Observed</th>
-          <% unless lead_with_trigger %>
-            <th>Trigger</th>
+          <% if columns.include?(:run_id) %>
+            <th>Run ID</th>
           <% end %>
-          <th>Run ID</th>
-          <th>Details</th>
+          <% if columns.include?(:open) %>
+            <th>Open</th>
+          <% end %>
         </tr>
       </thead>
 
       <tbody>
         <% runs.each do |run| %>
           <tr>
-            <% if show_workflow %>
+            <% if columns.include?(:workflow) %>
               <td>
                 <%= dashboard_workflow_link(run) %>
-                <div class="meta"><code><%= run[:class_name] %></code></div>
               </td>
             <% end %>
 
-            <% if lead_with_trigger %>
+            <% if columns.include?(:result) %>
+              <td>
+                <span class="pill <%= dashboard_tone_for(run[:status]) %>">
+                  <%= dashboard_status_label(run[:status]) %>
+                </span>
+              </td>
+            <% end %>
+
+            <% if columns.include?(:observed) %>
+              <td><%= dashboard_timestamp(run[:recorded_at]) %></td>
+            <% end %>
+
+            <% if columns.include?(:trigger) %>
               <td><code><%= run[:trigger_key] || "manual/default" %></code></td>
             <% end %>
 
-            <td>
-              <span class="pill <%= dashboard_tone_for(run[:status]) %>">
-                <%= dashboard_status_label(run[:status]) %>
-              </span>
-            </td>
-
-            <td><%= dashboard_timestamp(run[:recorded_at]) %></td>
-
-            <% unless lead_with_trigger %>
-              <td><code><%= run[:trigger_key] || "manual/default" %></code></td>
+            <% if columns.include?(:run_id) %>
+              <td><code><%= run[:job_id] %></code></td>
             <% end %>
-            <td><code><%= run[:job_id] %></code></td>
 
-            <td>
-              <% if run[:error].present? %>
-                <div><%= dashboard_error_summary(run[:error]) %></div>
-                <div class="meta"><%= link_to "View error", workflow_run_path(run[:job_id]) %></div>
-              <% else %>
-                <div class="meta"><%= link_to "View run", workflow_run_path(run[:job_id]) %></div>
-              <% end %>
-            </td>
+            <% if columns.include?(:open) %>
+              <td>
+                <% if run[:status] == "failed" && run[:error].present? %>
+                  <div><%= dashboard_error_summary(run[:error]) %></div>
+                <% end %>
+                <div class="meta"><%= link_to "Open run", workflow_run_path(run[:job_id]) %></div>
+              </td>
+            <% end %>
           </tr>
         <% end %>
       </tbody>

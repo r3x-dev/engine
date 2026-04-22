@@ -51,9 +51,134 @@ module R3x
         assert_equal "feed offline", summary[:health][:detail]
       end
 
+      test "orders the catalog by health severity by default" do
+        create_dashboard_workflow(workflow_key: "idle_workflow", trigger_key: "schedule:idle")
+        create_dashboard_workflow(
+          workflow_key: "healthy_workflow",
+          trigger_key: "schedule:healthy",
+          run_status: "finished",
+          recorded_at: 3.minutes.ago
+        )
+        create_dashboard_workflow(
+          workflow_key: "failed_workflow",
+          trigger_key: "schedule:failed",
+          run_status: "failed",
+          recorded_at: 2.minutes.ago
+        )
+        create_dashboard_workflow(
+          workflow_key: "trigger_error_workflow",
+          trigger_key: "feed:error",
+          trigger_error_at: 1.minute.ago
+        )
+
+        summaries = WorkflowSummaries.new.all
+
+        assert_equal %w[trigger_error_workflow failed_workflow healthy_workflow idle_workflow], summaries.map { |summary| summary[:workflow_key] }
+      end
+
+      test "reverses health severity order when sorted descending" do
+        create_dashboard_workflow(workflow_key: "idle_workflow", trigger_key: "schedule:idle")
+        create_dashboard_workflow(
+          workflow_key: "healthy_workflow",
+          trigger_key: "schedule:healthy",
+          run_status: "finished",
+          recorded_at: 3.minutes.ago
+        )
+        create_dashboard_workflow(
+          workflow_key: "failed_workflow",
+          trigger_key: "schedule:failed",
+          run_status: "failed",
+          recorded_at: 2.minutes.ago
+        )
+        create_dashboard_workflow(
+          workflow_key: "trigger_error_workflow",
+          trigger_key: "feed:error",
+          trigger_error_at: 1.minute.ago
+        )
+
+        summaries = WorkflowSummaries.new(sort: "health", direction: "desc").all
+
+        assert_equal %w[idle_workflow healthy_workflow failed_workflow trigger_error_workflow], summaries.map { |summary| summary[:workflow_key] }
+      end
+
+      test "supports workflow and last run sorting" do
+        create_dashboard_workflow(
+          workflow_key: "zeta_workflow",
+          trigger_key: "schedule:zeta",
+          run_status: "finished",
+          recorded_at: 5.minutes.ago
+        )
+        create_dashboard_workflow(
+          workflow_key: "alpha_workflow",
+          trigger_key: "schedule:alpha",
+          run_status: "finished",
+          recorded_at: 1.minute.ago
+        )
+
+        workflow_asc = WorkflowSummaries.new(sort: "workflow", direction: "asc").all
+        workflow_desc = WorkflowSummaries.new(sort: "workflow", direction: "desc").all
+        last_run_desc = WorkflowSummaries.new(sort: "last_run", direction: "desc").all
+        last_run_asc = WorkflowSummaries.new(sort: "last_run", direction: "asc").all
+
+        assert_equal %w[alpha_workflow zeta_workflow], workflow_asc.map { |summary| summary[:workflow_key] }
+        assert_equal %w[zeta_workflow alpha_workflow], workflow_desc.map { |summary| summary[:workflow_key] }
+        assert_equal %w[alpha_workflow zeta_workflow], last_run_desc.map { |summary| summary[:workflow_key] }
+        assert_equal %w[zeta_workflow alpha_workflow], last_run_asc.map { |summary| summary[:workflow_key] }
+      end
+
       private
         def clear_tables
           TestDbCleanup.clear_runtime_tables!
+        end
+
+        def create_dashboard_workflow(workflow_key:, trigger_key:, run_status: nil, recorded_at: nil, trigger_error_at: nil)
+          job_class_name = ensure_dashboard_job_class("#{workflow_key.camelize}Job").name
+
+          SolidQueue::RecurringTask.create!(
+            key: "workflow:#{workflow_key}:#{trigger_key}",
+            schedule: "0 * * * *",
+            class_name: job_class_name,
+            arguments: [ trigger_key ],
+            queue_name: "default",
+            static: false
+          )
+
+          if trigger_error_at.present?
+            R3x::TriggerState.create!(
+              workflow_key: workflow_key,
+              trigger_key: trigger_key,
+              trigger_type: "feed",
+              state: {},
+              last_error_at: trigger_error_at,
+              last_error_message: "#{workflow_key} error"
+            )
+          end
+
+          return if run_status.blank?
+
+          job = DashboardJobRows.create_job!(
+            job_class_name: job_class_name,
+            arguments: [ trigger_key ],
+            finished_at: run_status == "finished" ? recorded_at : nil,
+            created_at: recorded_at - 1.minute,
+            updated_at: recorded_at
+          )
+
+          return unless run_status == "failed"
+
+          SolidQueue::FailedExecution.create!(job_id: job.id, error: "#{workflow_key} failed", created_at: recorded_at)
+        end
+
+        def ensure_dashboard_job_class(name)
+          test_jobs = if Object.const_defined?(:TestDashboardJobs, false)
+            Object.const_get(:TestDashboardJobs)
+          else
+            Object.const_set(:TestDashboardJobs, Module.new)
+          end
+
+          return test_jobs.const_get(name, false) if test_jobs.const_defined?(name, false)
+
+          test_jobs.const_set(name, Class.new(R3x::TestSupport::DashboardWorkflowJob))
         end
     end
   end

@@ -1,0 +1,85 @@
+<% content_for :title, "Overview" %>
+
+<section class="page-header">
+  <div>
+    <h2>Overview</h2>
+  </div>
+</section>
+
+<section class="stats">
+  <% @summary_cards.each do |card| %>
+    <%= link_to card[:href], class: "stat stat-link" do %>
+      <span class="label"><%= card[:label] %></span>
+      <strong><%= card[:count] %></strong>
+      <span class="meta"><%= card[:note] %></span>
+    <% end %>
+  <% end %>
+</section>
+
+<section id="needs-attention" class="panel stack panel-spaced">
+  <div class="page-header">
+    <div>
+      <h3 class="section-title">Needs attention</h3>
+      <p class="section-copy">Workflows with trigger errors or a latest failed run.</p>
+    </div>
+
+    <div class="actions">
+      <%= link_to "View failing runs", workflow_runs_path(status: "failed"), class: "button subtle" %>
+    </div>
+  </div>
+
+  <% if @needs_attention.empty? %>
+    <div class="empty">No workflows need attention right now.</div>
+  <% else %>
+    <div class="grid two">
+      <% @needs_attention.each do |workflow| %>
+        <article class="panel panel-nested stack overview-needs-attention-card">
+          <div class="stack">
+            <div class="run-heading">
+              <%= link_to workflow[:title], workflow_path(workflow[:workflow_key]), class: "title-link" %>
+              <span class="pill <%= dashboard_tone_for(workflow.dig(:health, :status)) %>">
+                <%= dashboard_health_label(workflow[:health]) %>
+              </span>
+            </div>
+
+            <p class="meta"><%= workflow.dig(:health, :detail).presence || "Inspect this workflow to review the latest runtime state." %></p>
+
+            <div class="pill-row">
+              <span class="pill muted">Last seen <%= dashboard_relative_time(workflow[:last_seen_at]) %></span>
+              <% if workflow[:next_trigger_at].present? %>
+                <span class="pill muted">Next <%= dashboard_relative_time(workflow[:next_trigger_at]) %></span>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="actions">
+            <%= link_to "Open workflow", workflow_path(workflow[:workflow_key]), class: "button subtle" %>
+            <% if workflow[:last_run].present? && workflow[:last_run][:status] == "failed" %>
+              <%= link_to "Latest failure", workflow_run_path(workflow[:last_run][:job_id]), class: "button subtle" %>
+            <% end %>
+          </div>
+        </article>
+      <% end %>
+    </div>
+  <% end %>
+</section>
+
+<section class="panel stack panel-spaced">
+  <div class="page-header">
+    <div>
+      <h3 class="section-title">Recent runs</h3>
+      <p class="section-copy">Newest visible runs across all workflows.</p>
+    </div>
+
+    <div class="actions">
+      <%= link_to "View all runs", workflow_runs_path, class: "button subtle" %>
+    </div>
+  </div>
+
+  <div class="overview-recent-runs-table">
+    <%= render "r3x/dashboard/workflow_runs/table",
+               runs: @recent_runs,
+               columns: %i[workflow result observed trigger open],
+               empty_message: "No recent workflow runs are visible yet." %>
+  </div>
+</section>

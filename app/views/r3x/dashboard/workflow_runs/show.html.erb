@@ -2,23 +2,31 @@
 
 <%
   trigger_key = @run[:trigger_key] || "manual/default"
+  failure_summary = dashboard_error_summary(@run[:error])
 %>
+
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <%= link_to "Overview", root_path %>
+  <span>/</span>
+  <%= link_to "Runs", workflow_runs_path %>
+  <% if @run[:known_workflow] %>
+    <span>/</span>
+    <%= link_to @run[:workflow_title], workflow_path(@run[:workflow_key]) %>
+  <% end %>
+  <span>/</span>
+  <span aria-current="page">Run <%= @run[:job_id] %></span>
+</nav>
 
 <section class="page-header">
   <div>
     <div class="run-heading">
-      <h2 class="page-title">
-        <% if @run[:known_workflow] %>
-          <%= link_to @run[:workflow_title], workflow_path(@run[:workflow_key]), class: "title-link" %>
-        <% else %>
-          <%= @run[:workflow_title] %>
-        <% end %>
-      </h2>
+      <h2 class="page-title"><%= @run[:workflow_title] %></h2>
 
       <span class="pill <%= dashboard_tone_for(@run[:status]) %>">
         <%= dashboard_status_label(@run[:status]) %>
       </span>
     </div>
+    <p>Run <code><%= @run[:job_id] %></code></p>
   </div>
 
   <div class="actions">
@@ -27,22 +35,29 @@
         <%= form.button dashboard_icon_label(:launch, "Rerun"), class: "button success" %>
       <% end %>
     <% end %>
-
-    <% if @run[:known_workflow] %>
-      <%= link_to "Back to workflow", workflow_path(@run[:workflow_key]), class: "button subtle" %>
-      <%= link_to "Workflow runs", workflow_runs_path(workflow: @run[:workflow_key]), class: "button subtle" %>
-    <% else %>
-      <%= link_to "Recent runs", workflow_runs_path, class: "button subtle" %>
-    <% end %>
   </div>
 </section>
 
 <section class="panel stack panel-spaced">
   <div>
-    <h3 class="section-title">Run Details</h3>
+    <h3 class="section-title">Summary</h3>
   </div>
 
   <div class="detail-grid">
+    <div class="detail-item">
+      <span class="label">Result</span>
+      <strong>
+        <span class="pill <%= dashboard_tone_for(@run[:status]) %>">
+          <%= dashboard_status_label(@run[:status]) %>
+        </span>
+      </strong>
+    </div>
+
+    <div class="detail-item">
+      <span class="label">Observed</span>
+      <strong><%= dashboard_absolute_timestamp(@run[:recorded_at]) %></strong>
+    </div>
+
     <div class="detail-item">
       <span class="label">Trigger</span>
       <strong><code><%= trigger_key %></code></strong>
@@ -72,9 +87,34 @@
         <strong><%= dashboard_absolute_timestamp(@run[:scheduled_at]) %></strong>
       </div>
     <% end %>
-
   </div>
+</section>
 
+<% if @run[:error].present? %>
+  <section class="panel stack panel-spaced">
+    <div>
+      <h3 class="section-title">Failure summary</h3>
+    </div>
+
+    <div class="failure-summary">
+      <span class="pill danger">Failed</span>
+      <strong><%= failure_summary %></strong>
+    </div>
+
+    <% if dashboard_error_details_visible?(@run[:error]) %>
+      <details class="technical-details">
+        <summary>Full error</summary>
+        <pre class="error-block"><%= dashboard_error_body(@run[:error]) %></pre>
+      </details>
+    <% end %>
+  </section>
+<% end %>
+
+<% if logs_configured? %>
+  <%= render "r3x/dashboard/workflow_runs/logs_panel", run: @run, logs: @logs %>
+<% end %>
+
+<section class="panel stack panel-spaced">
   <details class="technical-details">
     <summary>Technical details</summary>
 
@@ -82,6 +122,10 @@
       <div class="technical-item">
         <dt>Run ID</dt>
         <dd><code><%= @run[:job_id] %></code></dd>
+      </div>
+      <div class="technical-item">
+        <dt>Queue</dt>
+        <dd><code><%= @run[:queue_name].presence || "default" %></code></dd>
       </div>
       <div class="technical-item">
         <dt>Class</dt>
@@ -93,20 +137,10 @@
           <dd><code><%= @run[:active_job_id] %></code></dd>
         </div>
       <% end %>
+      <div class="technical-item">
+        <dt>Mission Control</dt>
+        <dd><%= link_to "Open queue controls", mission_control_path %></dd>
+      </div>
     </dl>
   </details>
 </section>
-
-<% if @run[:error].present? %>
-  <section class="panel stack panel-spaced">
-    <div>
-      <h3 class="section-title">Failure Details</h3>
-    </div>
-
-    <pre class="error-block"><%= dashboard_error_body(@run[:error]) %></pre>
-  </section>
-<% end %>
-
-<% if logs_configured? %>
-  <%= render "r3x/dashboard/workflow_runs/logs_panel", run: @run, logs: @logs %>
-<% end %>

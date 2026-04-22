@@ -153,6 +153,15 @@ module R3x
         end
       end
 
+      def dashboard_error_multiline?(text)
+        dashboard_error_body(text).lines.size > 1
+      end
+
+      def dashboard_error_details_visible?(text)
+        body = dashboard_error_body(text)
+        body.present? && dashboard_error_summary(text) != body
+      end
+
       def dashboard_icon(name)
         icon_name, variant = {
           alert: [ "exclamation-triangle", :outline ],
@@ -172,6 +181,47 @@ module R3x
 
       def dashboard_icon_label(name, text)
         safe_join([ dashboard_icon(name), content_tag(:span, text) ], " ")
+      end
+
+      def dashboard_run_filter_path(status:, workflow_key: nil)
+        params = {}
+        params[:workflow] = workflow_key if workflow_key.present?
+        params[:status] = status if status.present?
+
+        workflow_runs_path(params)
+      end
+
+      def dashboard_workflow_sort_aria(sort_key, active_sort:, active_direction:)
+        return "none" unless active_sort == sort_key.to_s
+
+        active_direction == "desc" ? "descending" : "ascending"
+      end
+
+      def dashboard_workflow_sort_link(label, sort_key, active_sort:, active_direction:)
+        sort_key = sort_key.to_s
+        next_direction = if active_sort == sort_key
+          active_direction == "desc" ? "asc" : "desc"
+        else
+          WorkflowSummaries.default_direction_for(sort_key)
+        end
+
+        active = active_sort == sort_key
+
+        link_to workflows_path(sort: sort_key, direction: next_direction, anchor: "workflows-catalog"), class: "sort-link#{' active' if active}" do
+          safe_join(
+            [
+              content_tag(:span, label, class: "sort-label"),
+              content_tag(:span, class: "sort-carets", "aria-hidden": "true") do
+                safe_join(
+                  [
+                    content_tag(:span, "", class: "sort-caret sort-caret-up#{' active' if active && active_direction == 'asc'}"),
+                    content_tag(:span, "", class: "sort-caret sort-caret-down#{' active' if active && active_direction == 'desc'}")
+                  ]
+                )
+              end
+            ]
+          )
+        end
       end
 
       private
