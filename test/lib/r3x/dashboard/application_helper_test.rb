@@ -44,6 +44,13 @@ module R3x
         assert_equal "danger", dashboard_log_level_tone("fatal")
         assert_equal "muted", dashboard_log_level_tone("unknown")
       end
+
+      test "dashboard error details stay visible for truncated single-line messages" do
+        long_error = "API error: " + ("x" * 220)
+
+        assert dashboard_error_details_visible?(long_error)
+        refute dashboard_error_multiline?(long_error)
+      end
     end
   end
 end

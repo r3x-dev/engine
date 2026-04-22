@@ -1,19 +1,23 @@
-<% content_for :title, "Recent Runs" %>
+<% content_for :title, "Runs" %>
 
 <section class="page-header">
   <div>
-    <h2>Recent Runs</h2>
+    <h2>Runs</h2>
     <p>Visible runs in the current queue retention window.</p>
   </div>
-
-  <div class="actions">
-    <% if @workflow_filter.present? %>
-      <%= link_to "Back to workflow", workflow_path(@workflow_filter), class: "button subtle" %>
-    <% else %>
-      <%= link_to "All workflows", workflows_path, class: "button subtle" %>
-    <% end %>
-  </div>
 </section>
+
+<nav class="filter-chips" aria-label="Quick status filters">
+  <%= link_to "All",
+              dashboard_run_filter_path(status: nil, workflow_key: @workflow_filter),
+              class: [ "chip-link", (@status_filter.blank? ? "current" : nil) ].compact.join(" ") %>
+  <%= link_to "Failed",
+              dashboard_run_filter_path(status: "failed", workflow_key: @workflow_filter),
+              class: [ "chip-link", (@status_filter == "failed" ? "current" : nil) ].compact.join(" ") %>
+  <%= link_to "Running",
+              dashboard_run_filter_path(status: "running", workflow_key: @workflow_filter),
+              class: [ "chip-link", (@status_filter == "running" ? "current" : nil) ].compact.join(" ") %>
+</nav>
 
 <section class="panel filters-panel">
   <%= form_with url: workflow_runs_path, method: :get, local: true, class: "filters" do |form| %>
@@ -39,5 +43,8 @@
 </section>
 
 <section class="panel stack">
-  <%= render "r3x/dashboard/workflow_runs/table", runs: @runs, empty_message: "No workflow runs match the current filters." %>
+  <%= render "r3x/dashboard/workflow_runs/table",
+             runs: @runs,
+             columns: %i[workflow result observed trigger run_id open],
+             empty_message: "No workflow runs match the current filters." %>
 </section>

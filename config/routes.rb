@@ -2,7 +2,7 @@ Rails.application.routes.draw do
   mount MissionControl::Jobs::Engine, at: "/ops/jobs"
 
   scope module: "r3x/dashboard" do
-    root "workflows#index"
+    root "overview#index"
 
     resources :workflows, only: %i[ index show ], param: :workflow_key do
       post :run_trigger, on: :member

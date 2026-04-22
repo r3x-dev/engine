@@ -1,21 +1,24 @@
 <% content_for :title, @workflow[:title] %>
 
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <%= link_to "Overview", root_path %>
+  <span>/</span>
+  <%= link_to "Workflows", workflows_path %>
+  <span>/</span>
+  <span aria-current="page"><%= @workflow[:title] %></span>
+</nav>
+
 <section class="page-header">
   <div>
     <h2 class="page-title"><%= @workflow[:title] %></h2>
-    <p>
-      <% if @workflow[:class_name].present? %>
-        <code><%= @workflow[:class_name] %></code>
-      <% else %>
-        Reconstructed from persisted runtime state.
-      <% end %>
-    </p>
+    <p>Workflow drill-down built from persisted runs and trigger state.</p>
   </div>
 
   <div class="actions">
     <%= form_with url: run_trigger_workflow_path(@workflow[:workflow_key]), method: :post, local: true, class: "inline-form" do |form| %>
       <%= form.button dashboard_icon_label(:launch, "Run now"), class: "button success" %>
     <% end %>
+    <%= link_to "View all runs", workflow_runs_path(workflow: @workflow[:workflow_key]), class: "button subtle" %>
     <% if @latest_failure.present? %>
       <%= link_to dashboard_icon_label(:alert, "Latest failure"), workflow_run_path(@latest_failure[:job_id]), class: "button subtle" %>
     <% end %>
@@ -25,21 +28,29 @@
 <section class="panel">
   <div class="stats">
     <div class="stat">
-      <span class="label">Next trigger</span>
-      <strong><%= @workflow[:next_trigger_at].present? ? dashboard_relative_time(@workflow[:next_trigger_at]) : "Manual only" %></strong>
-    </div>
-
-    <div class="stat">
-      <span class="label">Last run</span>
+      <span class="label">Last result</span>
       <% if @workflow[:last_run].present? %>
         <strong>
           <span class="pill <%= dashboard_tone_for(@workflow[:last_run][:status]) %>">
             <%= dashboard_status_label(@workflow[:last_run][:status]) %>
           </span>
         </strong>
+        <span class="meta"><%= dashboard_timestamp(@workflow[:last_run][:recorded_at]) %></span>
       <% else %>
         <strong>No runs yet</strong>
       <% end %>
+    </div>
+
+    <div class="stat">
+      <span class="label">Last seen</span>
+      <strong><%= @workflow[:last_seen_at].present? ? dashboard_relative_time(@workflow[:last_seen_at]) : "Never" %></strong>
+      <span class="meta"><%= dashboard_timestamp(@workflow[:last_seen_at]) %></span>
+    </div>
+
+    <div class="stat">
+      <span class="label">Next trigger</span>
+      <strong><%= @workflow[:next_trigger_at].present? ? dashboard_relative_time(@workflow[:next_trigger_at]) : "Manual only" %></strong>
+      <span class="meta"><%= dashboard_timestamp(@workflow[:next_trigger_at]) %></span>
     </div>
   </div>
 </section>
@@ -55,8 +66,8 @@
       <thead>
         <tr>
           <th>Trigger</th>
-          <th>Next run</th>
-          <th>Runtime state</th>
+          <th>Next</th>
+          <th>State</th>
         </tr>
       </thead>
       <tbody>
@@ -76,24 +87,22 @@
               </div>
             </td>
 
-            <td><%= dashboard_timestamp(trigger_entry[:next_trigger_at]) %></td>
+            <td><%= trigger_entry[:next_trigger_at].present? ? dashboard_timestamp(trigger_entry[:next_trigger_at]) : "Manual only" %></td>
 
             <td>
-              <div><strong>Mode:</strong> <%= trigger_entry[:mode].to_s.humanize %></div>
-
-              <% if trigger_entry[:queue_name].present? && trigger_entry[:queue_name] != "default" %>
-                <div><strong>Queue:</strong> <code><%= trigger_entry[:queue_name] %></code></div>
-              <% end %>
+              <div class="pill-row">
+                <span class="pill muted"><%= trigger_entry[:mode].to_s.humanize %></span>
+                <% if trigger_entry[:queue_name].present? %>
+                  <span class="pill muted">Queue <code><%= trigger_entry[:queue_name] %></code></span>
+                <% end %>
+              </div>
 
               <% if trigger_state.present? %>
-                <div><strong>Last checked:</strong> <%= dashboard_timestamp(trigger_state.last_checked_at) %></div>
-                <div><strong>Last triggered:</strong> <%= dashboard_timestamp(trigger_state.last_triggered_at) %></div>
+                <div class="meta">Last checked <%= dashboard_timestamp(trigger_state.last_checked_at) %></div>
+                <div class="meta">Last triggered <%= dashboard_timestamp(trigger_state.last_triggered_at) %></div>
 
                 <% if trigger_state.last_error_at.present? %>
-                  <div class="meta">
-                    <strong>Last error:</strong>
-                    <%= dashboard_error_summary(trigger_state.last_error_message) %>
-                  </div>
+                  <div class="meta">Last error <%= dashboard_error_summary(trigger_state.last_error_message) %></div>
                 <% end %>
               <% else %>
                 <span class="muted">No persisted runtime state</span>
@@ -110,12 +119,12 @@
   <div class="page-header">
     <div>
       <h3 class="section-title">Recent runs</h3>
-      <p class="section-copy">Newest visible runs.</p>
+      <p class="section-copy">Newest 10 visible runs for this workflow.</p>
     </div>
   </div>
 
   <%= render "r3x/dashboard/workflow_runs/table",
              runs: @runs,
-             show_workflow: false,
+             columns: %i[result observed trigger open],
              empty_message: "No recent runs are visible for this workflow yet." %>
 </section>

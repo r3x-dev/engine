@@ -3,22 +3,30 @@
 <section class="page-header">
   <div>
     <h2>Workflows</h2>
-    <p>Current workflows reconstructed from persisted runtime state.</p>
+    <p>Current workflows reconstructed from persisted runtime state, ordered for fast health checks.</p>
   </div>
 </section>
 
-<section class="panel table-wrap">
+<section id="workflows-catalog" class="panel table-wrap">
   <% if @workflows.empty? %>
     <div class="empty">No workflows are visible yet. They will appear here once recurring tasks or trigger state are written to the database.</div>
   <% else %>
     <table>
       <thead>
         <tr>
-          <th>Workflow</th>
-          <th>Trigger</th>
-          <th>Next trigger</th>
-          <th>Last run</th>
-          <th></th>
+          <th aria-sort="<%= dashboard_workflow_sort_aria("workflow", active_sort: @sort, active_direction: @direction) %>">
+            <%= dashboard_workflow_sort_link("Workflow", "workflow", active_sort: @sort, active_direction: @direction) %>
+          </th>
+          <th aria-sort="<%= dashboard_workflow_sort_aria("health", active_sort: @sort, active_direction: @direction) %>">
+            <%= dashboard_workflow_sort_link("Health", "health", active_sort: @sort, active_direction: @direction) %>
+          </th>
+          <th aria-sort="<%= dashboard_workflow_sort_aria("next_trigger", active_sort: @sort, active_direction: @direction) %>">
+            <%= dashboard_workflow_sort_link("Next trigger", "next_trigger", active_sort: @sort, active_direction: @direction) %>
+          </th>
+          <th aria-sort="<%= dashboard_workflow_sort_aria("last_run", active_sort: @sort, active_direction: @direction) %>">
+            <%= dashboard_workflow_sort_link("Last run", "last_run", active_sort: @sort, active_direction: @direction) %>
+          </th>
+          <th>Action</th>
         </tr>
       </thead>
 
@@ -28,40 +36,25 @@
             <td>
               <%= link_to workflow[:title], workflow_path(workflow[:workflow_key]), class: "title-link" %>
               <div class="meta">
-                <% if workflow[:class_name].present? %>
-                  <code><%= workflow[:class_name] %></code>
-                <% else %>
-                  Only runtime traces are currently available.
-                <% end %>
+                <%= pluralize(workflow[:trigger_count], "persisted trigger") %>
               </div>
             </td>
 
             <td>
-              <% primary_trigger = workflow[:trigger_entries].first %>
-              <% if primary_trigger.present? %>
-                <div><strong><%= dashboard_trigger_kind(primary_trigger) %></strong></div>
-                <div class="meta"><code><%= dashboard_trigger_details(primary_trigger) %></code></div>
-                <% if workflow[:trigger_entries].size > 1 %>
-                  <div class="meta"><%= workflow[:trigger_entries].size %> persisted triggers</div>
-                <% end %>
-              <% else %>
-                <span class="muted">No trigger data</span>
+              <span class="pill <%= dashboard_tone_for(workflow.dig(:health, :status)) %>">
+                <%= dashboard_health_label(workflow[:health]) %>
+              </span>
+              <% if workflow.dig(:health, :detail).present? %>
+                <div class="meta"><%= dashboard_error_summary(workflow.dig(:health, :detail)) %></div>
               <% end %>
             </td>
 
-            <td><%= dashboard_timestamp(workflow[:next_trigger_at]) %></td>
+            <td><%= workflow[:next_trigger_at].present? ? dashboard_timestamp(workflow[:next_trigger_at]) : "Manual only" %></td>
 
             <td>
               <% if workflow[:last_run].present? %>
                 <% last_run = workflow[:last_run] %>
-                <% if last_run[:job_id].present? %>
-                  <%= link_to workflow_run_path(last_run[:job_id]) do %>
-                    <span class="pill <%= dashboard_tone_for(last_run[:status]) %>">
-                      <%= dashboard_status_label(last_run[:status]) %>
-                    </span>
-                    <div class="meta"><%= dashboard_timestamp(last_run[:recorded_at]) %></div>
-                  <% end %>
-                <% else %>
+                <%= link_to workflow_run_path(last_run[:job_id]) do %>
                   <span class="pill <%= dashboard_tone_for(last_run[:status]) %>">
                     <%= dashboard_status_label(last_run[:status]) %>
                   </span>
