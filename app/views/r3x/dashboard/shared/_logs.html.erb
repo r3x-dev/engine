@@ -2,17 +2,13 @@
   <div class="page-header">
     <div>
       <h3 class="section-title"><%= local_assigns.fetch(:title) %></h3>
-      <p class="section-copy"><%= local_assigns.fetch(:description) %></p>
     </div>
 
     <% if local_assigns[:refreshable] %>
       <div class="actions log-actions">
-        <span class="log-live-indicator" data-r3x-log-live-indicator data-state="idle" aria-live="polite">
+        <span class="pill info log-live-indicator" data-r3x-log-live-indicator data-state="idle" aria-live="polite">
           <span class="log-live-dot" aria-hidden="true"></span>
-          <span class="log-live-label">Live</span>
-          <span class="log-live-ellipsis" aria-hidden="true">
-            <span>.</span><span>.</span><span>.</span>
-          </span>
+          <span class="log-live-label" data-r3x-log-refresh-status>Live</span>
         </span>
         <div class="log-refresh-control">
           <select class="log-refresh-select" data-r3x-log-refresh-select aria-label="Auto-refresh">
@@ -26,7 +22,6 @@
         <span class="meta log-last-updated" data-r3x-log-last-updated>
           Last updated <%= logs[:entries].last&.dig(:time).present? ? dashboard_log_time(logs[:entries].last[:time]) : "--:--:--" %>
         </span>
-        <span class="meta log-refresh-state" data-r3x-log-refresh-status>Every 30s while running</span>
       </div>
     <% end %>
   </div>

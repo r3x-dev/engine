@@ -3,8 +3,44 @@ require "fugit"
 module R3x
   module Dashboard
     class WorkflowSummaries
+      DEFAULT_SORT = "health"
+      DEFAULT_DIRECTIONS = {
+        "workflow" => "asc",
+        "health" => "asc",
+        "next_trigger" => "asc",
+        "last_run" => "desc"
+      }.freeze
+      HEALTH_SORT_ORDER = %w[trigger_error failed healthy idle].freeze
+
+      attr_reader :direction, :sort
+
+      def self.default_direction_for(sort)
+        DEFAULT_DIRECTIONS.fetch(normalize_sort(sort))
+      end
+
+      def self.normalize_direction(direction, sort:)
+        normalized_direction = direction.to_s
+        return default_direction_for(sort) unless %w[asc desc].include?(normalized_direction)
+
+        normalized_direction
+      end
+
+      def self.normalize_sort(sort)
+        normalized_sort = sort.to_s
+        return DEFAULT_SORT unless DEFAULT_DIRECTIONS.key?(normalized_sort)
+
+        normalized_sort
+      end
+
+      def initialize(sort: nil, direction: nil)
+        @sort = self.class.normalize_sort(sort)
+        @direction = self.class.normalize_direction(direction, sort: @sort)
+      end
+
       def all
-        catalog.all.map { |workflow| build_summary(workflow.fetch(:workflow_key)) }
+        workflows = catalog.all.map { |workflow| build_summary(workflow.fetch(:workflow_key)) }
+
+        workflows.sort { |left, right| compare_workflows(left, right) }
       end
 
       def find!(workflow_key)
@@ -24,6 +60,7 @@ module R3x
           {
             class_name: class_name,
             health: health_for(last_run: last_run, trigger_states: trigger_states),
+            last_seen_at: last_seen_at_for(last_run: last_run, trigger_states: trigger_states),
             last_run: last_run,
             mission_control_path: "/ops/jobs",
             next_trigger_at: trigger_entries.filter_map { |entry| entry[:next_trigger_at] }.min,
@@ -32,6 +69,68 @@ module R3x
             trigger_entries: trigger_entries,
             workflow_key: workflow_key
           }
+        end
+
+        def compare_workflows(left, right)
+          comparison = case sort
+          when "workflow"
+            compare_text(left[:title], right[:title], direction:)
+          when "health"
+            compare_health(left, right)
+          when "next_trigger"
+            compare_time(left[:next_trigger_at], right[:next_trigger_at], direction:)
+          when "last_run"
+            compare_time(left.dig(:last_run, :recorded_at), right.dig(:last_run, :recorded_at), direction:)
+          else
+            0
+          end
+
+          return comparison unless comparison.zero?
+
+          left[:workflow_key] <=> right[:workflow_key]
+        end
+
+        def compare_health(left, right)
+          comparison = compare_numbers(
+            health_rank(left.dig(:health, :status)),
+            health_rank(right.dig(:health, :status)),
+            direction:
+          )
+          return comparison unless comparison.zero?
+
+          comparison = compare_time(health_timestamp_for(left), health_timestamp_for(right), direction: "desc")
+          return comparison unless comparison.zero?
+
+          compare_text(left[:title], right[:title], direction: "asc")
+        end
+
+        def compare_numbers(left, right, direction:)
+          comparison = left <=> right
+          direction == "desc" ? -comparison : comparison
+        end
+
+        def compare_text(left, right, direction:)
+          comparison = left.to_s.downcase <=> right.to_s.downcase
+          direction == "desc" ? -comparison : comparison
+        end
+
+        def compare_time(left, right, direction:)
+          return 0 if left.blank? && right.blank?
+          return 1 if left.blank?
+          return -1 if right.blank?
+
+          comparison = left <=> right
+          direction == "desc" ? -comparison : comparison
+        end
+
+        def health_rank(status)
+          HEALTH_SORT_ORDER.index(status.to_s) || HEALTH_SORT_ORDER.length
+        end
+
+        def health_timestamp_for(workflow)
+          return workflow[:last_seen_at] if workflow.dig(:health, :status) == "trigger_error"
+
+          workflow.dig(:last_run, :recorded_at) || workflow[:last_seen_at]
         end
 
         def trigger_entries_for(workflow_key:, trigger_states:, recurring_tasks:)
@@ -172,6 +271,15 @@ module R3x
           return trigger_state.trigger_type if trigger_state&.trigger_type.present?
 
           "observed"
+        end
+
+        def last_seen_at_for(last_run:, trigger_states:)
+          activity_times = [
+            last_run&.dig(:recorded_at),
+            *trigger_states.flat_map { |state| [ state.last_checked_at, state.last_triggered_at, state.last_error_at ] }
+          ]
+
+          activity_times.compact.max
         end
 
         def latest_queue_name(workflow_key)

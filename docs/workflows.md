@@ -141,6 +141,22 @@ These notes apply to workflow code in general.
 - Dashboard run logs read the explicit `level` from structured log payloads. They do not infer levels
   from free-form message text.
 
+### Pretty-Printing Hashes And Structures
+
+- When logging hashes or structured data, avoid manually interpolating individual fields.
+- Use `amazing_print` (already available in the project) with `plain: true` so keys are aligned
+  and output is readable, without ANSI colour codes that clutter log files.
+
+  ```ruby
+  # Good
+  logger.info("Camera check result:\n#{result.ai(plain: true)}")
+
+  # Bad
+  logger.info("Checked camera #{url}, result: #{result["status"]}, description: #{result["description"]}")
+  ```
+
+- If the structure is large, consider logging it on `debug` instead of `info`.
+
 ## LLM Output
 
 - When a workflow expects structured LLM output, prefer `RubyLLM` schema support.

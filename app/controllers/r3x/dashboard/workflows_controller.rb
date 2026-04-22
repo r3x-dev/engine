@@ -2,12 +2,16 @@ module R3x
   module Dashboard
     class WorkflowsController < ApplicationController
       def index
-        @workflows = WorkflowSummaries.new.all
+        summaries = WorkflowSummaries.new(sort: params[:sort], direction: params[:direction])
+
+        @direction = summaries.direction
+        @sort = summaries.sort
+        @workflows = summaries.all
       end
 
       def show
         @workflow = WorkflowSummaries.new.find!(params[:workflow_key])
-        @runs = WorkflowRuns.new(workflow_key: params[:workflow_key], limit: 25).all
+        @runs = WorkflowRuns.new(workflow_key: params[:workflow_key], limit: 10).all
         @latest_failure = WorkflowRuns.new(workflow_key: params[:workflow_key], status: "failed", limit: 1).all.first
       end
 
