@@ -84,6 +84,46 @@ class DashboardTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "Workflow shortcuts"
   end
 
+  test "root overview recent runs are ordered by observed activity, not enqueue time" do
+    clear_tables
+
+    long_running_job = DashboardJobRows.create_job!(
+      job_class_name: "R3x::RunWorkflowJob",
+      arguments: [ "slow_workflow", { trigger_key: "manual:slow" } ],
+      finished_at: 5.seconds.ago,
+      created_at: 2.days.ago,
+      updated_at: 5.seconds.ago
+    )
+
+    12.times do |index|
+      finished_at = (20 - index).minutes.ago
+
+      DashboardJobRows.create_job!(
+        job_class_name: "R3x::RunWorkflowJob",
+        arguments: [ "workflow_#{index}", { trigger_key: "manual:#{index}" } ],
+        finished_at: finished_at,
+        created_at: finished_at - 30.seconds,
+        updated_at: finished_at
+      )
+      R3x::TriggerState.create!(
+        workflow_key: "workflow_#{index}",
+        trigger_key: "manual:#{index}",
+        trigger_type: "manual",
+        state: {},
+        last_checked_at: finished_at,
+        last_triggered_at: finished_at
+      )
+    end
+
+    get "/"
+
+    assert_response :success
+    first_row_text = css_select(".overview-recent-runs-table tbody tr").first.text
+    assert_includes first_row_text, "Slow Workflow"
+    assert_includes response.body, "/workflow-runs/#{long_running_job.id}"
+    assert_equal 10, css_select(".overview-recent-runs-table tbody tr").size
+  end
+
   test "root overview keeps workflow and failure drill-downs inside needs attention cards" do
     failed_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
