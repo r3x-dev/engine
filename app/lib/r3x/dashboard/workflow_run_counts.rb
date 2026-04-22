@@ -95,17 +95,17 @@ module R3x
         end
 
         def running_jobs_scope(base_scope)
-          base_scope.joins(:claimed_execution)
+          unfinished_jobs_scope(base_scope).joins(:claimed_execution)
         end
 
         def queued_jobs_scope(base_scope)
-          base_scope.joins(:ready_execution)
+          unfinished_jobs_scope(base_scope)
+            .where.missing(:claimed_execution)
+            .joins(:ready_execution)
         end
 
         def fallback_queued_jobs_scope(base_scope)
-          base_scope
-            .where(finished_at: nil)
-            .where.missing(:failed_execution)
+          unfinished_jobs_scope(base_scope)
             .where.missing(:claimed_execution)
             .where.missing(:ready_execution)
             .where.missing(:blocked_execution)
@@ -113,11 +113,22 @@ module R3x
         end
 
         def blocked_jobs_scope(base_scope)
-          base_scope.joins(:blocked_execution)
+          unfinished_jobs_scope(base_scope)
+            .where.missing(:claimed_execution)
+            .where.missing(:ready_execution)
+            .joins(:blocked_execution)
         end
 
         def scheduled_jobs_scope(base_scope)
-          base_scope.joins(:scheduled_execution)
+          unfinished_jobs_scope(base_scope)
+            .where.missing(:claimed_execution)
+            .where.missing(:ready_execution)
+            .where.missing(:blocked_execution)
+            .joins(:scheduled_execution)
+        end
+
+        def unfinished_jobs_scope(base_scope)
+          base_scope.where(finished_at: nil).where.missing(:failed_execution)
         end
 
         def non_legacy_class_names

@@ -126,11 +126,14 @@ module R3x
         )
 
         12.times do |index|
+          finished_at = (20 - index).minutes.ago
+
           DashboardJobRows.create_job!(
             job_class_name: WorkflowRuns::LEGACY_CLASS_NAME,
             arguments: [ "queued_workflow_#{index}", { trigger_key: "manual:#{index}" } ],
-            created_at: (20 - index).minutes.ago,
-            updated_at: (20 - index).minutes.ago
+            finished_at: finished_at,
+            created_at: finished_at - 30.seconds,
+            updated_at: finished_at
           )
         end
 
