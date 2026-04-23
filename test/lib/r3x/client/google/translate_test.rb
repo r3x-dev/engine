@@ -25,39 +25,26 @@ module R3x
               headers: { "Content-Type" => "application/json" }
             )
 
-          with_stubbed_google_auth(authorization, captured) do
-            result = Translate.new(project: "TEST_APP")
-              .translate(" Ola mundo ", to: "en", from: "pt")
+          R3x::Client::GoogleAuth.stubs(:from_env).with { |**kwargs|
+            kwargs[:project] == "TEST_APP" && kwargs[:scope] == "https://www.googleapis.com/auth/cloud-translation"
+          }.returns(authorization)
 
-            assert_equal(
-              {
-                "q" => " Ola mundo ",
-                "target" => "en",
-                "source" => "pt",
-                "format" => "text"
-              },
-              delivered
-            )
-            assert_equal "https://www.googleapis.com/auth/cloud-translation", captured[:scope]
-            assert_equal "<p>Hello <strong>world</strong></p>", result
-          end
+          result = Translate.new(project: "TEST_APP")
+            .translate(" Ola mundo ", to: "en", from: "pt")
+
+          assert_equal(
+            {
+              "q" => " Ola mundo ",
+              "target" => "en",
+              "source" => "pt",
+              "format" => "text"
+            },
+            delivered
+          )
+          assert_equal "<p>Hello <strong>world</strong></p>", result
         end
 
         private
-
-        def with_stubbed_google_auth(result, captured)
-          singleton_class = R3x::Client::GoogleAuth.singleton_class
-          original_method = R3x::Client::GoogleAuth.method(:from_env)
-
-          singleton_class.define_method(:from_env) do |project:, scope:|
-            captured[:scope] = scope
-            result
-          end
-
-          yield
-        ensure
-          singleton_class.define_method(:from_env, original_method)
-        end
 
         class FakeAuthorization
           attr_reader :access_token

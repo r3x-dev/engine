@@ -297,11 +297,7 @@ module R3x
     end
 
     test "rejects duplicate change-detecting trigger keys in one workflow" do
-      original_resolve = R3x::Triggers.method(:resolve)
-
-      R3x::Triggers.define_singleton_method(:resolve) do |_type|
-        R3x::TestSupport::FakeChangeDetectingTrigger
-      end
+      R3x::Triggers.stubs(:resolve).returns(R3x::TestSupport::FakeChangeDetectingTrigger)
 
       error = assert_raises(ArgumentError) do
         Class.new(R3x::Workflow::Base) do
@@ -315,8 +311,6 @@ module R3x
       end
 
       assert_match(/Trigger with key .* already exists/, error.message)
-    ensure
-      R3x::Triggers.define_singleton_method(:resolve, original_resolve)
     end
 
     test "change-detecting trigger key does not change when only cron changes" do
@@ -439,16 +433,11 @@ module R3x
         end
       end
 
-      original_load = R3x::Workflow::PackLoader.method(:load!)
-      R3x::Workflow::PackLoader.singleton_class.send(:define_method, :load!) do |*|
-        raise "should not reload packs during workflow execution"
-      end
+      R3x::Workflow::PackLoader.stubs(:load!).raises("should not reload packs during workflow execution")
 
       result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
 
       assert_equal "manual", result["trigger_type"]
-    ensure
-      R3x::Workflow::PackLoader.singleton_class.send(:define_method, :load!, original_load)
     end
 
     test "perform logs workflow run outcome" do
@@ -610,16 +599,13 @@ module R3x
       end
 
       workflow = workflow_class.new
-      original_env = Rails.method(:env)
-      Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new("production") }
+      Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("production"))
 
       error = assert_raises(RuntimeError) do
         workflow.with_cache { "cached" }
       end
 
       assert_equal "with_cache is disabled in production, if you need to use it, please set R3X_SKIP_CACHE=true in the environment variables", error.message
-    ensure
-      Rails.define_singleton_method(:env, original_env)
     end
 
     test "with_cache bypasses cache when skip-cache override is enabled" do
@@ -659,11 +645,10 @@ module R3x
       end
 
       workflow = workflow_class.new
-      original_env = Rails.method(:env)
       original_skip_cache = ENV["R3X_SKIP_CACHE"]
       calls = 0
 
-      Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new("production") }
+      Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("production"))
       ENV["R3X_SKIP_CACHE"] = "true"
 
       result = workflow.with_cache do
@@ -675,7 +660,6 @@ module R3x
       assert_equal({ "calls" => 1 }, result)
     ensure
       ENV["R3X_SKIP_CACHE"] = original_skip_cache
-      Rails.define_singleton_method(:env, original_env)
     end
 
     test "ctx durable_set stores membership across calls" do
@@ -794,24 +778,14 @@ module R3x
         ),
         workflow_key: "ttl_validation_workflow"
       )
-      original_cache_store = Rails.application.config.method(:cache_store)
-      original_config_for = Rails.application.method(:config_for)
-
-      Rails.application.config.define_singleton_method(:cache_store) { :solid_cache_store }
-      Rails.application.define_singleton_method(:config_for) do |name|
-        return { store_options: { max_age: 90.days.to_i } } if name == :cache
-
-        original_config_for.call(name)
-      end
+      Rails.application.config.stubs(:cache_store).returns(:solid_cache_store)
+      Rails.application.stubs(:config_for).with(:cache).returns({ store_options: { max_age: 90.days.to_i } })
 
       error = assert_raises(ArgumentError) do
         context.durable_set(ttl: 91.days)
       end
 
       assert_equal "ttl can't exceed Solid Cache max_age configured in config/cache.yml", error.message
-    ensure
-      Rails.application.config.define_singleton_method(:cache_store, original_cache_store)
-      Rails.application.define_singleton_method(:config_for, original_config_for)
     end
 
     test "ctx durable_set rejects per-call ttl above configured Solid Cache max_age" do
@@ -823,15 +797,9 @@ module R3x
         ),
         workflow_key: "per_call_ttl_validation_workflow"
       )
-      original_cache_store = Rails.application.config.method(:cache_store)
-      original_config_for = Rails.application.method(:config_for)
 
-      Rails.application.config.define_singleton_method(:cache_store) { :solid_cache_store }
-      Rails.application.define_singleton_method(:config_for) do |name|
-        return { store_options: { max_age: 90.days.to_i } } if name == :cache
-
-        original_config_for.call(name)
-      end
+      Rails.application.config.stubs(:cache_store).returns(:solid_cache_store)
+      Rails.application.stubs(:config_for).with(:cache).returns({ store_options: { max_age: 90.days.to_i } })
 
       durable_set = context.durable_set
 
@@ -840,9 +808,6 @@ module R3x
       end
 
       assert_equal "ttl can't exceed Solid Cache max_age configured in config/cache.yml", error.message
-    ensure
-      Rails.application.config.define_singleton_method(:cache_store, original_cache_store)
-      Rails.application.define_singleton_method(:config_for, original_config_for)
     end
 
     test "ctx durable_set add? returns true for new members and false for existing" do
