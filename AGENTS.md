@@ -287,7 +287,7 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - **Good**: `triggers.select(&:cron_schedulable?)`
 - **Bad**: `triggers.select { |t| t.type == :schedule }`
 - Prefer instance variables only for state the object needs across method calls or as part of its long-lived identity.
-- Do not keep one-time derived configuration in instance variables when it is only used during initialization or validation; keep it local or behind a small helper method instead.
+- Do not use instance variables as local variables inside a single method. If a derived value is only needed within one method, use a local variable or extract a small helper. Instance variables are appropriate for memoization when a helper is called from multiple places and the result is stable for the lifetime of the object.
 - When multiple classes share a capability, extract a small concern or module with an explicit predicate and required methods.
 - **Good**: `include R3x::Triggers::Concerns::CronSchedulable`
 - Framework code should avoid hardcoding knowledge of concrete subtypes. Prefer polymorphism, capability predicates, and object-owned methods like `to_h`.
@@ -347,6 +347,32 @@ response.content
 - When intermediate results are used multiple times
 - When the intermediate value has semantic meaning that aids comprehension
 - When debugging requires inspecting intermediate state
+
+### Module-Level Singleton API
+
+When a module exists solely as a namespace for a group of related class-level (singleton) methods, use `extend self`. This avoids repeating `self.` on every method definition and signals that the module is intended to be called directly as `ModuleName.method`.
+
+**Good:**
+```ruby
+module R3x::RuntimeProfile
+  extend self
+
+  def current
+    # ...
+  end
+end
+```
+
+**Bad:**
+```ruby
+module R3x::RuntimeProfile
+  def self.current
+    # ...
+  end
+end
+```
+
+Do **not** use `extend self` in modules that are meant to be mixed in (`include`) or that contain both instance and class methods. Reserve it for pure singleton-method namespaces.
 
 ## Design Principles
 

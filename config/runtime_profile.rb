@@ -6,32 +6,34 @@ module R3x
     HEADLESS_PROFILES = %w[jobs workflow_cli].freeze
     SUPPORTED_PROFILES = [ DEFAULT_PROFILE, *HEADLESS_PROFILES ].freeze
 
-    def current(env = ENV)
-      profile = env.fetch("R3X_RUNTIME_PROFILE", "").to_s
-      profile = DEFAULT_PROFILE if profile.empty?
+    def current
+      @current ||= begin
+        profile = ENV.fetch("R3X_RUNTIME_PROFILE", "").to_s
+        profile = DEFAULT_PROFILE if profile.empty?
 
-      case profile
-      when *SUPPORTED_PROFILES
-        profile
-      else
-        raise ArgumentError, "Unsupported R3X_RUNTIME_PROFILE: #{profile}"
+        case profile
+        when *SUPPORTED_PROFILES
+          profile
+        else
+          raise ArgumentError, "Unsupported R3X_RUNTIME_PROFILE: #{profile}"
+        end
       end
     end
 
-    def jobs?(env = ENV)
-      current(env) == "jobs"
+    def jobs?
+      current == "jobs"
     end
 
-    def workflow_cli?(env = ENV)
-      current(env) == "workflow_cli"
+    def workflow_cli?
+      current == "workflow_cli"
     end
 
-    def headless?(env = ENV)
-      HEADLESS_PROFILES.include?(current(env))
+    def headless?
+      HEADLESS_PROFILES.include?(current)
     end
 
-    def bundler_groups(env = ENV)
-      headless?(env) ? [] : [ :web ]
+    def bundler_groups
+      headless? ? [] : [ :web ]
     end
   end
 end
