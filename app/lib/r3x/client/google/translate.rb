@@ -6,8 +6,8 @@ module R3x
       class Translate
         API_URL = "https://translation.googleapis.com/language/translate/v2"
 
-        def initialize(credentials_env:)
-          @credentials_env = credentials_env
+        def initialize(project:)
+          @project = project
         end
 
         def translate(text, to:, from: nil, format: "text")
@@ -22,11 +22,11 @@ module R3x
 
         private
 
-        attr_reader :credentials_env
+        attr_reader :project
 
         def authorization
-          @authorization ||= R3x::Client::GoogleAuth.from_json(
-            R3x::Client::Google::Credentials.from_env(credentials_env),
+          @authorization ||= R3x::Client::GoogleAuth.from_env(
+            project: project,
             scope: R3x::Client::GoogleAuth.resolve_scope("translate")
           )
         end

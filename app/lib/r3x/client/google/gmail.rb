@@ -6,8 +6,8 @@ module R3x
       class Gmail
         include R3x::Concerns::Logger
 
-        def initialize(credentials_env:)
-          @credentials_env = credentials_env
+        def initialize(project:)
+          @project = project
         end
 
         def deliver(to:, subject:, body:)
@@ -30,14 +30,14 @@ module R3x
 
         private
 
-        attr_reader :credentials_env
+        attr_reader :project
 
         def build_service
           R3x::Client::GoogleAuth.require_gmail!
 
           ::Google::Apis::GmailV1::GmailService.new.tap do |service|
-            service.authorization = R3x::Client::GoogleAuth.from_json(
-              R3x::Client::Google::Credentials.from_env(credentials_env),
+            service.authorization = R3x::Client::GoogleAuth.from_env(
+              project: project,
               scope: "gmail.send"
             )
           end

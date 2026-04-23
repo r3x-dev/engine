@@ -31,6 +31,16 @@ module R3x
           .merge(translate_scope_aliases)
       end
 
+      def self.from_env(project:, scope:)
+        Signet::OAuth2::Client.new(
+          client_id: R3x::Env.fetch!("GOOGLE_CLIENT_ID_#{project}"),
+          client_secret: R3x::Env.fetch!("GOOGLE_CLIENT_SECRET_#{project}"),
+          refresh_token: R3x::Env.fetch!("GOOGLE_REFRESH_TOKEN_#{project}"),
+          token_credential_uri: "https://oauth2.googleapis.com/token",
+          scope: Array(scope).map { |value| resolve_scope(value) }
+        ).tap(&:fetch_access_token!)
+      end
+
       def self.from_json(parsed_json, scope:)
         Signet::OAuth2::Client.new(
           client_id: parsed_json.fetch("client_id"),

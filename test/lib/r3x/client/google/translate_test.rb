@@ -25,61 +25,38 @@ module R3x
               headers: { "Content-Type" => "application/json" }
             )
 
-          with_stubbed_google_credentials(test_credentials) do
-            with_stubbed_google_auth(authorization, captured) do
-              result = Translate.new(credentials_env: "GOOGLE_CREDENTIALS_TEST_APP")
-                .translate(" Ola mundo ", to: "en", from: "pt")
+          with_stubbed_google_auth(authorization, captured) do
+            result = Translate.new(project: "TEST_APP")
+              .translate(" Ola mundo ", to: "en", from: "pt")
 
-              assert_equal(
-                {
-                  "q" => " Ola mundo ",
-                  "target" => "en",
-                  "source" => "pt",
-                  "format" => "text"
-                },
-                delivered
-              )
-              assert_equal "https://www.googleapis.com/auth/cloud-translation", captured[:scope]
-              assert_equal "<p>Hello <strong>world</strong></p>", result
-            end
+            assert_equal(
+              {
+                "q" => " Ola mundo ",
+                "target" => "en",
+                "source" => "pt",
+                "format" => "text"
+              },
+              delivered
+            )
+            assert_equal "https://www.googleapis.com/auth/cloud-translation", captured[:scope]
+            assert_equal "<p>Hello <strong>world</strong></p>", result
           end
         end
 
         private
 
-        def test_credentials
-          {
-            "client_id" => "client-id",
-            "client_secret" => "client-secret",
-            "refresh_token" => "refresh-token"
-          }
-        end
-
-        def with_stubbed_google_credentials(result)
-          singleton_class = R3x::Client::Google::Credentials.singleton_class
-          original_method = R3x::Client::Google::Credentials.method(:from_env)
-
-          singleton_class.define_method(:from_env) do |_credentials_env|
-            result
-          end
-
-          yield
-        ensure
-          singleton_class.define_method(:from_env, original_method)
-        end
-
         def with_stubbed_google_auth(result, captured)
           singleton_class = R3x::Client::GoogleAuth.singleton_class
-          original_method = R3x::Client::GoogleAuth.method(:from_json)
+          original_method = R3x::Client::GoogleAuth.method(:from_env)
 
-          singleton_class.define_method(:from_json) do |_parsed_json, scope:|
+          singleton_class.define_method(:from_env) do |project:, scope:|
             captured[:scope] = scope
             result
           end
 
           yield
         ensure
-          singleton_class.define_method(:from_json, original_method)
+          singleton_class.define_method(:from_env, original_method)
         end
 
         class FakeAuthorization

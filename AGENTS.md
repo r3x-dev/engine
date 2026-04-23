@@ -37,7 +37,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `lib/r3x/trigger_manager.rb` + `lib/r3x/trigger_manager/`: trigger infrastructure — `R3x::TriggerManager::Collection` (manages workflow triggers as a hash keyed by `unique_key`) and `R3x::TriggerManager::Execution` (wraps a trigger for runtime use).
 - `app/lib/r3x/`: runtime support code such as client wrappers and shared concerns.
 - `app/lib/r3x/client/victoria_logs.rb`: thin VictoriaLogs HTTP client used by the dashboard when log viewing is enabled.
-- `app/lib/r3x/client/google/credentials.rb`: shared Google credentials loader used by Gmail, Google Sheets, and Google Translate integrations.
+- `app/lib/r3x/client/google_auth.rb`: resolves Google OAuth2 scope aliases and builds `Signet::OAuth2::Client` instances from per-project environment variables.
 - `lib/r3x/gem_loader.rb`: tiny helper for one-time lazy `require` of heavy optional gems used by integrations and workflow helpers.
 - `app/lib/r3x/client/google/gmail.rb`: Gmail API client used by workflows via `ctx.client.gmail(...)`.
 - `app/lib/r3x/client/google/translate.rb`: Google Translate client used by workflows via `ctx.client.google_translate(...)`.
@@ -95,7 +95,7 @@ Use `bin/workflow` to interact with workflows from the command line. `list` and 
 - If a client can be destructive or noisy, prefer a boolean `dry_run` flag over an implicit ENV-based mode switch.
 - When a client is used from app/runtime code, resolve the default through `R3x::Policy.dry_run_for(:key, dry_run)`: development and test should be dry-run by default, production should default to real delivery unless the caller explicitly opts into `dry_run: true`.
 - `R3x::Policy` may also honor per-feature overrides like `R3X_GMAIL_DRY_RUN` and a global `R3X_DRY_RUN` if we need to widen or narrow the policy later.
-- For integration credentials, prefer passing `*_env` references like `credentials_env:` or `api_key_env:` instead of raw secrets or parsed credential hashes. Resolve the secret lazily inside the client/output so dry-run paths can avoid loading credentials when they do not need them.
+- For integration credentials, prefer passing `*_env` references like `api_key_env:` or `project:` instead of raw secrets or parsed credential hashes. Resolve the secret lazily inside the client/output so dry-run paths can avoid loading credentials when they do not need them.
 - Prefer lazy-loading heavy third-party gems from the client or workflow helper that first needs them. Mark the gem `require: false` in `Gemfile`, then call `R3x::GemLoader.require("...")` at the boundary that actually uses it.
 - Treat lazy-loading as a default design tool for optional workflow integrations and LLM helpers, especially in production boot paths.
 - Reasoning: this app boots the workflow engine for web and jobs processes, but not every workflow uses every integration. Avoid making all processes pay the memory and boot-time cost of Gmail, Google Sheets, Google Calendar, Google Translate, RubyLLM, or similar stacks when only a subset of workflows needs them.

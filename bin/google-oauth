@@ -15,6 +15,14 @@ class GoogleOAuthCLI < Thor
   def authorize
     project = options[:project]
 
+    step("[Step 1] Loading client credentials...")
+
+    client_id = fetch_env!("GOOGLE_CLIENT_ID_#{project}")
+    success("Found GOOGLE_CLIENT_ID_#{project}")
+
+    client_secret = fetch_env!("GOOGLE_CLIENT_SECRET_#{project}")
+    success("Found GOOGLE_CLIENT_SECRET_#{project}")
+
     scope_aliases = if options[:scopes]&.strip&.present?
       options[:scopes]
     else
@@ -30,14 +38,6 @@ class GoogleOAuthCLI < Thor
     puts ""
     puts "Project: #{project}"
     puts "Scopes:  #{scopes.join(', ')}"
-
-    step("[Step 1] Loading client credentials...")
-
-    client_id = fetch_env!("GOOGLE_CLIENT_ID_#{project}")
-    success("Found GOOGLE_CLIENT_ID_#{project}")
-
-    client_secret = fetch_env!("GOOGLE_CLIENT_SECRET_#{project}")
-    success("Found GOOGLE_CLIENT_SECRET_#{project}")
 
     step("[Step 2] Generating authorization URL...")
 
@@ -61,17 +61,19 @@ class GoogleOAuthCLI < Thor
     puts "    http://localhost/?code=4/0AX4XfWh..."
     puts ""
     puts "  The browser may show a connection error — that's expected."
-    puts "  Copy the authorization code from the 'code' parameter in the URL."
+    puts "  Copy the full redirect URL from the browser address bar."
 
     puts ""
-    print "  Paste the authorization code: "
-    code = $stdin.gets&.chomp
+    print "  Paste the redirect URL: "
+    redirect_url = $stdin.gets&.chomp
 
-    if code.nil? || code.strip.empty?
+    if redirect_url.nil? || redirect_url.strip.empty?
       puts ""
-      failure("No code provided — aborting")
+      failure("No URL provided — aborting")
       abort
     end
+
+    code = extract_code_from_url(redirect_url.strip)
 
     step("[Step 4] Exchanging code for tokens...")
 
@@ -79,7 +81,7 @@ class GoogleOAuthCLI < Thor
       client_id:     client_id,
       client_secret: client_secret,
       redirect_uri:  "http://localhost",
-      code:          code.strip,
+      code:          code,
       token_credential_uri: "https://oauth2.googleapis.com/token"
     )
 
@@ -98,22 +100,17 @@ class GoogleOAuthCLI < Thor
 
     success("Access token obtained")
 
-    credentials = {
-      "client_id"     => client_id,
-      "client_secret" => client_secret,
-      "refresh_token" => token_client.refresh_token
-    }
-    json_output = MultiJson.dump(credentials)
+    refresh_token = token_client.refresh_token
 
-    step("[Step 5] Store these credentials in Vault")
-    vault_key = "GOOGLE_CREDENTIALS_#{project}"
+    step("[Step 5] Store the refresh token in Vault")
+    vault_key = "GOOGLE_REFRESH_TOKEN_#{project}"
     puts ""
     puts "  Vault key: #{vault_key}"
     puts ""
-    puts "  #{json_output}"
+    puts "  #{refresh_token}"
     puts ""
     puts "  Run:"
-    puts "  vault kv put secret/data/env/r3x #{vault_key}='#{json_output}'"
+    puts "  vault kv put secret/data/env/r3x #{vault_key}='#{refresh_token}'"
     puts ""
     puts "Done! Test with: bin/google-oauth status --project #{project}"
   end
@@ -128,43 +125,36 @@ class GoogleOAuthCLI < Thor
     puts ""
     puts "Project: #{project}"
 
-    step("[Step 1] Checking credentials...")
+    step("[Step 1] Checking client credentials...")
 
-    credentials_key = "GOOGLE_CREDENTIALS_#{project}"
-    credentials_json = R3x::Env.fetch(credentials_key)
+    fetch_env!("GOOGLE_CLIENT_ID_#{project}")
+    success("Found GOOGLE_CLIENT_ID_#{project}")
 
-    unless credentials_json
-      failure("Missing #{credentials_key}")
+    fetch_env!("GOOGLE_CLIENT_SECRET_#{project}")
+    success("Found GOOGLE_CLIENT_SECRET_#{project}")
+
+    step("[Step 2] Checking refresh token...")
+
+    refresh_token_key = "GOOGLE_REFRESH_TOKEN_#{project}"
+    refresh_token = R3x::Env.fetch(refresh_token_key)
+
+    unless refresh_token
+      failure("Missing #{refresh_token_key}")
       puts ""
       puts "  Run authorization first:"
       puts "  bin/google-oauth authorize --project #{project} --scopes gmail.readonly,sheets.readonly"
       abort
     end
 
-    success("Found #{credentials_key}")
-
-    step("[Step 2] Parsing credentials...")
-
-    parsed = begin
-      MultiJson.load(credentials_json)
-    rescue MultiJson::ParseError => e
-      failure("Invalid JSON: #{e.message}")
-      abort
-    end
-
-    %w[client_id client_secret refresh_token].each do |field|
-      if parsed[field].to_s.empty?
-        failure("Missing field: #{field}")
-        abort
-      end
-    end
-
-    success("Credentials JSON is valid")
+    success("Found #{refresh_token_key}")
 
     step("[Step 3] Validating refresh token...")
 
     begin
-      R3x::Client::GoogleAuth.from_json(parsed, scope: "https://www.googleapis.com/auth/spreadsheets.readonly")
+      R3x::Client::GoogleAuth.from_env(
+        project: project,
+        scope: "https://www.googleapis.com/auth/spreadsheets.readonly"
+      )
       success("Token valid — access token obtained")
     rescue Signet::AuthorizationError => e
       failure("Token invalid: #{e.class} — #{e.message}")
@@ -172,8 +162,8 @@ class GoogleOAuthCLI < Thor
       puts "  The refresh token may have expired or been revoked."
       puts "  Re-run: bin/google-oauth authorize --project #{project} --scopes gmail.readonly,sheets.readonly"
       abort
-    rescue KeyError => e
-      failure("Missing credential field: #{e.message}")
+    rescue ArgumentError => e
+      failure("Missing credential: #{e.message}")
       abort
     rescue StandardError => e
       failure("Unexpected error: #{e.class} — #{e.message}")
@@ -219,6 +209,23 @@ class GoogleOAuthCLI < Thor
     puts "#{crossmark} #{text}"
   end
 
+  def extract_code_from_url(url)
+    uri = URI.parse(url)
+    params = URI.decode_www_form(uri.query.to_s).to_h
+    params["code"].presence || begin
+      failure("No 'code' parameter found in the URL")
+      puts ""
+      puts "  Make sure you pasted the full redirect URL from the browser."
+      puts "  Example: http://localhost/?code=4/0AX4XfWh..."
+      abort
+    end
+  rescue URI::InvalidURIError => e
+    failure("Invalid URL: #{e.message}")
+    puts ""
+    puts "  Make sure you pasted the full redirect URL from the browser."
+    abort
+  end
+
   def fetch_env!(key)
     R3x::Env.fetch(key) || begin
       failure("Missing #{key}")
@@ -256,16 +263,22 @@ class GoogleOAuthCLI < Thor
           menu.prompt = "Select a scope (or 'done' to finish): "
 
           remaining.each do |alias_name|
-          scope = R3x::Client::GoogleAuth.resolve_scope(alias_name)
-          menu.choice("#{alias_name} (#{scope})") { alias_name }
+            scope = R3x::Client::GoogleAuth.resolve_scope(alias_name)
+            menu.choice("#{alias_name} (#{scope})") { alias_name }
+          end
+
+          menu.choice(:all) { :all }
+          menu.choice(:done) { nil }
         end
 
-        menu.choice(:done) { nil }
-      end
+        break if choice.nil? || choice == :done
 
-      break if choice.nil? || choice == :done
+        if choice == :all
+          selected_aliases.concat(remaining)
+          break
+        end
 
-      selected_aliases << choice
+        selected_aliases << choice
       puts "  ✓ Added: #{choice}"
       puts ""
 
