@@ -698,11 +698,11 @@ class DashboardTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "<th>Queue</th>"
   end
 
-  test "recent runs table uses run id column instead of queue and inline job label" do
+  test "recent runs table omits queue and inline job label" do
     get "/workflow-runs"
 
     assert_response :success
-    assert_equal [ "Workflow", "Result", "Observed", "Trigger", "Run ID", "Open" ], css_select("table").last.css("thead th").map(&:text)
+    assert_equal [ "Workflow", "Result", "Observed", "Trigger", "Open" ], css_select("table").last.css("thead th").map(&:text)
     refute_includes response.body, "<th>Queue</th>"
     refute_includes response.body, WORKFLOW_JOB_CLASS_NAME
   end

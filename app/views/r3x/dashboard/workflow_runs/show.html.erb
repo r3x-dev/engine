@@ -42,18 +42,18 @@
 
   <div class="detail-grid">
     <div class="detail-item">
-      <span class="label">Observed</span>
-      <strong><%= dashboard_absolute_timestamp(@run[:recorded_at]) %></strong>
-    </div>
-
-    <div class="detail-item">
-      <span class="label">Trigger</span>
-      <strong><code><%= trigger_key %></code></strong>
+      <span class="label">Started</span>
+      <strong><%= @run[:started_at].present? ? dashboard_absolute_timestamp(@run[:started_at]) : content_tag(:span, "Not started", class: "muted") %></strong>
     </div>
 
     <div class="detail-item">
       <span class="label">Duration</span>
       <strong><%= dashboard_duration(@run[:enqueued_at], terminal_time) %></strong>
+    </div>
+
+    <div class="detail-item">
+      <span class="label">Trigger</span>
+      <strong><code><%= trigger_key %></code></strong>
     </div>
   </div>
 </section>
