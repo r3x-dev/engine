@@ -5,25 +5,21 @@ module R3x
       HIDDEN_TAG_PREFIXES = %w[r3x.].freeze
 
       class << self
-        def configured?(provider_name: current_provider_name)
-          case normalize_provider_name(provider_name)
+        def configured?(provider_name: current_provider_name, rails_env: Rails.env)
+          case provider_name.presence
           when nil
             false
           when "victorialogs"
             R3x::Env.fetch("R3X_VICTORIA_LOGS_URL").present?
+          when "file_log"
+            rails_env.to_s == "development"
           else
             true
           end
         end
 
         def current_provider_name
-          normalize_provider_name(R3x::Env.fetch("R3X_LOGS_PROVIDER"))
-        end
-
-        private
-
-        def normalize_provider_name(provider_name)
-          provider_name.presence
+          R3x::Env.fetch("R3X_LOGS_PROVIDER").presence
         end
       end
 
@@ -53,7 +49,7 @@ module R3x
       def configured?
         return true if client.present?
 
-        self.class.configured?(provider_name: provider_name)
+        self.class.configured?(provider_name: provider_name, rails_env: Rails.env)
       end
 
       def build_query(filter)
@@ -91,6 +87,8 @@ module R3x
         return client if client.present?
 
         @logs_client ||= case provider_name
+        when "file_log"
+          R3x::Client::FileLog.new
         when "victorialogs"
           R3x::Client::VictoriaLogs.new
         else

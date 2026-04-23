@@ -6,7 +6,9 @@ class DashboardTest < ActionDispatch::IntegrationTest
   WORKFLOW_JOB_CLASS_NAME = R3x::TestSupport::DashboardWorkflowJob.name.freeze
 
   setup do
+    @dashboard_log_files = [].freeze
     @original_logs_provider = ENV["R3X_LOGS_PROVIDER"]
+    @original_workflow_log_path = ENV["R3X_WORKFLOW_LOG_PATH"]
     @original_victoria_logs_url = ENV["R3X_VICTORIA_LOGS_URL"]
     clear_tables
     clear_enqueued_jobs
@@ -39,7 +41,9 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
   teardown do
     ENV["R3X_LOGS_PROVIDER"] = @original_logs_provider
+    ENV["R3X_WORKFLOW_LOG_PATH"] = @original_workflow_log_path
     ENV["R3X_VICTORIA_LOGS_URL"] = @original_victoria_logs_url
+    @dashboard_log_files.each(&:close!)
   end
 
   test "root renders workflows dashboard" do
@@ -139,6 +143,35 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Back to workflow"
     assert_includes response.body, 'class="panel stack panel-spaced"'
     assert_match(/<span class="label">Finished<\/span>\s*<strong><time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
+  end
+
+  test "workflow run detail renders file log provider entries" do
+    ENV["R3X_LOGS_PROVIDER"] = "file_log"
+    ENV["R3X_WORKFLOW_LOG_PATH"] = write_dashboard_log(
+      [
+        {
+          "level" => "info",
+          "message" => "[r3x.run_active_job_id=#{@job.active_job_id}] [r3x.workflow_key=test_workflow] [r3x.trigger_key=#{@trigger}] [#{WORKFLOW_JOB_CLASS_NAME}] Running workflow trigger_type=schedule",
+          "time" => (@job.created_at + 1.second).utc.iso8601(6),
+          "tags" => [ "r3x.run_active_job_id=#{@job.active_job_id}", "r3x.workflow_key=test_workflow", "r3x.trigger_key=#{@trigger}", WORKFLOW_JOB_CLASS_NAME ]
+        },
+        {
+          "level" => "warn",
+          "message" => "[r3x.run_active_job_id=other-job] Not this run",
+          "time" => (@job.created_at + 2.seconds).utc.iso8601(6),
+          "tags" => [ "r3x.run_active_job_id=other-job" ]
+        }
+      ]
+    )
+
+    with_logs_configured(true) do
+      get "/workflow-runs/#{@job.id}"
+    end
+
+    assert_response :success
+    assert_includes response.body, "Run logs"
+    assert_includes response.body, "Running workflow trigger_type=schedule"
+    refute_includes response.body, "Not this run"
   end
 
   test "workflow run detail hides failure details when run succeeded" do
@@ -421,6 +454,32 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Log query failed: Unsupported logs provider: unknown"
   end
 
+  test "workflow run detail reports missing file log file in development" do
+    ENV["R3X_LOGS_PROVIDER"] = "file_log"
+    ENV["R3X_WORKFLOW_LOG_PATH"] = Rails.root.join("tmp", "missing-dashboard-file-log.log").to_s
+
+    with_logs_configured(true) do
+      get "/workflow-runs/#{@job.id}", params: { logs: 1 }
+    end
+
+    assert_response :success
+    assert_includes response.body, "Log query failed:"
+    assert_includes response.body, "No such file or directory"
+  end
+
+  test "workflow run detail keeps file log provider unavailable outside development" do
+    ENV["R3X_LOGS_PROVIDER"] = "file_log"
+    ENV["R3X_WORKFLOW_LOG_PATH"] = Rails.root.join("tmp", "missing-dashboard-file-log.log").to_s
+
+    with_logs_configured(false) do
+      get "/workflow-runs/#{@job.id}", params: { logs: 1 }
+    end
+
+    assert_response :success
+    refute_includes response.body, "Run logs"
+    refute_includes response.body, "Log query failed:"
+  end
+
   test "workflow detail does not show logs shortcut" do
     ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
     ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
@@ -504,6 +563,30 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
   def clear_tables
     TestDbCleanup.clear_runtime_tables!
+  end
+
+  def write_dashboard_log(entries)
+    file = Tempfile.new([ "dashboard-log", ".log" ])
+    entries.each do |entry|
+      file.puts(MultiJson.dump(entry))
+    end
+
+    file.flush
+    @dashboard_log_files = (@dashboard_log_files + [ file ]).freeze
+    file.path
+  end
+
+  def with_logs_configured(value)
+    singleton = R3x::Dashboard::Logs.singleton_class
+    original = singleton.instance_method(:configured?)
+
+    singleton.define_method(:configured?) do |**_kwargs|
+      value
+    end
+
+    yield
+  ensure
+    singleton.define_method(:configured?, original) if singleton && original
   end
 
   def claim_job!(job)

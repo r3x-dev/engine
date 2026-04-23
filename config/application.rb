@@ -1,5 +1,6 @@
 require_relative "boot"
 require_relative "log_formatter"
+require_relative "../lib/r3x/workflow_log"
 
 require "rails"
 # Pick the frameworks you want:

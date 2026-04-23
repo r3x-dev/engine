@@ -135,9 +135,17 @@ These notes apply to workflow code in general.
   emitted.
 - Workflow execution already carries tagged context such as `r3x.run_active_job_id` and `r3x.trigger_key`
   for indexed log correlation in the dashboard. Orchestration jobs also tag lines with `r3x.workflow_key`
-  where that broader workflow-level context is useful. Prefer logging through the existing Rails logger so
-  those tags stay attached to emitted lines.
-- App logs are always emitted as structured JSON with explicit `level`, `message`, and `tags`.
+  where that broader workflow-level context is useful. Prefer the existing workflow/job logger helpers
+  (`logger` on jobs/workflows and `R3x::Concerns::Logger` in helpers/clients) so those tags stay attached
+  to emitted lines.
+- Production app logs are emitted as structured JSON with explicit `level`, `message`, and `tags`.
+- In local development, the web/server logger stays human-readable while workflow/job execution is mirrored
+  to the terminal and written as structured JSON lines to `log/workflow_runs.<env>.jsonl` for the dashboard.
+- The development workflow logger honors the app's configured log level, so `RAILS_LOG_LEVEL=info` filters
+  `debug` on both terminal output and the JSONL file sink.
+- The workflow JSONL sink is file-backed and rotated explicitly by the workflow logger. By default it keeps
+  10 archived files of up to 50 MiB each; tune it with `R3X_WORKFLOW_LOG_ROTATION_COUNT` and
+  `R3X_WORKFLOW_LOG_ROTATION_SIZE_BYTES`.
 - Dashboard run logs read the explicit `level` from structured log payloads. They do not infer levels
   from free-form message text.
 

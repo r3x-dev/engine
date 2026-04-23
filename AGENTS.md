@@ -18,7 +18,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - The default local UI surface is the server-rendered workflow dashboard mounted at `/`.
 - Mission Control Jobs remains available at `/ops/jobs` for queue inspection and operational actions.
 - The dashboard is DB-first: workflow pages and recent runs are derived from current `Solid Queue` tables plus `trigger_states`, so they only show workflows and runs that have persisted runtime artifacts.
-- The dashboard can optionally query indexed application logs when `R3X_LOGS_PROVIDER` is configured. The current supported provider is `victorialogs`, which reads from `R3X_VICTORIA_LOGS_URL` via VictoriaLogs native query API.
+- The dashboard can optionally query indexed application logs when `R3X_LOGS_PROVIDER` is configured. Supported providers are `victorialogs`, which reads from `R3X_VICTORIA_LOGS_URL` via VictoriaLogs native query API, and development-only `file_log`, which reads structured JSON lines from the local workflow-run log file (`log/workflow_runs.<env>.jsonl` by default, overrideable with `R3X_WORKFLOW_LOG_PATH`).
 
 ## Codebase Map
 
@@ -31,10 +31,12 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `lib/r3x/workflow/executor.rb`: shared workflow execution helper that resolves the trigger and builds `Workflow::Context` for a loaded workflow class.
 - `lib/r3x/workflow/cli.rb`: in-process implementation for `bin/workflow` commands so CLI behavior can be tested without shelling out.
 - `lib/r3x/workflow/entrypoint.rb`: boot-policy layer used by `config/application.rb` and `bin/jobs*` to decide whether to only load workflows or also schedule recurring tasks.
+- `lib/r3x/execution_logger.rb`: tiny execution-scoped bridge that lets workflow/job helpers reuse the current Active Job logger without routing web logs away from `Rails.logger`.
 - `lib/r3x/dsl/`: shared DSL infrastructure, especially validation concerns and configuration errors used by workflow-declared objects.
 - `lib/r3x/trigger_manager.rb` + `lib/r3x/trigger_manager/`: trigger infrastructure — `R3x::TriggerManager::Collection` (manages workflow triggers as a hash keyed by `unique_key`) and `R3x::TriggerManager::Execution` (wraps a trigger for runtime use).
 - `app/lib/r3x/`: runtime support code such as client wrappers and shared concerns.
 - `app/lib/r3x/client/victoria_logs.rb`: thin VictoriaLogs HTTP client used by the dashboard when log viewing is enabled.
+- `app/lib/r3x/client/file_log.rb`: development-only file-backed log client used by the dashboard for workflow log queries without VictoriaLogs.
 - `app/lib/r3x/client/google/credentials.rb`: shared Google credentials loader used by Gmail, Google Sheets, and Google Translate integrations.
 - `lib/r3x/gem_loader.rb`: tiny helper for one-time lazy `require` of heavy optional gems used by integrations and workflow helpers.
 - `app/lib/r3x/client/google/gmail.rb`: Gmail API client used by workflows via `ctx.client.gmail(...)`.
@@ -71,7 +73,10 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - Because the app currently uses `Solid Queue` as a database-backed backend on the same Active Record database connection, code may intentionally rely on a database transaction covering both `TriggerState` updates and `perform_later`. Do not assume those guarantees survive a future backend or database split.
 - `R3x::RunWorkflowJob` fetches the workflow from the registry and calls `workflow_class.perform_now(trigger_key, trigger_payload: ...)` for compatibility with callers that still dispatch by workflow key.
 - `ApplicationJob`, `R3x::RunWorkflowJob`, `R3x::Workflow::Base`, and `R3x::ChangeDetectionJob` add stable tagged log context so indexed logs can be correlated back to run pages. The workflow job itself keeps the per-run tags minimal (`r3x.run_active_job_id` and `r3x.trigger_key`), while orchestration jobs still emit `r3x.workflow_key` for broader workflow-level correlation.
-- App logs are always emitted as structured JSON with explicit `level`, `message`, and tag data so the dashboard can read real log levels directly.
+- Production app logs and the local workflow-run log file are emitted as structured JSON with explicit `level`, `message`, and tag data so the dashboard can read real log levels directly.
+- In local development, logging is intentionally split: `config.logger` stays human-readable for the web/server path, `config.active_job.logger` points at the workflow logger that mirrors readable `STDOUT` output plus structured `log/workflow_runs.<env>.jsonl` output, and `config.solid_queue.logger` stays on the human-readable side. In production, workflow/job logs stay on `stdout`; do not wire the file-backed workflow logger into production config.
+- The workflow file logger is rotated explicitly by size and archive count. The defaults are `10` archived files and `52428800` bytes per file, configurable via `R3X_WORKFLOW_LOG_ROTATION_COUNT` and `R3X_WORKFLOW_LOG_ROTATION_SIZE_BYTES`.
+- The execution-scoped bridge is `R3x::ExecutionLogger`, not a repo-wide `CurrentAttributes` API. `ApplicationJob` sets it to the current job logger for the duration of `perform`, and helper/client code should read through `R3x::Concerns::Logger` or `R3x::Env.logger`.
 - Known limitation: because queued workflow runs persist the concrete workflow class name, renaming or removing a workflow class across deploys can strand older queued runs with job deserialization failures. This is currently an accepted tradeoff for preserving `ActiveJob::Continuable` on the workflow job itself.
 - The dashboard's run history is DB-first and parses `Solid Queue` / `Active Job` payloads directly. It still accepts the underlying tradeoff that finished runs are retention-bound and that workflows with no persisted runtime artifacts are invisible to the dashboard.
 - The dashboard log view is also retention-bound, but by the configured log backend rather than `Solid Queue`; it is read-only and fail-soft, so missing log provider config or query failures should not break the main dashboard pages.
@@ -218,7 +223,8 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - **Good**: `logger.tagged(self.class.name) { logger.info("message") }`
 - **Bad**: `logger.info("[Hardcoded::Class::Name] message")` or manual string interpolation
 - Reasoning: Using `self.class.name` keeps log tags synchronized with actual class names automatically, supports nested tagging, and works consistently with Rails log formatting.
-- Use `R3x::Concerns::Logger` - provides both instance and class method `logger` tagged with class name. `Rails.logger` is already `TaggedLogging` so just call `.tagged(name)` directly.
+- Use `R3x::Concerns::Logger` - provides both instance and class method `logger` tagged with class name. It prefers the current execution logger when a workflow/job is running and otherwise falls back to `Rails.logger`.
+- Do not introduce new public uses of `CurrentAttributes` just to route logs. Use `R3x::ExecutionLogger` as the single bridge for workflow/job execution-scoped logging.
 - For class methods: `extend R3x::Concerns::Logger` then call `logger.info(...)`
 - For instance methods: `include R3x::Concerns::Logger` then call `logger.info(...)`
 - Preserve the shared workflow/job correlation tags emitted by `ApplicationJob` and workflow execution paths: `r3x.run_active_job_id` and, where useful for the emitting layer, `r3x.workflow_key` and `r3x.trigger_key`. Add nested tags when needed, but do not replace or rename these tags without updating the dashboard log queries and deployment env/docs in the same change.
