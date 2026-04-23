@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+ENV["R3X_RUNTIME_PROFILE"] = "jobs"
+
 require_relative "../config/environment"
 require "solid_queue/cli"
 

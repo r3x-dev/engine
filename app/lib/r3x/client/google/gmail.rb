@@ -44,6 +44,8 @@ module R3x
         end
 
         def raw_message(to:, subject:, body:)
+          R3x::GemLoader.require("mail")
+
           Mail.new.tap do |mail|
             mail.charset = "UTF-8"
             mail.to = to

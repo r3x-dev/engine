@@ -15,12 +15,6 @@ Rails.application.configure do
   # Eager load code on boot for better performance and memory savings (ignored by Rake tasks).
   config.eager_load = true
 
-  # Full error reports are disabled.
-  config.consider_all_requests_local = false
-
-  # Cache assets for far-future expiry since they are all digest stamped.
-  config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
-
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
@@ -43,9 +37,6 @@ Rails.application.configure do
 
   # Change to "debug" to log everything (including potentially personally-identifiable information!).
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
-
-  # Prevent health checks from clogging up the logs.
-  config.silence_healthcheck_path = "/up"
 
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
@@ -76,8 +67,19 @@ Rails.application.configure do
   config.solid_queue.clear_finished_jobs_after = 2.weeks
   config.solid_queue.shutdown_timeout = shutdown_timeout_seconds.seconds
 
-  # Intentionally uses ActiveModel::Type::Boolean instead of R3x::Env.fetch_boolean.
-  # A typo in this env var should fail-open (auth stays enabled) rather than crash
-  # the app on boot.
-  config.mission_control.jobs.http_basic_auth_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch("MISSION_CONTROL_AUTH_ENABLED", true))
+  unless R3x::RuntimeProfile.headless?
+    # Full error reports are disabled.
+    config.consider_all_requests_local = false
+
+    # Cache assets for far-future expiry since they are all digest stamped.
+    config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
+
+    # Prevent health checks from clogging up the logs.
+    config.silence_healthcheck_path = "/up"
+
+    # Intentionally uses ActiveModel::Type::Boolean instead of R3x::Env.fetch_boolean.
+    # A typo in this env var should fail-open (auth stays enabled) rather than crash
+    # the app on boot.
+    config.mission_control.jobs.http_basic_auth_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch("MISSION_CONTROL_AUTH_ENABLED", true))
+  end
 end

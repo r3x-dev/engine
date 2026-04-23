@@ -14,6 +14,12 @@ encrypted credentials in production deployments.
   for Solid Queue. Defaults to `900` seconds in production.
 - `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL`: optional
   dashboard run-log integration.
+- `R3X_RUNTIME_PROFILE=jobs`: internal jobs-only boot profile used by
+  `bin/jobs-worker` and `bin/jobs-scheduler`. Do not set this in the chart; the
+  entrypoint command is the source of truth.
+- `R3X_RUNTIME_PROFILE=workflow_cli`: internal headless profile used only by
+  `bin/workflow`. Do not set this in the chart either; this is a command-owned
+  CLI profile, not a deployment mode.
 
 ## Kubernetes Process Layouts
 
@@ -29,7 +35,15 @@ scheduler:
 This is the preferred Kubernetes layout because web scaling, queue execution,
 and recurring scheduling have separate lifecycle and resource needs. The worker
 entrypoint loads workflow classes but skips recurring task ownership. The
-scheduler entrypoint loads workflows and schedules recurring tasks.
+scheduler entrypoint loads workflows and schedules recurring tasks. Both
+entrypoints also enable the internal `jobs` boot profile, which keeps eager
+load enabled in production while trimming the boot surface to the Active Job /
+Active Record runtime instead of the dashboard web stack. The jobs profile also
+removes the app's `config/routes.rb` and `config/routes/**/*` from Rails path
+registration before initialization, so jobs never evaluate the web routes file
+at boot. Rails still eager-loads some framework controllers during production
+boot, so the jobs profile also keeps `ActionController::Base.include_all_helpers`
+disabled to avoid helper-path scans pulling web-only constants back in.
 
 ### Single-Process Puma Deployment
 
@@ -47,6 +61,10 @@ jobs scheduler that owns recurring scheduling in this mode.
 `bin/jobs` keeps the default Solid Queue CLI behavior. In split Kubernetes
 deployments prefer `bin/jobs-worker` and `bin/jobs-scheduler` so the role is
 encoded in the command and the matching queue config is selected by default.
+That is also why the chart should not set `R3X_RUNTIME_PROFILE`: the command
+already chooses the correct runtime profile. `workflow_cli` is only for the
+local/operator `bin/workflow` wrapper and is not something pods should set
+directly.
 
 ## Vault Secrets
 
