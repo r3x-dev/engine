@@ -157,8 +157,8 @@ module R3x
     test "schedule_all! removes stale dynamic tasks" do
       SolidQueue.schedule_recurring_task(
         "workflow:test_workflow:stale_trigger",
-        class: "R3x::RunWorkflowJob",
-        args: [ "test_workflow", { "trigger_key" => "stale" } ],
+        class: R3x::TestSupport::DashboardWorkflowJob.name,
+        args: [ "stale" ],
         schedule: "0 * * * *"
       )
 
@@ -182,8 +182,8 @@ module R3x
     test "schedule_all! does not delete foreign dynamic tasks" do
       SolidQueue.schedule_recurring_task(
         "foreign_system:task",
-        class: "R3x::RunWorkflowJob",
-        args: [ "test_workflow", { "trigger_key" => "foreign" } ],
+        class: R3x::TestSupport::DashboardWorkflowJob.name,
+        args: [ "foreign" ],
         schedule: "0 * * * *"
       )
 

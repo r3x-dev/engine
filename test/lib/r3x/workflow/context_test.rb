@@ -11,13 +11,13 @@ module R3x
       test "previous_run_at is memoized" do
         job = SolidQueue::Job.create!(
           queue_name: "default",
-          class_name: "R3x::RunWorkflowJob",
+          class_name: R3x::TestSupport::DashboardWorkflowJob.name,
           arguments: [ "test_memo" ]
         )
         SolidQueue::RecurringTask.create!(
           key: "test_memo",
           schedule: "0 * * * *",
-          class_name: "R3x::RunWorkflowJob",
+          class_name: R3x::TestSupport::DashboardWorkflowJob.name,
           arguments: [],
           queue_name: "default"
         )
@@ -37,7 +37,7 @@ module R3x
       ensure
         SolidQueue::RecurringExecution.where(task_key: "test_memo").delete_all
         SolidQueue::RecurringTask.where(key: "test_memo").delete_all
-        SolidQueue::Job.where(class_name: "R3x::RunWorkflowJob").delete_all
+        SolidQueue::Job.where(class_name: R3x::TestSupport::DashboardWorkflowJob.name).delete_all
       end
 
       test "first_run? returns true when no previous_run_at" do
@@ -48,13 +48,13 @@ module R3x
       test "first_run? returns false when previous_run_at exists" do
         job = SolidQueue::Job.create!(
           queue_name: "default",
-          class_name: "R3x::RunWorkflowJob",
+          class_name: R3x::TestSupport::DashboardWorkflowJob.name,
           arguments: [ "test_fr" ]
         )
         SolidQueue::RecurringTask.create!(
           key: "test_fr",
           schedule: "0 * * * *",
-          class_name: "R3x::RunWorkflowJob",
+          class_name: R3x::TestSupport::DashboardWorkflowJob.name,
           arguments: [],
           queue_name: "default"
         )
@@ -69,7 +69,7 @@ module R3x
       ensure
         SolidQueue::RecurringExecution.where(task_key: "test_fr").delete_all
         SolidQueue::RecurringTask.where(key: "test_fr").delete_all
-        SolidQueue::Job.where(class_name: "R3x::RunWorkflowJob").delete_all
+        SolidQueue::Job.where(class_name: R3x::TestSupport::DashboardWorkflowJob.name).delete_all
       end
     end
 

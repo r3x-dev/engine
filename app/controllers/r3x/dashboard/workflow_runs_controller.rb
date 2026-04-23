@@ -4,13 +4,13 @@ module R3x
       def index
         @workflow_filter = params[:workflow].presence
         @status_filter = params[:status].presence
-        @workflow_options = WorkflowCatalog.new.all
-        @statuses = WorkflowRuns.statuses
-        @runs = WorkflowRuns.new(workflow_key: @workflow_filter, status: @status_filter).all
+        @workflow_options = Workflow::Catalog.new.all
+        @statuses = Workflow::Runs.statuses
+        @runs = Workflow::Runs.new(workflow_key: @workflow_filter, status: @status_filter).all
       end
 
       def show
-        @run = WorkflowRuns.new.find!(params[:id])
+        @run = Workflow::Runs.new.find!(params[:id])
         @logs = Logs.new.run_logs(@run) if logs_configured?
       end
     end

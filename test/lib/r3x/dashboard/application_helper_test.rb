@@ -51,6 +51,23 @@ module R3x
         assert dashboard_error_details_visible?(long_error)
         refute dashboard_error_multiline?(long_error)
       end
+
+      test "dashboard structured error parses ruby hash dumps into exception message and backtrace" do
+        error = dashboard_structured_error(
+          '{"exception_class" => "Faraday::ForbiddenError", "message" => "the server responded with status 403", "backtrace" => ["line one", "line two"]}'
+        )
+
+        assert_equal "Faraday::ForbiddenError", error[:exception_class]
+        assert_equal "the server responded with status 403", error[:message]
+        assert_equal [ "line one", "line two" ], error[:backtrace]
+      end
+
+      test "dashboard duration renders hh:mm:ss" do
+        start_time = Time.zone.parse("2026-04-23 10:00:00 UTC")
+        end_time = Time.zone.parse("2026-04-23 11:02:03 UTC")
+
+        assert_equal "01:02:03", dashboard_duration(start_time, end_time)
+      end
     end
   end
 end

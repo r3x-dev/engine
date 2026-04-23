@@ -3,6 +3,11 @@
 <%
   trigger_key = @run[:trigger_key] || "manual/default"
   failure_summary = dashboard_error_summary(@run[:error])
+  terminal_time = if @run[:finished_at].present?
+                    @run[:finished_at]
+                  elsif @run[:status] == "failed"
+                    @run[:recorded_at]
+                  end
 %>
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -28,14 +33,6 @@
     </div>
     <p>Run <code><%= @run[:job_id] %></code></p>
   </div>
-
-  <div class="actions">
-    <% if @run[:known_workflow] && %w[failed finished].include?(@run[:status]) %>
-      <%= form_with url: workflow_run_rerun_path(@run[:job_id]), method: :post, local: true, class: "inline-form" do |form| %>
-        <%= form.button dashboard_icon_label(:launch, "Rerun"), class: "button success" %>
-      <% end %>
-    <% end %>
-  </div>
 </section>
 
 <section class="panel stack panel-spaced">
@@ -44,15 +41,6 @@
   </div>
 
   <div class="detail-grid">
-    <div class="detail-item">
-      <span class="label">Result</span>
-      <strong>
-        <span class="pill <%= dashboard_tone_for(@run[:status]) %>">
-          <%= dashboard_status_label(@run[:status]) %>
-        </span>
-      </strong>
-    </div>
-
     <div class="detail-item">
       <span class="label">Observed</span>
       <strong><%= dashboard_absolute_timestamp(@run[:recorded_at]) %></strong>
@@ -64,29 +52,9 @@
     </div>
 
     <div class="detail-item">
-      <span class="label">Enqueued</span>
-      <strong><%= dashboard_absolute_timestamp(@run[:enqueued_at]) %></strong>
+      <span class="label">Duration</span>
+      <strong><%= dashboard_duration(@run[:enqueued_at], terminal_time) %></strong>
     </div>
-
-    <% terminal_time = if @run[:finished_at].present?
-                         @run[:finished_at]
-                       elsif @run[:status] == "failed"
-                         @run[:recorded_at]
-                       end %>
-
-    <% if terminal_time.present? %>
-      <div class="detail-item">
-        <span class="label">Finished</span>
-        <strong><%= dashboard_absolute_timestamp(terminal_time) %></strong>
-      </div>
-    <% end %>
-
-    <% if @run[:scheduled_at].present? %>
-      <div class="detail-item">
-        <span class="label">Scheduled</span>
-        <strong><%= dashboard_absolute_timestamp(@run[:scheduled_at]) %></strong>
-      </div>
-    <% end %>
   </div>
 </section>
 
@@ -116,9 +84,25 @@
 
 <section class="panel stack panel-spaced">
   <details class="technical-details">
-    <summary>Technical details</summary>
+    <summary>Advanced details</summary>
 
     <dl class="technical-grid">
+      <div class="technical-item">
+        <dt>Enqueued</dt>
+        <dd><%= dashboard_absolute_timestamp(@run[:enqueued_at]) %></dd>
+      </div>
+      <% if terminal_time.present? %>
+        <div class="technical-item">
+          <dt>Finished</dt>
+          <dd><%= dashboard_absolute_timestamp(terminal_time) %></dd>
+        </div>
+      <% end %>
+      <% if @run[:scheduled_at].present? %>
+        <div class="technical-item">
+          <dt>Scheduled</dt>
+          <dd><%= dashboard_absolute_timestamp(@run[:scheduled_at]) %></dd>
+        </div>
+      <% end %>
       <div class="technical-item">
         <dt>Run ID</dt>
         <dd><code><%= @run[:job_id] %></code></dd>

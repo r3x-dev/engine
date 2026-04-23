@@ -31,8 +31,9 @@
   <% if @needs_attention.empty? %>
     <div class="empty">No workflows need attention right now.</div>
   <% else %>
-    <div class="grid two">
+    <div class="overview-needs-attention-list">
       <% @needs_attention.each do |workflow| %>
+        <% error = dashboard_structured_error(workflow.dig(:health, :detail)) %>
         <article class="panel panel-nested stack overview-needs-attention-card">
           <div class="stack">
             <div class="run-heading">
@@ -42,10 +43,31 @@
               </span>
             </div>
 
-            <p class="meta"><%= workflow.dig(:health, :detail).presence || "Inspect this workflow to review the latest runtime state." %></p>
+            <% if error.present? %>
+              <section class="failure-summary overview-error-panel">
+                <div class="overview-error-header">
+                  <% if error[:exception_class].present? %>
+                    <span class="pill danger"><%= error[:exception_class] %></span>
+                  <% end %>
+                </div>
+
+                <p class="overview-error-message"><%= error[:message].presence || dashboard_error_summary(workflow.dig(:health, :detail)) %></p>
+
+                <% if error[:backtrace].present? %>
+                  <details class="technical-details overview-error-backtrace">
+                    <summary>Backtrace (<%= pluralize(error[:backtrace].size, "frame") %>)</summary>
+                    <pre class="error-block"><%= error[:backtrace].join("\n") %></pre>
+                  </details>
+                <% end %>
+              </section>
+            <% elsif workflow.dig(:health, :detail).present? %>
+              <p class="overview-error-message"><%= dashboard_error_body(workflow.dig(:health, :detail)) %></p>
+            <% else %>
+              <p class="meta">Inspect this workflow to review the latest runtime state.</p>
+            <% end %>
 
             <div class="pill-row">
-              <span class="pill muted">Last seen <%= dashboard_relative_time(workflow[:last_seen_at]) %></span>
+              <span class="pill muted"><%= workflow[:attention_label] %> <%= dashboard_relative_time(workflow[:attention_at]) %></span>
               <% if workflow[:next_trigger_at].present? %>
                 <span class="pill muted">Next <%= dashboard_relative_time(workflow[:next_trigger_at]) %></span>
               <% end %>

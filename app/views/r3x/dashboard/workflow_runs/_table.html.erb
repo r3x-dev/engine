@@ -39,7 +39,10 @@
 
             <% if columns.include?(:result) %>
               <td>
-                <span class="pill <%= dashboard_tone_for(run[:status]) %>">
+                <span
+                  class="pill <%= dashboard_tone_for(run[:status]) %>"
+                  <% if run[:status] == "failed" && run[:error].present? %>title="<%= dashboard_error_summary(run[:error]) %>"<% end %>
+                >
                   <%= dashboard_status_label(run[:status]) %>
                 </span>
               </td>
@@ -59,10 +62,7 @@
 
             <% if columns.include?(:open) %>
               <td>
-                <% if run[:status] == "failed" && run[:error].present? %>
-                  <div><%= dashboard_error_summary(run[:error]) %></div>
-                <% end %>
-                <div class="meta"><%= link_to "Open run", workflow_run_path(run[:job_id]) %></div>
+                <%= link_to "Open run", workflow_run_path(run[:job_id]), class: "button subtle" %>
               </td>
             <% end %>
           </tr>
