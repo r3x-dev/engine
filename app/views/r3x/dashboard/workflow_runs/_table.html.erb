@@ -1,4 +1,4 @@
-<% columns = local_assigns.fetch(:columns, %i[workflow result observed trigger run_id open]) %>
+<% columns = local_assigns.fetch(:columns, %i[workflow result observed trigger open]) %>
 
 <div class="table-wrap">
   <% if runs.empty? %>
@@ -18,9 +18,6 @@
           <% end %>
           <% if columns.include?(:trigger) %>
             <th>Trigger</th>
-          <% end %>
-          <% if columns.include?(:run_id) %>
-            <th>Run ID</th>
           <% end %>
           <% if columns.include?(:open) %>
             <th>Open</th>
@@ -54,10 +51,6 @@
 
             <% if columns.include?(:trigger) %>
               <td><code><%= run[:trigger_key] || "manual/default" %></code></td>
-            <% end %>
-
-            <% if columns.include?(:run_id) %>
-              <td><code><%= run[:job_id] %></code></td>
             <% end %>
 
             <% if columns.include?(:open) %>

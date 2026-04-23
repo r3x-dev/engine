@@ -53,6 +53,7 @@ module R3x
               queue_name: job.queue_name,
               recorded_at: job.recorded_at,
               scheduled_at: job.scheduled_execution&.scheduled_at || job.scheduled_at,
+              started_at: job.claimed_execution&.created_at,
               status: job.status,
               trigger_key: job.trigger_key,
               trigger_payload: job.trigger_payload,
