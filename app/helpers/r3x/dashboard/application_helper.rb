@@ -42,12 +42,17 @@ module R3x
 
         displayed_time = dashboard_display_time(time)
 
-        time_tag(
-          displayed_time,
-          dashboard_relative_time(time),
+        content_tag(
+          :time,
           datetime: displayed_time.iso8601,
+          class: "timestamp-hoverable",
           title: displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z")
-        )
+        ) do
+          safe_join([
+            content_tag(:span, dashboard_relative_time(time), class: "timestamp-relative"),
+            content_tag(:span, displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z"), class: "timestamp-absolute")
+          ])
+        end
       end
 
       def dashboard_absolute_timestamp(time)

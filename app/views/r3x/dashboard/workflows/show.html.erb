@@ -45,14 +45,12 @@
 
     <div class="stat">
       <span class="label">Last seen</span>
-      <strong><%= @workflow[:last_seen_at].present? ? dashboard_relative_time(@workflow[:last_seen_at]) : "Never" %></strong>
-      <span class="meta"><%= dashboard_timestamp(@workflow[:last_seen_at]) %></span>
+      <strong><%= @workflow[:last_seen_at].present? ? dashboard_timestamp(@workflow[:last_seen_at]) : "Never" %></strong>
     </div>
 
     <div class="stat">
       <span class="label">Next trigger</span>
-      <strong><%= @workflow[:next_trigger_at].present? ? dashboard_relative_time(@workflow[:next_trigger_at]) : "Manual only" %></strong>
-      <span class="meta"><%= dashboard_timestamp(@workflow[:next_trigger_at]) %></span>
+      <strong><%= @workflow[:next_trigger_at].present? ? dashboard_timestamp(@workflow[:next_trigger_at]) : "Manual only" %></strong>
     </div>
   </div>
 </section>
