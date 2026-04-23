@@ -3,7 +3,7 @@ require "test_helper"
 module R3x
   module Dashboard
     class WorkflowRunsTest < ActiveSupport::TestCase
-      WORKFLOW_JOB_CLASS_NAME = R3x::TestSupport::DashboardWorkflowJob.name.freeze
+      WORKFLOW_JOB_CLASS_NAME = DashboardTestWorkflows.ensure_class("TestWorkflow").freeze
 
       setup do
         TestDbCleanup.clear_runtime_tables!
@@ -28,6 +28,31 @@ module R3x
         assert_equal "test_workflow", run[:workflow_key]
         assert_equal "finished", run[:status]
         assert_equal "schedule:abc123", run[:trigger_key]
+        assert_equal job.created_at, run[:started_at]
+      end
+
+      test "started_at uses claimed_execution time for running jobs" do
+        job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          created_at: 5.minutes.ago,
+          updated_at: 2.minutes.ago
+        )
+        process = SolidQueue::Process.create!(
+          name: "test-worker-1",
+          kind: "Worker",
+          pid: $$,
+          hostname: "localhost",
+          last_heartbeat_at: Time.current,
+          created_at: Time.current
+        )
+        claimed_at = 2.minutes.ago
+        SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: claimed_at)
+
+        run = Workflow::Runs.new.all.find { |entry| entry[:job_id] == job.id }
+
+        assert_equal "running", run[:status]
+        assert_equal claimed_at.to_i, run[:started_at].to_i
       end
 
       test "maps trigger payload for workflow jobs" do
@@ -61,8 +86,6 @@ module R3x
       end
 
       test "maps change-detection-driven workflow runs through trigger state observations" do
-        observed_job_class_name = ensure_dashboard_job_class("FeedWorkflowJob").name
-
         R3x::TriggerState.create!(
           workflow_key: "feed_workflow",
           trigger_key: "feed:123",
@@ -70,7 +93,7 @@ module R3x
           state: {}
         )
         job = DashboardJobRows.create_job!(
-          job_class_name: observed_job_class_name,
+          job_class_name: "Workflows::FeedWorkflow",
           arguments: [ "feed:123", { trigger_payload: { "id" => "99" } } ],
           finished_at: 1.minute.ago,
           created_at: 5.minutes.ago,
@@ -195,18 +218,6 @@ module R3x
             queue_name: "default",
             static: false
           )
-        end
-
-        def ensure_dashboard_job_class(name)
-          test_jobs = if Object.const_defined?(:TestDashboardJobs, false)
-            Object.const_get(:TestDashboardJobs)
-          else
-            Object.const_set(:TestDashboardJobs, Module.new)
-          end
-
-          return test_jobs.const_get(name, false) if test_jobs.const_defined?(name, false)
-
-          test_jobs.const_set(name, Class.new(R3x::TestSupport::DashboardWorkflowJob))
         end
     end
   end

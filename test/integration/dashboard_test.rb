@@ -3,7 +3,7 @@ require "test_helper"
 class DashboardTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
-  WORKFLOW_JOB_CLASS_NAME = R3x::TestSupport::DashboardWorkflowJob.name.freeze
+  WORKFLOW_JOB_CLASS_NAME = DashboardTestWorkflows.ensure_class("TestWorkflow").freeze
 
   setup do
     @original_logs_provider = ENV["R3X_LOGS_PROVIDER"]
@@ -124,7 +124,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       finished_at = (90 + index).minutes.ago
 
       create_dashboard_workflow(
-        workflow_key: "visible_workflow_#{index}",
+        workflow_key: "visible_workflow#{index}",
         trigger_key: "schedule:visible:#{index}",
         run_status: "finished",
         recorded_at: finished_at
@@ -135,7 +135,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal 10, css_select(".overview-recent-runs-table tbody tr").size
-    assert_includes response.body, "Visible Workflow 0"
+    assert_includes response.body, "Visible Workflow0"
     refute_includes response.body, "CleanupJob"
   end
 
@@ -827,7 +827,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
   end
 
   def create_dashboard_workflow(workflow_key:, trigger_key:, run_status: nil, recorded_at: nil, trigger_error_at: nil)
-    job_class_name = ensure_dashboard_job_class("#{workflow_key.camelize}Job").name
+    job_class_name = DashboardTestWorkflows.ensure_class(workflow_key.camelize)
 
     SolidQueue::RecurringTask.create!(
       key: "workflow:#{workflow_key}:#{trigger_key}",
@@ -863,17 +863,5 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     SolidQueue::FailedExecution.create!(job_id: job.id, error: "#{workflow_key} failed", created_at: recorded_at)
     job
-  end
-
-  def ensure_dashboard_job_class(name)
-    test_jobs = if Object.const_defined?(:TestDashboardJobs, false)
-      Object.const_get(:TestDashboardJobs)
-    else
-      Object.const_set(:TestDashboardJobs, Module.new)
-    end
-
-    return test_jobs.const_get(name, false) if test_jobs.const_defined?(name, false)
-
-    test_jobs.const_set(name, Class.new(R3x::TestSupport::DashboardWorkflowJob))
   end
 end
