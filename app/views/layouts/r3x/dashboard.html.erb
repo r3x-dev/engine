@@ -769,6 +769,47 @@
         white-space: nowrap;
       }
 
+      .timestamp-hoverable {
+        cursor: default;
+      }
+
+      .timestamp-hoverable .timestamp-relative {
+        display: inline;
+      }
+
+      .timestamp-hoverable .timestamp-absolute {
+        display: none;
+      }
+
+      .timestamp-hoverable:hover .timestamp-relative {
+        display: none;
+      }
+
+      .timestamp-hoverable:hover .timestamp-absolute {
+        display: inline;
+      }
+
+      .button,
+      button,
+      .chip-link {
+        transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .button:hover,
+      button:hover {
+        transform: scale(1.04);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      }
+
+      .chip-link:hover {
+        transform: scale(1.04);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+      }
+
+      .title-link {
+        transition: color 0.15s ease;
+      }
+
       @media (max-width: 960px) {
         .grid.two,
         .stats {
