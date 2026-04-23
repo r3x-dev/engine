@@ -32,7 +32,8 @@ Then open http://localhost:3000/ to view the workflow dashboard.
 - This repo is `ENV`-only for secrets and runtime configuration.
 - Do not use Rails encrypted credentials for app secrets in this project.
 - In production, provide `SECRET_KEY_BASE` explicitly in the environment. Generate one with `bin/rails secret`.
-- Integration secrets should also be provided via environment variables such as `GOOGLE_CREDENTIALS_*`, `DISCORD_WEBHOOK_URL_*`, and similar `*_env` references used by the app.
+- Integration secrets should also be provided via environment variables such as `GOOGLE_CLIENT_ID_*`, `GOOGLE_CLIENT_SECRET_*`, `GOOGLE_REFRESH_TOKEN_*`, `DISCORD_WEBHOOK_URL_*`, and similar `*_env` references used by the app.
+- See [docs/google_oauth.md](docs/google_oauth.md) for how to obtain and refresh Google OAuth2 tokens used by Gmail, Sheets, Calendar, and Translate integrations.
 
 - `/` shows registered workflows, trigger state, and recent visible runs.
 - `/workflow-runs` shows recent runs from the current `Solid Queue` retention window.
