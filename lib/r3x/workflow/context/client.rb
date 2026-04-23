@@ -23,23 +23,23 @@ module R3x
           )
         end
 
-        def google_sheets(spreadsheet_id:, credentials_env:)
+        def google_sheets(spreadsheet_id:, project:)
           R3x::Client::GoogleSheets.new(
             spreadsheet_id: spreadsheet_id,
-            credentials_env: credentials_env
+            project: project
           )
         end
 
-        def gmail(credentials_env:)
-          R3x::Client::Google::Gmail.new(credentials_env: credentials_env)
+        def gmail(project:)
+          R3x::Client::Google::Gmail.new(project: project)
         end
 
         def ocr(api_key_env:)
           R3x::Client::Ocr.new(api_key_env: api_key_env)
         end
 
-        def google_translate(credentials_env:)
-          R3x::Client::Google::Translate.new(credentials_env: credentials_env)
+        def google_translate(project:)
+          R3x::Client::Google::Translate.new(project: project)
         end
 
         def discord(webhook_url_env:)
