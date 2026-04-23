@@ -32,7 +32,7 @@ module R3x
         assert_equal "client-id", captured.fetch(:client_id)
         assert_equal "client-secret", captured.fetch(:client_secret)
         assert_equal "refresh-token", captured.fetch(:refresh_token)
-        assert_equal [::Google::Apis::GmailV1::AUTH_GMAIL_SEND], captured.fetch(:scope)
+        assert_equal [ ::Google::Apis::GmailV1::AUTH_GMAIL_SEND ], captured.fetch(:scope)
       ensure
         Signet::OAuth2::Client.singleton_class.define_method(:new, original_new)
       end
@@ -97,7 +97,7 @@ module R3x
           scope: "gmail.send"
         )
 
-        assert_equal [::Google::Apis::GmailV1::AUTH_GMAIL_SEND], captured_scope
+        assert_equal [ ::Google::Apis::GmailV1::AUTH_GMAIL_SEND ], captured_scope
       ensure
         Signet::OAuth2::Client.singleton_class.define_method(:new, original_new)
       end

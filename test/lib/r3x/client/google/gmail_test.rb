@@ -32,7 +32,7 @@ module R3x
                 )
 
                 assert_equal authorization, service.authorization
-                assert_equal({"mode" => "real", "message_id" => "message-123"}, result)
+                assert_equal({ "mode" => "real", "message_id" => "message-123" }, result)
                 assert_includes required_features, "mail"
                 assert_includes service.delivered_message.raw, "To: recipient@example.com"
                 assert_includes service.delivered_message.raw, "Subject: Hello"
@@ -52,7 +52,7 @@ module R3x
               body: "Body"
             )
 
-            assert_equal({"mode" => "dry_run"}, result)
+            assert_equal({ "mode" => "dry_run" }, result)
           end
         end
 
