@@ -56,11 +56,10 @@ module R3x
       test "run executes workflow from a file path" do
         output = StringIO.new
 
-        Cli.new(stdout: output).run(@fixture_path.to_s)
+        result = Cli.new(stdout: output).run(@fixture_path.to_s)
 
         assert_includes output.string, "Running: #{@fixture_path}"
-        assert_includes output.string, "\"test\""
-        assert_includes output.string, "Test workflow executed successfully"
+        assert_equal({ "test" => true, "message" => "Test workflow executed successfully" }, result)
       end
 
       test "run supports dry run and skip cache messaging without leaking env overrides" do
@@ -101,7 +100,6 @@ module R3x
           Cli.new(stdout: output).run(@fixture_path.to_s)
 
           assert_includes output.string, "Running: #{@fixture_path}"
-          assert_includes output.string, "Test workflow executed successfully"
         end
       end
 
