@@ -1,5 +1,5 @@
 ---
-description: Autonomous ship — AI commit, push, PR, watch checks, squash merge, cleanup worktree
+description: gh-ship — AI commit, push, PR, watch checks, squash merge, cleanup worktree
 agent: build
 subtask: true
 ---
@@ -21,8 +21,12 @@ Unstaged diff stat: !`git diff --stat`
 
 ## Step 2: AI commit
 
-1. Run: `git add -A`
-2. Analyze the diff and generate a commit message in **conventional commits** format:
+1. Verify git identity is configured:
+   - `git config user.name` — should return the user's name
+   - `git config user.email` — should return the user's email
+   - If either is missing or looks like a bot/system default, STOP with error "Git user.name/user.email not configured properly. Run: git config user.name 'Your Name' && git config user.email 'your@email.com'"
+2. Run: `git add -A`
+3. Analyze the diff and generate a commit message in **conventional commits** format:
    - `feat:` — new functionality
    - `fix:` — bug fix
    - `refactor:` — structural change without behavior change
@@ -30,7 +34,7 @@ Unstaged diff stat: !`git diff --stat`
    - `test:` — tests
    - `chore:` — config, deps, build
    - The subject should describe **WHY**, not **WHAT**.
-3. Run: `git commit -m "<generated-message>"`
+4. Run: `git commit -m "<generated-message>"`
 
 ## Step 3: Push
 
@@ -77,7 +81,10 @@ STOP here. Do not proceed to merge or cleanup.
 
 ## Step 7: Squash merge
 
-Run: `gh pr merge --squash --subject "<commit-message>" --delete-branch`
+Run: `gh pr merge --squash --delete-branch`
+
+Note: Do NOT pass `--subject`. GitHub will use the PR title automatically
+and append `(#<number>)` to the squash commit subject.
 
 ## Step 8: Cleanup worktree
 
