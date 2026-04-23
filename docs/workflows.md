@@ -152,8 +152,10 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
 ### Pretty-Printing Hashes And Structures
 
 - When logging hashes or structured data, avoid manually interpolating individual fields.
-- Use `amazing_print` (already available in the project) with `plain: true` so keys are aligned
-  and output is readable, without ANSI colour codes that clutter log files.
+- `amazing_print` is preloaded globally — you can call `.ai(...)` on any object without adding
+  `require "amazing_print"` yourself.
+- Use `.ai(plain: true)` so keys are aligned and output is readable, without ANSI colour codes
+  that clutter log files.
 
   ```ruby
   # Good

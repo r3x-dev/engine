@@ -80,4 +80,4 @@ end
 
 gem "retryable", "~> 3.0"
 
-gem "amazing_print", "~> 2.0", require: false
+gem "amazing_print", "~> 2.0"
