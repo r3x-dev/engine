@@ -35,6 +35,12 @@ module R3x
         Signet::OAuth2::Client.singleton_class.define_method(:new, original_new)
       end
 
+      test "resolve_scope resolves translate alias directly" do
+        scope = GoogleAuth.resolve_scope("translate")
+
+        assert_equal "https://www.googleapis.com/auth/cloud-translation", scope
+      end
+
       test "resolve_scope returns raw value for unknown aliases" do
         assert_equal "https://example.test/scope", GoogleAuth.resolve_scope("https://example.test/scope")
       end
