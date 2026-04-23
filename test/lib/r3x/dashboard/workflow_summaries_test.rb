@@ -3,7 +3,7 @@ require "test_helper"
 module R3x
   module Dashboard
     class WorkflowSummariesTest < ActiveSupport::TestCase
-      WORKFLOW_JOB_CLASS_NAME = R3x::TestSupport::DashboardWorkflowJob.name.freeze
+      WORKFLOW_JOB_CLASS_NAME = DashboardTestWorkflows.ensure_class("TestWorkflow").freeze
 
       setup do
         clear_tables
@@ -160,7 +160,7 @@ module R3x
       end
 
       test "last run summary follows recorded activity instead of newest enqueue time" do
-        job_class_name = ensure_dashboard_job_class("OverlapWorkflowJob").name
+        job_class_name = DashboardTestWorkflows.ensure_class("OverlapWorkflow")
 
         SolidQueue::RecurringTask.create!(
           key: "workflow:overlap_workflow:schedule:abc123",
@@ -200,7 +200,7 @@ module R3x
         end
 
         def create_dashboard_workflow(workflow_key:, trigger_key:, run_status: nil, recorded_at: nil, trigger_error_at: nil)
-          job_class_name = ensure_dashboard_job_class("#{workflow_key.camelize}Job").name
+          job_class_name = DashboardTestWorkflows.ensure_class(workflow_key.camelize)
 
           SolidQueue::RecurringTask.create!(
             key: "workflow:#{workflow_key}:#{trigger_key}",
@@ -235,18 +235,6 @@ module R3x
           return unless run_status == "failed"
 
           SolidQueue::FailedExecution.create!(job_id: job.id, error: "#{workflow_key} failed", created_at: recorded_at)
-        end
-
-        def ensure_dashboard_job_class(name)
-          test_jobs = if Object.const_defined?(:TestDashboardJobs, false)
-            Object.const_get(:TestDashboardJobs)
-          else
-            Object.const_set(:TestDashboardJobs, Module.new)
-          end
-
-          return test_jobs.const_get(name, false) if test_jobs.const_defined?(name, false)
-
-          test_jobs.const_set(name, Class.new(R3x::TestSupport::DashboardWorkflowJob))
         end
     end
   end
