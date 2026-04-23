@@ -32,6 +32,8 @@ module R3x
       end
 
       def self.from_json(parsed_json, scope:)
+        require_googleauth!
+
         Signet::OAuth2::Client.new(
           client_id: parsed_json.fetch("client_id"),
           client_secret: parsed_json.fetch("client_secret"),
@@ -62,6 +64,10 @@ module R3x
 
       def self.require_gmail!
         R3x::GemLoader.require("google/apis/gmail_v1")
+      end
+
+      def self.require_googleauth!
+        R3x::GemLoader.require("googleauth")
       end
 
       def self.require_sheets!

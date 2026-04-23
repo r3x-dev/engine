@@ -1,26 +1,33 @@
 require_relative "boot"
 require_relative "log_formatter"
+require_relative "runtime_profile"
 
 require "rails"
-# Pick the frameworks you want:
 require "active_model/railtie"
 require "active_job/railtie"
 require "active_record/railtie"
-# require "active_storage/engine"
-require "action_controller/railtie"
-# require "action_mailer/railtie"
-# require "action_mailbox/engine"
-# require "action_text/engine"
-require "action_view/railtie"
-# require "action_cable/engine"
-require "rails/test_unit/railtie"
+
+unless R3x::RuntimeProfile.headless?
+  require "action_controller/railtie"
+  require "action_view/railtie"
+  require "rails/test_unit/railtie"
+end
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
-Bundler.require(*Rails.groups)
+Bundler.require(*Rails.groups(*R3x::RuntimeProfile.bundler_groups))
 
 module R3x
   class Application < Rails::Application
+    HEADLESS_AUTOLOAD_IGNORES = [
+      Rails.root.join("app/controllers"),
+      Rails.root.join("app/helpers"),
+      Rails.root.join("app/lib/r3x/dashboard")
+    ].freeze
+    JOBS_ONLY_AUTOLOAD_IGNORES = [
+      Rails.root.join("lib/r3x/workflow/cli.rb")
+    ].freeze
+
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
 
@@ -30,6 +37,35 @@ module R3x
     config.autoload_lib(ignore: %w[assets tasks])
     config.autoload_paths << Rails.root.join("app/lib")
     config.eager_load_paths << Rails.root.join("app/lib")
+
+    if R3x::RuntimeProfile.headless?
+      # Headless entrypoints keep the Rails application boot, but they do not
+      # serve the dashboard or health endpoint. Remove app route files before
+      # Rails wires them into the routes reloader so headless entrypoints never
+      # load config/routes*.rb.
+      paths["config/routes.rb"] = []
+      paths["config/routes"] = []
+
+      initializer "r3x.runtime_profile.ignore_web_paths" do
+        Rails.autoloaders.main.ignore(*HEADLESS_AUTOLOAD_IGNORES)
+        Rails.autoloaders.once.ignore(*HEADLESS_AUTOLOAD_IGNORES)
+      end
+
+      if R3x::RuntimeProfile.jobs?
+        initializer "r3x.runtime_profile.ignore_jobs_only_paths" do
+          Rails.autoloaders.main.ignore(*JOBS_ONLY_AUTOLOAD_IGNORES)
+          Rails.autoloaders.once.ignore(*JOBS_ONLY_AUTOLOAD_IGNORES)
+        end
+      end
+
+      # Rails still eager-loads framework controllers such as Rails::HealthController
+      # during boot. Keep include_all_helpers off so ActionController::Base does not
+      # scan app/helpers and pull web-only constants back into headless runtimes.
+      initializer "r3x.runtime_profile.disable_include_all_helpers" do
+        require "action_controller"
+        ActionController::Base.include_all_helpers = false
+      end
+    end
 
     # Configuration for the application, engines, and railties goes here.
     #
@@ -42,10 +78,12 @@ module R3x
     # Only loads a smaller set of middleware suitable for API only apps.
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
-    config.api_only = true
-    config.mission_control.jobs.base_controller_class = "R3x::WebController"
     config.log_formatter = R3x::LogFormatter.new
 
-    server { R3x::Workflow::Entrypoint.boot_server!(rails_env: Rails.env) }
+    unless R3x::RuntimeProfile.headless?
+      config.api_only = true
+      config.mission_control.jobs.base_controller_class = "R3x::WebController"
+      server { R3x::Workflow::Entrypoint.boot_server!(rails_env: Rails.env) }
+    end
   end
 end
