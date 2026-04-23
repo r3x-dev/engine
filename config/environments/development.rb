@@ -30,11 +30,12 @@ Rails.application.configure do
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.clear_finished_jobs_after = 2.weeks
 
+  if ENV["R3X_LOGS_PROVIDER"].present?
+    config.log_formatter = R3x::LogFormatter.new
+  end
+
   config.solid_queue.logger = ActiveSupport::Logger.new(STDOUT).tap do |logger|
-    if ENV["R3X_LOGS_PROVIDER"].present?
-      require_relative "../log_formatter"
-      logger.formatter = R3x::LogFormatter.new
-    end
+    logger.formatter = config.log_formatter if ENV["R3X_LOGS_PROVIDER"].present?
   end
 
   unless R3x::RuntimeProfile.headless?

@@ -31,7 +31,6 @@ Rails.application.configure do
   config.log_tags = [ :request_id ]
 
   if ENV["R3X_LOGS_PROVIDER"].present?
-    require_relative "../log_formatter"
     config.log_formatter = R3x::LogFormatter.new
     config.logger = ActiveSupport::TaggedLogging.new(
       ActiveSupport::Logger.new(STDOUT).tap do |logger|
