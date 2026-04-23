@@ -81,9 +81,17 @@ Run: `gh pr merge --squash --subject "<commit-message>" --delete-branch`
 
 ## Step 8: Cleanup worktree
 
-1. Get worktree name: `basename $(pwd)` (assumes directory name = wtp worktree name)
-2. Check if worktree is clean. If `git status --short` returns anything — STOP with warning "Worktree is dirty, skipping cleanup. Handle manually." and do NOT run `wtp rm`.
-3. If clean — run: `wtp rm --with-branch <worktree-name>`
+1. Store current worktree path: `worktree_path="$(pwd)"`
+2. Resolve the actual branch name for this worktree:
+   `branch_name="$(git -C "$worktree_path" rev-parse --abbrev-ref HEAD)"`
+   (this is robust even when the directory name does not match the branch)
+3. Check if worktree is clean. If `git status --short` returns anything — STOP with warning "Worktree is dirty, skipping cleanup. Handle manually." and do NOT run cleanup.
+4. If clean — run in one chained shell:
+   ```bash
+   cd "$(dirname "$(git -C "$worktree_path" rev-parse --git-common-dir)")" && \
+     git worktree remove "$worktree_path" && \
+     git branch -D "$branch_name"
+   ```
 
 ## Step 9: Retrospective
 
