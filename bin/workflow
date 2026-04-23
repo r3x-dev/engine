@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+ENV["R3X_RUNTIME_PROFILE"] = "workflow_cli"
+
 require_relative "../config/environment"
 require "thor"
 
