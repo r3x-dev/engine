@@ -4,6 +4,7 @@ require "rails/test_help"
 require "webmock/minitest"
 require_relative "support/dashboard_job_rows"
 require_relative "support/dashboard_workflow_job"
+require_relative "support/dashboard_test_workflows"
 require_relative "support/vault_test_helpers"
 require_relative "support/test_db_cleanup"
 

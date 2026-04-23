@@ -24,7 +24,7 @@ module Dashboard
       visible_class_names.present? ? where(class_name: visible_class_names) : none
     end
     scope :direct_workflows, -> { excluding_ignored_classes.where("class_name LIKE ?", "Workflows::%") }
-    scope :observed_triggers, -> { excluding_ignored_classes.where("class_name NOT LIKE ?", "Workflows::%") }
+    scope :observed_triggers, -> { excluding_ignored_classes.where(class_name: []) }
     scope :unfinished, -> { where(finished_at: nil).where.missing(:failed_execution) }
     scope :for_status, ->(status) do
       case status.to_s

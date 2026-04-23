@@ -43,7 +43,7 @@
   <div class="detail-grid">
     <div class="detail-item">
       <span class="label">Started</span>
-      <strong><%= @run[:started_at].present? ? dashboard_absolute_timestamp(@run[:started_at]) : content_tag(:span, "Not started", class: "muted") %></strong>
+      <strong><%= dashboard_absolute_timestamp(@run[:started_at]) %></strong>
     </div>
 
     <div class="detail-item">

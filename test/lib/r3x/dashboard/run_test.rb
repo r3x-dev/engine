@@ -1,7 +1,7 @@
 require "test_helper"
 
 class Dashboard::RunTest < ActiveSupport::TestCase
-  WORKFLOW_JOB_CLASS_NAME = R3x::TestSupport::DashboardWorkflowJob.name.freeze
+  WORKFLOW_JOB_CLASS_NAME = DashboardTestWorkflows.ensure_class("TestWorkflow").freeze
 
   setup do
     TestDbCleanup.clear_runtime_tables!
