@@ -3,7 +3,7 @@ module R3x
     INTERNAL_PREFIX = "R3X_"
 
     def self.logger
-      Rails.logger.tagged(name)
+      R3x::ExecutionLogger.current.tagged(name)
     end
 
     def self.fetch(key)

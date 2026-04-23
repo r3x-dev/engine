@@ -193,6 +193,18 @@ module R3x
       ENV.delete("R3X_TEST_ENV_VAR")
     end
 
+    test "logger prefers execution logger when present" do
+      io = StringIO.new
+      execution_logger = build_test_logger(io)
+
+      R3x::ExecutionLogger.with(execution_logger) do
+        Env.logger.info("hello from env")
+      end
+
+      assert_includes io.string, "R3x::Env"
+      assert_includes io.string, "hello from env"
+    end
+
     private
   end
 end

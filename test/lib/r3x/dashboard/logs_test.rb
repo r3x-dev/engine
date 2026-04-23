@@ -45,6 +45,12 @@ module R3x
         ENV["R3X_VICTORIA_LOGS_URL"] = original_url
       end
 
+      test "returns unavailable state for file log outside development" do
+        result = Logs.configured?(provider_name: "file_log", rails_env: "production")
+
+        assert_equal false, result
+      end
+
       test "queries run logs by run active job id" do
         client = FakeLogsClient.new(entries: [
           {

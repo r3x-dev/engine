@@ -38,6 +38,13 @@ Then open http://localhost:3000/ to view the workflow dashboard.
 - `/workflow-runs` shows recent runs from the current `Solid Queue` retention window.
 - `/ops/jobs` opens Mission Control Jobs for queue inspection and operational actions.
 - If `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL` are configured, run detail pages can show indexed logs correlated by Active Job identifiers.
+- For local dashboard run logs in development, set `R3X_LOGS_PROVIDER=file_log`. The dashboard reads
+  workflow/job JSON lines from `log/workflow_runs.<env>.jsonl` by default while the web/server log stays
+  human-readable in the terminal. `file_log` is not a production deployment option; production log shipping
+  should use `stdout` plus an indexed provider such as VictoriaLogs. Override the local workflow log file
+  with `R3X_WORKFLOW_LOG_PATH` if needed.
+- Workflow log rotation is explicit for that development file sink: it keeps 10 archives of 50 MiB each by
+  default, configurable with `R3X_WORKFLOW_LOG_ROTATION_COUNT` and `R3X_WORKFLOW_LOG_ROTATION_SIZE_BYTES`.
 
 ## Test
 

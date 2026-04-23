@@ -13,6 +13,14 @@ module R3x
       WebMock.reset!
     end
 
+    class WorkflowHelper
+      include R3x::Concerns::Logger
+
+      def call
+        logger.info("hello from helper")
+      end
+    end
+
     test "performs workflow with manual trigger" do
       job = RunWorkflowJob.new
 
@@ -140,7 +148,7 @@ module R3x
     end
 
     test "tags nested workflow execution with workflow and run identifiers" do
-      job = RunWorkflowJob.new
+      RunWorkflowJob.new
       workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
           "TestTaggedLogs"
@@ -149,7 +157,8 @@ module R3x
         trigger :manual
 
         def run
-          Rails.logger.info("hello from tagged workflow")
+          WorkflowHelper.new.call
+          logger.info("hello from tagged workflow")
         end
       end
 
@@ -163,8 +172,101 @@ module R3x
       assert_includes output, "r3x.run_active_job_id="
       assert_includes output, "r3x.workflow_key=test_tagged_logs"
       assert_includes output, "r3x.trigger_key=#{manual_trigger.unique_key}"
+      assert_includes output, "hello from helper"
       assert_includes output, "hello from tagged workflow"
     ensure
+      Workflow::Registry.reset!
+    end
+
+    test "routes workflow execution logs through the active job logger" do
+      web_output = StringIO.new
+      workflow_output = StringIO.new
+      web_logger = build_test_logger(web_output)
+      workflow_logger = build_test_logger(workflow_output)
+      original_rails_logger = Rails.logger
+      original_active_job_logger = ActiveJob::Base.logger
+
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "TestActiveJobLogger"
+        end
+
+        trigger :manual
+
+        def run
+          WorkflowHelper.new.call
+          logger.info("hello from workflow logger")
+        end
+      end
+
+      Workflow::Registry.register(workflow_class)
+      manual_trigger = workflow_class.triggers.first
+      Rails.logger = web_logger
+      ActiveJob::Base.logger = workflow_logger
+
+      RunWorkflowJob.perform_now("test_active_job_logger", trigger_key: manual_trigger.unique_key)
+
+      assert_includes workflow_output.string, "r3x.run_active_job_id="
+      assert_includes workflow_output.string, "r3x.workflow_key=test_active_job_logger"
+      assert_includes workflow_output.string, "hello from helper"
+      assert_includes workflow_output.string, "hello from workflow logger"
+      assert_includes workflow_output.string, "Dispatching workflow class=TestActiveJobLogger"
+      refute_includes web_output.string, "hello from helper"
+      refute_includes web_output.string, "hello from workflow logger"
+      refute_includes web_output.string, "Dispatching workflow class=TestActiveJobLogger"
+      assert_same web_logger, R3x::ExecutionLogger.current
+    ensure
+      Rails.logger = original_rails_logger
+      ActiveJob::Base.logger = original_active_job_logger
+      Workflow::Registry.reset!
+    end
+
+    test "emits workflow jsonl entries readable through the file log client" do
+      stdout = StringIO.new
+      log_file = Tempfile.new([ "workflow-run", ".jsonl" ])
+      log_file.close
+      workflow_logger = R3x::WorkflowLog.build_logger(stdout: stdout, path: log_file.path)
+      original_active_job_logger = ActiveJob::Base.logger
+
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        class << self
+          # rubocop:disable ThreadSafety/ClassAndModuleAttributes
+          attr_accessor :last_run_job_id
+          # rubocop:enable ThreadSafety/ClassAndModuleAttributes
+        end
+
+        def self.name
+          "TestWorkflowJsonl"
+        end
+
+        trigger :manual
+
+        def run
+          self.class.last_run_job_id = job_id
+          logger.info("hello from workflow jsonl")
+        end
+      end
+
+      Workflow::Registry.register(workflow_class)
+      manual_trigger = workflow_class.triggers.first
+      ActiveJob::Base.logger = workflow_logger
+
+      RunWorkflowJob.perform_now("test_workflow_jsonl", trigger_key: manual_trigger.unique_key)
+      workflow_logger.flush
+
+      entries = R3x::Client::FileLog.new(path: log_file.path).query(
+        query: %(_msg:"r3x.run_active_job_id=#{workflow_class.last_run_job_id}"),
+        start_at: 1.minute.ago,
+        end_at: 1.minute.from_now,
+        limit: 20
+      )
+
+      assert entries.any? { |entry| entry.fetch("_msg").include?("\"message\":\"hello from workflow jsonl\"") }
+      assert entries.any? { |entry| entry.fetch("_msg").include?("\"message\":\"Workflow run completed\"") }
+      assert_includes stdout.string, "hello from workflow jsonl"
+    ensure
+      log_file.close! if log_file
+      ActiveJob::Base.logger = original_active_job_logger
       Workflow::Registry.reset!
     end
 

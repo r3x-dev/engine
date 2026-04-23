@@ -19,6 +19,14 @@ module R3x
       Workflow::Registry.reset!
     end
 
+    class ChangeDetectionHelper
+      include R3x::Concerns::Logger
+
+      def call
+        logger.info("checking trigger helper")
+      end
+    end
+
     test "creates trigger state and does not enqueue workflow when unchanged" do
       fake_trigger = R3x::TestSupport::FakeChangeDetectingTrigger.new(
         identity: "feed",
@@ -126,7 +134,7 @@ module R3x
       fake_trigger = R3x::TestSupport::FakeChangeDetectingTrigger.new(
         identity: "feed",
         detector: ->(**) do
-          Rails.logger.info("checking trigger")
+          ChangeDetectionHelper.new.call
           { changed: false, state: {}, payload: nil }
         end
       )
@@ -141,7 +149,7 @@ module R3x
       assert_includes output, "r3x.trigger_key=#{fake_trigger.unique_key}"
       assert_includes output, "Checking change-detecting trigger type=fake_change_detecting"
       assert_includes output, "Evaluated change-detecting trigger changed=false"
-      assert_includes output, "checking trigger"
+      assert_includes output, "checking trigger helper"
     end
 
     test "logs changed outcome before enqueueing workflow" do
@@ -160,6 +168,39 @@ module R3x
 
       assert_includes output, "Change detected; enqueueing workflow class=TestChangeDetectingFeed"
       assert_includes output, "r3x.job_outcome=changed"
+    end
+
+    test "routes change detection logs through the active job logger" do
+      web_output = StringIO.new
+      workflow_output = StringIO.new
+      web_logger = build_test_logger(web_output)
+      workflow_logger = build_test_logger(workflow_output)
+      original_rails_logger = Rails.logger
+      original_active_job_logger = ActiveJob::Base.logger
+      fake_trigger = R3x::TestSupport::FakeChangeDetectingTrigger.new(
+        identity: "feed",
+        detector: ->(**) do
+          ChangeDetectionHelper.new.call
+          { changed: false, state: {}, payload: nil }
+        end
+      )
+
+      register_change_detecting_workflow(fake_trigger)
+      Rails.logger = web_logger
+      ActiveJob::Base.logger = workflow_logger
+
+      ChangeDetectionJob.perform_now("test_change_detecting_feed", trigger_key: fake_trigger.unique_key)
+
+      assert_includes workflow_output.string, "r3x.workflow_key=test_change_detecting_feed"
+      assert_includes workflow_output.string, "r3x.trigger_key=#{fake_trigger.unique_key}"
+      assert_includes workflow_output.string, "checking trigger helper"
+      assert_includes workflow_output.string, "Evaluated change-detecting trigger changed=false"
+      refute_includes web_output.string, "checking trigger helper"
+      refute_includes web_output.string, "Evaluated change-detecting trigger changed=false"
+      assert_same web_logger, R3x::ExecutionLogger.current
+    ensure
+      Rails.logger = original_rails_logger
+      ActiveJob::Base.logger = original_active_job_logger
     end
 
     test "logs failed outcome when change detection raises" do

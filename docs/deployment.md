@@ -13,7 +13,11 @@ encrypted credentials in production deployments.
 - `R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS`: optional graceful shutdown timeout
   for Solid Queue. Defaults to `900` seconds in production.
 - `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL`: optional
-  dashboard run-log integration.
+  dashboard run-log integration backed by VictoriaLogs.
+- Do not use `R3X_LOGS_PROVIDER=file_log` in production deployments. `file_log`
+  is a local development convenience provider; production workflow/job logs
+  should stay on `stdout`, and dashboard log panels should use an indexed
+  provider such as VictoriaLogs.
 
 ## Kubernetes Process Layouts
 
