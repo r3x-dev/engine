@@ -1,5 +1,3 @@
-require "amazing_print"
-
 module R3x
   module Workflow
     class Cli
@@ -12,12 +10,9 @@ module R3x
       def run(path, dry_run: false, skip_cache: false)
         stdout.puts run_message(path, dry_run:, skip_cache:)
 
-        result = with_run_env(dry_run:, skip_cache:) do
+        with_run_env(dry_run:, skip_cache:) do
           load_workflow(path).new.perform
         end
-
-        print_result(result)
-        result
       end
 
       def list
@@ -67,14 +62,6 @@ module R3x
         raise ArgumentError, "No workflow class found in #{path}" unless workflow
 
         workflow
-      end
-
-      def print_result(result)
-        if result.is_a?(String)
-          stdout.puts result
-        else
-          stdout.puts result.ai
-        end
       end
 
       def run_message(path, dry_run:, skip_cache:)

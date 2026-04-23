@@ -17,8 +17,6 @@ class WorkflowCliTest < ActiveSupport::TestCase
     output = run_cli("run #{@fixture_path}")
 
     assert_includes output, "Running: #{@fixture_path}"
-    assert_includes output, "test"
-    assert_includes output, "Test workflow executed successfully"
   end
 
   test "nonexistent file shows error" do
