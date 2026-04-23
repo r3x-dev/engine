@@ -100,6 +100,19 @@ module R3x
         empty_message
       end
 
+      def dashboard_duration(start_time, end_time = nil)
+        return content_tag(:span, "Unknown", class: "muted") if start_time.blank?
+
+        finish_time = end_time || Time.current
+        total_seconds = [ (finish_time - start_time).to_i, 0 ].max
+
+        hours = total_seconds / 3600
+        minutes = (total_seconds % 3600) / 60
+        seconds = total_seconds % 60
+
+        format("%02d:%02d:%02d", hours, minutes, seconds)
+      end
+
       def dashboard_trigger_label(trigger_entry)
         mode = trigger_entry.fetch(:mode)
         cron = trigger_entry[:cron]
@@ -162,6 +175,24 @@ module R3x
         body.present? && dashboard_error_summary(text) != body
       end
 
+      def dashboard_structured_error(text)
+        parsed_error =
+          case text
+          when Hash
+            text.stringify_keys
+          else
+            parse_dashboard_error_text(text.to_s)
+          end
+
+        return if parsed_error.blank?
+
+        {
+          exception_class: parsed_error["exception_class"].presence || parsed_error["error_class"].presence,
+          message: parsed_error["message"].presence || parsed_error["error"].presence,
+          backtrace: Array(parsed_error["backtrace"] || parsed_error["trace"] || parsed_error["stack"]).compact_blank
+        }.compact_blank
+      end
+
       def dashboard_icon(name)
         icon_name, variant = {
           alert: [ "exclamation-triangle", :outline ],
@@ -202,7 +233,7 @@ module R3x
         next_direction = if active_sort == sort_key
           active_direction == "desc" ? "asc" : "desc"
         else
-          WorkflowSummaries.default_direction_for(sort_key)
+          Workflow::Summaries.default_direction_for(sort_key)
         end
 
         active = active_sort == sort_key
@@ -242,7 +273,63 @@ module R3x
           return Regexp.last_match(1) if first_line.match(/"message"\s*:\s*"([^"]+)"/)
 
           first_line
-      end
+        end
+
+        def parse_dashboard_error_text(text)
+          return if text.blank?
+
+          parse_json_error_text(text) || parse_ruby_hash_error_text(text)
+        end
+
+        def parse_json_error_text(text)
+          return unless text.lstrip.start_with?("{", "[")
+
+          parsed = MultiJson.load(text)
+          parsed.is_a?(Hash) ? parsed.stringify_keys : nil
+        rescue MultiJson::ParseError
+          nil
+        end
+
+        def parse_ruby_hash_error_text(text)
+          return unless text.include?("=>")
+
+          exception_class = extract_ruby_hash_error_value(text, "exception_class")
+          message = extract_ruby_hash_error_value(text, "message")
+          backtrace = extract_ruby_hash_error_array(text, "backtrace")
+
+          {
+            "exception_class" => exception_class,
+            "message" => message,
+            "backtrace" => backtrace
+          }.compact_blank
+        end
+
+        def extract_ruby_hash_error_value(text, key)
+          match = text.match(
+            /"#{Regexp.escape(key)}"\s*(?:=>|:)\s*"(?<value>.*?)"\s*(?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)/m
+          )
+          return unless match
+
+          unescape_dashboard_error_string(match[:value])
+        end
+
+        def extract_ruby_hash_error_array(text, key)
+          match = text.match(
+            /"#{Regexp.escape(key)}"\s*(?:=>|:)\s*\[(?<value>.*?)\]\s*(?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)/m
+          )
+          return [] unless match
+
+          match[:value]
+            .scan(/"((?:[^"\\]|\\.)*)"/)
+            .flatten
+            .map { |value| unescape_dashboard_error_string(value) }
+        end
+
+        def unescape_dashboard_error_string(value)
+          MultiJson.load(%("#{value}"))
+        rescue MultiJson::ParseError
+          value.to_s.gsub('\"', '"').gsub("\\\\", "\\")
+        end
     end
   end
 end

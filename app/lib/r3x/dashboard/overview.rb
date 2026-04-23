@@ -34,12 +34,18 @@ module R3x
       def needs_attention
         @needs_attention ||= workflows
           .select { |workflow| %w[ failed trigger_error ].include?(workflow.dig(:health, :status)) }
-          .sort_by { |workflow| attention_time_for(workflow) || Time.at(0) }
+          .map do |workflow|
+            workflow.merge(
+              attention_at: attention_time_for(workflow),
+              attention_label: attention_label_for(workflow)
+            )
+          end
+          .sort_by { |workflow| workflow[:attention_at] || Time.at(0) }
           .reverse
       end
 
       def recent_runs
-        @recent_runs ||= WorkflowRuns.new(
+        @recent_runs ||= Workflow::Runs.new(
           job_ids: run_counts.recent_run_ids(limit: RECENT_RUN_LIMIT),
           limit: RECENT_RUN_LIMIT
         ).all
@@ -49,19 +55,25 @@ module R3x
         include Rails.application.routes.url_helpers
 
         def run_counts
-          @run_counts ||= WorkflowRunCounts.new
+          @run_counts ||= Workflow::RunCounts.new
         end
 
         def workflows
-          @workflows ||= WorkflowSummaries.new.all
+          @workflows ||= Workflow::Summaries.new.all
         end
 
         def attention_time_for(workflow)
-          return workflow[:last_seen_at] if workflow.dig(:health, :status) == "failed"
+          return workflow.dig(:last_run, :recorded_at) if workflow.dig(:health, :status) == "failed"
 
           workflow[:trigger_entries]
             .filter_map { |entry| entry[:trigger_state]&.last_error_at }
             .max
+        end
+
+        def attention_label_for(workflow)
+          return "Failed" if workflow.dig(:health, :status) == "failed"
+
+          "Trigger error"
         end
     end
   end
