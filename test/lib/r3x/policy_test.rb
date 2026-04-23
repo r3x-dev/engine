@@ -15,14 +15,11 @@ module R3x
     end
 
     test "defaults to dry run in test environment" do
-      original = Rails.method(:env)
-      Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new("test") }
+      Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("test"))
 
       with_env("R3X_DRY_RUN" => nil, "R3X_GMAIL_DRY_RUN" => nil) do
         assert_equal true, Policy.default_dry_run_for(:gmail)
       end
-    ensure
-      Rails.define_singleton_method(:env, original)
     end
 
     test "dry_run_for prefers explicit value" do
@@ -36,12 +33,9 @@ module R3x
     end
 
     test "defaults to real delivery in production" do
-      original = Rails.method(:env)
-      Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new("production") }
+      Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("production"))
 
       assert_equal false, Policy.default_dry_run_for(:gmail)
-    ensure
-      Rails.define_singleton_method(:env, original)
     end
 
     test "specific env override wins" do

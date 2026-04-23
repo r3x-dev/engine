@@ -76,6 +76,7 @@ end
 
 group :test do
   gem "webmock"
+  gem "mocha"
 end
 
 gem "retryable", "~> 3.0"

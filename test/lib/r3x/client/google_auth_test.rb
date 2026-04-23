@@ -82,11 +82,10 @@ module R3x
 
         stub_client.define_singleton_method(:fetch_access_token!) { true }
 
-        original_new = Signet::OAuth2::Client.method(:new)
-        Signet::OAuth2::Client.singleton_class.define_method(:new) do |**kwargs|
+        Signet::OAuth2::Client.stubs(:new).with { |**kwargs|
           captured_scope = kwargs.fetch(:scope)
-          stub_client
-        end
+          true
+        }.returns(stub_client)
 
         GoogleAuth.from_json(
           {
@@ -98,8 +97,6 @@ module R3x
         )
 
         assert_equal [ ::Google::Apis::GmailV1::AUTH_GMAIL_SEND ], captured_scope
-      ensure
-        Signet::OAuth2::Client.singleton_class.define_method(:new, original_new)
       end
 
       test "resolve_scope resolves translate alias directly" do

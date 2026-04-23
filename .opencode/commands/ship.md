@@ -79,13 +79,11 @@ STOP here. Do not proceed to merge or cleanup.
 
 Run: `gh pr merge --squash --subject "<commit-message>" --delete-branch`
 
-**Note:** If this fails with `fatal: 'main' is already used by worktree at ...`, that is expected — the PR is still merged and the remote branch is deleted. The local branch will be cleaned up in Step 8. Proceed to Step 8.
-
 ## Step 8: Cleanup worktree
 
 1. Get worktree name: `basename $(pwd)` (assumes directory name = wtp worktree name)
 2. Check if worktree is clean. If `git status --short` returns anything — STOP with warning "Worktree is dirty, skipping cleanup. Handle manually." and do NOT run `wtp rm`.
-3. If clean — switch to base worktree and remove from there: `cd $(wtp cd @) && wtp rm --with-branch <worktree-name>`
+3. If clean — run: `wtp rm --with-branch <worktree-name>`
 
 ## Step 9: Retrospective
 
