@@ -20,8 +20,15 @@ module R3x
         "calendar" => "AUTH_CALENDAR"
       }.freeze
 
+      TRANSLATE_SCOPE_ALIASES = {
+        "translate" => "https://www.googleapis.com/auth/cloud-translation"
+      }.freeze
+
       def self.scope_aliases
-        gmail_scope_aliases.merge(sheets_scope_aliases).merge(calendar_scope_aliases)
+        gmail_scope_aliases
+          .merge(sheets_scope_aliases)
+          .merge(calendar_scope_aliases)
+          .merge(translate_scope_aliases)
       end
 
       def self.from_json(parsed_json, scope:)
@@ -46,6 +53,8 @@ module R3x
         when *calendar_scope_aliases.keys
           require_calendar!
           ::Google::Apis::CalendarV3.const_get(calendar_scope_aliases.fetch(key))
+        when *translate_scope_aliases.keys
+          translate_scope_aliases.fetch(key)
         else
           key
         end
@@ -73,6 +82,10 @@ module R3x
 
       def self.calendar_scope_aliases
         CALENDAR_SCOPE_ALIASES
+      end
+
+      def self.translate_scope_aliases
+        TRANSLATE_SCOPE_ALIASES
       end
     end
   end
