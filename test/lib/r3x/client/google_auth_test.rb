@@ -37,6 +37,21 @@ module R3x
         Signet::OAuth2::Client.singleton_class.define_method(:new, original_new)
       end
 
+      test "from_env loads googleauth on first use" do
+        GoogleAuth.expects(:require_googleauth!).once
+        stub_client = Object.new
+        stub_client.stubs(:fetch_access_token!)
+        Signet::OAuth2::Client.stubs(:new).returns(stub_client)
+
+        with_env(
+          "GOOGLE_CLIENT_ID_TESTPROJ" => "client-id",
+          "GOOGLE_CLIENT_SECRET_TESTPROJ" => "client-secret",
+          "GOOGLE_REFRESH_TOKEN_TESTPROJ" => "refresh-token"
+        ) do
+          GoogleAuth.from_env(project: "TESTPROJ", scope: "gmail.send")
+        end
+      end
+
       test "from_json loads googleauth on first use" do
         required_features = []
         original_require = R3x::GemLoader.method(:require)
