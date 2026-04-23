@@ -32,7 +32,9 @@ module R3x
       end
 
       def self.from_env(project:, scope:)
-        Signet::OAuth2::Client.new(
+        require_googleauth!
+
+        ::Signet::OAuth2::Client.new(
           client_id: R3x::Env.fetch!("GOOGLE_CLIENT_ID_#{project}"),
           client_secret: R3x::Env.fetch!("GOOGLE_CLIENT_SECRET_#{project}"),
           refresh_token: R3x::Env.fetch!("GOOGLE_REFRESH_TOKEN_#{project}"),
@@ -44,7 +46,7 @@ module R3x
       def self.from_json(parsed_json, scope:)
         require_googleauth!
 
-        Signet::OAuth2::Client.new(
+        ::Signet::OAuth2::Client.new(
           client_id: parsed_json.fetch("client_id"),
           client_secret: parsed_json.fetch("client_secret"),
           refresh_token: parsed_json.fetch("refresh_token"),
