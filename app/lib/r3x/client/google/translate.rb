@@ -5,7 +5,6 @@ module R3x
     module Google
       class Translate
         API_URL = "https://translation.googleapis.com/language/translate/v2"
-        OAUTH_SCOPE = "https://www.googleapis.com/auth/cloud-translation"
 
         def initialize(credentials_env:)
           @credentials_env = credentials_env
@@ -28,7 +27,7 @@ module R3x
         def authorization
           @authorization ||= R3x::Client::GoogleAuth.from_json(
             R3x::Client::Google::Credentials.from_env(credentials_env),
-            scope: OAUTH_SCOPE
+            scope: R3x::Client::GoogleAuth.resolve_scope("translate")
           )
         end
 
