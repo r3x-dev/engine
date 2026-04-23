@@ -3,7 +3,7 @@ require "test_helper"
 module R3x
   module Dashboard
     class WorkflowRunEnqueuerTest < ActiveSupport::TestCase
-      WORKFLOW_JOB_CLASS_NAME = R3x::TestSupport::DashboardWorkflowJob.name.freeze
+      WORKFLOW_JOB_CLASS_NAME = DashboardTestWorkflows.ensure_class("TestWorkflow").freeze
 
       include ActiveJob::TestHelper
 
