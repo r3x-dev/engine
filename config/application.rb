@@ -31,8 +31,8 @@ module R3x
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
 
-    # Please, add to the `ignore` list any other `lib` subdirectories that do
-    # not contain `.rb` files, or that should not be reloaded or eager loaded.
+    # Please, add to the `ignore` list any other `lib` subdirectories that
+    # do not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
     config.autoload_paths << Rails.root.join("app/lib")
@@ -65,6 +65,10 @@ module R3x
         require "action_controller"
         ActionController::Base.include_all_helpers = false
       end
+    else
+      config.api_only = true
+      config.mission_control.jobs.base_controller_class = "R3x::WebController"
+      server { R3x::Workflow::Entrypoint.boot_server!(rails_env: Rails.env) }
     end
 
     # Configuration for the application, engines, and railties goes here.
@@ -79,11 +83,5 @@ module R3x
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.log_formatter = R3x::LogFormatter.new
-
-    unless R3x::RuntimeProfile.headless?
-      config.api_only = true
-      config.mission_control.jobs.base_controller_class = "R3x::WebController"
-      server { R3x::Workflow::Entrypoint.boot_server!(rails_env: Rails.env) }
-    end
   end
 end
