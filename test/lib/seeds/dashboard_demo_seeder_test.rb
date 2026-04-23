@@ -19,7 +19,7 @@ module Seeds
       assert_equal "", stdout
       assert_equal 5, @runs.size
 
-      runs = R3x::Dashboard::WorkflowRuns.new.all.select { |run| run[:workflow_key].start_with?("demo_") }
+      runs = R3x::Dashboard::Workflow::Runs.new.all.select { |run| run[:workflow_key].start_with?("demo_") }
 
       assert_equal [
         "demo_feed_watch",
@@ -27,7 +27,7 @@ module Seeds
         "demo_invoice_dispatch",
         "demo_monitoring",
         "demo_retention_cleanup"
-      ], R3x::Dashboard::WorkflowCatalog.new.workflow_keys
+      ], R3x::Dashboard::Workflow::Catalog.new.workflow_keys
 
       assert_equal %w[failed finished finished running scheduled], runs.map { |run| run[:status] }.sort
       assert_equal 5, SolidQueue::RecurringTask.where("key LIKE ?", "workflow:demo_%").count

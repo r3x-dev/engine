@@ -6,12 +6,12 @@ module R3x
       WORKFLOW_JOB_CLASS_NAME = R3x::TestSupport::DashboardWorkflowJob.name.freeze
 
       setup do
-        clear_queue_tables
+        TestDbCleanup.clear_runtime_tables!
         seed_runtime_catalog
       end
 
       teardown do
-        clear_queue_tables
+        TestDbCleanup.clear_runtime_tables!
       end
 
       test "counts running jobs and recent activity with dashboard visibility semantics" do
@@ -63,8 +63,8 @@ module R3x
         )
 
         DashboardJobRows.create_job!(
-          job_class_name: WorkflowRuns::LEGACY_CLASS_NAME,
-          arguments: [ "test_workflow", { trigger_key: "manual:legacy" } ],
+          job_class_name: "CleanupJob",
+          arguments: [ "tmp/cache" ],
           finished_at: 30.minutes.ago,
           created_at: 45.minutes.ago,
           updated_at: 30.minutes.ago
@@ -79,23 +79,16 @@ module R3x
         )
 
         DashboardJobRows.create_job!(
-          job_class_name: WorkflowRuns::CHANGE_DETECTION_CLASS_NAME,
+          job_class_name: "R3x::ChangeDetectionJob",
           arguments: [ "test_workflow", { trigger_key: "feed:123" } ],
           created_at: 10.minutes.ago,
           updated_at: 10.minutes.ago
         )
-        DashboardJobRows.create_job!(
-          job_class_name: WorkflowRuns::LEGACY_CLASS_NAME,
-          arguments: [ { workflow_key: "test_workflow", trigger_key: "manual:keyword" } ],
-          finished_at: 5.minutes.ago,
-          created_at: 10.minutes.ago,
-          updated_at: 5.minutes.ago
-        )
 
-        counts = WorkflowRunCounts.new
+        counts = Workflow::RunCounts.new
 
         assert_equal 1, counts.running_count
-        assert_equal 6, counts.recent_activity_count(window: 24.hours)
+        assert_equal 5, counts.recent_activity_count(window: 24.hours)
       end
 
       test "does not count future scheduled runs as recent activity" do
@@ -111,15 +104,15 @@ module R3x
           created_at: Time.current
         )
 
-        counts = WorkflowRunCounts.new
+        counts = Workflow::RunCounts.new
 
         assert_equal 0, counts.recent_activity_count(window: 24.hours)
       end
 
       test "recent run ids include long-running jobs that completed most recently" do
         long_running_job = DashboardJobRows.create_job!(
-          job_class_name: WorkflowRuns::LEGACY_CLASS_NAME,
-          arguments: [ "slow_workflow", { trigger_key: "manual:slow" } ],
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
           finished_at: 5.seconds.ago,
           created_at: 2.days.ago,
           updated_at: 5.seconds.ago
@@ -129,25 +122,51 @@ module R3x
           finished_at = (20 - index).minutes.ago
 
           DashboardJobRows.create_job!(
-            job_class_name: WorkflowRuns::LEGACY_CLASS_NAME,
-            arguments: [ "queued_workflow_#{index}", { trigger_key: "manual:#{index}" } ],
+            job_class_name: WORKFLOW_JOB_CLASS_NAME,
+            arguments: [ "schedule:abc123" ],
             finished_at: finished_at,
             created_at: finished_at - 30.seconds,
             updated_at: finished_at
           )
         end
 
-        runs = WorkflowRuns.new(job_ids: WorkflowRunCounts.new.recent_run_ids(limit: 10), limit: 10).all
+        runs = Workflow::Runs.new(job_ids: Workflow::RunCounts.new.recent_run_ids(limit: 10), limit: 10).all
 
         assert_equal long_running_job.id, runs.first[:job_id]
-        assert_includes runs.map { |run| run[:workflow_key] }, "slow_workflow"
+      end
+
+      test "recent run ids ignore unrelated non-workflow rows entirely" do
+        60.times do |index|
+          finished_at = (index + 1).minutes.ago
+
+          DashboardJobRows.create_job!(
+            job_class_name: "CleanupJob",
+            arguments: [ "tmp/#{index}" ],
+            finished_at: finished_at,
+            created_at: finished_at - 30.seconds,
+            updated_at: finished_at
+          )
+        end
+
+        10.times do |index|
+          finished_at = (90 + index).minutes.ago
+
+          DashboardJobRows.create_job!(
+            job_class_name: WORKFLOW_JOB_CLASS_NAME,
+            arguments: [ "schedule:abc123" ],
+            finished_at: finished_at,
+            created_at: finished_at - 30.seconds,
+            updated_at: finished_at
+          )
+        end
+
+        runs = Workflow::Runs.new(job_ids: Workflow::RunCounts.new.recent_run_ids(limit: 10), limit: 10).all
+
+        assert_equal 10, runs.size
+        assert runs.all? { |run| run[:class_name] == WORKFLOW_JOB_CLASS_NAME }
       end
 
       private
-        def clear_queue_tables
-          TestDbCleanup.clear_runtime_tables!
-        end
-
         def seed_runtime_catalog
           SolidQueue::RecurringTask.create!(
             key: "workflow:test_workflow:schedule:abc123",

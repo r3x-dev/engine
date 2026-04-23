@@ -15,8 +15,10 @@
   </div>
 
   <div class="actions">
-    <%= form_with url: run_trigger_workflow_path(@workflow[:workflow_key]), method: :post, local: true, class: "inline-form" do |form| %>
-      <%= form.button dashboard_icon_label(:launch, "Run now"), class: "button success" %>
+    <% if @workflow[:run_now_available] %>
+      <%= form_with url: run_trigger_workflow_path(@workflow[:workflow_key]), method: :post, local: true, class: "inline-form" do |form| %>
+        <%= form.button dashboard_icon_label(:launch, "Run now"), class: "button success" %>
+      <% end %>
     <% end %>
     <%= link_to "View all runs", workflow_runs_path(workflow: @workflow[:workflow_key]), class: "button subtle" %>
     <% if @latest_failure.present? %>
