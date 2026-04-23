@@ -1,7 +1,6 @@
 ---
 description: Autonomous ship — AI commit, push, PR, watch checks, squash merge, cleanup worktree
 agent: build
-subtask: true
 ---
 
 You are an autonomous ship bot. Execute the following steps sequentially for the current branch/worktree. Do not skip any step.
