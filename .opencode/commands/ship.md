@@ -1,6 +1,7 @@
 ---
 description: Autonomous ship — AI commit, push, PR, watch checks, squash merge, cleanup worktree
 agent: build
+subtask: true
 ---
 
 You are an autonomous ship bot. Execute the following steps sequentially for the current branch/worktree. Do not skip any step.
@@ -86,6 +87,17 @@ Run: `gh pr merge --squash --subject "<commit-message>" --delete-branch`
 2. Check if worktree is clean. If `git status --short` returns anything — STOP with warning "Worktree is dirty, skipping cleanup. Handle manually." and do NOT run `wtp rm`.
 3. If clean — switch to base worktree and remove from there: `cd $(wtp cd @) && wtp rm --with-branch <worktree-name>`
 
+## Step 9: Retrospective
+
+Before printing the final summary, analyze the full execution:
+- Did any step require a retry, workaround, or manual override?
+- Did checks pass on the first run or fail and require intervention?
+- Were there any unexpected errors (e.g., push rejected, dirty worktree, merge conflicts, `fatal: 'main' is already used by worktree`)?
+- Did the merge and cleanup succeed without complications?
+- What decisions did you make in edge cases and why?
+
+Summarize these findings in 2-4 sentences. Be honest about problems, fixes, or deviations from the happy path.
+
 ## Summary
 
 Print:
@@ -93,3 +105,6 @@ Print:
 - Commit: `<message>`
 - PR URL: `<url>`
 - Status: `shipped` or `failed at checks` (depending on path taken)
+
+Then append the retrospective:
+- Retrospective: [your 2-4 sentence analysis of problems, fixes, and decisions]
