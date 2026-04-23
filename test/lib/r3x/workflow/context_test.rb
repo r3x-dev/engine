@@ -84,20 +84,20 @@ module R3x
         assert ctx.execution.is_a?(Execution)
       end
 
-      test "client proxy builds gmail client from credentials env" do
+      test "client proxy builds gmail client from project" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
         trigger_execution = R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "test")
         ctx = Context.new(trigger: trigger_execution, workflow_key: "test")
-        gmail = ctx.client.gmail(credentials_env: "GOOGLE_CREDENTIALS_MISSING")
+        gmail = ctx.client.gmail(project: "MISSING")
 
         assert_instance_of R3x::Client::Google::Gmail, gmail
       end
 
-      test "client proxy builds google translate client from credentials env" do
+      test "client proxy builds google translate client from project" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
         trigger_execution = R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "test")
         ctx = Context.new(trigger: trigger_execution, workflow_key: "test")
-        translate = ctx.client.google_translate(credentials_env: "GOOGLE_CREDENTIALS_MISSING")
+        translate = ctx.client.google_translate(project: "MISSING")
 
         assert_instance_of R3x::Client::Google::Translate, translate
       end

@@ -13,7 +13,7 @@ module R3x
         with_stubbed_google_sheets_service(service) do
           rows = GoogleSheets.new(
             spreadsheet_id: "spreadsheet-123",
-            credentials_env: "GOOGLE_CREDENTIALS_TEST_APP"
+            project: "TEST_APP"
           ).read_rows(range: "Sheet1!A:B")
 
           assert_equal(
@@ -36,7 +36,7 @@ module R3x
         with_stubbed_google_sheets_service(service) do
           rows = GoogleSheets.new(
             spreadsheet_id: "spreadsheet-123",
-            credentials_env: "GOOGLE_CREDENTIALS_TEST_APP"
+            project: "TEST_APP"
           ).read_rows(range: "Sheet1!A:B", headers: false)
 
           assert_equal(
@@ -58,7 +58,7 @@ module R3x
         with_stubbed_google_sheets_service(service) do
           rows = GoogleSheets.new(
             spreadsheet_id: "spreadsheet-123",
-            credentials_env: "GOOGLE_CREDENTIALS_TEST_APP"
+            project: "TEST_APP"
           ).read_rows(range: "Sheet1!A:C")
 
           assert_equal(
@@ -76,7 +76,7 @@ module R3x
         with_stubbed_google_sheets_service(service) do
           rows = GoogleSheets.new(
             spreadsheet_id: "spreadsheet-123",
-            credentials_env: "GOOGLE_CREDENTIALS_TEST_APP"
+            project: "TEST_APP"
           ).read_rows(range: "Sheet1!A:C")
 
           assert_equal [], rows
