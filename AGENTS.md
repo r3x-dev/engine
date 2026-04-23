@@ -217,6 +217,21 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - This ensures the bug is actually fixed and prevents regressions.
 - Apply this red/green flow broadly to bug fixes and behavioral regressions, not just parser or formatter changes. Keep a regression test that proves the user-visible or externally observable behavior that broke.
 
+### Stubbing and Mocking
+
+- **Use Mocha** for method-level stubbing in tests. It removes the need for manual `define_singleton_method` / `alias_method` / `ensure` cleanup boilerplate.
+- **Require order matters**: `require "mocha/minitest"` must come **after** `require "rails/test_help"` in `test_helper.rb`.
+- **Prefer `stubs`, not `expects`**, unless the test is explicitly verifying that a side-effect method is called (e.g., an enqueue, a cache write, or a logging call). `stubs` keeps tests focused on outputs; `expects` makes tests brittle to internal refactoring.
+- **Do not stub what you don't own** via Mocha:
+  - Keep HTTP stubbing in **WebMock** (`stub_request`). Do not replace WebMock with Mocha stubs on Faraday/Net::HTTP internals.
+  - Keep complex stateful fakes (e.g., a fake `GmailService` with multiple interacting methods) as plain Ruby objects (`Object.new`, `Struct`, `Class.new`). Do not spread them across ten Mocha `expects` calls.
+  - Keep `ActiveRecord` queries and `Solid Queue` internal state changes as real database operations when possible. Only stub the boundary method (e.g., `SolidQueue::Job.enqueue`) when testing error paths or direct-enqueue contracts.
+- **Auto-cleanup**: Mocha stubs are automatically reset after each test. Do not write manual `ensure` blocks to restore stubbed methods.
+- **Block-style vs inline-style**:
+  - Use inline stubs when the stub applies to the whole test (`setup` or top of the test method).
+  - Use block-style only when you need a temporary override in the middle of a test (rare; prefer splitting the test).
+- **Regression rule**: If removing the real implementation under the stub does not break the test, the stub covers too much. Roll back the migration for that test.
+
 ## Logging
 
 - Use Rails tagged logging with `self.class.name` for per-class log prefixes.

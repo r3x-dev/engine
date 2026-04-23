@@ -10,21 +10,21 @@ module R3x
           [ "Linus", "linus@example.com" ]
         ])
 
-        with_stubbed_google_sheets_service(service) do
-          rows = GoogleSheets.new(
-            spreadsheet_id: "spreadsheet-123",
-            project: "TEST_APP"
-          ).read_rows(range: "Sheet1!A:B")
+        GoogleSheets.any_instance.stubs(:build_service).returns(service)
 
-          assert_equal(
-            [
-              { "Name" => "Ada", "Email" => "ada@example.com" },
-              { "Name" => "Linus", "Email" => "linus@example.com" }
-            ],
-            rows
-          )
-          assert_equal [ "spreadsheet-123", "Sheet1!A:B" ], service.calls.first
-        end
+        rows = GoogleSheets.new(
+          spreadsheet_id: "spreadsheet-123",
+          project: "TEST_APP"
+        ).read_rows(range: "Sheet1!A:B")
+
+        assert_equal(
+          [
+            { "Name" => "Ada", "Email" => "ada@example.com" },
+            { "Name" => "Linus", "Email" => "linus@example.com" }
+          ],
+          rows
+        )
+        assert_equal [ "spreadsheet-123", "Sheet1!A:B" ], service.calls.first
       end
 
       test "read_rows returns raw rows when headers are disabled" do
@@ -33,20 +33,20 @@ module R3x
           [ "Ada", "ada@example.com" ]
         ])
 
-        with_stubbed_google_sheets_service(service) do
-          rows = GoogleSheets.new(
-            spreadsheet_id: "spreadsheet-123",
-            project: "TEST_APP"
-          ).read_rows(range: "Sheet1!A:B", headers: false)
+        GoogleSheets.any_instance.stubs(:build_service).returns(service)
 
-          assert_equal(
-            [
-              [ "Name", "Email" ],
-              [ "Ada", "ada@example.com" ]
-            ],
-            rows
-          )
-        end
+        rows = GoogleSheets.new(
+          spreadsheet_id: "spreadsheet-123",
+          project: "TEST_APP"
+        ).read_rows(range: "Sheet1!A:B", headers: false)
+
+        assert_equal(
+          [
+            [ "Name", "Email" ],
+            [ "Ada", "ada@example.com" ]
+          ],
+          rows
+        )
       end
 
       test "read_rows deduplicates headers and pads short rows" do
@@ -55,32 +55,32 @@ module R3x
           [ "Ada", "Lovelace" ]
         ])
 
-        with_stubbed_google_sheets_service(service) do
-          rows = GoogleSheets.new(
-            spreadsheet_id: "spreadsheet-123",
-            project: "TEST_APP"
-          ).read_rows(range: "Sheet1!A:C")
+        GoogleSheets.any_instance.stubs(:build_service).returns(service)
 
-          assert_equal(
-            [
-              { "Name" => "Ada", "Name_2" => "Lovelace", "Email" => nil }
-            ],
-            rows
-          )
-        end
+        rows = GoogleSheets.new(
+          spreadsheet_id: "spreadsheet-123",
+          project: "TEST_APP"
+        ).read_rows(range: "Sheet1!A:C")
+
+        assert_equal(
+          [
+            { "Name" => "Ada", "Name_2" => "Lovelace", "Email" => nil }
+          ],
+          rows
+        )
       end
 
       test "read_rows returns empty array when the sheet is empty" do
         service = fake_service_with_rows(nil)
 
-        with_stubbed_google_sheets_service(service) do
-          rows = GoogleSheets.new(
-            spreadsheet_id: "spreadsheet-123",
-            project: "TEST_APP"
-          ).read_rows(range: "Sheet1!A:C")
+        GoogleSheets.any_instance.stubs(:build_service).returns(service)
 
-          assert_equal [], rows
-        end
+        rows = GoogleSheets.new(
+          spreadsheet_id: "spreadsheet-123",
+          project: "TEST_APP"
+        ).read_rows(range: "Sheet1!A:C")
+
+        assert_equal [], rows
       end
 
       private
@@ -92,22 +92,6 @@ module R3x
             Struct.new(:values).new(values)
           end
         end.new([], rows)
-      end
-
-      def with_stubbed_google_sheets_service(result)
-        original_method = GoogleSheets.instance_method(:build_service)
-
-        GoogleSheets.class_eval do
-          define_method(:build_service) { result }
-          private :build_service
-        end
-
-        yield
-      ensure
-        GoogleSheets.class_eval do
-          define_method(:build_service, original_method)
-          private :build_service
-        end
       end
     end
   end

@@ -79,15 +79,10 @@ module R3x
 
       workflow_class = register_change_detecting_workflow(fake_trigger)
 
-      original_perform_later = workflow_class.method(:perform_later)
-      workflow_class.singleton_class.send(:define_method, :perform_later) do |*|
-        raise ActiveJob::EnqueueError, "enqueue failed"
-      end
+      workflow_class.stubs(:perform_later).raises(ActiveJob::EnqueueError, "enqueue failed")
 
       error = assert_raises(ActiveJob::EnqueueError) do
         ChangeDetectionJob.perform_now("test_change_detecting_feed", { "trigger_key" => fake_trigger.unique_key })
-      ensure
-        workflow_class.singleton_class.send(:define_method, :perform_later, original_perform_later)
       end
 
       assert_equal "enqueue failed", error.message
@@ -191,13 +186,12 @@ module R3x
           "TestChangeDetectingFeed"
         end
 
-        define_singleton_method(:triggers_by_key) { { fake_trigger.unique_key => fake_trigger } }
-
         def run
           ctx.trigger.payload
         end
       end
 
+      workflow_class.stubs(:triggers_by_key).returns({ fake_trigger.unique_key => fake_trigger })
       Workflow::Registry.register(workflow_class)
       workflow_class
     end

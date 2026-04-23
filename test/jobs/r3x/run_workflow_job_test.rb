@@ -89,20 +89,15 @@ module R3x
 
       Workflow::Registry.register(workflow_class)
       manual_trigger = workflow_class.triggers.first
-      original_perform_now = workflow_class.method(:perform_now)
 
-      workflow_class.singleton_class.send(:define_method, :perform_now) do |*args, **kwargs|
-        called = { args: args, kwargs: kwargs }
-        { "mode" => "perform_now" }
-      end
+      workflow_class.stubs(:perform_now)
+        .with(manual_trigger.unique_key, trigger_payload: nil)
+        .returns({ "mode" => "perform_now" })
 
       result = job.perform("test_perform_now", trigger_key: manual_trigger.unique_key)
 
       assert_equal({ "mode" => "perform_now" }, result)
-      assert_equal [ manual_trigger.unique_key ], called[:args]
-      assert_equal({ trigger_payload: nil }, called[:kwargs])
     ensure
-      workflow_class.singleton_class.send(:define_method, :perform_now, original_perform_now) if workflow_class && original_perform_now
       Workflow::Registry.reset!
     end
 
@@ -115,8 +110,6 @@ module R3x
           "TestChangeDetecting"
         end
 
-        define_singleton_method(:triggers_by_key) { { fake_trigger.unique_key => fake_trigger } }
-
         def run
           {
             "trigger_type" => ctx.trigger.type.to_s,
@@ -125,6 +118,7 @@ module R3x
         end
       end
 
+      workflow_class.stubs(:triggers_by_key).returns({ fake_trigger.unique_key => fake_trigger })
       Workflow::Registry.register(workflow_class)
 
       result = job.perform(
