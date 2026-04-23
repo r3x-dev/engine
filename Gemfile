@@ -18,7 +18,7 @@ gem "faraday-multipart"
 gem "multi_json"
 
 # HTML/XML parsing
-gem "nokogiri"
+gem "nokogiri", require: false
 
 # LLM integration
 gem "ruby_llm", require: false
@@ -28,11 +28,11 @@ gem "ruby_llm-schema", require: false
 gem "google-cloud-translate", require: false
 
 # Google OAuth and API integration
-gem "googleauth"
+gem "googleauth", require: false
 gem "google-apis-calendar_v3", require: false
 gem "google-apis-gmail_v1", require: false
 gem "google-apis-sheets_v4", require: false
-gem "mail"
+gem "mail", require: false
 
 # Use the database-backed adapters for Rails.cache and Active Job
 gem "solid_cache"
@@ -41,10 +41,12 @@ gem "solid_queue"
 # CLI tools
 gem "highline", require: false
 
-# Active Job dashboard (requires propshaft for API-only apps)
-gem "mission_control-jobs"
-gem "propshaft"
-gem "heroicon"
+group :web do
+  # Active Job dashboard (requires propshaft for API-only apps)
+  gem "mission_control-jobs"
+  gem "propshaft"
+  gem "heroicon"
+end
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false

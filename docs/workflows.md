@@ -2,6 +2,14 @@
 
 These notes apply to workflow code in general.
 
+`bin/workflow` boots Rails through the internal `workflow_cli` runtime profile.
+That profile is headless: it skips the dashboard/Mission Control web stack,
+web-only gems, and app route registration, and it keeps
+`ActionController::Base.include_all_helpers = false` so framework eager-load
+does not scan app helpers. Unlike the slimmer `jobs` profile used by
+`bin/jobs-worker` and `bin/jobs-scheduler`, `workflow_cli` still leaves
+`lib/r3x/workflow/cli.rb` available for the Thor wrapper.
+
 ## Workflows Are Jobs
 
 - Workflows inherit from `R3x::Workflow::Base` and implement `#run`.
