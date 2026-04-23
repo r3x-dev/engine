@@ -23,21 +23,23 @@ module R3x
           end
 
           with_env("R3X_GMAIL_DRY_RUN" => "false") do
-            with_stubbed_google_auth(authorization) do
-              with_stubbed_gmail_service(service) do
-                result = Gmail.new(project: "TEST_APP").deliver(
-                  to: "recipient@example.com",
-                  subject: "Hello",
-                  body: "Body"
-                )
+            R3x::Client::GoogleAuth.stubs(:from_env).with { |**kwargs|
+              kwargs[:project] == "TEST_APP" && kwargs[:scope].is_a?(String)
+            }.returns(authorization)
 
-                assert_equal authorization, service.authorization
-                assert_equal({ "mode" => "real", "message_id" => "message-123" }, result)
-                assert_includes required_features, "mail"
-                assert_includes service.delivered_message.raw, "To: recipient@example.com"
-                assert_includes service.delivered_message.raw, "Subject: Hello"
-                assert_includes service.delivered_message.raw, "Body"
-              end
+            with_stubbed_gmail_service(service) do
+              result = Gmail.new(project: "TEST_APP").deliver(
+                to: "recipient@example.com",
+                subject: "Hello",
+                body: "Body"
+              )
+
+              assert_equal authorization, service.authorization
+              assert_equal({ "mode" => "real", "message_id" => "message-123" }, result)
+              assert_includes required_features, "mail"
+              assert_includes service.delivered_message.raw, "To: recipient@example.com"
+              assert_includes service.delivered_message.raw, "Subject: Hello"
+              assert_includes service.delivered_message.raw, "Body"
             end
           end
         ensure
@@ -71,32 +73,19 @@ module R3x
           end
         end
 
-        def with_stubbed_google_auth(result)
-          singleton_class = R3x::Client::GoogleAuth.singleton_class
-          original_method = R3x::Client::GoogleAuth.method(:from_env)
-
-          singleton_class.define_method(:from_env) do |project:, scope:|
-            result
-          end
-
-          yield
-        ensure
-          singleton_class.define_method(:from_env, original_method)
-        end
-
         def with_stubbed_gmail_service(result)
           R3x::Client::GoogleAuth.require_gmail!
 
-          singleton_class = ::Google::Apis::GmailV1::GmailService.singleton_class
-          original_method = ::Google::Apis::GmailV1::GmailService.method(:new)
+          gmail_service_class = ::Google::Apis::GmailV1::GmailService
+          original_new = gmail_service_class.method(:new)
 
-          singleton_class.define_method(:new) do
+          gmail_service_class.define_singleton_method(:new) do
             result
           end
 
           yield
         ensure
-          singleton_class.define_method(:new, original_method)
+          gmail_service_class.define_singleton_method(:new, original_new) if gmail_service_class && original_new
         end
       end
     end

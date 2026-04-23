@@ -52,8 +52,8 @@ module R3x
           "Workflows::ChangeDetectingFeed"
         end
 
-        define_singleton_method(:triggers) { [ fake_trigger ] }
-        define_singleton_method(:schedulable_triggers) { [ fake_trigger ] }
+        stubs(:triggers).returns([ fake_trigger ])
+        stubs(:schedulable_triggers).returns([ fake_trigger ])
       end
 
       R3x::Workflow::Registry.register(workflow_class)
