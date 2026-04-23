@@ -309,4 +309,4 @@ class GoogleOAuthCLI < Thor
   end
 end
 
-GoogleOAuthCLI.start(ARGV)
+GoogleOAuthCLI.start(ARGV) if __FILE__ == $PROGRAM_NAME
