@@ -37,7 +37,7 @@
 /.githooks
 /.ruby-lsp
 /.rubocop.yml
-/Justfile
+/justfile
 /opencode.json
 /config/bundler-audit.yml
 /config/ci.rb
