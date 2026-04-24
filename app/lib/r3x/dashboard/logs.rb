@@ -102,7 +102,10 @@ module R3x
         payload = parse_message_payload(entry["_msg"], context: context)
 
         {
+          backtrace: Array(payload[:backtrace]).presence,
           container_name: entry["kubernetes.container_name"],
+          error_class: payload[:error_class],
+          error_message: payload[:error_message],
           level: payload.fetch(:level),
           message: payload.fetch(:message),
           pod_name: entry["kubernetes.pod_name"],
@@ -133,6 +136,9 @@ module R3x
         message, tags = extract_message_and_tags(parsed["message"], tags: parsed["tags"], context: context)
 
         {
+          backtrace: parsed["backtrace"],
+          error_class: parsed["error_class"],
+          error_message: parsed["error_message"],
           level: normalize_level(parsed["level"]),
           message: message,
           tags: tags

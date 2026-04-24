@@ -14,16 +14,24 @@ module R3x
     private
 
     def payload_for(severity, time, progname, msg)
-      message, tags = extract_message_and_tags(msg2str(msg))
-
-      {
+      base = {
         "level" => normalize_level(severity),
-        "message" => message,
         "time" => time.utc.iso8601(6)
-      }.tap do |payload|
-        payload["progname"] = progname if progname
-        payload["tags"] = tags if tags.any?
+      }
+      base["progname"] = progname if progname
+
+      case msg
+      when Hash
+        base.merge!(msg.transform_keys(&:to_s))
+      when String, Symbol, NilClass
+        message, tags = extract_message_and_tags(msg2str(msg))
+        base["message"] = message
+        base["tags"] = tags if tags.any?
+      else
+        raise ArgumentError, "Unsupported log message type: #{msg.class}"
       end
+
+      base
     end
 
     def normalize_level(severity)

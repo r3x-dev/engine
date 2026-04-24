@@ -82,6 +82,27 @@
   <%= render "r3x/dashboard/workflow_runs/logs_panel", run: @run, logs: @logs %>
 <% end %>
 
+<% if @logs.present? && @logs[:entries].any? { |e| e[:backtrace].present? } %>
+  <section class="panel stack panel-spaced">
+    <div>
+      <h3 class="section-title">Backtrace</h3>
+    </div>
+    <% @logs[:entries].select { |e| e[:backtrace].present? }.each do |entry| %>
+      <% if entry[:error_class].present? || entry[:error_message].present? %>
+        <div class="failure-summary">
+          <% if entry[:error_class].present? %>
+            <span class="pill danger"><%= entry[:error_class] %></span>
+          <% end %>
+          <% if entry[:error_message].present? %>
+            <strong><%= entry[:error_message] %></strong>
+          <% end %>
+        </div>
+      <% end %>
+      <pre class="error-block"><%= entry[:backtrace].join("\n") %></pre>
+    <% end %>
+  </section>
+<% end %>
+
 <section class="panel stack panel-spaced">
   <details class="technical-details">
     <summary>Advanced details</summary>

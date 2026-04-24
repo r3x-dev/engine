@@ -44,7 +44,7 @@ module R3x
         ("r3x.trigger_key=#{trigger_key}" if defined?(trigger_key) && trigger_key.present?),
         "r3x.job_outcome=failed"
       ) do
-        logger.error "Change detection failed error_class=#{e.class} error_message=#{e.message}"
+        structured_error(message: "Change detection failed", error: e)
       end
 
       raise

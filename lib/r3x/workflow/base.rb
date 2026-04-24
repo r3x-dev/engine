@@ -36,7 +36,7 @@ module R3x
             end
           rescue => e
             with_log_tags("r3x.job_outcome=failed") do
-              logger.error "Workflow run failed error_class=#{e.class} error_message=#{e.message}"
+              structured_error(message: "Workflow run failed", error: e)
             end
 
             raise
