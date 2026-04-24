@@ -1,0 +1,16 @@
+worktree_dir: ".."
+# window_prefix: ""  # Odkomentuj żeby usunąć prefix 'wm-' (domyślnie: wm-<branch>)
+
+files:
+  copy:
+    - ".env"
+    - "workflows/"
+
+post_create:
+  - mise trust
+
+# Nadpisuje globalne panes — just setup przed agentem (w panelu tmux)
+panes:
+  - command: just setup && <agent>
+    focus: true
+  - split: horizontal
