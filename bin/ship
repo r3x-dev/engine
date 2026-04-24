@@ -1,0 +1,320 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "thor"
+require "open3"
+
+class ShipCLI < Thor
+  def self.exit_on_failure? = true
+
+  desc "ship", "Ship current changes. Auto-detects main vs feature branch."
+  option :message, aliases: "-m", desc: "Custom commit message"
+  option :dry_run, type: :boolean, desc: "Show what would be done without doing it"
+  option :watch_timeout, type: :numeric, default: 600, desc: "Timeout in seconds for watching checks"
+  def ship
+    Ship.new(options).run
+  end
+end
+
+class Ship
+  MAIN_BRANCHES = %w[main master].freeze
+
+  def initialize(options)
+    @options = options
+    @dry_run = options[:dry_run]
+  end
+
+  def run
+    validate!
+
+    if main_branch?
+      say "Shipping from #{current_branch}..."
+      ship_main
+    else
+      say "Shipping from feature branch: #{current_branch}..."
+      ship_feature
+    end
+  end
+
+  private
+
+  def validate!
+    unless has_changes?
+      abort red("No changes to ship")
+    end
+
+    name = git_config("user.name")
+    email = git_config("user.email")
+    if name.nil? || name.strip.empty? || email.nil? || email.strip.empty?
+      abort red("Git user.name/user.email not configured.\nRun: git config user.name 'Your Name' && git config user.email 'your@email.com'")
+    end
+  end
+
+  def ship_main
+    commit!
+    push_main!
+    watch_main_or_fail
+  end
+
+  def ship_feature
+    commit!
+    push_feature!
+    create_pr!
+    watch_pr_or_fail
+    merge_pr!
+  end
+
+  def commit!
+    run_cmd("git add -A")
+
+    if !@dry_run && nothing_staged?
+      abort red("Nothing staged after git add")
+    end
+
+    @commit_message = @options[:message] || generate_commit_message
+    say "Commit: #{@commit_message}"
+    run_cmd("git commit -m #{shell_escape(@commit_message)}")
+  end
+
+  def push_main!
+    run_cmd("git push origin #{current_branch}")
+    @original_sha = head_sha
+    say "Pushed #{@original_sha[0, 8]} to #{current_branch}"
+  end
+
+  def push_feature!
+    run_cmd("git push -u origin #{current_branch}")
+    say "Pushed branch #{current_branch}"
+  end
+
+  def create_pr!
+    title = commit_subject
+    body = pr_body
+    run_cmd("gh pr create --title #{shell_escape(title)} --body #{shell_escape(body)}")
+
+    if @dry_run
+      say "PR: (dry-run)"
+      return
+    end
+
+    @pr_url = capture("gh pr view --json url --jq '.url'")
+    say "PR: #{@pr_url}"
+  end
+
+  def watch_pr_or_fail
+    if @dry_run
+      say "[dry-run] Would watch PR checks and merge if passing"
+      return
+    end
+
+    say "Watching PR checks..."
+    ok = system("gh pr checks --watch --fail-fast --interval 30")
+    return if ok
+
+    warn yellow("Checks failed: #{@pr_url}")
+    if prompt("Fix the issues, then I will amend, force-push and re-watch. Continue? [y/N]")
+      fixup_feature!
+      watch_pr_or_fail
+    else
+      abort red("Stopped. Fix manually and re-run bin/ship.")
+    end
+  end
+
+  def watch_main_or_fail
+    run_id = wait_for_run(current_branch, head_sha)
+    run_url = capture("gh run view #{run_id} --json url --jq '.url'")
+    say "Watching run: #{run_url}"
+
+    ok = system("gh run watch #{run_id} --exit-status")
+    return if ok
+
+    warn yellow("Checks failed on #{current_branch}: #{run_url}")
+    if prompt("Fix the issues, then I will amend, force-push and re-watch. Continue? [y/N]")
+      fixup_main!
+      watch_main_or_fail
+    else
+      abort red("Stopped. Fix manually and re-run bin/ship.")
+    end
+  end
+
+  def fixup_feature!
+    ensure_on_branch!(current_branch)
+
+    remote_sha = capture("git rev-parse origin/#{current_branch} 2>/dev/null || true")
+    if remote_sha != head_sha && !remote_sha.empty?
+      abort red("origin/#{current_branch} has changed since our push. Pull and resolve manually.")
+    end
+
+    run_cmd("git add -A")
+    run_cmd("git commit --amend --no-edit")
+    run_cmd("git push --force-with-lease origin #{current_branch}")
+    say "Fixup pushed"
+  end
+
+  def fixup_main!
+    ensure_on_branch!(current_branch)
+
+    remote_sha = capture("git rev-parse origin/#{current_branch}")
+    if remote_sha != @original_sha
+      abort red("origin/#{current_branch} has changed since our push. Pull and resolve manually.")
+    end
+
+    run_cmd("git add -A")
+    run_cmd("git commit --amend --no-edit")
+    run_cmd("git push --force-with-lease origin #{current_branch}")
+    @original_sha = head_sha
+    say "Fixup pushed"
+  end
+
+  def merge_pr!
+    if @dry_run
+      say "[dry-run] Would squash-merge PR and delete branch"
+      return
+    end
+
+    say "Merging PR..."
+    run_cmd("gh pr merge --squash --delete-branch")
+    say green("Shipped!")
+  end
+
+  def wait_for_run(branch, sha)
+    say "Waiting for GitHub Actions run (max #{@options[:watch_timeout]}s)..."
+    waited = 0
+    interval = 5
+
+    loop do
+      run_id = capture("gh run list --branch=#{branch} --commit=#{sha} --limit=1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || true").strip
+      return run_id if run_id.match?(/\A\d+\z/)
+
+      sleep(interval)
+      waited += interval
+      print "."
+
+      abort red("\nRun not found after #{@options[:watch_timeout]}s") if waited >= @options[:watch_timeout]
+    end
+  end
+
+  def generate_commit_message
+    files = capture("git diff --cached --name-only").strip.split("\n")
+    files = capture("git diff --name-only").strip.split("\n") if files.empty?
+    files = capture("git ls-files --others --exclude-standard").strip.split("\n") if files.empty?
+    return "chore: empty commit" if files.empty?
+
+    type = infer_type(files)
+    scope = infer_scope(files)
+    scope_part = scope ? "(#{scope})" : ""
+
+    main_file = files.first
+    "#{type}#{scope_part}: update #{main_file}"
+  end
+
+  def infer_type(files)
+    counts = Hash.new(0)
+    files.each do |f|
+      case f
+      when /\A(test|spec)\//, /_(test|spec)\.rb\z/ then counts["test"] += 1
+      when /\Adocs\//, /\.md\z/ then counts["docs"] += 1
+      when /\A\.github\//, /\AGemfile/, /\ADockerfile/, /\Aconfig\// then counts["chore"] += 1
+      else counts["feat"] += 1
+      end
+    end
+    counts.max_by { |_, v| v }&.first || "feat"
+  end
+
+  def infer_scope(files)
+    scopes = files.flat_map do |f|
+      s = []
+      s << "dashboard" if f.include?("dashboard")
+      s << "workflow"  if f.include?("workflow")
+      s << "trigger"   if f.include?("trigger")
+      s << "client"    if f.include?("client")
+      s << "job"       if f.include?("job")
+      s
+    end
+    scopes.group_by(&:itself).transform_values(&:count).max_by { |_, v| v }&.first
+  end
+
+  def pr_body
+    <<~BODY
+      ## Summary
+      Changes shipped from #{current_branch}.
+
+      ## Changes
+      #{capture("git log --oneline origin/#{base_branch}..HEAD 2>/dev/null || echo '-'")}
+    BODY
+  end
+
+  def commit_subject
+    @commit_message || capture("git log -1 --pretty=%s").strip
+  end
+
+  def base_branch
+    capture("git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo main").strip.sub("origin/", "")
+  end
+
+  def current_branch
+    @current_branch ||= capture("git rev-parse --abbrev-ref HEAD").strip
+  end
+
+  def head_sha
+    capture("git rev-parse HEAD").strip
+  end
+
+  def main_branch?
+    MAIN_BRANCHES.include?(current_branch)
+  end
+
+  def has_changes?
+    !system("git diff --quiet HEAD") ||
+      !system("git diff --cached --quiet") ||
+      !capture("git ls-files --others --exclude-standard").strip.empty?
+  end
+
+  def nothing_staged?
+    system("git diff --cached --quiet")
+  end
+
+  def git_config(key)
+    stdout, _, status = Open3.capture3("git config #{key}")
+    stdout.strip if status.success?
+  end
+
+  def ensure_on_branch!(branch)
+    return if current_branch == branch
+    abort red("Branch changed. Expected #{branch}, currently on #{current_branch}. Aborting.")
+  end
+
+  def run_cmd(cmd)
+    if @dry_run
+      say yellow("[dry-run] #{cmd}")
+      return
+    end
+    say dim("$ #{cmd}")
+    system(cmd) || abort(red("Command failed: #{cmd}"))
+  end
+
+  def capture(cmd)
+    stdout, stderr, status = Open3.capture3(cmd)
+    abort(red("Command failed: #{cmd}\n#{stderr}")) unless status.success?
+    stdout
+  end
+
+  def prompt(msg)
+    print "#{msg} "
+    $stdin.gets.to_s.strip.downcase == "y"
+  end
+
+  def say(msg) = puts green("[ship] #{msg}")
+  def warn(msg) = puts yellow("[ship] #{msg}")
+
+  def red(msg)    = "\e[0;31m#{msg}\e[0m"
+  def green(msg)  = "\e[0;32m#{msg}\e[0m"
+  def yellow(msg) = "\e[1;33m#{msg}\e[0m"
+  def dim(msg)    = "\e[2;37m#{msg}\e[0m"
+
+  def shell_escape(str)
+    "'#{str.gsub("'", "'\\''")}'"
+  end
+end
+
+ShipCLI.start(ARGV)
