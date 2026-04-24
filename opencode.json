@@ -5,5 +5,12 @@
       "command": ["bundle", "exec", "rubocop", "-a", "$FILE"],
       "extensions": [".rb", ".rake", ".gemspec", ".ru"]
     }
+  },
+  "command": {
+    "ship": {
+      "template": "Use bin/ship to ship the current changes. First check if bin/ship exists. If yes, run `bin/ship ship` (use --dry-run if the user wants to preview). If bin/ship is unavailable, fall back to the manual git + gh workflow: commit, push, create PR if on a feature branch, watch checks, and merge.",
+      "description": "Ship changes via bin/ship (preferred) or manual gh fallback",
+      "agent": "build"
+    }
   }
 }
