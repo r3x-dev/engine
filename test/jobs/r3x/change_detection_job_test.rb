@@ -175,7 +175,9 @@ module R3x
 
       assert_includes output, "r3x.job_outcome=failed"
       assert_includes output, "Change detection failed"
-      assert_includes output, "error_class=ArgumentError"
+      assert_includes output, "\"error_class\":\"ArgumentError\""
+      assert_includes output, "\"error_message\":\"detection failed\""
+      assert_includes output, "\"backtrace\":["
     end
 
     private

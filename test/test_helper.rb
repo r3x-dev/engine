@@ -22,7 +22,7 @@ module ActiveSupport
       original_active_job_logger = ActiveJob::Base.logger
       test_logger = ActiveSupport::TaggedLogging.new(
         ActiveSupport::Logger.new(io).tap do |logger|
-          logger.formatter = Rails.application.config.log_formatter || ::Logger::Formatter.new
+          logger.formatter = R3x::LogFormatter.new
         end
       )
 

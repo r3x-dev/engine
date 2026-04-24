@@ -486,7 +486,9 @@ module R3x
 
       assert_includes output, "r3x.job_outcome=failed"
       assert_includes output, "Workflow run failed"
-      assert_includes output, "error_class=ArgumentError"
+      assert_includes output, "\"error_class\":\"ArgumentError\""
+      assert_includes output, "\"error_message\":\"boom\""
+      assert_includes output, "\"backtrace\":["
     end
 
     test "prevents overriding perform method in subclasses" do

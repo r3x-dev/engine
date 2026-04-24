@@ -185,8 +185,8 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       assert_includes error.message, "Direct workflow enqueue failed"
     end
 
-    assert_includes output, "Dashboard direct enqueue failed"
-    assert_includes output, "error_class=SolidQueue::Job::EnqueueError"
+      assert_includes output, "Dashboard direct enqueue failed"
+      assert_includes output, "error_class=SolidQueue::Job::EnqueueError"
   end
 
   private

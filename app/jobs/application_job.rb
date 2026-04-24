@@ -1,4 +1,6 @@
 class ApplicationJob < ActiveJob::Base
+  include R3x::StructuredLogging
+
   around_perform :tag_log_context
 
   private
