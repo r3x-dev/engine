@@ -791,18 +791,20 @@
 
       .button,
       button,
-      .chip-link {
+      .chip-link,
+      .nav a:not(.current) {
         transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
       }
 
       .button:hover,
-      button:hover {
-        transform: scale(1.04);
+      button:hover,
+      .nav a:not(.current):hover {
+        transform: scale(1.03);
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
       }
 
       .chip-link:hover {
-        transform: scale(1.04);
+        transform: scale(1.03);
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
       }
 
