@@ -718,8 +718,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
       post "/workflows/test_workflow/run_trigger"
     end
 
-    assert_redirected_to "/workflows/test_workflow"
     job = SolidQueue::Job.order(:id).last
+    assert_redirected_to "/workflow-runs/#{job.id}"
     assert_equal [], Dashboard::Run.find(job.id).workflow_arguments
   end
 
@@ -789,9 +789,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     post "/workflows/feed_watch/run_trigger"
 
-    assert_redirected_to "/workflows/feed_watch"
-
     job = SolidQueue::Job.order(:id).last
+    assert_redirected_to "/workflow-runs/#{job.id}"
     assert_equal "Workflows::FeedWatch", job.class_name
     assert_equal "feed", job.queue_name
     assert_equal 4, job.priority
@@ -854,7 +853,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     job = DashboardJobRows.create_job!(
       job_class_name: job_class_name,
       arguments: [ trigger_key ],
-      finished_at: run_status == "finished" ? recorded_at : nil,
+      finished_at: (run_status == "finished") ? recorded_at : nil,
       created_at: recorded_at - 1.minute,
       updated_at: recorded_at
     )

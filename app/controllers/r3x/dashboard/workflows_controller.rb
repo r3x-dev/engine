@@ -16,12 +16,16 @@ module R3x
       end
 
       def run_trigger
-        Workflow::RunEnqueuer.new(
+        run = Workflow::RunEnqueuer.new(
           workflow_key: params[:workflow_key],
           trigger_key: params[:trigger_key]
         ).enqueue!
 
-        redirect_to workflow_path(params[:workflow_key]), notice: "Queued a new run for #{params[:workflow_key].titleize}."
+        if run
+          redirect_to workflow_run_path(run), notice: "Queued a new run for #{params[:workflow_key].titleize}."
+        else
+          redirect_to workflow_path(params[:workflow_key]), notice: "Queued a new run for #{params[:workflow_key].titleize}."
+        end
       rescue ActiveRecord::RecordNotFound, KeyError
         head :not_found
       end

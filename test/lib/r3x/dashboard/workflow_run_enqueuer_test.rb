@@ -28,10 +28,12 @@ module R3x
           static: false
         )
 
+        result = nil
         assert_difference -> { SolidQueue::Job.where(class_name: WORKFLOW_JOB_CLASS_NAME).count }, 1 do
-          Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: nil).enqueue!
+          result = Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: nil).enqueue!
         end
 
+        assert_instance_of ::Dashboard::Run, result
         job = SolidQueue::Job.order(:id).last
         assert_equal "critical", job.queue_name
         assert_equal 7, job.priority
@@ -58,10 +60,12 @@ module R3x
           updated_at: 30.seconds.ago
         )
 
+        result = nil
         assert_difference -> { SolidQueue::Job.where(class_name: WORKFLOW_JOB_CLASS_NAME).count }, 1 do
-          Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: nil).enqueue!
+          result = Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: nil).enqueue!
         end
 
+        assert_instance_of ::Dashboard::Run, result
         job = SolidQueue::Job.order(:id).last
         assert_equal "critical", job.queue_name
         assert_equal 7, job.priority
@@ -85,10 +89,12 @@ module R3x
           updated_at: 30.seconds.ago
         )
 
+        result = nil
         assert_difference -> { SolidQueue::Job.where(class_name: WORKFLOW_JOB_CLASS_NAME).count }, 1 do
-          Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: nil).enqueue!
+          result = Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: nil).enqueue!
         end
 
+        assert_instance_of ::Dashboard::Run, result
         job = SolidQueue::Job.order(:id).last
         assert_equal "feeds", job.queue_name
         assert_equal 3, job.priority
@@ -106,10 +112,12 @@ module R3x
           static: false
         )
 
+        result = nil
         assert_difference -> { SolidQueue::Job.where(class_name: "Workflows::FeedWatch").count }, 1 do
-          Workflow::RunEnqueuer.new(workflow_key: "feed_watch", trigger_key: nil).enqueue!
+          result = Workflow::RunEnqueuer.new(workflow_key: "feed_watch", trigger_key: nil).enqueue!
         end
 
+        assert_instance_of ::Dashboard::Run, result
         job = SolidQueue::Job.order(:id).last
         assert_equal "Workflows::FeedWatch", job.class_name
         assert_equal "feeds", job.queue_name
@@ -140,10 +148,12 @@ module R3x
           static: false
         )
 
+        result = nil
         assert_difference -> { SolidQueue::Job.where(class_name: "Workflows::FooBar").count }, 1 do
-          Workflow::RunEnqueuer.new(workflow_key: "foo_bar", trigger_key: nil).enqueue!
+          result = Workflow::RunEnqueuer.new(workflow_key: "foo_bar", trigger_key: nil).enqueue!
         end
 
+        assert_instance_of ::Dashboard::Run, result
         job = SolidQueue::Job.order(:id).last
         assert_equal "Workflows::FooBar", job.class_name
         assert_equal "expected", job.queue_name
@@ -161,10 +171,12 @@ module R3x
           static: false
         )
 
+        result = nil
         assert_difference -> { SolidQueue::Job.where(class_name: WORKFLOW_JOB_CLASS_NAME).count }, 1 do
-          Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: "schedule:123").enqueue!
+          result = Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: "schedule:123").enqueue!
         end
 
+        assert_instance_of ::Dashboard::Run, result
         job = SolidQueue::Job.order(:id).last
         assert_equal "critical", job.queue_name
         assert_equal 7, job.priority
@@ -182,14 +194,17 @@ module R3x
           static: false
         )
 
+        result = nil
         assert_enqueued_with(
           job: R3x::ChangeDetectionJob,
           args: [ "test_workflow", { trigger_key: "feed:123" } ],
           queue: "feeds",
           priority: 3
         ) do
-          Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: "feed:123").enqueue!
+          result = Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: "feed:123").enqueue!
         end
+
+        assert_nil result
       end
 
       test "enqueue without direct target raises a key error" do
@@ -205,17 +220,18 @@ module R3x
       end
 
       private
-        def ensure_workflow_job_class(name)
-          workflows = if Object.const_defined?(:Workflows, false)
-            Object.const_get(:Workflows)
-          else
-            Object.const_set(:Workflows, Module.new)
-          end
 
-          return workflows.const_get(name, false) if workflows.const_defined?(name, false)
-
-          workflows.const_set(name, Class.new(R3x::TestSupport::DashboardWorkflowJob))
+      def ensure_workflow_job_class(name)
+        workflows = if Object.const_defined?(:Workflows, false)
+          Object.const_get(:Workflows)
+        else
+          Object.const_set(:Workflows, Module.new)
         end
+
+        return workflows.const_get(name, false) if workflows.const_defined?(name, false)
+
+        workflows.const_set(name, Class.new(R3x::TestSupport::DashboardWorkflowJob))
+      end
     end
   end
 end
