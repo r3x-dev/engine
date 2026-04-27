@@ -296,3 +296,10 @@ response = ctx.client.llm(
 Any option passed this way overrides the default for that single `R3x::Client::Llm`
 instance. The rest of the call stays the same -- the retry is handled transparently by
 `ruby_llm`.
+
+## Return Value
+
+- Do not design `#run` to return a special metadata hash, status object, or summary structure.
+- If the last expression happens to return a value (for example an array from `filter_map` or the result of a helper), that is acceptable, but do not write `run` specifically to produce a return value unless the user explicitly asks for one.
+- Workflows are side-effect driven: their purpose is to fetch data, transform it, and deliver it. Prefer logging and monitoring over return-value contracts.
+- If a caller needs to observe what a workflow did, inspect the durable set, the logs, or the downstream system (Discord, email, API) rather than relying on a return value from `run`.
