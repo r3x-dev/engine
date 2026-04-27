@@ -1,11 +1,14 @@
 module R3x
   module Client
     class Llm
-      def initialize(api_key:, config_api_key_attr:)
+      def initialize(api_key:, config_api_key_attr:, max_retries: nil, retry_interval: nil, retry_backoff_factor: nil)
         R3x::GemLoader.require("ruby_llm")
 
         @llm_context = RubyLLM.context do |config|
           config.public_send(:"#{config_api_key_attr}=", api_key)
+          config.max_retries = max_retries if max_retries
+          config.retry_interval = retry_interval if retry_interval
+          config.retry_backoff_factor = retry_backoff_factor if retry_backoff_factor
         end
       end
 
