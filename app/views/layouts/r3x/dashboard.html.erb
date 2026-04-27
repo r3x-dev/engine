@@ -912,7 +912,11 @@
           }
         }
 
-        const refreshable = (element) => element?.dataset.r3xLogRefresh === "true" && element.dataset.r3xRunStatus === "running"
+        const activeStatuses = ["queued", "running"]
+
+        const refreshable = (element) => {
+          return element?.dataset.r3xLogRefresh === "true" && activeStatuses.includes(element.dataset.r3xRunStatus)
+        }
 
         const refreshInterval = () => intervalByOption[currentOption()]
 
@@ -990,6 +994,8 @@
             return
           }
 
+          const oldStatus = currentPanel.dataset.r3xRunStatus
+
           setLiveState("refreshing")
           setStatus("Refreshing")
 
@@ -1006,7 +1012,15 @@
             currentPanel.outerHTML = await response.text()
             syncControls()
 
-            if (refreshable(panel())) {
+            const newPanel = panel()
+            const newStatus = newPanel?.dataset.r3xRunStatus
+
+            if (oldStatus !== newStatus) {
+              window.location.reload()
+              return
+            }
+
+            if (refreshable(newPanel)) {
               schedule()
             }
           } catch (_) {
