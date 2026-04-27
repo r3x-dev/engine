@@ -6,9 +6,9 @@ module R3x
 
         @llm_context = RubyLLM.context do |config|
           config.public_send(:"#{config_api_key_attr}=", api_key)
-          config.max_retries = max_retries || 3
           config.retry_interval = retry_interval || 60.0
-          config.retry_backoff_factor = retry_backoff_factor || 2
+          config.max_retries = max_retries if max_retries
+          config.retry_backoff_factor = retry_backoff_factor if retry_backoff_factor
         end
       end
 
