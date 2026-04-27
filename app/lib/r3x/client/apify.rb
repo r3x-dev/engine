@@ -24,7 +24,11 @@ module R3x
         params = { format: format, clean: clean, limit: limit }.merge(options).compact
         response = connection.post("#{BASE_URL}/acts/#{actor_id}/run-sync-get-dataset-items", json: input, params: params).raise_for_status
 
-        response.json
+        if response.headers["content-type"]&.include?("application/json")
+          response.json
+        else
+          response.body.to_s
+        end
       end
 
       def raw
