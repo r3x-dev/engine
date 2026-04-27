@@ -1,12 +1,12 @@
 require "test_helper"
 
 module R3x
-  class LogFormatterTest < ActiveSupport::TestCase
+  class Log::JsonFormatterTest < ActiveSupport::TestCase
     test "formats tagged logs as json" do
       io = StringIO.new
       logger = ActiveSupport::TaggedLogging.new(
         ActiveSupport::Logger.new(io).tap do |base_logger|
-          base_logger.formatter = LogFormatter.new
+          base_logger.formatter = Log::JsonFormatter.new
         end
       )
 
@@ -25,7 +25,7 @@ module R3x
     test "formats plain logs as json without tags" do
       io = StringIO.new
       logger = ActiveSupport::Logger.new(io).tap do |base_logger|
-        base_logger.formatter = LogFormatter.new
+        base_logger.formatter = Log::JsonFormatter.new
       end
 
       logger.info("plain message")
@@ -40,7 +40,7 @@ module R3x
     test "preserves bracketed literal prefixes in plain messages" do
       io = StringIO.new
       logger = ActiveSupport::Logger.new(io).tap do |base_logger|
-        base_logger.formatter = LogFormatter.new
+        base_logger.formatter = Log::JsonFormatter.new
       end
 
       logger.info("[DRY-RUN]: email not sent")
@@ -54,7 +54,7 @@ module R3x
     test "merges hash payload as top-level fields" do
       io = StringIO.new
       logger = ActiveSupport::Logger.new(io).tap do |base_logger|
-        base_logger.formatter = LogFormatter.new
+        base_logger.formatter = Log::JsonFormatter.new
       end
 
       logger.error(
@@ -75,7 +75,7 @@ module R3x
     end
 
     test "raises on unsupported message type" do
-      formatter = LogFormatter.new
+      formatter = Log::JsonFormatter.new
 
       error = assert_raises(ArgumentError) do
         formatter.call("error", Time.current, nil, 12345)

@@ -12,6 +12,8 @@ encrypted credentials in production deployments.
 - `R3X_WORKFLOW_PATHS`: one or more workflow pack directories for jobs processes.
 - `R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS`: optional graceful shutdown timeout
   for Solid Queue. Defaults to `900` seconds in production.
+- `R3X_LOG_FORMAT=json` or `plain` (default `plain`): controls app log output
+  format. Structured JSON is required for the dashboard log view.
 - `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL`: optional
   dashboard run-log integration.
 - `R3X_RUNTIME_PROFILE=jobs`: internal jobs-only boot profile used by

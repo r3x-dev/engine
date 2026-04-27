@@ -163,7 +163,7 @@ module R3x
       def extract_message_and_tags(message, tags: nil, context: {})
         visible_tags = Array(tags).map(&:to_s).reject { |tag| hidden_tag?(tag, context: context) }
         message = message.to_s
-        match = message.match(R3x::LogFormatter::TAG_PATTERN)
+        match = message.match(R3x::Log::TAG_PATTERN)
         return [ message, visible_tags ] unless match
 
         raw_tags = match[0].scan(/\[([^\]]+)\]/).flatten
