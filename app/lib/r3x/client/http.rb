@@ -37,13 +37,17 @@ module R3x
       def upload_file(url, file, file_field: "file", filename: nil, content_type: nil, params: {}, headers: {})
         file_io = file.respond_to?(:read) ? file : StringIO.new(file.to_s)
         original_position = file_io.pos if file_io.respond_to?(:pos)
+        file_content_type = content_type || sniff_content_type(file_io)
+        rewind_file(file_io)
+
+        actual_filename = filename || default_filename(file_io)
 
         # httpx properly serializes File objects as multipart; StringIO is sent as-is.
         # Convert to a Tempfile so filename and content-type are preserved.
         upload_io = if file_io.respond_to?(:path)
           file_io
         else
-          temp = Tempfile.new([ filename || "upload", nil ])
+          temp = Tempfile.new([ actual_filename || "upload", nil ])
           temp.binmode
           temp.write(file_io.read)
           temp.rewind
@@ -52,8 +56,8 @@ module R3x
 
         file_value = {
           body: upload_io,
-          filename: filename || "file",
-          content_type: content_type || "application/octet-stream"
+          filename: actual_filename || "file",
+          content_type: file_content_type || "application/octet-stream"
         }
 
         payload = params.merge(file_field => file_value)
@@ -90,6 +94,30 @@ module R3x
         decode_percent_encoded_value(encoded_value, charset)
       rescue ArgumentError, Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
         decode_percent_encoded_value(encoded_value || value)
+      end
+
+      def sniff_content_type(file_io)
+        R3x::GemLoader.require("marcel")
+
+        position = file_io.pos if file_io.respond_to?(:pos)
+
+        ::Marcel::MimeType.for(file_io)
+      ensure
+        restore_file_position(file_io, position)
+      end
+
+      def default_filename(file_io)
+        if file_io.respond_to?(:original_filename)
+          file_io.original_filename
+        elsif file_io.respond_to?(:path)
+          File.basename(file_io.path)
+        end
+      end
+
+      def rewind_file(file_io)
+        file_io.rewind if file_io.respond_to?(:rewind)
+      rescue
+        nil
       end
 
       def restore_file_position(file_io, position = nil)
