@@ -252,24 +252,47 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
   end
   ```
 
-- For fixed backoff windows (for example 1 minute and then 3 minutes), use a `sleep` lambda and log
-  the wait:
-
-  ```ruby
-  delays = [1.minute, 3.minutes]
-  tries = delays.size + 1
-
-  sleep_strategy = lambda do |retries|
-    delay = delays.fetch(retries, delays.last)
-    logger.info("Retrying in #{delay.inspect} (next attempt #{retries + 2}/#{tries})")
-    delay
-  end
-
-  Retryable.retryable(tries: tries, matching: /high demand/i, sleep: sleep_strategy) do
-    call_llm
-  end
-  ```
-
 - Avoid retrying operations that are not idempotent or that cause external side effects (e.g.
   sending emails, creating records) unless the remote API guarantees idempotency.
 - Full documentation: https://github.com/nfedyashev/retryable
+
+## LLM Retry
+
+`ruby_llm` has built-in automatic retry through its Faraday middleware. Defaults are applied
+per `RubyLLM::Context` inside `R3x::Client::Llm`, so every workflow run gets an isolated copy.
+Processes that never call `ctx.client.llm` do not load the gem at all.
+
+The defaults are:
+
+- `max_retries: 3`
+- `retry_interval: 60.0` (seconds)
+- `retry_backoff_factor: 2`
+
+This means the first retry waits 60 seconds, the second waits 120 seconds, then it gives up.
+The gem automatically retries on transient provider errors:
+
+- `RubyLLM::RateLimitError` (HTTP 429)
+- `RubyLLM::ServerError` (HTTP 500)
+- `RubyLLM::ServiceUnavailableError` (HTTP 502-504)
+- `RubyLLM::OverloadedError` (HTTP 529)
+- Network timeouts and connection failures
+
+### Per-workflow override
+
+If a particular workflow needs different retry behavior, pass overrides directly to
+`ctx.client.llm(...)`:
+
+```ruby
+response = ctx.client.llm(
+  api_key_env: "GEMINI_API_KEY_MICHAL",
+  max_retries: 5,
+  retry_interval: 30.0
+).message(
+  model: "gemini-3-flash-preview",
+  prompt: prompt
+)
+```
+
+Any option passed this way overrides the default for that single `R3x::Client::Llm`
+instance. The rest of the call stays the same -- the retry is handled transparently by
+`ruby_llm`.
