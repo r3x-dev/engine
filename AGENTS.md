@@ -335,6 +335,39 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 
 ## Code Style
 
+### Prefer Expressive, High-Level Methods
+
+Ruby's standard library is designed so that the most readable, expressive methods are often also the most efficient. Prefer them over manually chaining lower-level operations.
+
+- **Good**: `rows.map { |e| e.values_at("name", "location").join("\n") }` — one hash traversal, one array allocation, clear intent.
+- **Bad**: `rows.map { |e| [e["name"], e["location"]].join("\n") }` — two separate lookups, more noise.
+
+Reasoning: expressiveness and performance usually go hand in hand in Ruby. `values_at`, `slice`, `filter_map`, `each_with_object`, `sum`, `tally`, etc. are implemented in C and optimized for their use cases. Don't sacrifice readability for micro-optimizations, and don't write verbose manual loops when a built-in method does the same job faster and cleaner.
+
+### Extracting Multiple Hash Keys
+
+When pulling several values out of a hash to build a list, table row, or tuple, prefer `values_at` (ordered extraction) or `slice` + `values` (explicit subset) over chaining individual `.fetch` or `[]` calls.
+
+**Good:**
+```ruby
+# Ordered positional extraction — use values_at
+rows.map { |e| e.values_at("name", "location", "date_time").join("\n") }
+
+# Named subset you will pass around — use slice
+row.slice("name", "location", "date_time").values.join("\n")
+```
+
+**Bad:**
+```ruby
+rows.map { |e| [e.fetch("name"), e.fetch("location"), e.fetch("date_time")].join("\n") }
+```
+
+**Rationale:**
+- `values_at` communicates "I need these keys in this exact order" more clearly than repeated fetches.
+- `slice` communicates "I want a subset of the hash" and works well when the resulting hash is passed onward.
+- Both are shorter, easier to scan, and less prone to copy-paste errors when adding or reordering keys.
+- They are also more efficient: a single `values_at` or `slice` call performs one internal hash traversal instead of multiple separate lookups, and avoids allocating intermediate arrays or throwaway wrapper objects. Ruby's standard library is designed so that expressive, readable methods often coincide with the faster path — prefer them instead of manually chaining lower-level operations.
+
 ### Method Chaining
 
 Prefer chaining methods across multiple lines over introducing single-use intermediate variables.
