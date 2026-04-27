@@ -68,7 +68,7 @@ module R3x
       test "raw exposes configured connection" do
         client = Apify.new(api_key: "test-api-key")
 
-        assert_instance_of Faraday::Connection, client.raw
+        assert_instance_of HTTPX::Session, client.raw
       end
     end
   end

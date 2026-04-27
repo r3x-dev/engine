@@ -1,5 +1,7 @@
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
+require "webmock"
+require "httpx/adapters/webmock"
 require "rails/test_help"
 require "webmock/minitest"
 require_relative "support/dashboard_job_rows"

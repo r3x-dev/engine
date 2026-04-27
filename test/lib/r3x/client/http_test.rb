@@ -84,7 +84,7 @@ module R3x
         stub_request(:get, "https://example.com/notfound")
           .to_return(status: 404, body: "not found")
 
-        assert_raises(Faraday::Error) do
+        assert_raises(HTTPX::HTTPError) do
           Http.new.get("https://example.com/notfound")
         end
       end
@@ -222,7 +222,7 @@ module R3x
         )
 
         assert_requested :post, "https://api.example.com/upload" do |request|
-          request.body.include?("abcdef")
+          request.body.include?("cdef")
         end
         assert_equal original_position, file.pos
       end

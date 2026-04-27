@@ -28,7 +28,7 @@ module R3x
           .to_return(status: 404)
 
         with_env("R3X_DISCORD_DRY_RUN" => "false", "DISCORD_WEBHOOK_URL_TEST" => webhook_url) do
-          assert_raises(Faraday::ResourceNotFound) do
+          assert_raises(HTTPX::HTTPError) do
             Discord.new(webhook_url_env: "DISCORD_WEBHOOK_URL_TEST").deliver(content: "Hello")
           end
         end

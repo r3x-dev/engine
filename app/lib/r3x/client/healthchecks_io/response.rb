@@ -4,12 +4,12 @@ module R3x
   module Client
     class HealthchecksIO
       class Response
-        def initialize(faraday_response)
-          @response = faraday_response
+        def initialize(response)
+          @response = response
         end
 
         def success?
-          response.success?
+          status >= 200 && status < 300
         end
 
         def status
@@ -17,7 +17,7 @@ module R3x
         end
 
         def body
-          response.body
+          response.body.to_s
         end
 
         def headers
@@ -29,11 +29,11 @@ module R3x
         #
         # @return [Integer, nil] The body limit in bytes, or nil if header not present
         def body_limit
-          headers["Ping-Body-Limit"]&.to_i
+          headers["ping-body-limit"]&.to_i
         end
 
         def to_s
-          body.to_s
+          body
         end
 
         def inspect
