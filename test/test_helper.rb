@@ -1,4 +1,5 @@
 ENV["RAILS_ENV"] ||= "test"
+ENV["R3X_LOG_FORMAT"] = "json"
 require_relative "../config/environment"
 require "rails/test_help"
 require "webmock/minitest"
@@ -22,7 +23,7 @@ module ActiveSupport
       original_active_job_logger = ActiveJob::Base.logger
       test_logger = ActiveSupport::TaggedLogging.new(
         ActiveSupport::Logger.new(io).tap do |logger|
-          logger.formatter = R3x::LogFormatter.new
+          logger.formatter = R3x::Log::JsonFormatter.new
         end
       )
 
