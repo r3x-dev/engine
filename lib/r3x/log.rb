@@ -3,7 +3,7 @@ module R3x
     TAG_PATTERN = /\A(?:\[(?<tag>[^\]]+)\]\s+)+/
 
     def self.format
-      @format ||= resolve_format
+      resolve_format
     end
 
     def self.json?

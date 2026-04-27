@@ -40,7 +40,9 @@ Rails.application.configure do
     logger.formatter = config.log_formatter if R3x::Log.json?
   end
 
-  config.logger.info { "Log format: #{R3x::Log.format} (set R3X_LOG_FORMAT=json for structured output)" }
+  config.after_initialize do
+    Rails.logger.info { "Log format: #{R3x::Log.format} (set R3X_LOG_FORMAT=json for structured output)" }
+  end
 
   unless R3x::RuntimeProfile.headless?
     # Show full error reports.
