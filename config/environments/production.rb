@@ -1,4 +1,6 @@
 require "active_support/core_ext/integer/time"
+require "r3x/log"
+require "r3x/log/json_formatter"
 
 shutdown_timeout_seconds = Integer(ENV.fetch("R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS", 900))
 
@@ -30,8 +32,8 @@ Rails.application.configure do
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]
 
-  if ENV["R3X_LOGS_PROVIDER"].present?
-    config.log_formatter = R3x::LogFormatter.new
+  if R3x::Log.json?
+    config.log_formatter = R3x::Log::JsonFormatter.new
     config.logger = ActiveSupport::TaggedLogging.new(
       ActiveSupport::Logger.new(STDOUT).tap do |logger|
         logger.formatter = config.log_formatter
@@ -40,6 +42,8 @@ Rails.application.configure do
   else
     config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT))
   end
+
+  config.logger.info { "Log format: #{R3x::Log.format} (set R3X_LOG_FORMAT=json for structured output)" }
 
   # Change to "debug" to log everything (including potentially personally-identifiable information!).
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")

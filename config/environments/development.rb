@@ -1,4 +1,6 @@
 require "active_support/core_ext/integer/time"
+require "r3x/log"
+require "r3x/log/json_formatter"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -30,13 +32,15 @@ Rails.application.configure do
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.clear_finished_jobs_after = 2.weeks
 
-  if ENV["R3X_LOGS_PROVIDER"].present?
-    config.log_formatter = R3x::LogFormatter.new
+  if R3x::Log.json?
+    config.log_formatter = R3x::Log::JsonFormatter.new
   end
 
   config.solid_queue.logger = ActiveSupport::Logger.new(STDOUT).tap do |logger|
-    logger.formatter = config.log_formatter if ENV["R3X_LOGS_PROVIDER"].present?
+    logger.formatter = config.log_formatter if R3x::Log.json?
   end
+
+  config.logger.info { "Log format: #{R3x::Log.format} (set R3X_LOG_FORMAT=json for structured output)" }
 
   unless R3x::RuntimeProfile.headless?
     # Show full error reports.
