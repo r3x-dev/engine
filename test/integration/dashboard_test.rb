@@ -564,6 +564,34 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Last updated --:--:--"
   end
 
+  test "queued workflow run logs auto-refresh while waiting" do
+    ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+    ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+    queued_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ @trigger ],
+      active_job_id: "aj-queued",
+      created_at: 1.minute.ago,
+      updated_at: 30.seconds.ago
+    )
+
+    stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
+      .to_return(status: 200, body: "")
+
+    get "/workflow-runs/#{queued_job.id}"
+
+    assert_response :success
+    assert_includes response.body, 'data-r3x-log-refresh="true"'
+    assert_includes response.body, "data-r3x-log-refresh-select"
+    assert_includes response.body, "data-r3x-log-live-indicator"
+    assert_includes response.body, "Live"
+    assert_includes response.body, 'value="30s" selected="selected"'
+    assert_includes response.body, "data-r3x-log-last-updated"
+    assert_includes response.body, "Waiting for first log line..."
+    assert_includes response.body, "/workflow-runs/#{queued_job.id}/logs"
+  end
+
   test "running workflow run logs auto-refresh while visible" do
     ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
     ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
