@@ -1,7 +1,7 @@
 module R3x
   module StructuredLogging
     def structured_error(message:, error:)
-      if json_logging_enabled?
+      if R3x::Log.json?
         payload = {
           level: "error",
           time: Time.current.utc.iso8601(6),
@@ -11,7 +11,7 @@ module R3x
           backtrace: error.backtrace&.first(20),
           tags: current_log_tags
         }
-        formatted = R3x::LogFormatter.new.call("error", Time.current, nil, payload)
+        formatted = R3x::Log::JsonFormatter.new.call("error", Time.current, nil, payload)
         Rails.logger << formatted
       else
         logger.error "#{message} error_class=#{error.class} error_message=#{error.message}"
@@ -25,10 +25,6 @@ module R3x
       return [] unless formatter.respond_to?(:tag_stack)
 
       formatter.tag_stack.tags
-    end
-
-    def json_logging_enabled?
-      Rails.logger.formatter.is_a?(R3x::LogFormatter)
     end
   end
 end

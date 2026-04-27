@@ -38,7 +38,7 @@ Then open http://localhost:3000/ to view the workflow dashboard.
 - `/` shows registered workflows, trigger state, and recent visible runs.
 - `/workflow-runs` shows recent runs from the current `Solid Queue` retention window.
 - `/ops/jobs` opens Mission Control Jobs for queue inspection and operational actions.
-- If `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL` are configured, run detail pages can show indexed logs correlated by Active Job identifiers.
+- If `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL` are configured, run detail pages can show indexed logs correlated by Active Job identifiers. Set `R3X_LOG_FORMAT=json` to emit structured logs (required for the dashboard log view); leave unset or set `plain` for standard Rails flat text.
 
 ## Test
 

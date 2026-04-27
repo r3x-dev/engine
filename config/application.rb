@@ -1,5 +1,4 @@
 require_relative "boot"
-require_relative "log_formatter"
 require_relative "runtime_profile"
 
 require "rails"

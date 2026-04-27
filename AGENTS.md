@@ -22,6 +22,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - The dashboard is DB-first: workflow pages and recent runs are derived from current `Solid Queue` tables plus `trigger_states`, so they only show workflows and runs that have persisted runtime artifacts.
 - Dashboard-side queue rows and recurring-task rows are wrapped by app models `Dashboard::Run` and `Dashboard::RecurringTask`; treat those as the dashboard-facing read/write boundary over `solid_queue_jobs` and `solid_queue_recurring_tasks`.
 - The dashboard can optionally query indexed application logs when `R3X_LOGS_PROVIDER` is configured. The current supported provider is `victorialogs`, which reads from `R3X_VICTORIA_LOGS_URL` via VictoriaLogs native query API.
+- App log output format is controlled independently by `R3X_LOG_FORMAT`. Set it to `json` for structured logs (required by the dashboard log view), or `plain` for standard Rails flat text. Unsupported values raise on boot.
 
 ## Codebase Map
 
@@ -78,7 +79,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `R3x::ChangeDetectionJob` loads the trigger, fetches/updates `R3x::TriggerState`, and only enqueues the workflow job class itself when the trigger reports a change.
 - Because the app currently uses `Solid Queue` as a database-backed backend on the same Active Record database connection, code may intentionally rely on a database transaction covering both `TriggerState` updates and `perform_later`. Do not assume those guarantees survive a future backend or database split.
 - `ApplicationJob`, `R3x::Workflow::Base`, and `R3x::ChangeDetectionJob` add stable tagged log context so indexed logs can be correlated back to run pages. The workflow job itself keeps the per-run tags minimal (`r3x.run_active_job_id` and `r3x.trigger_key`), while change-detection orchestration still emits `r3x.workflow_key` for broader workflow-level correlation.
-- App logs are emitted as structured JSON when `R3X_LOGS_PROVIDER` is configured (e.g. for VictoriaLogs ingestion), and fall back to standard Rails flat text otherwise. When JSON is enabled, payloads include explicit `level`, `message`, and tag data so the dashboard can read real log levels directly.
+- When `R3X_LOG_FORMAT=json`, logs are emitted as structured JSON with explicit `level`, `message`, and tag data so the dashboard can read real log levels directly. When `R3X_LOG_FORMAT=plain` (or unset), logs use standard Rails flat text.
 - Known limitation: because queued workflow runs persist the concrete workflow class name, renaming or removing a workflow class across deploys can strand older queued runs with job deserialization failures. This is currently an accepted tradeoff for preserving `ActiveJob::Continuable` on the workflow job itself.
 - The dashboard's run history is DB-first and parses `Solid Queue` / `Active Job` payloads directly. It still accepts the underlying tradeoff that finished runs are retention-bound and that workflows with no persisted runtime artifacts are invisible to the dashboard.
 - The dashboard log view is also retention-bound, but by the configured log backend rather than `Solid Queue`; it is read-only and fail-soft, so missing log provider config or query failures should not break the main dashboard pages.
