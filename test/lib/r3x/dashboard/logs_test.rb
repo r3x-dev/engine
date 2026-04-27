@@ -244,7 +244,7 @@ module R3x
       end
 
       test "returns provider error when query fails" do
-        client = FakeLogsClient.new(error: Faraday::ConnectionFailed.new("boom"))
+        client = FakeLogsClient.new(error: HTTPX::ConnectionError.new("boom"))
 
         result = Logs.new(provider_name: "victorialogs", client: client).run_logs(active_job_id: "aj-123")
 

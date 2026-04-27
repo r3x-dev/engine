@@ -4,48 +4,66 @@ module R3x
   module Client
     class Http
       def initialize(verify_ssl: true, timeout: 10)
-        @verify_ssl = verify_ssl
-        @timeout = timeout
+        ssl_options = verify_ssl ? {} : { verify_mode: OpenSSL::SSL::VERIFY_NONE }
+        @client = HTTPX.with(
+          timeout: { connect_timeout: 5, operation_timeout: timeout },
+          ssl: ssl_options
+        )
       end
 
       def get(url, params: {}, headers: {})
-        connection.get(url, params, headers)
+        @client.get(url, params: params, headers: headers).raise_for_status
       end
 
       def head(url, params: {}, headers: {})
-        connection.head(url, params, headers)
+        @client.head(url, params: params, headers: headers).raise_for_status
       end
 
       def post(url, payload, headers: {})
-        connection.post(url, payload, headers)
+        @client.post(url, json: payload, headers: headers).raise_for_status
       end
 
       def download_file(url, headers: {})
-        response = connection.get(url, {}, headers)
+        response = @client.get(url, headers: headers).raise_for_status
 
         DownloadedFile.new(
-          body: response.body,
-          content_type: response.headers["Content-Type"]&.split(";")&.first,
+          body: response.body.to_s,
+          content_type: response.headers["content-type"]&.split(";")&.first,
           filename: filename_from_headers(response.headers),
           url: url
         )
       end
 
       def upload_file(url, file, file_field: "file", filename: nil, content_type: nil, params: {}, headers: {})
-        file_io = file.respond_to?(:read) ? file : StringIO.new(file.dup)
+        file_io = file.respond_to?(:read) ? file : StringIO.new(file.to_s)
         original_position = file_io.pos if file_io.respond_to?(:pos)
-        file_content_type = content_type || sniff_content_type(file_io)
-        rewind_file(file_io)
 
-        file_part = ::Faraday::Multipart::FilePart.new(file_io, file_content_type, filename)
+        # httpx properly serializes File objects as multipart; StringIO is sent as-is.
+        # Convert to a Tempfile so filename and content-type are preserved.
+        upload_io = if file_io.respond_to?(:path)
+          file_io
+        else
+          temp = Tempfile.new([ filename || "upload", nil ])
+          temp.binmode
+          temp.write(file_io.read)
+          temp.rewind
+          temp
+        end
 
-        payload = params.merge(file_field => file_part)
+        file_value = {
+          body: upload_io,
+          filename: filename || "file",
+          content_type: content_type || "application/octet-stream"
+        }
 
-        connection.tap do |conn|
-          conn.request :multipart
-          conn.request :url_encoded
-        end.post(url, payload, headers)
+        payload = params.merge(file_field => file_value)
+
+        @client.post(url, form: payload, headers: headers).raise_for_status
       ensure
+        if defined?(temp) && temp
+          temp.close
+          temp.unlink
+        end
         restore_file_position(file_io, original_position)
       end
 
@@ -53,14 +71,8 @@ module R3x
 
       attr_reader :verify_ssl, :timeout
 
-      def connection
-        Faraday.new(ssl: { verify: verify_ssl }, request: { timeout: timeout }) do |f|
-          f.response :raise_error
-        end
-      end
-
       def filename_from_headers(headers)
-        disposition = headers["Content-Disposition"]
+        disposition = headers["content-disposition"]
         return nil unless disposition
 
         filename_star_from_disposition(disposition) ||
@@ -80,27 +92,11 @@ module R3x
         decode_percent_encoded_value(encoded_value || value)
       end
 
-      def sniff_content_type(file_io)
-        R3x::GemLoader.require("marcel")
-
-        position = file_io.pos if file_io.respond_to?(:pos)
-
-        ::Marcel::MimeType.for(file_io)
-      ensure
-        restore_file_position(file_io, position)
-      end
-
       def restore_file_position(file_io, position = nil)
         return unless position && file_io.respond_to?(:seek)
 
         file_io.seek(position)
-      rescue StandardError
-        nil
-      end
-
-      def rewind_file(file_io)
-        file_io.rewind if file_io.respond_to?(:rewind)
-      rescue StandardError
+      rescue
         nil
       end
 

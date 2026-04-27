@@ -38,6 +38,8 @@ module R3x
         end
 
         secrets.transform_keys(&:to_s)
+      rescue MultiJson::ParseError => e
+        raise "Vault response missing KV v2 data at data.data (#{e.message})"
       end
 
       def lookup_self
@@ -83,11 +85,11 @@ module R3x
       end
 
       def build_connection(token: nil)
-        Faraday.new(url: config.vault_addr) do |f|
-          f.request :json
-          f.response :json
-          f.headers["X-Vault-Token"] = token if token.present?
-        end
+        headers = {}
+        headers["X-Vault-Token"] = token if token.present?
+        HTTPX.with(
+          headers: headers
+        )
       end
 
       def vault_token
@@ -125,21 +127,29 @@ module R3x
       end
 
       def request(method, path, body = nil)
+        url = "#{config.vault_addr}/#{path}"
         response = case method
         when :get
-          connection.get(path)
+          connection.get(url)
         when :post
-          connection.post(path, body)
+          connection.post(url, json: body)
         else
           raise ArgumentError, "Unsupported Vault HTTP method: #{method.inspect}"
         end
 
-        raise_request_error(response) unless response.success?
-        response.body
+        raise_request_error(response) unless response.status >= 200 && response.status < 300
+        parse_json_response(response)
+      end
+
+      def parse_json_response(response)
+        MultiJson.load(response.body.to_s)
       end
 
       def request_errors(response)
-        response.body.is_a?(Hash) ? response.body["errors"] : response.body
+        body = parse_json_response(response)
+        body.is_a?(Hash) ? body["errors"] : body
+      rescue MultiJson::ParseError
+        response.body.to_s
       end
 
       def raise_request_error(response)

@@ -24,10 +24,10 @@ module R3x
         assert response.success?
       end
 
-      test "success? returns false for failed response" do
+      test "ping raises HTTPX::HTTPError on non-2xx response" do
         stub_request(:head, @ping_url).to_return(status: 500, body: "Error")
 
-        assert_raises(Faraday::Error) do
+        assert_raises(HTTPX::HTTPError) do
           @client.ping
         end
       end

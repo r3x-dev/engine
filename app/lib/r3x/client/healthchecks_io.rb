@@ -91,11 +91,9 @@ module R3x
       attr_reader :ping_url
 
       def connection
-        @connection ||= Faraday.new(url: ping_url) do |f|
-          f.response :raise_error
-          f.options.timeout = 10
-          f.options.open_timeout = 5
-        end
+        @connection ||= HTTPX.with(
+          timeout: { connect_timeout: 5, operation_timeout: 10 }
+        )
       end
 
       def send_start(rid: nil)
@@ -108,16 +106,23 @@ module R3x
 
         logger.debug { "HealthchecksIO #{method.upcase} #{ping_url}/#{url}" }
 
+        target_url = if url.empty?
+          ping_url
+        elsif url.start_with?("?")
+          "#{ping_url}#{url}"
+        else
+          "#{ping_url}/#{url}"
+        end
         response = case method
         when :head
-          connection.head(url)
+          connection.head(target_url)
         when :post
-          connection.post(url, body)
+          connection.post(target_url, body: body)
         else
           raise ArgumentError, "Unsupported HTTP method: #{method}"
         end
 
-        Response.new(response)
+        Response.new(response.raise_for_status)
       end
     end
   end

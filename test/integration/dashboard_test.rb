@@ -166,14 +166,14 @@ class DashboardTest < ActionDispatch::IntegrationTest
     )
     SolidQueue::FailedExecution.create!(
       job_id: failed_job.id,
-      error: '{"exception_class" => "Faraday::ForbiddenError", "message" => "the server responded with status 403", "backtrace" => ["line one", "line two"]}',
+      error: '{"exception_class" => "HTTPX::HTTPError", "message" => "the server responded with status 403", "backtrace" => ["line one", "line two"]}',
       created_at: 30.seconds.ago
     )
 
     get "/"
 
     assert_response :success
-    assert_includes response.body, "Faraday::ForbiddenError"
+    assert_includes response.body, "HTTPX::HTTPError"
     assert_includes response.body, "the server responded with status 403"
     assert_includes response.body, "Backtrace (2 frames)"
     refute_includes response.body, "&quot;exception_class&quot; =&gt;"

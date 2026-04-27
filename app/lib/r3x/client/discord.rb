@@ -18,7 +18,7 @@ module R3x
           return { "mode" => "dry_run" }
         end
 
-        connection.post(webhook_url, { "content" => content })
+        connection.post(webhook_url, json: { "content" => content }).raise_for_status
 
         { "mode" => "real", "content" => content }
       end
@@ -28,10 +28,7 @@ module R3x
       attr_reader :webhook_url
 
       def connection
-        Faraday.new do |f|
-          f.request :json
-          f.response :raise_error
-        end
+        HTTPX.with({})
       end
     end
   end

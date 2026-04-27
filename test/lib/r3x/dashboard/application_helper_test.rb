@@ -54,10 +54,10 @@ module R3x
 
       test "dashboard structured error parses ruby hash dumps into exception message and backtrace" do
         error = dashboard_structured_error(
-          '{"exception_class" => "Faraday::ForbiddenError", "message" => "the server responded with status 403", "backtrace" => ["line one", "line two"]}'
+          '{"exception_class" => "HTTPX::HTTPError", "message" => "the server responded with status 403", "backtrace" => ["line one", "line two"]}'
         )
 
-        assert_equal "Faraday::ForbiddenError", error[:exception_class]
+        assert_equal "HTTPX::HTTPError", error[:exception_class]
         assert_equal "the server responded with status 403", error[:message]
         assert_equal [ "line one", "line two" ], error[:backtrace]
       end

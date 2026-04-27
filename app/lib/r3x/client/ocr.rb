@@ -9,14 +9,14 @@ module R3x
       BASE_URL = "https://api.ocr.space"
 
       MIME_TYPES = {
-        ".png"  => "image/png",
-        ".jpg"  => "image/jpeg",
+        ".png" => "image/png",
+        ".jpg" => "image/jpeg",
         ".jpeg" => "image/jpeg",
-        ".gif"  => "image/gif",
-        ".tif"  => "image/tiff",
+        ".gif" => "image/gif",
+        ".tif" => "image/tiff",
         ".tiff" => "image/tiff",
-        ".bmp"  => "image/bmp",
-        ".pdf"  => "application/pdf"
+        ".bmp" => "image/bmp",
+        ".pdf" => "application/pdf"
       }.freeze
 
       def initialize(api_key_env:)
@@ -26,10 +26,10 @@ module R3x
       def parse(io_or_path, language: nil, engine: nil, filetype: nil, overlay: false)
         mime_type = filetype || detect_mime(io_or_path)
         params = build_params(io_or_path, mime_type, language: language, engine: engine, overlay: overlay)
-        response = connection.post(ENDPOINT, params)
-        raise "OCR request failed: #{response.status}" unless response.success?
+        response = connection.post("#{BASE_URL}/#{ENDPOINT}", form: params)
+        raise "OCR request failed: #{response.status}" unless response.status >= 200 && response.status < 300
 
-        body = response.body
+        body = response.json
         raise "OCR API error: #{body["ErrorMessage"]}" if body["IsErroredOnProcessing"]
 
         Result.new(body)
@@ -40,13 +40,10 @@ module R3x
       attr_reader :api_key
 
       def connection
-        @connection ||= Faraday.new(url: BASE_URL) do |f|
-          f.request :url_encoded
-          f.response :json
-          f.options.timeout = 30
-          f.options.open_timeout = 5
-          f.headers["apikey"] = api_key
-        end
+        @connection ||= HTTPX.with(
+          timeout: { connect_timeout: 5, operation_timeout: 30 },
+          headers: { "apikey" => api_key }
+        )
       end
 
       def detect_mime(io_or_path)

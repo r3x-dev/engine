@@ -174,13 +174,17 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 
 ## HTTP
 
-- Prefer `Faraday` for outbound HTTP and API integrations.
-- Reasoning: it is already a direct project dependency and gives us a standard place for middleware, retries, authentication, adapters, and test stubbing instead of ad hoc HTTP clients.
-- For small integration clients under `R3x::Client`, build the Faraday client inside the class instead of injecting a `connection` dependency.
-- Reasoning: these clients are thin integration boundaries, so passing a raw Faraday connection through the initializer adds indirection without improving the public interface we actually want to use.
-- **JSON handling**: When making HTTP requests that send/receive JSON, use Faraday's built-in `:json` middleware (available via `faraday` gem 2.0+) instead of manually serializing with `MultiJson`. Configure the connection with `f.request :json` and `f.response :json` - this automatically sets the Content-Type header and handles request/response body serialization.
+- Prefer `httpx` for outbound HTTP and API integrations in `R3x::Client` code.
+- Reasoning: `httpx` provides native multipart uploads, JSON request/response handling, persistent connections, and built-in retries without the middleware boilerplate that Faraday requires. It reduces client code volume and eliminates thread-unsafe runtime middleware mutation.
+- `Faraday` remains in `Gemfile.lock` as a transitive dependency of `googleauth`, `ruby_llm`, and `google-apis-*`. Do not add new direct Faraday dependencies or use Faraday in internal clients.
+- For small integration clients under `R3x::Client`, build the `httpx` client inside the class instead of injecting a `connection` dependency.
+- Reasoning: these clients are thin integration boundaries, so passing a raw HTTP client through the initializer adds indirection without improving the public interface we actually want to use.
+- **JSON handling**: When making HTTP requests that send/receive JSON, use `httpx`'s native `json:` option instead of manually serializing with `MultiJson`. This automatically sets the `Content-Type` header and handles serialization.
   - **Bad**: `request.body = MultiJson.dump({"key" => "value"})`
-  - **Good**: `connection.post(url, { key: "value" })` with `f.request :json` middleware
+  - **Good**: `client.post(url, json: { key: "value" })`
+- **Error handling**: `httpx` does not raise on 4xx/5xx by default. Call `.raise_for_status` on the response when the client should fail fast on HTTP errors, matching the previous `Faraday::Error` behavior.
+  - **Bad**: `response = client.get(url)` (silently ignores 404/500)
+  - **Good**: `client.get(url).raise_for_status`
 
 ## Naming Conventions
 
