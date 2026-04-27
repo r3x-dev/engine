@@ -258,11 +258,11 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
 
 ## LLM Retry
 
-`ruby_llm` has built-in automatic retry through its Faraday middleware. The defaults are
-applied when `R3x::Client::Llm` lazy-loads the gem, so processes that never call `ctx.client.llm`
-do not pay the boot or memory cost.
+`ruby_llm` has built-in automatic retry through its Faraday middleware. Defaults are applied
+per `RubyLLM::Context` inside `R3x::Client::Llm`, so every workflow run gets an isolated copy.
+Processes that never call `ctx.client.llm` do not load the gem at all.
 
-The global defaults are:
+The defaults are:
 
 - `max_retries: 3`
 - `retry_interval: 60.0` (seconds)
@@ -293,6 +293,6 @@ response = ctx.client.llm(
 )
 ```
 
-Any option passed this way overrides the global default for that single `R3x::Client::Llm`
+Any option passed this way overrides the default for that single `R3x::Client::Llm`
 instance. The rest of the call stays the same -- the retry is handled transparently by
 `ruby_llm`.
