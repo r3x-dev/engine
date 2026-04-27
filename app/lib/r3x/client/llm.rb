@@ -4,6 +4,12 @@ module R3x
       def initialize(api_key:, config_api_key_attr:, max_retries: nil, retry_interval: nil, retry_backoff_factor: nil)
         R3x::GemLoader.require("ruby_llm")
 
+        RubyLLM.configure do |config|
+          config.max_retries = 3
+          config.retry_interval = 60.0
+          config.retry_backoff_factor = 2
+        end
+
         @llm_context = RubyLLM.context do |config|
           config.public_send(:"#{config_api_key_attr}=", api_key)
           config.max_retries = max_retries if max_retries
