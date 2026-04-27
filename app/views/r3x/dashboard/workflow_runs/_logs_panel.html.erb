@@ -1,4 +1,4 @@
-<% refreshable = logs_configured? && run[:status] == "running" %>
+<% refreshable = logs_configured? && %w[queued running].include?(run[:status]) %>
 
 <div id="run-logs"
      data-r3x-log-refresh="<%= refreshable %>"
