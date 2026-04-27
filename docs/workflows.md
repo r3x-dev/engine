@@ -218,7 +218,7 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
 - Basic usage:
 
   ```ruby
-  Retryable.retryable(tries: 3, on: [Faraday::TimeoutError, Faraday::ConnectionFailed]) do
+  Retryable.retryable(tries: 3, on: [HTTPX::TimeoutError, HTTPX::ConnectionError]) do
     connection.get("/api/data").body
   end
   ```
@@ -234,7 +234,7 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
 - Block receives two optional arguments: retry count so far and the last exception:
 
   ```ruby
-  Retryable.retryable(tries: 4, on: Faraday::ServerError) do |retries, exception|
+  Retryable.retryable(tries: 4, on: HTTPX::HTTPError) do |retries, exception|
     logger.debug { "Attempt #{retries} failed: #{exception}" } if retries > 0
     http.get("/endpoint")
   end
@@ -247,7 +247,7 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
     logger.debug { "[Attempt ##{retries}] Retrying: #{exception.class} - #{exception.message}" }
   end
 
-  Retryable.retryable(tries: 3, on: Faraday::TimeoutError, log_method: log_method) do
+  Retryable.retryable(tries: 3, on: HTTPX::TimeoutError, log_method: log_method) do
     http.get("/endpoint")
   end
   ```

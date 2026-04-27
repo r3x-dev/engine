@@ -7,7 +7,7 @@ module Seeds
     def seed!
       clear_demo_data!
 
-      runs = demo_definitions.map do |definition|
+      demo_definitions.map do |definition|
         create_recurring_task!(definition)
         create_trigger_state!(definition)
         create_run!(definition)
@@ -63,7 +63,7 @@ module Seeds
           updated_at: now - 2.hours - 52.minutes,
           failed_at: now - 2.hours - 52.minutes,
           error: <<~ERROR.strip,
-            Faraday::TimeoutError: execution expired while polling external feed
+            HTTPX::TimeoutError: execution expired while polling external feed
             app/lib/r3x/client/http.rb:41:in `get'
             workflows/external/feed_watch/workflow.rb:18:in `run'
           ERROR
