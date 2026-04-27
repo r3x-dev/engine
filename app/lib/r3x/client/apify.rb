@@ -14,21 +14,17 @@ module R3x
       def run_actor(actor_id, input: nil, **options)
         logger.debug { "Apify run_actor #{actor_id}" }
 
-        response = connection.post("/v2/acts/#{actor_id}/runs", input) do |request|
-          request.params = options.compact
-        end
-        response.body.fetch("data")
+        response = connection.post("#{BASE_URL}/acts/#{actor_id}/runs", json: input, params: options.compact).raise_for_status
+        response.json.fetch("data")
       end
 
       def run_actor_sync_get_items(actor_id, input: nil, format: "json", clean: true, limit: nil, **options)
         logger.debug { "Apify run_actor_sync_get_items #{actor_id}" }
 
         params = { format: format, clean: clean, limit: limit }.merge(options).compact
-        response = connection.post("/v2/acts/#{actor_id}/run-sync-get-dataset-items", input) do |req|
-          req.params = params
-        end
+        response = connection.post("#{BASE_URL}/acts/#{actor_id}/run-sync-get-dataset-items", json: input, params: params).raise_for_status
 
-        response.body
+        response.json
       end
 
       def raw
@@ -40,14 +36,10 @@ module R3x
       attr_reader :api_key
 
       def connection
-        @connection ||= Faraday.new(url: BASE_URL) do |f|
-          f.request :json
-          f.response :json
-          f.response :raise_error
-          f.headers["Authorization"] = "Bearer #{api_key}"
-          f.options.timeout = 360
-          f.options.open_timeout = 10
-        end
+        @connection ||= HTTPX.with(
+          timeout: { connect_timeout: 10, operation_timeout: 360 },
+          headers: { "Authorization" => "Bearer #{api_key}" }
+        )
       end
     end
   end

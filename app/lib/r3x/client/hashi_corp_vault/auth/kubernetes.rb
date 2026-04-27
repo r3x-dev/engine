@@ -11,14 +11,15 @@ module R3x
           end
 
           def client_token
-            response = unauthenticated_connection.post("v1/#{config.kubernetes_auth_path}/login", {
-              role: config.kubernetes_role,
-              jwt: service_account_token
-            })
+            response = unauthenticated_connection.post(
+              "#{config.vault_addr}/v1/#{config.kubernetes_auth_path}/login",
+              json: { role: config.kubernetes_role, jwt: service_account_token }
+            )
 
-            raise_login_error(response) unless response.success?
+            raise_login_error(response) unless response.status >= 200 && response.status < 300
 
-            auth = response.body.is_a?(Hash) && response.body["auth"]
+            body = MultiJson.load(response.body.to_s)
+            auth = body.is_a?(Hash) && body["auth"]
             raise "Vault response missing kubernetes auth data" unless auth.is_a?(Hash)
 
             client_token = auth["client_token"].presence
@@ -84,7 +85,10 @@ module R3x
           end
 
           def request_errors(response)
-            response.body.is_a?(Hash) ? response.body["errors"] : response.body
+            body = MultiJson.load(response.body.to_s)
+            body.is_a?(Hash) ? body["errors"] : body
+          rescue MultiJson::ParseError
+            response.body.to_s
           end
         end
       end

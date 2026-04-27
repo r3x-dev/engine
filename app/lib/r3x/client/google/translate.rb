@@ -14,8 +14,8 @@ module R3x
           input = text.to_s
           return input if input.empty?
 
-          response = connection.post(API_URL, request_body(input, to: to, from: from, format: format), authorization_header)
-          translation = Array(response.body.dig("data", "translations")).first ||
+          response = connection.post(API_URL, json: request_body(input, to: to, from: from, format: format), headers: authorization_header).raise_for_status
+          translation = Array(response.json.dig("data", "translations")).first ||
             raise(ArgumentError, "Missing translations in Google Translate response")
           translation.fetch("translatedText")
         end
@@ -43,11 +43,7 @@ module R3x
         end
 
         def connection
-          @connection ||= Faraday.new do |f|
-            f.request :json
-            f.response :json
-            f.response :raise_error
-          end
+          @connection ||= HTTPX.with({})
         end
 
         def request_body(text, to:, from:, format:)
