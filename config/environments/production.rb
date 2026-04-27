@@ -43,7 +43,9 @@ Rails.application.configure do
     config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT))
   end
 
-  config.logger.info { "Log format: #{R3x::Log.format} (set R3X_LOG_FORMAT=json for structured output)" }
+  config.after_initialize do
+    Rails.logger.info { "Log format: #{R3x::Log.format} (set R3X_LOG_FORMAT=json for structured output)" }
+  end
 
   # Change to "debug" to log everything (including potentially personally-identifiable information!).
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
