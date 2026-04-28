@@ -262,8 +262,8 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
 per `RubyLLM::Context` inside `R3x::Client::Llm`, so every workflow run gets an isolated copy.
 Processes that never call `ctx.client.llm` do not load the gem at all.
 
-The only project-level override is `retry_interval: 60.0` (the gem default is `0.1`).
-Everything else uses the gem defaults (`max_retries: 3`, `retry_backoff_factor: 2`).
+The retry defaults are set in `app/lib/r3x/client/llm.rb` inside the `RubyLLM.context` block.
+Only `retry_interval` has a project-level override (the gem default is `0.1`); everything else uses the gem defaults.
 
 This means the first retry waits 60 seconds, the second waits 120 seconds, then it gives up.
 The gem automatically retries on transient provider errors:
