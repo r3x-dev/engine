@@ -12,7 +12,5 @@ post_create:
 # Nadpisuje globalne panes — just setup przed agentem (w panelu tmux)
 panes:
   - command: <agent>
-    focus: true
+    zoom: true
   - command: just setup
-    split: horizontal
-    percentage: 30
