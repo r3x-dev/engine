@@ -10,6 +10,20 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
 `bin/jobs-worker` and `bin/jobs-scheduler`, `workflow_cli` still leaves
 `lib/r3x/workflow/cli.rb` available for the Thor wrapper.
 
+## Temporarily Disabling A Workflow
+
+- To disable a workflow without deleting it, add a top-of-file pragma near the start of
+  `workflow.rb`:
+
+  ```ruby
+  # r3x:disable Reason for disabling
+  ```
+
+- `R3x::Workflow::PackLoader` scans the first lines of each entrypoint and skips files with this
+  pragma, so the workflow file is not `require`d, not registered, and not scheduled.
+- Keep the pragma near the top of the file (before constants/classes) so it is easy to spot during
+  reviews and maintenance.
+
 ## Workflows Are Jobs
 
 - Workflows inherit from `R3x::Workflow::Base` and implement `#run`.
