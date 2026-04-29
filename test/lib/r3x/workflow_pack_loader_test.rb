@@ -32,6 +32,12 @@ module R3x
       end
     end
 
+    test "skips workflow files with disable pragma" do
+      assert_raises(KeyError) do
+        R3x::Workflow::Registry.fetch("disabled_workflow")
+      end
+    end
+
     test "can run loaded workflow" do
       workflow_class = R3x::Workflow::Registry.fetch("test_workflow")
       result = workflow_class.new.run
@@ -48,6 +54,7 @@ module R3x
       assert_includes output, "R3x::Workflow::PackLoader"
       assert_includes output, "r3x.workflow_key=test_workflow"
       assert_includes output, "Loaded workflow class=Workflows::TestWorkflow"
+      assert_includes output, "Skipping disabled workflow entrypoint"
     end
   end
 end

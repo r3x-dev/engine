@@ -5,6 +5,8 @@ module R3x
       extend R3x::Concerns::Logger
 
       WORKFLOW_ENTRYPOINT_FILENAME = "workflow.rb"
+      DISABLE_PRAGMA_PREFIX = "# r3x:disable"
+      PRAGMA_SCAN_LINES = 20
       MUTEX = Mutex.new
       LOADED = Concurrent::AtomicBoolean.new(false)
 
@@ -16,6 +18,13 @@ module R3x
           loaded = []
 
           workflow_files.each do |entrypoint|
+            if disabled_workflow?(entrypoint)
+              Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") do
+                logger.info "Skipping disabled workflow entrypoint"
+              end
+              next
+            end
+
             require entrypoint
             workflow_class = register_workflow(entrypoint)
             loaded << workflow_class
@@ -33,6 +42,12 @@ module R3x
 
           logger.info "Loaded #{loaded.size} workflow packs"
           LOADED.make_true
+        end
+      end
+
+      def disabled_workflow?(entrypoint)
+        File.foreach(entrypoint).take(PRAGMA_SCAN_LINES).any? do |line|
+          line.strip.start_with?(DISABLE_PRAGMA_PREFIX)
         end
       end
 
