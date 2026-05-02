@@ -30,12 +30,12 @@ module R3x
             logger.info "Running workflow trigger_type=#{context.trigger.type}"
 
             run.tap do
-              with_log_tags("r3x.job_outcome=success") do
+              with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "success")) do
                 logger.info "Workflow run completed"
               end
             end
           rescue => e
-            with_log_tags("r3x.job_outcome=failed") do
+            with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "failed")) do
               structured_error(message: "Workflow run failed", error: e)
             end
 
@@ -80,7 +80,7 @@ module R3x
 
       def workflow_log_tags(trigger_key)
         [
-          ("r3x.trigger_key=#{trigger_key}" if trigger_key.present?)
+          R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key)
         ]
       end
 

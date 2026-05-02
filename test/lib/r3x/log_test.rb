@@ -37,6 +37,11 @@ module R3x
       end
     end
 
+    test "builds structured log tags" do
+      assert_equal "r3x.run_active_job_id=aj-123", Log.tag(Log::RUN_ACTIVE_JOB_ID_TAG, "aj-123")
+      assert_nil Log.tag(Log::RUN_ACTIVE_JOB_ID_TAG, nil)
+    end
+
     private
 
     def with_env(overrides)
