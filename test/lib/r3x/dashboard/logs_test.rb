@@ -64,7 +64,69 @@ module R3x
         assert_equal true, result[:configured]
         assert_nil result[:error]
         assert_equal 1, result[:entries].size
-        assert_includes client.calls.first[:query], '_msg:"r3x.run_active_job_id=aj-123"'
+        assert_includes client.calls.first[:query], 'tags:"r3x.run_active_job_id=aj-123"'
+        refute_includes client.calls.first[:query], '_msg:"r3x.run_active_job_id=aj-123"'
+      end
+
+      test "run logs read collector-extracted structured fields" do
+        client = FakeLogsClient.new(entries: [
+          {
+            "_time" => "2026-04-15T12:00:01Z",
+            "_msg" => "Workflow run completed",
+            "level" => "info",
+            "tags" => MultiJson.dump([ "ActiveJob", "r3x.run_active_job_id=aj-123", "r3x.trigger_key=schedule:123" ]),
+            "error_class" => nil,
+            "error_message" => nil,
+            "backtrace" => MultiJson.dump([]),
+            "kubernetes.container_name" => "app",
+            "kubernetes.pod_name" => "r3x-jobs-123"
+          }
+        ])
+
+        run = {
+          active_job_id: "aj-123",
+          enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+        }
+
+        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        entry = result[:entries].first
+
+        assert_equal "info", entry[:level]
+        assert_equal "Workflow run completed", entry[:message]
+        assert_equal [ "ActiveJob" ], entry[:tags]
+        assert_nil entry[:backtrace]
+      end
+
+      test "run logs keep extracted error fields from collector" do
+        client = FakeLogsClient.new(entries: [
+          {
+            "_time" => "2026-04-15T12:00:01Z",
+            "_msg" => "Workflow run failed",
+            "level" => "error",
+            "tags" => [ "ActiveJob", "r3x.run_active_job_id=aj-123" ],
+            "error_class" => "NameError",
+            "error_message" => "uninitialized constant",
+            "backtrace" => [ "app/lib/a.rb:1", "app/lib/b.rb:2" ],
+            "kubernetes.container_name" => "app",
+            "kubernetes.pod_name" => "r3x-jobs-123"
+          }
+        ])
+
+        run = {
+          active_job_id: "aj-123",
+          enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+        }
+
+        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        entry = result[:entries].first
+
+        assert_equal "error", entry[:level]
+        assert_equal "Workflow run failed", entry[:message]
+        assert_equal "NameError", entry[:error_class]
+        assert_equal "uninitialized constant", entry[:error_message]
+        assert_equal [ "app/lib/a.rb:1", "app/lib/b.rb:2" ], entry[:backtrace]
       end
 
       test "run logs strip repeated correlation tags from the message body" do

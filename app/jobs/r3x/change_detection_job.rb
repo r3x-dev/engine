@@ -8,8 +8,8 @@ module R3x
       trigger_state = nil
 
       with_log_tags(
-        "r3x.workflow_key=#{workflow_key}",
-        "r3x.trigger_key=#{trigger_key}"
+        R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_key),
+        R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key)
       ) do
         workflow_class = R3x::Workflow::Registry.fetch(workflow_key)
         trigger = find_trigger(workflow_class: workflow_class, trigger_key: trigger_key)
@@ -26,7 +26,7 @@ module R3x
 
         TriggerState.transaction do
           if result[:changed]
-            with_log_tags("r3x.job_outcome=changed") do
+            with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "changed")) do
               logger.info "Change detected; enqueueing workflow class=#{workflow_class.name}"
             end
 
@@ -40,9 +40,9 @@ module R3x
       trigger_state.record_error!(e) if defined?(trigger_state) && trigger_state&.persisted?
 
       with_log_tags(
-        "r3x.workflow_key=#{workflow_key}",
-        ("r3x.trigger_key=#{trigger_key}" if defined?(trigger_key) && trigger_key.present?),
-        "r3x.job_outcome=failed"
+        R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_key),
+        R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, defined?(trigger_key) ? trigger_key : nil),
+        R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "failed")
       ) do
         structured_error(message: "Change detection failed", error: e)
       end
