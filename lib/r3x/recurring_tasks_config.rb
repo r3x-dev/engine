@@ -41,7 +41,10 @@ module R3x
         end
 
         scheduled_logs.each do |workflow_key, trigger_key, options|
-          Rails.logger.tagged("r3x.workflow_key=#{workflow_key}", "r3x.trigger_key=#{trigger_key}") do
+          Rails.logger.tagged(
+            R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_key),
+            R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key)
+          ) do
             logger.info "Scheduled recurring task class=#{options[:class]} schedule=#{options[:schedule]} queue=#{options[:queue]}"
           end
         end

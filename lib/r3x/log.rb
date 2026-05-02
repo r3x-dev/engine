@@ -1,6 +1,16 @@
 module R3x
   class Log
     TAG_PATTERN = /\A(?:\[(?<tag>[^\]]+)\]\s+)+/
+    RUN_ACTIVE_JOB_ID_TAG = "r3x.run_active_job_id"
+    TRIGGER_KEY_TAG = "r3x.trigger_key"
+    WORKFLOW_KEY_TAG = "r3x.workflow_key"
+    JOB_OUTCOME_TAG = "r3x.job_outcome"
+
+    def self.tag(name, value)
+      return if value.blank?
+
+      "#{name}=#{value}"
+    end
 
     def self.format
       resolve_format

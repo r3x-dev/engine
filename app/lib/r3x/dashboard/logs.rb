@@ -38,7 +38,7 @@ module R3x
         return error_logs(provider_name, "This run does not have an Active Job id yet.") if active_job_id.blank?
 
         query_logs(
-          build_query(%(_msg:"r3x.run_active_job_id=#{active_job_id}")),
+          build_query(%(tags:"#{R3x::Log.tag(R3x::Log::RUN_ACTIVE_JOB_ID_TAG, active_job_id)}")),
           start_at: run[:enqueued_at] || 1.hour.ago,
           end_at: run[:finished_at] || Time.current,
           limit: RUN_LOG_LIMIT,
@@ -57,7 +57,7 @@ module R3x
       end
 
       def build_query(filter)
-        "#{filter} | fields _time, kubernetes.pod_name, kubernetes.container_name, _msg"
+        "(#{filter}) | fields _time, kubernetes.pod_name, kubernetes.container_name, _msg, level, tags, error_class, error_message, backtrace"
       end
 
       def error_logs(provider, error)
@@ -99,10 +99,10 @@ module R3x
       end
 
       def normalize_entry(entry, context: {})
-        payload = parse_message_payload(entry["_msg"], context: context)
+        payload = parse_message_payload(entry, context: context)
 
         {
-          backtrace: Array(payload[:backtrace]).presence,
+          backtrace: payload[:backtrace],
           container_name: entry["kubernetes.container_name"],
           error_class: payload[:error_class],
           error_message: payload[:error_message],
@@ -116,7 +116,11 @@ module R3x
         nil
       end
 
-      def parse_message_payload(raw_message, context: {})
+      def parse_message_payload(entry, context: {})
+        payload = parse_extracted_payload(entry, context: context)
+        return payload if payload.present?
+
+        raw_message = entry["_msg"]
         parsed = MultiJson.load(raw_message.to_s)
 
         unless parsed.is_a?(Hash)
@@ -136,7 +140,7 @@ module R3x
         message, tags = extract_message_and_tags(parsed["message"], tags: parsed["tags"], context: context)
 
         {
-          backtrace: parsed["backtrace"],
+          backtrace: normalize_array_field(parsed["backtrace"]).presence,
           error_class: parsed["error_class"],
           error_message: parsed["error_message"],
           level: normalize_level(parsed["level"]),
@@ -151,6 +155,27 @@ module R3x
           message: message,
           tags: tags
         }
+      end
+
+      def parse_extracted_payload(entry, context: {})
+        return unless entry.key?("level")
+
+        message, tags = extract_message_and_tags(
+          entry["_msg"],
+          tags: normalize_array_field(entry["tags"]),
+          context: context
+        )
+
+        {
+          backtrace: normalize_array_field(entry["backtrace"]).presence,
+          error_class: entry["error_class"],
+          error_message: entry["error_message"],
+          level: normalize_level(entry["level"]),
+          message: message,
+          tags: tags
+        }
+      rescue ArgumentError, MultiJson::ParseError
+        nil
       end
 
       def normalize_level(value)
@@ -186,6 +211,22 @@ module R3x
         Time.zone.parse(value)
       rescue ArgumentError
         nil
+      end
+
+      def normalize_array_field(value)
+        case value
+        when nil
+          []
+        when Array
+          value.compact_blank
+        when String
+          parsed = MultiJson.load(value)
+          parsed.is_a?(Array) ? parsed.compact_blank : [ value ]
+        else
+          Array(value).compact_blank
+        end
+      rescue MultiJson::ParseError
+        [ value ]
       end
 
       def unavailable_logs
