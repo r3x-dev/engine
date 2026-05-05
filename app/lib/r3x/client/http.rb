@@ -26,10 +26,13 @@ module R3x
       def download_file(url, headers: {})
         response = @client.get(url, headers: headers).raise_for_status
 
+        content_type = response.headers["content-type"]&.split(";")&.first
+        filename = response.body.filename || filename_from_url(url, content_type: content_type)
+
         DownloadedFile.new(
           body: response.body.to_s,
-          content_type: response.headers["content-type"]&.split(";")&.first,
-          filename: filename_from_headers(response.headers),
+          content_type: content_type,
+          filename: filename,
           url: url
         )
       end
@@ -75,25 +78,14 @@ module R3x
 
       attr_reader :verify_ssl, :timeout
 
-      def filename_from_headers(headers)
-        disposition = headers["content-disposition"]
-        return nil unless disposition
+      def filename_from_url(url, content_type:)
+        filename = File.basename(URI.parse(url).path)
+        filename = "downloaded_file" if filename.empty? || filename == "/"
 
-        filename_star_from_disposition(disposition) ||
-          disposition.match(/filename=["']?([^"';]+)["']?/i)&.captures&.first
-      end
+        extension = Rack::Mime::MIME_TYPES.invert[content_type]
+        filename += extension if extension && File.extname(filename).empty?
 
-      def filename_star_from_disposition(disposition)
-        encoded_filename = disposition.match(/filename\*\s*=\s*([^;]+)/i)&.captures&.first
-        return nil unless encoded_filename
-
-        value = encoded_filename.strip.delete_prefix('"').delete_suffix('"')
-        charset, _, encoded_value = value.split("'", 3)
-        encoded_value ||= value
-
-        decode_percent_encoded_value(encoded_value, charset)
-      rescue ArgumentError, Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
-        decode_percent_encoded_value(encoded_value || value)
+        filename
       end
 
       def sniff_content_type(file_io)
@@ -126,12 +118,6 @@ module R3x
         file_io.seek(position)
       rescue
         nil
-      end
-
-      def decode_percent_encoded_value(value, charset = "UTF-8")
-        URI::DEFAULT_PARSER.unescape(value)
-          .force_encoding(Encoding.find(charset || "UTF-8"))
-          .encode(Encoding::UTF_8)
       end
     end
   end

@@ -169,14 +169,41 @@ module R3x
         assert_equal "text/html", file.content_type
       end
 
-      test "download_file handles missing content-disposition" do
+      test "download_file falls back to the url basename without content-disposition" do
         stub_request(:get, "https://example.com/file")
           .to_return(status: 200, body: "content")
 
         file = Http.new.download_file("https://example.com/file")
 
-        assert_nil file.filename
+        assert_equal "file", file.filename
         assert_nil file.content_type
+      end
+
+      test "download_file appends extension from content-type when url basename has none" do
+        stub_request(:get, "https://example.com/jpeg")
+          .to_return(status: 200, body: "content", headers: { "Content-Type" => "image/jpeg" })
+
+        file = Http.new.download_file("https://example.com/jpeg")
+
+        assert_equal "jpeg.jpg", file.filename
+      end
+
+      test "download_file uses generic filename when url has no basename" do
+        stub_request(:get, "https://example.com/")
+          .to_return(status: 200, body: "content")
+
+        file = Http.new.download_file("https://example.com/")
+
+        assert_equal "downloaded_file", file.filename
+      end
+
+      test "download_file appends extension to generic filename from content-type" do
+        stub_request(:get, "https://example.com/")
+          .to_return(status: 200, body: "content", headers: { "Content-Type" => "image/png" })
+
+        file = Http.new.download_file("https://example.com/")
+
+        assert_equal "downloaded_file.png", file.filename
       end
 
       test "DownloadedFile#to_io returns StringIO" do
