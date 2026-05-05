@@ -10,7 +10,7 @@ module R3x
           @project = project
         end
 
-        def deliver(to:, subject:, body:)
+        def deliver(to:, subject:, body:, attachments: [])
           if R3x::Policy.dry_run_for(:gmail)
             logger.info "[DRY-RUN]: \nto: #{to}\nsubject: #{subject}\nbody: #{body}"
 
@@ -19,7 +19,7 @@ module R3x
 
           result = build_service.send_user_message(
             "me", # The user's email address. The special value `me` can be used to indicate the
-            ::Google::Apis::GmailV1::Message.new(raw: raw_message(to: to, subject: subject, body: body))
+            ::Google::Apis::GmailV1::Message.new(raw: raw_message(to: to, subject: subject, body: body, attachments: attachments))
           )
 
           {
@@ -43,14 +43,25 @@ module R3x
           end
         end
 
-        def raw_message(to:, subject:, body:)
+        def raw_message(to:, subject:, body:, attachments: [])
           R3x::GemLoader.require("mail")
 
           Mail.new.tap do |mail|
             mail.charset = "UTF-8"
             mail.to = to
             mail.subject = subject
-            mail.body = body
+
+            if attachments.any?
+              mail.text_part = Mail::Part.new do
+                body body
+              end
+
+              attachments.each do |attachment|
+                mail.add_file(filename: attachment[:filename], content: attachment[:content])
+              end
+            else
+              mail.body = body
+            end
           end.to_s
         end
       end
