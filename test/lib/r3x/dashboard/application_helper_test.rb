@@ -3,12 +3,23 @@ require "test_helper"
 module R3x
   module Dashboard
     class ApplicationHelperTest < ActionView::TestCase
-      test "dashboard relative time describes future timestamps as upcoming" do
-        assert_match "from now", dashboard_relative_time(5.minutes.from_now)
+      test "dashboard timestamp renders absolute time without relative copy" do
+        rendered = dashboard_timestamp(Time.zone.parse("2026-04-15T12:00:01Z"))
+
+        assert_includes rendered, "15.04.2026 12:00:01"
+        refute_includes rendered, "ago"
+        refute_includes rendered, "from now"
       end
 
-      test "dashboard relative time describes past timestamps as elapsed" do
-        assert_match "ago", dashboard_relative_time(5.minutes.ago)
+      test "dashboard timestamp respects R3X_TIMEZONE" do
+        original_timezone = ENV["R3X_TIMEZONE"]
+        ENV["R3X_TIMEZONE"] = "America/New_York"
+
+        rendered = dashboard_timestamp(Time.zone.parse("2026-04-15T12:00:01Z"))
+
+        assert_includes rendered, "15.04.2026 08:00:01 EDT"
+      ensure
+        ENV["R3X_TIMEZONE"] = original_timezone
       end
 
       test "dashboard log time renders clock time instead of relative time" do
@@ -18,7 +29,7 @@ module R3x
       test "dashboard absolute timestamp renders date and time instead of relative time" do
         rendered = dashboard_absolute_timestamp(Time.zone.parse("2026-04-15T12:00:01Z"))
 
-        assert_includes rendered, "2026-04-15 12:00:01"
+        assert_includes rendered, "15.04.2026 12:00:01"
         refute_includes rendered, ">about"
       end
 
@@ -28,9 +39,42 @@ module R3x
 
         rendered = dashboard_absolute_timestamp(Time.zone.parse("2026-04-15T12:00:01Z"))
 
-        assert_includes rendered, "2026-04-15 08:00:01 EDT"
+        assert_includes rendered, "15.04.2026 08:00:01 EDT"
       ensure
         ENV["R3X_TIMEZONE"] = original_timezone
+      end
+
+      test "dashboard trigger details shows schedule details without hash as visible text" do
+        rendered = dashboard_trigger_details(
+          cron: "0 12 * * * Europe/Warsaw",
+          mode: "scheduled",
+          unique_key: "schedule:abc123"
+        )
+
+        assert_includes rendered, "schedule:&quot;0 12 * * * Europe/Warsaw&quot;"
+        assert_includes rendered, "schedule:abc123"
+        refute_includes rendered, ">schedule:abc123<"
+      end
+
+      test "dashboard trigger details formats one-part trigger keys" do
+        rendered = dashboard_trigger_details(unique_key: "feed:abc123", mode: "observed")
+
+        assert_includes rendered, ">abc123<"
+        assert_includes rendered, "feed:abc123"
+      end
+
+      test "dashboard trigger key label hides trigger type prefix" do
+        assert_equal "inventory", dashboard_trigger_key_label("schedule:inventory")
+        assert_equal "abc123", dashboard_trigger_key_label("feed:abc123")
+        assert_equal "manual/default", dashboard_trigger_key_label(nil)
+      end
+
+      test "dashboard run trigger label prefers schedule from persisted recurring task" do
+        assert_equal(
+          'schedule:"15 * * * *"',
+          dashboard_run_trigger_label(trigger_key: "schedule:inventory", trigger_schedule: "15 * * * *")
+        )
+        assert_equal "inventory", dashboard_run_trigger_label(trigger_key: "schedule:inventory")
       end
 
       test "dashboard log state empty message prefers waiting copy for refreshable panels" do

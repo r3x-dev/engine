@@ -1,7 +1,7 @@
 <% content_for :title, @run[:workflow_title] %>
 
 <%
-  trigger_key = @run[:trigger_key] || "manual/default"
+  trigger_key = @run[:trigger_key]
   failure_summary = dashboard_error_summary(@run[:error])
   terminal_time = if @run[:finished_at].present?
                     @run[:finished_at]
@@ -27,9 +27,7 @@
     <div class="run-heading">
       <h2 class="page-title"><%= @run[:workflow_title] %></h2>
 
-      <span class="pill <%= dashboard_tone_for(@run[:status]) %>">
-        <%= dashboard_status_label(@run[:status]) %>
-      </span>
+      <%= dashboard_status_pill(@run[:status], error: @run[:error]) %>
     </div>
     <p>Run <code><%= @run[:job_id] %></code></p>
   </div>
@@ -53,7 +51,7 @@
 
     <div class="detail-item">
       <span class="label">Trigger</span>
-      <strong><code><%= trigger_key %></code></strong>
+      <strong><code title="<%= trigger_key %>"><%= dashboard_run_trigger_label(@run) %></code></strong>
     </div>
   </div>
 </section>
@@ -65,7 +63,7 @@
     </div>
 
     <div class="failure-summary">
-      <span class="pill danger">Failed</span>
+      <%= dashboard_pill("Failed", "danger") %>
       <strong><%= failure_summary %></strong>
     </div>
 
@@ -91,7 +89,7 @@
       <% if entry[:error_class].present? || entry[:error_message].present? %>
         <div class="failure-summary">
           <% if entry[:error_class].present? %>
-            <span class="pill danger"><%= entry[:error_class] %></span>
+            <%= dashboard_pill(entry[:error_class], "danger") %>
           <% end %>
           <% if entry[:error_message].present? %>
             <strong><%= entry[:error_message] %></strong>

@@ -33,9 +33,7 @@
       <span class="label">Last result</span>
       <% if @workflow[:last_run].present? %>
         <strong>
-          <span class="pill <%= dashboard_tone_for(@workflow[:last_run][:status]) %>">
-            <%= dashboard_status_label(@workflow[:last_run][:status]) %>
-          </span>
+          <%= dashboard_status_pill(@workflow[:last_run][:status], error: @workflow[:last_run][:error]) %>
         </strong>
         <span class="meta"><%= dashboard_timestamp(@workflow[:last_run][:recorded_at]) %></span>
       <% else %>
@@ -45,12 +43,12 @@
 
     <div class="stat">
       <span class="label">Last seen</span>
-      <strong><%= @workflow[:last_seen_at].present? ? dashboard_timestamp(@workflow[:last_seen_at]) : "Never" %></strong>
+      <strong><%= dashboard_optional_timestamp(@workflow[:last_seen_at], fallback: "Never") %></strong>
     </div>
 
     <div class="stat">
       <span class="label">Next trigger</span>
-      <strong><%= @workflow[:next_trigger_at].present? ? dashboard_timestamp(@workflow[:next_trigger_at]) : "Manual only" %></strong>
+      <strong><%= dashboard_optional_timestamp(@workflow[:next_trigger_at], fallback: "Manual only") %></strong>
     </div>
   </div>
 </section>
@@ -79,21 +77,21 @@
               <div class="meta"><code><%= dashboard_trigger_details(trigger_entry) %></code></div>
               <div class="pill-row trigger-badges">
                 <% if trigger_entry[:change_detecting] %>
-                  <span class="pill info">Change detecting</span>
+                  <%= dashboard_pill("Change detecting", "info") %>
                 <% end %>
                 <% if trigger_entry[:recurring_task].blank? %>
-                  <span class="pill muted">Observed from runtime state</span>
+                  <%= dashboard_pill("Observed from runtime state", "muted") %>
                 <% end %>
               </div>
             </td>
 
-            <td><%= trigger_entry[:next_trigger_at].present? ? dashboard_timestamp(trigger_entry[:next_trigger_at]) : "Manual only" %></td>
+            <td><%= dashboard_optional_timestamp(trigger_entry[:next_trigger_at], fallback: "Manual only") %></td>
 
             <td>
               <div class="pill-row">
-                <span class="pill muted"><%= trigger_entry[:mode].to_s.humanize %></span>
+                <%= dashboard_pill(trigger_entry[:mode].to_s.humanize, "muted") %>
                 <% if trigger_entry[:queue_name].present? %>
-                  <span class="pill muted">Queue <code><%= trigger_entry[:queue_name] %></code></span>
+                  <%= dashboard_pill(safe_join([ "Queue", content_tag(:code, trigger_entry[:queue_name]) ], " "), "muted") %>
                 <% end %>
               </div>
 
