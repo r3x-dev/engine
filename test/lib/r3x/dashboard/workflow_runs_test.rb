@@ -28,6 +28,7 @@ module R3x
         assert_equal "test_workflow", run[:workflow_key]
         assert_equal "finished", run[:status]
         assert_equal "schedule:abc123", run[:trigger_key]
+        assert_equal "0 * * * *", run[:trigger_schedule]
         assert_equal job.created_at, run[:started_at]
       end
 

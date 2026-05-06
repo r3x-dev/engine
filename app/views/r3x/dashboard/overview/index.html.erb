@@ -38,16 +38,14 @@
           <div class="stack">
             <div class="run-heading">
               <%= link_to workflow[:title], workflow_path(workflow[:workflow_key]), class: "title-link" %>
-              <span class="pill <%= dashboard_tone_for(workflow.dig(:health, :status)) %>">
-                <%= dashboard_health_label(workflow[:health]) %>
-              </span>
+              <%= dashboard_health_pill(workflow[:health]) %>
             </div>
 
             <% if error.present? %>
               <section class="failure-summary overview-error-panel">
                 <div class="overview-error-header">
                   <% if error[:exception_class].present? %>
-                    <span class="pill danger"><%= error[:exception_class] %></span>
+                    <%= dashboard_pill(error[:exception_class], "danger") %>
                   <% end %>
                 </div>
 
@@ -67,9 +65,9 @@
             <% end %>
 
             <div class="pill-row">
-              <span class="pill muted"><%= workflow[:attention_label] %> <%= dashboard_relative_time(workflow[:attention_at]) %></span>
+              <%= dashboard_pill(safe_join([ workflow[:attention_label], dashboard_timestamp(workflow[:attention_at]) ], " "), "muted") %>
               <% if workflow[:next_trigger_at].present? %>
-                <span class="pill muted">Next <%= dashboard_relative_time(workflow[:next_trigger_at]) %></span>
+                <%= dashboard_pill(safe_join([ "Next", dashboard_timestamp(workflow[:next_trigger_at]) ], " "), "muted") %>
               <% end %>
             </div>
           </div>

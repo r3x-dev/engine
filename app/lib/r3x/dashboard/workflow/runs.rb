@@ -40,6 +40,9 @@ module R3x
             resolved_workflow_key = workflow_key_for(job)
             return if resolved_workflow_key.blank?
 
+            trigger_key = job.trigger_key
+            recurring_task = recurring_task_for(workflow_key: resolved_workflow_key, trigger_key: trigger_key)
+
             {
               active_job_id: job.active_job_id,
               class_name: job.class_name,
@@ -55,8 +58,9 @@ module R3x
               scheduled_at: job.scheduled_execution&.scheduled_at || job.scheduled_at,
               started_at: job.claimed_execution&.created_at || job.created_at,
               status: job.status,
-              trigger_key: job.trigger_key,
+              trigger_key: trigger_key,
               trigger_payload: job.trigger_payload,
+              trigger_schedule: recurring_task&.schedule,
               workflow_key: resolved_workflow_key,
               workflow_title: resolved_workflow_key.titleize
             }
@@ -79,6 +83,25 @@ module R3x
 
           def workflow_key_for(job)
             catalog.class_names_to_keys[job.class_name]
+          end
+
+          def recurring_task_for(workflow_key:, trigger_key:)
+            return if trigger_key.blank?
+
+            recurring_tasks_by_workflow_key
+              .fetch(workflow_key, [])
+              .find { |task| task.trigger_key == trigger_key }
+          end
+
+          def recurring_tasks_by_workflow_key
+            @recurring_tasks_by_workflow_key ||= begin
+              ::Dashboard::RecurringTask
+                .workflow_tasks
+                .to_a
+                .group_by(&:workflow_key)
+            rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
+              {}
+            end
           end
 
           def catalog

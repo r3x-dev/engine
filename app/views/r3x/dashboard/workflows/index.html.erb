@@ -41,23 +41,16 @@
             </td>
 
             <td>
-              <span class="pill <%= dashboard_tone_for(workflow.dig(:health, :status)) %>">
-                <%= dashboard_health_label(workflow[:health]) %>
-              </span>
-              <% if workflow.dig(:health, :detail).present? %>
-                <div class="meta"><%= dashboard_error_summary(workflow.dig(:health, :detail)) %></div>
-              <% end %>
+              <%= dashboard_health_pill(workflow[:health]) %>
             </td>
 
-            <td><%= workflow[:next_trigger_at].present? ? dashboard_timestamp(workflow[:next_trigger_at]) : "Manual only" %></td>
+            <td><%= dashboard_optional_timestamp(workflow[:next_trigger_at], fallback: "Manual only") %></td>
 
             <td>
               <% if workflow[:last_run].present? %>
                 <% last_run = workflow[:last_run] %>
                 <%= link_to workflow_run_path(last_run[:job_id]) do %>
-                  <span class="pill <%= dashboard_tone_for(last_run[:status]) %>">
-                    <%= dashboard_status_label(last_run[:status]) %>
-                  </span>
+                  <%= dashboard_status_pill(last_run[:status], error: last_run[:error]) %>
                   <div class="meta"><%= dashboard_timestamp(last_run[:recorded_at]) %></div>
                 <% end %>
               <% else %>

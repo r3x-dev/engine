@@ -30,43 +30,56 @@ module R3x
         }.fetch(value, "muted")
       end
 
+      def dashboard_pill(label, tone, title: nil, class_name: nil)
+        classes = [ "pill", tone, class_name ].compact.join(" ")
+        options = { class: classes }
+        options[:title] = title if title.present?
+
+        content_tag(:span, label, options)
+      end
+
+      def dashboard_status_pill(status, error: nil)
+        dashboard_pill(
+          dashboard_status_label(status),
+          dashboard_tone_for(status),
+          title: error.present? ? dashboard_error_summary(error) : nil
+        )
+      end
+
+      def dashboard_health_pill(health)
+        dashboard_pill(
+          dashboard_health_label(health),
+          dashboard_tone_for(health[:status]),
+          title: health[:detail].present? ? dashboard_error_summary(health[:detail]) : nil
+        )
+      end
+
+      def dashboard_optional_timestamp(time, fallback:)
+        time.present? ? dashboard_timestamp(time) : fallback
+      end
+
       def dashboard_relative_time(time)
         return "Never" if time.blank?
 
-        suffix = time.future? ? "from now" : "ago"
-        "#{time_ago_in_words(time)} #{suffix}"
+        dashboard_timestamp_text(time)
       end
 
       def dashboard_timestamp(time)
         return content_tag(:span, "Never", class: "muted") if time.blank?
 
         displayed_time = dashboard_display_time(time)
+        formatted_time = dashboard_timestamp_text(displayed_time)
 
-        content_tag(
-          :time,
-          datetime: displayed_time.iso8601,
-          class: "timestamp-hoverable",
-          title: displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z")
-        ) do
-          safe_join([
-            content_tag(:span, dashboard_relative_time(time), class: "timestamp-relative"),
-            content_tag(:span, displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z"), class: "timestamp-absolute")
-          ])
-        end
+        time_tag(displayed_time, formatted_time, datetime: displayed_time.iso8601, title: formatted_time)
       end
 
       def dashboard_absolute_timestamp(time)
         return content_tag(:span, "Never", class: "muted") if time.blank?
 
         displayed_time = dashboard_display_time(time)
-        formatted_time = displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z")
+        formatted_time = dashboard_timestamp_text(displayed_time)
 
-        time_tag(
-          displayed_time,
-          formatted_time,
-          datetime: displayed_time.iso8601,
-          title: dashboard_relative_time(time)
-        )
+        time_tag(displayed_time, formatted_time, datetime: displayed_time.iso8601, title: formatted_time)
       end
 
       def dashboard_log_time(time)
@@ -142,7 +155,31 @@ module R3x
       end
 
       def dashboard_trigger_details(trigger_entry)
-        trigger_entry[:cron].presence || trigger_entry[:unique_key]
+        visible_details = if trigger_entry[:cron].present?
+          dashboard_schedule_trigger_label(trigger_entry[:cron])
+        else
+          dashboard_trigger_key_label(trigger_entry[:unique_key])
+        end
+        return visible_details if trigger_entry[:unique_key].blank?
+
+        content_tag(:span, visible_details, title: trigger_entry[:unique_key])
+      end
+
+      def dashboard_trigger_key_label(trigger_key)
+        return "manual/default" if trigger_key.blank?
+
+        _type, details = trigger_key.to_s.split(":", 2)
+        details.presence || trigger_key
+      end
+
+      def dashboard_run_trigger_label(run)
+        return "manual/default" if run[:trigger_key].blank?
+
+        if run[:trigger_schedule].present?
+          dashboard_schedule_trigger_label(run[:trigger_schedule])
+        else
+          dashboard_trigger_key_label(run[:trigger_key])
+        end
       end
 
       def dashboard_workflow_link(run)
@@ -263,6 +300,14 @@ module R3x
       private
         def dashboard_display_time(time)
           time.in_time_zone(dashboard_time_zone_name)
+        end
+
+        def dashboard_timestamp_text(time)
+          dashboard_display_time(time).strftime("%d.%m.%Y %H:%M:%S %Z")
+        end
+
+        def dashboard_schedule_trigger_label(schedule)
+          %(schedule:"#{schedule}")
         end
 
         def dashboard_time_zone_name
