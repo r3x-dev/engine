@@ -257,6 +257,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Failed"
+    assert_includes response.body, 'title="boom"'
     assert_includes response.body, "/workflow-runs/#{failed_job.id}"
   end
 
@@ -402,7 +403,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "stack line 1"
     assert_includes response.body, "Overview"
     assert_includes response.body, 'class="panel stack panel-spaced"'
-    assert_match(/<dt>Finished<\/dt>\s*<dd><time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
+    assert_match(/<dt>Finished<\/dt>\s*<dd><time[^>]*>\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}/, response.body)
   end
 
   test "workflow run detail preserves full long single-line errors" do
@@ -439,9 +440,9 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Duration"
     assert_match(/<span class="label">Duration<\/span>\s*<strong>\d{2}:\d{2}:\d{2}<\/strong>/, response.body)
     refute_includes response.body, "<span class=\"label\">Result</span>"
-    assert_match(/<dt>Enqueued<\/dt>\s*<dd><time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
+    assert_match(/<dt>Enqueued<\/dt>\s*<dd><time[^>]*>\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}/, response.body)
     refute_match(/<dt>Enqueued<\/dt>\s*<dd><time[^>]*>about /, response.body)
-    assert_match(/<dt>Finished<\/dt>\s*<dd><time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
+    assert_match(/<dt>Finished<\/dt>\s*<dd><time[^>]*>\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}/, response.body)
     refute_includes response.body, "Recorded"
   end
 
@@ -473,7 +474,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     refute_match(/<span class="label">Scheduled<\/span>/, response.body)
-    assert_match(/<dt>Scheduled<\/dt>\s*<dd><time[^>]*>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, response.body)
+    assert_match(/<dt>Scheduled<\/dt>\s*<dd><time[^>]*>\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}/, response.body)
   end
 
   test "workflow run detail does not show rerun action" do

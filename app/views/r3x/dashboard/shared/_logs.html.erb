@@ -38,7 +38,7 @@
         <% level_tone = dashboard_log_level_tone(entry[:level]) %>
         <div class="log-entry log-entry-<%= entry[:level] %>">
           <span class="log-time"><%= dashboard_log_time(entry[:time]) %></span>
-          <span class="pill <%= level_tone %> log-level"><%= dashboard_log_level_label(entry[:level]) %></span>
+          <%= dashboard_pill(dashboard_log_level_label(entry[:level]), level_tone, class_name: "log-level") %>
           <span class="log-message"><%= entry[:message] %></span>
         </div>
       <% end %>
