@@ -55,7 +55,7 @@ module R3x
 
           stub_request(:post, "https://vault.test/v1/auth/kubernetes/login")
             .with(
-              body: ->(body) { MultiJson.load(body) == { "role" => "r3x", "jwt" => "k8s-service-account-jwt" } }
+              body: ->(body) { MultiJSON.parse(body) == { "role" => "r3x", "jwt" => "k8s-service-account-jwt" } }
             )
             .to_return(
               status: 200,

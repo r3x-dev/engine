@@ -18,7 +18,7 @@ module R3x
 
             raise_login_error(response) unless response.status >= 200 && response.status < 300
 
-            body = MultiJson.load(response.body.to_s)
+            body = MultiJSON.parse(response.body.to_s)
             auth = body.is_a?(Hash) && body["auth"]
             raise "Vault response missing kubernetes auth data" unless auth.is_a?(Hash)
 
@@ -69,7 +69,7 @@ module R3x
               namespace: namespace,
               service_account_name: service_account_name
             }
-          rescue ArgumentError, MultiJson::ParseError
+          rescue ArgumentError, MultiJSON::ParseError
             nil
           end
 
@@ -77,7 +77,7 @@ module R3x
             _header, payload, _signature = service_account_token.split(".", 3)
             raise ArgumentError, "JWT payload missing" if payload.blank?
 
-            MultiJson.load(Base64.urlsafe_decode64(pad_base64(payload)))
+            MultiJSON.parse(Base64.urlsafe_decode64(pad_base64(payload)))
           end
 
           def pad_base64(value)
@@ -85,9 +85,9 @@ module R3x
           end
 
           def request_errors(response)
-            body = MultiJson.load(response.body.to_s)
+            body = MultiJSON.parse(response.body.to_s)
             body.is_a?(Hash) ? body["errors"] : body
-          rescue MultiJson::ParseError
+          rescue MultiJSON::ParseError
             response.body.to_s
           end
         end

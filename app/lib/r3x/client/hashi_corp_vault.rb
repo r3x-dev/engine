@@ -38,7 +38,7 @@ module R3x
         end
 
         secrets.transform_keys(&:to_s)
-      rescue MultiJson::ParseError => e
+      rescue MultiJSON::ParseError => e
         raise "Vault response missing KV v2 data at data.data (#{e.message})"
       end
 
@@ -142,13 +142,13 @@ module R3x
       end
 
       def parse_json_response(response)
-        MultiJson.load(response.body.to_s)
+        MultiJSON.parse(response.body.to_s)
       end
 
       def request_errors(response)
         body = parse_json_response(response)
         body.is_a?(Hash) ? body["errors"] : body
-      rescue MultiJson::ParseError
+      rescue MultiJSON::ParseError
         response.body.to_s
       end
 

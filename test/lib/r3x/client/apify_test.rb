@@ -12,7 +12,7 @@ module R3x
           .with(query: { "memory" => "1024", "timeout" => "30" })
           .to_return(
             status: 200,
-            body: MultiJson.dump("data" => { "id" => "run-123" }),
+            body: MultiJSON.generate("data" => { "id" => "run-123" }),
             headers: { "Content-Type" => "application/json" }
           )
 
@@ -32,7 +32,7 @@ module R3x
           query: { "memory" => "1024", "timeout" => "30" },
           headers: { "Authorization" => "Bearer test-api-key" }
         ) do |request|
-          assert_equal({ "startUrls" => [ { "url" => "https://example.com" } ] }, MultiJson.load(request.body))
+          assert_equal({ "startUrls" => [ { "url" => "https://example.com" } ] }, MultiJSON.parse(request.body))
         end
       end
 
@@ -41,7 +41,7 @@ module R3x
           .with(query: { "format" => "json", "clean" => "false", "limit" => "5", "fields" => "title" })
           .to_return(
             status: 200,
-            body: MultiJson.dump([ { "title" => "Hello" } ]),
+            body: MultiJSON.generate([ { "title" => "Hello" } ]),
             headers: { "Content-Type" => "application/json" }
           )
 
@@ -61,7 +61,7 @@ module R3x
           query: { "format" => "json", "clean" => "false", "limit" => "5", "fields" => "title" },
           headers: { "Authorization" => "Bearer test-api-key" }
         ) do |request|
-          assert_equal({ "query" => "ruby" }, MultiJson.load(request.body))
+          assert_equal({ "query" => "ruby" }, MultiJSON.parse(request.body))
         end
       end
 

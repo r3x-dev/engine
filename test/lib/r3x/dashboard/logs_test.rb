@@ -49,7 +49,7 @@ module R3x
         client = FakeLogsClient.new(entries: [
           {
             "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => MultiJson.dump("level" => "info", "message" => "hello")
+            "_msg" => MultiJSON.generate("level" => "info", "message" => "hello")
           }
         ])
 
@@ -74,10 +74,10 @@ module R3x
             "_time" => "2026-04-15T12:00:01Z",
             "_msg" => "Workflow run completed",
             "level" => "info",
-            "tags" => MultiJson.dump([ "ActiveJob", "r3x.run_active_job_id=aj-123", "r3x.trigger_key=schedule:123" ]),
+            "tags" => MultiJSON.generate([ "ActiveJob", "r3x.run_active_job_id=aj-123", "r3x.trigger_key=schedule:123" ]),
             "error_class" => nil,
             "error_message" => nil,
-            "backtrace" => MultiJson.dump([]),
+            "backtrace" => MultiJSON.generate([]),
             "kubernetes.container_name" => "app",
             "kubernetes.pod_name" => "r3x-jobs-123"
           }
@@ -133,7 +133,7 @@ module R3x
         client = FakeLogsClient.new(entries: [
           {
             "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => MultiJson.dump(
+            "_msg" => MultiJSON.generate(
               "level" => "info",
               "message" => "[r3x.run_active_job_id=aj-123] [r3x.workflow_key=test_workflow] [r3x.trigger_key=schedule:123] [Workflows::TestWorkflow] Running workflow trigger_type=schedule"
             ),
@@ -163,7 +163,7 @@ module R3x
         client = FakeLogsClient.new(entries: [
           {
             "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => MultiJson.dump(
+            "_msg" => MultiJSON.generate(
               "level" => "info",
               "message" => "[DRY-RUN]: Email send skipped"
             )
@@ -184,10 +184,10 @@ module R3x
 
       test "run logs read explicit level from structured payload" do
         client = FakeLogsClient.new(entries: [
-          { "_time" => "2026-04-15T12:00:01Z", "_msg" => MultiJson.dump("level" => "error", "message" => "Camera alert: driveway offline") },
-          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJson.dump("level" => "warn", "message" => "Retry scheduled after timeout") },
-          { "_time" => "2026-04-15T12:00:03Z", "_msg" => MultiJson.dump("level" => "info", "message" => "Workflow run completed") },
-          { "_time" => "2026-04-15T12:00:04Z", "_msg" => MultiJson.dump("level" => "debug", "message" => "Still working") }
+          { "_time" => "2026-04-15T12:00:01Z", "_msg" => MultiJSON.generate("level" => "error", "message" => "Camera alert: driveway offline") },
+          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJSON.generate("level" => "warn", "message" => "Retry scheduled after timeout") },
+          { "_time" => "2026-04-15T12:00:03Z", "_msg" => MultiJSON.generate("level" => "info", "message" => "Workflow run completed") },
+          { "_time" => "2026-04-15T12:00:04Z", "_msg" => MultiJSON.generate("level" => "debug", "message" => "Still working") }
         ])
 
         run = {
@@ -204,7 +204,7 @@ module R3x
       test "run logs preserve plaintext entries during json rollout" do
         client = FakeLogsClient.new(entries: [
           { "_time" => "2026-04-15T12:00:01Z", "_msg" => "not json at all" },
-          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJson.dump("level" => "info", "message" => "valid line") }
+          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJSON.generate("level" => "info", "message" => "valid line") }
         ])
 
         run = {
@@ -224,10 +224,10 @@ module R3x
       end
 
       test "run logs preserve json messages that are not log envelopes" do
-        raw_message = MultiJson.dump("event" => "email_sent", "count" => 2)
+        raw_message = MultiJSON.generate("event" => "email_sent", "count" => 2)
         client = FakeLogsClient.new(entries: [
           { "_time" => "2026-04-15T12:00:01Z", "_msg" => raw_message },
-          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJson.dump("level" => "info", "message" => "valid line") }
+          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJSON.generate("level" => "info", "message" => "valid line") }
         ])
 
         run = {
@@ -248,8 +248,8 @@ module R3x
 
       test "run logs skip entries with invalid level" do
         client = FakeLogsClient.new(entries: [
-          { "_time" => "2026-04-15T12:00:01Z", "_msg" => MultiJson.dump("level" => "trace", "message" => "bad level") },
-          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJson.dump("level" => "info", "message" => "valid line") }
+          { "_time" => "2026-04-15T12:00:01Z", "_msg" => MultiJSON.generate("level" => "trace", "message" => "bad level") },
+          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJSON.generate("level" => "info", "message" => "valid line") }
         ])
 
         run = {
@@ -270,7 +270,7 @@ module R3x
         client = FakeLogsClient.new(entries: [
           {
             "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => MultiJson.dump(
+            "_msg" => MultiJSON.generate(
               "level" => "error",
               "message" => "Workflow run failed",
               "error_class" => "NameError",

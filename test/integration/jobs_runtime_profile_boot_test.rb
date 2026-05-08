@@ -10,7 +10,7 @@ class JobsRuntimeProfileBootTest < ActiveSupport::TestCase
 
       R3x::Workflow::Boot.load!
 
-      puts MultiJson.dump(
+      puts MultiJSON.generate(
         runtime_profile: R3x::RuntimeProfile.current,
         workflow_base: defined?(R3x::Workflow::Base),
         workflow_entrypoint: defined?(R3x::Workflow::Entrypoint),
@@ -24,7 +24,7 @@ class JobsRuntimeProfileBootTest < ActiveSupport::TestCase
     RUBY
 
     output = run_command(script)
-    payload = MultiJson.load(output.lines.last)
+    payload = MultiJSON.parse(output.lines.last)
 
     assert_equal "jobs", payload.fetch("runtime_profile")
     assert_equal "constant", payload.fetch("workflow_base")

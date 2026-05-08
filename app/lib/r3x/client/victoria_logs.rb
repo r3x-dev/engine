@@ -48,7 +48,7 @@ module R3x
           stripped = line.strip
           next if stripped.blank?
 
-          MultiJson.load(stripped)
+          MultiJSON.parse(stripped)
         end
       end
     end

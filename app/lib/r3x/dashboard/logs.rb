@@ -121,7 +121,7 @@ module R3x
         return payload if payload.present?
 
         raw_message = entry["_msg"]
-        parsed = MultiJson.load(raw_message.to_s)
+        parsed = MultiJSON.parse(raw_message.to_s)
 
         unless parsed.is_a?(Hash)
           raise ArgumentError, "Expected log payload to decode to a hash, got #{parsed.class}"
@@ -147,7 +147,7 @@ module R3x
           message: message,
           tags: tags
         }
-      rescue MultiJson::ParseError
+      rescue MultiJSON::ParseError
         message, tags = extract_message_and_tags(raw_message, context: context)
 
         {
@@ -174,7 +174,7 @@ module R3x
           message: message,
           tags: tags
         }
-      rescue ArgumentError, MultiJson::ParseError
+      rescue ArgumentError, MultiJSON::ParseError
         nil
       end
 
@@ -220,12 +220,12 @@ module R3x
         when Array
           value.compact_blank
         when String
-          parsed = MultiJson.load(value)
+          parsed = MultiJSON.parse(value)
           parsed.is_a?(Array) ? parsed.compact_blank : [ value ]
         else
           Array(value).compact_blank
         end
-      rescue MultiJson::ParseError
+      rescue MultiJSON::ParseError
         [ value ]
       end
 

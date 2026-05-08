@@ -7,7 +7,7 @@ module R3x
     class JsonFormatter < ::Logger::Formatter
       def call(severity, time, progname, msg)
         payload = payload_for(severity, time, progname, msg)
-        MultiJson.dump(payload) << "\n"
+        MultiJSON.generate(payload) << "\n"
       end
 
       private
