@@ -15,12 +15,12 @@ module Seeds
     end
 
     def print_summary(runs)
-      puts "Seeded dashboard demo data for local UI review:" # rubocop:disable Rails/Output
-      puts "  /" # rubocop:disable Rails/Output
-      puts "  /workflow-runs" # rubocop:disable Rails/Output
+      puts "Seeded dashboard demo data for local UI review:"
+      puts "  /"
+      puts "  /workflow-runs"
 
       runs.each do |run|
-        puts "  /workflow-runs/#{run.fetch(:job_id)}  #{run.fetch(:status)}  #{run.fetch(:workflow_key).titleize}" # rubocop:disable Rails/Output
+        puts "  /workflow-runs/#{run.fetch(:job_id)}  #{run.fetch(:status)}  #{run.fetch(:workflow_key).titleize}"
       end
     end
 
