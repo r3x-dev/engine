@@ -38,7 +38,7 @@ module R3x
         stub_request(:post, "https://vault.test/v1/sys/capabilities-self")
           .with(
             headers: { "X-Vault-Token" => "test-token" },
-            body: ->(body) { MultiJson.load(body) == { "paths" => [ "secret/data/env/r3x" ] } }
+            body: ->(body) { MultiJSON.parse(body) == { "paths" => [ "secret/data/env/r3x" ] } }
           )
           .to_return(
             status: 200,

@@ -24,7 +24,7 @@ module R3x
 
       def unique_key
         # Generate unique key from type + sorted options hash
-        key_json = MultiJson.dump(options.sort.to_h)
+        key_json = MultiJSON.generate(options.sort.to_h)
         "#{type}:#{Digest::SHA256.hexdigest(key_json)[0..15]}"
       end
     end

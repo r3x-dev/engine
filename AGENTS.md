@@ -170,7 +170,7 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 
 ## JSON
 
-- Prefer `MultiJson` for JSON parsing and serialization work.
+- Prefer `MultiJSON` for JSON parsing and serialization work.
 - Reasoning: it gives the app one consistent JSON abstraction instead of scattering direct `JSON` stdlib usage across the codebase, which makes adapter swaps and shared conventions easier later.
 
 ## HTTP
@@ -180,8 +180,8 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - `Faraday` remains in `Gemfile.lock` as a transitive dependency of `googleauth`, `ruby_llm`, and `google-apis-*`. Do not add new direct Faraday dependencies or use Faraday in internal clients.
 - For small integration clients under `R3x::Client`, build the `httpx` client inside the class instead of injecting a `connection` dependency.
 - Reasoning: these clients are thin integration boundaries, so passing a raw HTTP client through the initializer adds indirection without improving the public interface we actually want to use.
-- **JSON handling**: When making HTTP requests that send/receive JSON, use `httpx`'s native `json:` option instead of manually serializing with `MultiJson`. This automatically sets the `Content-Type` header and handles serialization.
-  - **Bad**: `request.body = MultiJson.dump({"key" => "value"})`
+- **JSON handling**: When making HTTP requests that send/receive JSON, use `httpx`'s native `json:` option instead of manually serializing with `MultiJSON`. This automatically sets the `Content-Type` header and handles serialization.
+  - **Bad**: `request.body = MultiJSON.generate({"key" => "value"})`
   - **Good**: `client.post(url, json: { key: "value" })`
 - **Error handling**: `httpx` does not raise on 4xx/5xx by default. Call `.raise_for_status` on the response when the client should fail fast on HTTP errors, matching the previous `Faraday::Error` behavior.
   - **Bad**: `response = client.get(url)` (silently ignores 404/500)

@@ -267,28 +267,28 @@ module R3x
       def dashboard_workflow_sort_aria(sort_key, active_sort:, active_direction:)
         return "none" unless active_sort == sort_key.to_s
 
-        active_direction == "desc" ? "descending" : "ascending"
+        (active_direction == "desc") ? "descending" : "ascending"
       end
 
       def dashboard_workflow_sort_link(label, sort_key, active_sort:, active_direction:)
         sort_key = sort_key.to_s
         next_direction = if active_sort == sort_key
-          active_direction == "desc" ? "asc" : "desc"
+          (active_direction == "desc") ? "asc" : "desc"
         else
           Workflow::Summaries.default_direction_for(sort_key)
         end
 
         active = active_sort == sort_key
 
-        link_to workflows_path(sort: sort_key, direction: next_direction, anchor: "workflows-catalog"), class: "sort-link#{' active' if active}" do
+        link_to workflows_path(sort: sort_key, direction: next_direction, anchor: "workflows-catalog"), class: "sort-link#{" active" if active}" do
           safe_join(
             [
               content_tag(:span, label, class: "sort-label"),
               content_tag(:span, class: "sort-carets", "aria-hidden": "true") do
                 safe_join(
                   [
-                    content_tag(:span, "", class: "sort-caret sort-caret-up#{' active' if active && active_direction == 'asc'}"),
-                    content_tag(:span, "", class: "sort-caret sort-caret-down#{' active' if active && active_direction == 'desc'}")
+                    content_tag(:span, "", class: "sort-caret sort-caret-up#{" active" if active && active_direction == "asc"}"),
+                    content_tag(:span, "", class: "sort-caret sort-caret-down#{" active" if active && active_direction == "desc"}")
                   ]
                 )
               end
@@ -298,88 +298,89 @@ module R3x
       end
 
       private
-        def dashboard_display_time(time)
-          time.in_time_zone(dashboard_time_zone_name)
+
+      def dashboard_display_time(time)
+        time.in_time_zone(dashboard_time_zone_name)
+      end
+
+      def dashboard_timestamp_text(time)
+        dashboard_display_time(time).strftime("%d.%m.%Y %H:%M:%S %Z")
+      end
+
+      def dashboard_schedule_trigger_label(schedule)
+        %(schedule:"#{schedule}")
+      end
+
+      def dashboard_time_zone_name
+        @dashboard_time_zone_name ||= begin
+          timezone_name = R3x::Env.fetch("R3X_TIMEZONE")
+          timezone_name.present? ? R3x::Validators::Timezone.normalize(timezone_name) : Time.zone.tzinfo.identifier
         end
+      end
 
-        def dashboard_timestamp_text(time)
-          dashboard_display_time(time).strftime("%d.%m.%Y %H:%M:%S %Z")
-        end
+      def extract_error_message(text)
+        first_line = text.lines.first.to_s.strip
+        return Regexp.last_match(1) if first_line =~ /"message"\s*=>\s*"([^"]+)"/
+        return Regexp.last_match(1) if first_line =~ /"message"\s*:\s*"([^"]+)"/
 
-        def dashboard_schedule_trigger_label(schedule)
-          %(schedule:"#{schedule}")
-        end
+        first_line
+      end
 
-        def dashboard_time_zone_name
-          @dashboard_time_zone_name ||= begin
-            timezone_name = R3x::Env.fetch("R3X_TIMEZONE")
-            timezone_name.present? ? R3x::Validators::Timezone.normalize(timezone_name) : Time.zone.tzinfo.identifier
-          end
-        end
+      def parse_dashboard_error_text(text)
+        return if text.blank?
 
-        def extract_error_message(text)
-          first_line = text.lines.first.to_s.strip
-          return Regexp.last_match(1) if first_line.match(/"message"\s*=>\s*"([^"]+)"/)
-          return Regexp.last_match(1) if first_line.match(/"message"\s*:\s*"([^"]+)"/)
+        parse_json_error_text(text) || parse_ruby_hash_error_text(text)
+      end
 
-          first_line
-        end
+      def parse_json_error_text(text)
+        return unless text.lstrip.start_with?("{", "[")
 
-        def parse_dashboard_error_text(text)
-          return if text.blank?
+        parsed = MultiJSON.parse(text)
+        parsed.is_a?(Hash) ? parsed.stringify_keys : nil
+      rescue MultiJSON::ParseError
+        nil
+      end
 
-          parse_json_error_text(text) || parse_ruby_hash_error_text(text)
-        end
+      def parse_ruby_hash_error_text(text)
+        return unless text.include?("=>")
 
-        def parse_json_error_text(text)
-          return unless text.lstrip.start_with?("{", "[")
+        exception_class = extract_ruby_hash_error_value(text, "exception_class")
+        message = extract_ruby_hash_error_value(text, "message")
+        backtrace = extract_ruby_hash_error_array(text, "backtrace")
 
-          parsed = MultiJson.load(text)
-          parsed.is_a?(Hash) ? parsed.stringify_keys : nil
-        rescue MultiJson::ParseError
-          nil
-        end
+        {
+          "exception_class" => exception_class,
+          "message" => message,
+          "backtrace" => backtrace
+        }.compact_blank
+      end
 
-        def parse_ruby_hash_error_text(text)
-          return unless text.include?("=>")
+      def extract_ruby_hash_error_value(text, key)
+        match = text.match(
+          /"#{Regexp.escape(key)}"\s*(?:=>|:)\s*"(?<value>.*?)"\s*(?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)/m
+        )
+        return unless match
 
-          exception_class = extract_ruby_hash_error_value(text, "exception_class")
-          message = extract_ruby_hash_error_value(text, "message")
-          backtrace = extract_ruby_hash_error_array(text, "backtrace")
+        unescape_dashboard_error_string(match[:value])
+      end
 
-          {
-            "exception_class" => exception_class,
-            "message" => message,
-            "backtrace" => backtrace
-          }.compact_blank
-        end
+      def extract_ruby_hash_error_array(text, key)
+        match = text.match(
+          /"#{Regexp.escape(key)}"\s*(?:=>|:)\s*\[(?<value>.*?)\]\s*(?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)/m
+        )
+        return [] unless match
 
-        def extract_ruby_hash_error_value(text, key)
-          match = text.match(
-            /"#{Regexp.escape(key)}"\s*(?:=>|:)\s*"(?<value>.*?)"\s*(?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)/m
-          )
-          return unless match
+        match[:value]
+          .scan(/"((?:[^"\\]|\\.)*)"/)
+          .flatten
+          .map { |value| unescape_dashboard_error_string(value) }
+      end
 
-          unescape_dashboard_error_string(match[:value])
-        end
-
-        def extract_ruby_hash_error_array(text, key)
-          match = text.match(
-            /"#{Regexp.escape(key)}"\s*(?:=>|:)\s*\[(?<value>.*?)\]\s*(?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)/m
-          )
-          return [] unless match
-
-          match[:value]
-            .scan(/"((?:[^"\\]|\\.)*)"/)
-            .flatten
-            .map { |value| unescape_dashboard_error_string(value) }
-        end
-
-        def unescape_dashboard_error_string(value)
-          MultiJson.load(%("#{value}"))
-        rescue MultiJson::ParseError
-          value.to_s.gsub('\"', '"').gsub("\\\\", "\\")
-        end
+      def unescape_dashboard_error_string(value)
+        MultiJSON.parse(%("#{value}"))
+      rescue MultiJSON::ParseError
+        value.to_s.gsub('\"', '"').gsub("\\\\", "\\")
+      end
     end
   end
 end

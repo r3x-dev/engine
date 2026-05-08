@@ -14,7 +14,7 @@ module R3x
         logger.warn("tagged warn")
       end
 
-      payload = MultiJson.load(io.string)
+      payload = MultiJSON.parse(io.string)
 
       assert_equal "warn", payload.fetch("level")
       assert_equal "tagged warn", payload.fetch("message")
@@ -30,7 +30,7 @@ module R3x
 
       logger.info("plain message")
 
-      payload = MultiJson.load(io.string)
+      payload = MultiJSON.parse(io.string)
 
       assert_equal "info", payload.fetch("level")
       assert_equal "plain message", payload.fetch("message")
@@ -45,7 +45,7 @@ module R3x
 
       logger.info("[DRY-RUN]: email not sent")
 
-      payload = MultiJson.load(io.string)
+      payload = MultiJSON.parse(io.string)
 
       assert_equal "[DRY-RUN]: email not sent", payload.fetch("message")
       refute payload.key?("tags")
@@ -64,7 +64,7 @@ module R3x
         backtrace: [ "app/lib/a.rb:1", "app/lib/b.rb:2" ]
       )
 
-      payload = MultiJson.load(io.string)
+      payload = MultiJSON.parse(io.string)
 
       assert_equal "error", payload.fetch("level")
       assert_equal "Workflow run failed", payload.fetch("message")
