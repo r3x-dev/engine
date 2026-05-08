@@ -6,16 +6,15 @@ module R3x
       class TranslateTest < ActiveSupport::TestCase
         test "translate posts to the translation api and returns cleaned text" do
           delivered = nil
-          captured = {}
           authorization = FakeAuthorization.new(access_token: "access-token")
 
           stub_request(:post, "https://translation.googleapis.com/language/translate/v2")
             .with(headers: { "Authorization" => "Bearer access-token" }) do |req|
-              delivered = MultiJson.load(req.body)
+              delivered = MultiJSON.parse(req.body)
             end
             .to_return(
               status: 200,
-              body: MultiJson.dump(
+              body: MultiJSON.generate(
                 "data" => {
                   "translations" => [
                     { "translatedText" => "<p>Hello <strong>world</strong></p>" }

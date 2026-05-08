@@ -9,7 +9,7 @@ module R3x
 
         stub_request(:post, webhook_url)
           .with do |req|
-            delivered = MultiJson.load(req.body)
+            delivered = MultiJSON.parse(req.body)
           end
           .to_return(status: 204)
 
@@ -50,7 +50,7 @@ module R3x
 
         stub_request(:post, webhook_url)
           .with do |req|
-            delivered = MultiJson.load(req.body)
+            delivered = MultiJSON.parse(req.body)
           end
           .to_return(status: 204)
 
