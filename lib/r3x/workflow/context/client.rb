@@ -48,6 +48,12 @@ module R3x
         def discord(webhook_url_env:)
           R3x::Client::Discord.new(webhook_url_env: webhook_url_env)
         end
+
+        def markdownify(url:, method: "auto", retain_images: false)
+          R3x::Client::Markdownify.new(
+            url: url, method: method, retain_images: retain_images
+          ).convert["markdown"]
+        end
       end
     end
   end
