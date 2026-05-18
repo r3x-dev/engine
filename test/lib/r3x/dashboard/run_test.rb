@@ -189,6 +189,60 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       assert_includes output, "error_class=SolidQueue::Job::EnqueueError"
   end
 
+  test "latest_activity_candidates keeps the latest candidate per class and status" do
+    other_workflow_class_name = DashboardTestWorkflows.ensure_class("OtherWorkflow")
+
+    old_failed_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ "schedule:old_failed" ],
+      created_at: 20.minutes.ago,
+      updated_at: 20.minutes.ago
+    )
+    SolidQueue::FailedExecution.create!(job_id: old_failed_job.id, error: "old", created_at: 20.minutes.ago)
+
+    latest_failed_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ "schedule:latest_failed" ],
+      created_at: 10.minutes.ago,
+      updated_at: 10.minutes.ago
+    )
+    SolidQueue::FailedExecution.create!(job_id: latest_failed_job.id, error: "latest", created_at: 1.minute.ago)
+
+    finished_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ "schedule:finished" ],
+      finished_at: 2.minutes.ago,
+      created_at: 12.minutes.ago,
+      updated_at: 2.minutes.ago
+    )
+
+    other_failed_job = DashboardJobRows.create_job!(
+      job_class_name: other_workflow_class_name,
+      arguments: [ "schedule:other" ],
+      created_at: 5.minutes.ago,
+      updated_at: 5.minutes.ago
+    )
+    SolidQueue::FailedExecution.create!(job_id: other_failed_job.id, error: "other", created_at: 3.minutes.ago)
+
+    unrelated_job = DashboardJobRows.create_job!(
+      job_class_name: "CleanupJob",
+      arguments: [ "tmp/cache" ],
+      created_at: 30.seconds.ago,
+      updated_at: 30.seconds.ago
+    )
+    SolidQueue::FailedExecution.create!(job_id: unrelated_job.id, error: "cleanup", created_at: 30.seconds.ago)
+
+    candidate_ids = Dashboard::Run
+      .latest_activity_candidates(class_names: [ WORKFLOW_JOB_CLASS_NAME, other_workflow_class_name ])
+      .map(&:id)
+
+    assert_includes candidate_ids, latest_failed_job.id
+    assert_includes candidate_ids, finished_job.id
+    assert_includes candidate_ids, other_failed_job.id
+    refute_includes candidate_ids, old_failed_job.id
+    refute_includes candidate_ids, unrelated_job.id
+  end
+
   private
     def claim_job!(job, claimed_at:)
       process = SolidQueue::Process.create!(

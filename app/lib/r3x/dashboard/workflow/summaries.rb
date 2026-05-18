@@ -157,21 +157,20 @@ module R3x
           def trigger_entries_for(workflow_key:, trigger_states:, recurring_tasks:)
             trigger_keys = recurring_tasks.map(&:trigger_key)
             trigger_keys |= trigger_states.map(&:trigger_key)
+            recurring_tasks_by_trigger_key = recurring_tasks.index_by(&:trigger_key)
+            trigger_states_by_trigger_key = trigger_states.index_by(&:trigger_key)
 
             trigger_keys.sort.map do |trigger_key|
               build_trigger_entry(
                 workflow_key: workflow_key,
                 trigger_key: trigger_key,
-                trigger_states: trigger_states,
-                recurring_tasks: recurring_tasks
+                recurring_task: recurring_tasks_by_trigger_key[trigger_key],
+                trigger_state: trigger_states_by_trigger_key[trigger_key]
               )
             end
           end
 
-          def build_trigger_entry(workflow_key:, trigger_key:, trigger_states:, recurring_tasks:)
-            recurring_task = recurring_tasks.find { |task| task.trigger_key == trigger_key }
-            trigger_state = trigger_states.find { |state| state.trigger_key == trigger_key }
-
+          def build_trigger_entry(workflow_key:, trigger_key:, recurring_task:, trigger_state:)
             {
               change_detecting: change_detecting_trigger?(recurring_task, trigger_state),
               cron: recurring_task&.schedule,
@@ -285,8 +284,30 @@ module R3x
           end
 
           def latest_run_for(workflow_key)
-            run = Workflow::Runs.new(workflow_key: workflow_key, limit: 1).all.first
-            ::Dashboard::Run.with_execution_associations.find_by(id: run[:job_id]) if run.present?
+            latest_runs_by_workflow_key[workflow_key.to_s]
+          end
+
+          def latest_runs_by_workflow_key
+            @latest_runs_by_workflow_key ||= latest_visible_runs.each_with_object({}) do |run, latest_runs|
+              workflow_key = catalog.class_names_to_keys[run.class_name]
+              next if workflow_key.blank?
+
+              latest_run = latest_runs[workflow_key]
+              latest_runs[workflow_key] = run if latest_run.blank? || compare_latest_runs(run, latest_run).positive?
+            end
+          end
+
+          def latest_visible_runs
+            ::Dashboard::Run.latest_activity_candidates(class_names: catalog.class_names_to_keys.keys)
+          end
+
+          def compare_latest_runs(left, right)
+            left_time = left.recorded_at || left.created_at || Time.at(0)
+            right_time = right.recorded_at || right.created_at || Time.at(0)
+            comparison = left_time <=> right_time
+            return comparison unless comparison.zero?
+
+            left.id <=> right.id
           end
       end
     end

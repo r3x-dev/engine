@@ -104,6 +104,28 @@ module R3x
         assert_equal({ WORKFLOW_JOB_CLASS_NAME => "test_workflow" }, catalog.class_names_to_keys)
       end
 
+      test "keeps multiple class names for one workflow key in direct lookup" do
+        legacy_class_name = DashboardTestWorkflows.ensure_class("LegacyTestWorkflow")
+
+        SolidQueue::RecurringTask.create!(
+          key: "workflow:test_workflow:schedule:legacy",
+          schedule: "0 * * * *",
+          class_name: legacy_class_name,
+          arguments: [ "schedule:legacy" ],
+          queue_name: "default",
+          static: false
+        )
+        DashboardJobRows.create_job!(
+          job_class_name: "Workflows::TestWorkflow",
+          arguments: [],
+          finished_at: 1.minute.ago,
+          created_at: 2.minutes.ago,
+          updated_at: 1.minute.ago
+        )
+
+        assert_equal [ legacy_class_name, "Workflows::TestWorkflow" ], Workflow::Catalog.new.class_names_for("test_workflow")
+      end
+
       test "ignores unrelated observed jobs without trigger_payload signature" do
         SolidQueue::RecurringTask.create!(
           key: "workflow:test_workflow:schedule:123",

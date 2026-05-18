@@ -32,9 +32,7 @@ module R3x
         end
 
         def class_names_for(workflow_key)
-          class_names_to_keys
-            .select { |_class_name, key| key == workflow_key.to_s }
-            .keys
+          class_names_by_workflow_key.fetch(workflow_key.to_s, [])
         end
 
         def class_names_to_keys
@@ -94,6 +92,12 @@ module R3x
               next if class_name.blank?
 
               mapping[class_name] ||= task.workflow_key
+            end
+          end
+
+          def class_names_by_workflow_key
+            @class_names_by_workflow_key ||= class_names_to_keys.each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |(class_name, workflow_key), mapping|
+              mapping[workflow_key] << class_name
             end
           end
 
