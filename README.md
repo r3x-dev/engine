@@ -1,65 +1,263 @@
 # r3x
 
-Ruby-native workflow executor and automation engine. File-based workflow definitions with database runtime state. Built for local-first execution, self-hosting, and Git-native version control.
+Ruby-native workflow engine for people who want automations to live as plain code. 🚀
 
-Rails API backend with SQLite, Active Record, and Active Job. Supports staged DAG execution, pack-based extensibility, and multiple executor backends.
-Also includes a small server-rendered workflow dashboard at `/` and Mission Control Jobs at `/ops/jobs`.
+`r3x` lets you write workflow packs as ordinary Ruby files, run them locally, schedule them with
+Solid Queue, inspect them in a small dashboard, and keep the whole automation system versioned in
+Git.
 
-## Development Setup
+It is a good fit when you want:
 
-After cloning the repository, run:
+- 🧩 file-based workflows instead of click-built automations
+- 🐙 Git-friendly review, history, and rollback
+- 🧠 LLM, Gmail, Google Sheets, Discord, HTTP, OCR, and other integration clients from Ruby
+- 🔁 resumable `ActiveJob::Continuable` steps for long-running work
+- 🧱 database-backed runtime state through Rails, Active Record, Solid Queue, and Solid Cache
+- 🤖 agent-friendly docs so Codex-style agents can help write and maintain workflows
 
-```bash
-just setup
+## Project Principles
+
+`r3x` sits near tools like n8n, Huginn, and Argo Workflows, but takes a deliberately Ruby/Rails,
+code-first route.
+
+- 🧑‍💻 **Code-first, not UI-trapped** - workflow behavior lives in Ruby files that can be reviewed,
+  tested, refactored, and replayed locally.
+- 🏠 **Local-first feedback loop** - run workflows with `bin/workflow`, use `--dry-run` for safe
+  delivery checks, and add Minitest coverage beside the workflow pack.
+- 🌿 **Git from day one** - workflow packs are just files and directories, so changes get normal
+  branches, pull requests, diffs, history, and rollback.
+- 🤖 **Agent-first maintenance** - `AGENTS.md` and `docs/workflows.md` give coding agents the same
+  project rules humans use, which makes generated workflows easier to review and keep consistent.
+- 🚂 **Rails-native runtime** - Active Job, Solid Queue, Active Record, Rails cache, Minitest, and a
+  small server-rendered dashboard do the heavy lifting instead of a separate orchestration stack.
+- 🪶 **Small, repeatable pieces** - workflow packs stay easy to copy, test, disable, schedule, and
+  operate without building a large framework around each automation.
+- 📈 **Scale when needed** - run everything together for small deployments, or split web, worker,
+  and scheduler processes when queues or scheduling need separate resources.
+- 🔐 **Production-like local secrets** - optional Vault bootstrap lets local runs hydrate the same
+  secret names and values used by production, while dry-run keeps side effects controlled.
+
+## What It Is
+
+`r3x` is a Rails API app that acts as a workflow executor and automation runtime.
+
+Framework code lives in the app and `lib/r3x/`. Your automations live under `workflows/` as
+workflow packs. Each pack is just a directory with a `workflow.rb` entrypoint, so you can clone this
+project, point `R3X_WORKFLOW_PATHS` at your workflow catalog, and build your own automations in Ruby.
+
+Workflows subclass `R3x::Workflow::Base`, declare triggers, and implement `#run`:
+
+```ruby
+module Workflows
+  class DailyDigest < R3x::Workflow::Base
+    trigger :schedule, cron: "0 8 * * *", timezone: "Europe/Lisbon"
+
+    def run
+      rows = ctx.client.google_sheets(
+        spreadsheet_id: "spreadsheet-id",
+        project: "EXAMPLE_PROJECT"
+      ).read_rows(range: "Approved!A:Z")
+
+      step :deliver do
+        ctx.client.discord(webhook_url_env: "DISCORD_WEBHOOK_URL_EXAMPLE")
+          .deliver(content: "Found #{rows.size} rows")
+      end
+    end
+  end
+end
 ```
 
-This installs dependencies, prepares the database, configures the pre-commit hooks, and writes a local absolute Bundler path for the checkout (`$PWD/.bundle`). Keep that setting per-clone and local; do not use a shared relative `BUNDLE_PATH`, because Ruby LSP boots through its own `.ruby-lsp/Gemfile` and needs to resolve the same bundle as the app.
-
-This ensures that `bin/ci` runs automatically before each commit to catch issues early.
+For a fuller example with `step`, `with_cache`, `ctx.durable_set`, structured LLM output, and
+multiple clients, read
+[docs/workflows/example_multi_step_digest.md](docs/workflows/example_multi_step_digest.md). ✨
 
 ## Quick Start
 
 ```bash
+git clone <your-r3x-repo-url>
+cd r3x
 mise install
 just setup
 bin/rails server
 ```
 
-Then open http://localhost:3000/ to view the workflow dashboard.
+Open http://localhost:3000/ for the workflow dashboard.
+
+Useful local commands:
+
+```bash
+export R3X_WORKFLOW_PATHS="$PWD/workflows"
+bin/workflow list
+bin/workflow info <workflow_key>
+bin/workflow run workflows/<workflow_name>/workflow.rb
+bin/workflow run --dry-run workflows/<workflow_name>/workflow.rb
+bin/workflow run --skip-cache workflows/<workflow_name>/workflow.rb
+```
+
+For an included workflow in this checkout:
+
+```bash
+bin/workflow info porto_santo_news
+bin/workflow run --dry-run workflows/porto_santo_news/workflow.rb
+```
+
+`bin/workflow run --dry-run` enables the global dry-run policy for side-effecting clients. Use
+`--skip-cache` when you want a fresh local run without changing workflow code.
+
+## Build Your Workflow Catalog
+
+A workflow catalog can be as small as one directory:
+
+```text
+workflows/
+  daily_digest/
+    workflow.rb
+  invoices/
+    workflow.rb
+  monitoring/
+    workflow.rb
+```
+
+The loader discovers `workflow.rb` files from directories listed in `R3X_WORKFLOW_PATHS`.
+
+For local development, point it at this repo's `workflows/` directory:
+
+```bash
+export R3X_WORKFLOW_PATHS="$PWD/workflows"
+```
+
+You can also keep workflow packs in a separate private repo and point `R3X_WORKFLOW_PATHS` there.
+That makes it easy to use `r3x` as the engine while keeping your own automation catalog separate.
+
+Recommended workflow loop:
+
+1. Create `workflows/<name>/workflow.rb`.
+2. Read [docs/workflows.md](docs/workflows.md) for the workflow writing rules.
+3. Run it locally with `bin/workflow run --dry-run workflows/<name>/workflow.rb`.
+4. Add a pack-local test under `workflows/<name>/test/` when the behavior matters.
+5. Schedule it with `trigger :schedule` or run it manually from the dashboard.
+
+## Agent-Friendly By Design
+
+This repo includes [AGENTS.md](AGENTS.md), which is the project contract for coding agents.
+
+Agents use it to understand:
+
+- where framework code ends and user workflow packs begin
+- how workflows are loaded, scheduled, and run
+- which clients and libraries to prefer for integrations
+- how to write safe dry-run behavior for outputs
+- how `ActiveJob::Continuable`, `step`, `with_cache`, and durable sets should be used
+
+The workflow-specific knowledge lives in [docs/workflows.md](docs/workflows.md), and `AGENTS.md`
+points agents there before they edit workflow code. In practice, that means you can ask an agent to
+create or modify a workflow and it has a shared source of truth instead of guessing the local style.
+
+## Dashboard
+
+The default web surface is server-rendered and intentionally small:
+
+- `/` shows the workflow overview and recent runtime state
+- `/workflows` shows workflow health reconstructed from persisted queue data
+- `/workflow-runs` shows recent runs inside the Solid Queue retention window
+- `/ops/jobs` opens Mission Control Jobs for queue inspection and operational actions
+
+If `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL` are configured, run pages can show
+indexed logs correlated by Active Job IDs. Set `R3X_LOG_FORMAT=json` when you want structured logs
+for the dashboard log view.
+
+## Integrations
+
+Workflow code uses `ctx.client.*` helpers for integration boundaries. Existing clients include:
+
+- HTTP downloads and uploads
+- Gmail delivery
+- Google Sheets reads
+- Google Translate
+- Discord webhooks
+- Apify actor runs
+- OCR
+- LLM messages, classifiers, and image analysis
+- Prometheus queries
+- VictoriaLogs dashboard reads
+- Healthchecks.io pings
+
+New integration code should usually live under `app/lib/r3x/client/`, lazy-load heavy gems, expose a
+small workflow-facing API, and keep real side effects behind explicit dry-run-aware boundaries.
+
+## Runtime Model
+
+Workflows are real Active Job classes. That is the key design choice.
+
+- workflow classes inherit from `R3x::Workflow::Base`
+- `R3x::Workflow::Base` is an `ApplicationJob`
+- workflow jobs can use `ActiveJob::Continuable` and `step`
+- Solid Queue is the Active Job backend
+- workflow runtime state is database-backed
+- recurring triggers are persisted as Solid Queue recurring tasks
+
+In the current app configuration, Solid Queue and Solid Cache use the primary Active Record
+connection in development and production. That means queue inserts can participate in the same
+database transaction as app writes. If Solid Queue or Solid Cache is moved to a separate database,
+revisit any code that relies on that transactional behavior.
 
 ## Secrets
 
-- This repo is `ENV`-only for secrets and runtime configuration.
-- Do not use Rails encrypted credentials for app secrets in this project.
-- In production, provide `SECRET_KEY_BASE` explicitly in the environment. Generate one with `bin/rails secret`.
-- Integration secrets should also be provided via environment variables such as `GOOGLE_CLIENT_ID_*`, `GOOGLE_CLIENT_SECRET_*`, `GOOGLE_REFRESH_TOKEN_*`, `DISCORD_WEBHOOK_URL_*`, and similar `*_env` references used by the app.
-- See [docs/google_oauth.md](docs/google_oauth.md) for how to obtain and refresh Google OAuth2 tokens used by Gmail, Sheets, Calendar, and Translate integrations.
+Secrets are environment-only in this repo.
 
-- `/` shows registered workflows, trigger state, and recent visible runs.
-- `/workflow-runs` shows recent runs from the current `Solid Queue` retention window.
-- `/ops/jobs` opens Mission Control Jobs for queue inspection and operational actions.
-- If `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL` are configured, run detail pages can show indexed logs correlated by Active Job identifiers. Set `R3X_LOG_FORMAT=json` to emit structured logs (required for the dashboard log view); leave unset or set `plain` for standard Rails flat text.
+- Do not use Rails encrypted credentials or `RAILS_MASTER_KEY`.
+- Provide `SECRET_KEY_BASE` in production.
+- Pass integration secrets by environment variable references such as `api_key_env:` or `project:`.
+- For Google OAuth setup, see [docs/google_oauth.md](docs/google_oauth.md).
+- Optional Vault bootstrap is documented in
+  [docs/deployment.md#vault-secrets](docs/deployment.md#vault-secrets).
 
-## Test
+## Deployment
+
+For production, prefer split processes:
+
+- web process: dashboard and HTTP surface
+- worker process: `bin/jobs-worker`
+- scheduler process: `bin/jobs-scheduler`
+
+The generic `bin/jobs` entrypoint keeps the default Solid Queue behavior. The split worker and
+scheduler commands set the internal `jobs` runtime profile before boot, trimming web-only load from
+headless job pods while keeping the operator-facing commands stable.
+
+Read [docs/deployment.md](docs/deployment.md) for Kubernetes process layouts, Vault configuration,
+database env vars, and shutdown behavior.
+
+## Development
+
+After cloning, run:
+
+```bash
+just setup
+```
+
+That installs dependencies, prepares the database, configures pre-commit hooks, and writes a local
+absolute Bundler path for the checkout. Keep that Bundler setting local to each clone so Ruby LSP and
+the app resolve the same bundle cleanly.
+
+Run tests with:
 
 ```bash
 bin/rails test
 ```
 
-## Operational Notes
+Run the project lint/reference checks with:
 
-- See [Deployment](docs/deployment.md) for Kubernetes process layouts, Vault
-  setup and Kubernetes auth guidance.
-- If `R3X_VAULT_SECRETS_PATH` is set, Vault bootstrap is treated as intentional:
-  missing `R3X_VAULT_ADDR` skips Vault, but invalid or incomplete Vault auth
-  configuration fails fast during boot.
-- Workflow classes are enqueued directly as Active Job classes so workflows can use `ActiveJob::Continuable` and `step` on the real workflow job instance.
-- `bin/jobs` remains the generic Solid Queue entrypoint for the default `config/queue.yml` behavior. For split-process deployments, use `bin/jobs-worker` and `bin/jobs-scheduler`; they encode the role in the command, default the matching queue config, and keep worker-only recurring suppression out of the generic path.
-- `bin/jobs-worker` and `bin/jobs-scheduler` now also enable an internal `jobs` boot profile before Rails boots. That profile is for worker and scheduler entrypoints, keeps the operator-facing commands unchanged, skips the dashboard/Mission Control web stack and web-only gems, removes the app's `config/routes.rb` from the headless boot path instead of relying on conditional routes, keeps `ActionController::Base.include_all_helpers = false`, and still ignores `lib/r3x/workflow/cli.rb` so workers do not eager-load the Thor wrapper.
-- `bin/workflow` boots through a separate internal `workflow_cli` profile. It shares the same headless no-web boot surface as `jobs`, but keeps `R3x::Workflow::Cli` available for the Thor wrapper. This profile is command-owned; do not set it in deployment env.
-- Production `Solid Queue` shutdown is intentionally longer-lived and can be tuned with `R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS` so Kubernetes rollouts can wait for long workflow runs to finish gracefully.
-- Tradeoff: queued workflow runs persist the concrete workflow class name in Solid Queue.
-- If a workflow class is renamed or removed before an older queued run executes, that older run may fail deserialization.
-- After workflow class renames/removals, clean up pending jobs or recurring tasks that still reference the old class if you need a clean queue.
-- The dashboard's recent run view is read-only and derived from current `solid_queue_jobs` state.
-- Finished runs are only visible as long as `config.solid_queue.clear_finished_jobs_after` keeps them in the database. In this repo, development, test, and production are currently configured for `2.weeks`.
+```bash
+mise exec -- bin/lint-r3x
+```
+
+This repo uses `.githooks/`; the pre-commit hook runs `bin/ci`, including the `AGENTS.md` reference
+checks.
+
+## Documentation
+
+- [docs/workflows.md](docs/workflows.md) - workflow writing guide
+- [docs/workflows/example_multi_step_digest.md](docs/workflows/example_multi_step_digest.md) - full example workflow
+- [docs/google_oauth.md](docs/google_oauth.md) - Google OAuth setup
+- [docs/deployment.md](docs/deployment.md) - deployment and operations
+- [AGENTS.md](AGENTS.md) - instructions used by coding agents

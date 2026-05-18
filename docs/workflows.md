@@ -88,6 +88,123 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
 - Prefer this for best-effort dedup across runs; prefer a real table only when you need permanent
   history or hard uniqueness guarantees.
 
+## Example Workflow
+
+See [docs/workflows/example_multi_step_digest.md](./workflows/example_multi_step_digest.md) for a
+full worked example that combines `step`, `with_cache`, `ctx.durable_set`, structured LLM output,
+and multiple `ctx.client.*` integrations in one workflow.
+
+## Running Workflows Locally
+
+Use `bin/workflow` for local workflow development. It boots Rails through the `workflow_cli` runtime
+profile, loads the requested workflow file, and runs the workflow in-process.
+
+```bash
+export R3X_WORKFLOW_PATHS="$PWD/workflows"
+bin/workflow list
+bin/workflow info <workflow_key>
+bin/workflow run workflows/<workflow_name>/workflow.rb
+bin/workflow run --dry-run workflows/<workflow_name>/workflow.rb
+bin/workflow run --skip-cache workflows/<workflow_name>/workflow.rb
+```
+
+For an included workflow in this checkout:
+
+```bash
+bin/workflow info porto_santo_news
+bin/workflow run --dry-run workflows/porto_santo_news/workflow.rb
+```
+
+- `list` and `info` load workflow packs from `R3X_WORKFLOW_PATHS`.
+- `run` always takes a direct path to a `workflow.rb` file.
+- `--dry-run` sets `R3X_DRY_RUN=true` for that run, so dry-run-aware clients avoid real side effects.
+- `--skip-cache` sets `R3X_SKIP_CACHE=true` for that run and bypasses `with_cache`.
+- Use both flags together when you want a fresh, low-risk local run:
+
+  ```bash
+  bin/workflow run --dry-run --skip-cache workflows/<workflow_name>/workflow.rb
+  ```
+
+## Testing Workflows
+
+Workflow packs can have their own Minitest tests next to the workflow code:
+
+```text
+workflows/
+  example_digest/
+    workflow.rb
+    test/
+      workflow_test.rb
+```
+
+Pack-local tests should require the Rails environment and the workflow file, then instantiate the
+workflow directly. Use small fakes for workflow clients so tests verify behavior without calling
+external services.
+
+```ruby
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "minitest/autorun"
+require_relative "../../../config/environment"
+require_relative "../workflow"
+
+class ExampleDigestTest < Minitest::Test
+  def test_declares_schedule_trigger
+    schedule = Workflows::ExampleDigest.triggers.find(&:cron_schedulable?)
+
+    assert schedule
+    assert_equal "0 8 * * *", schedule.cron
+  end
+end
+```
+
+Run a pack-local test directly:
+
+```bash
+ruby workflows/<workflow_name>/test/workflow_test.rb
+```
+
+Use Minitest for workflow tests. Prefer real parsing and transformation code with fake client
+boundaries over stubbing the whole workflow. A useful test should fail if the workflow stops
+filtering, deduplicating, rendering, or delivering the expected thing.
+
+## Local Secret Parity With Vault
+
+For workflows that depend on real integration credentials, Vault gives local development strong
+dev/prod parity. When local env points at the same Vault address and secret path as production, the
+app can boot, log in to Vault, and hydrate `ENV` with the same secret names used by production pods.
+
+That means you can test a workflow locally against the same credential contract that production
+uses:
+
+```bash
+export R3X_VAULT_ADDR=http://vault.example.internal:8200
+export R3X_VAULT_SECRETS_PATH=secret/data/env/r3x
+export R3X_VAULT_AUTH_METHOD=kubernetes
+export R3X_VAULT_KUBERNETES_ROLE=r3x
+
+bin/workflow run --dry-run workflows/<workflow_name>/workflow.rb
+```
+
+The exact auth mode depends on your environment. Token auth is also supported for local operator
+work:
+
+```bash
+export R3X_VAULT_ADDR=http://vault.example.internal:8200
+export R3X_VAULT_TOKEN=<token>
+export R3X_VAULT_SECRETS_PATH=secret/data/env/r3x
+```
+
+Keep the distinction clear:
+
+- Vault parity means the same secret names and values can be loaded locally and in production.
+- `bin/workflow run --dry-run` should still be the default local command for workflows with side effects.
+- Dry run protects delivery behavior; Vault parity protects configuration drift.
+- Use `just vault_check` to verify Vault connectivity and visible secret keys without printing
+  secret values.
+- See [docs/deployment.md#vault-secrets](./deployment.md#vault-secrets) for the full Vault setup.
+
 ## Inline Parsing
 
 - For small extraction chains, prefer `presence` and chained fallbacks over repeated `blank?`
