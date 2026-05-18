@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "ruby-optimise": {
+      "source": "pproenca/dot-skills",
+      "sourceType": "github",
+      "skillPath": "skills/.curated/ruby-optimise/SKILL.md",
+      "computedHash": "9b6f45d217dc36f37be15fd0dc1cdd507101ebf50f6cb9c2e708929f166fd77e"
+    },
+    "ruby-refactor": {
+      "source": "pproenca/dot-skills",
+      "sourceType": "github",
+      "skillPath": "skills/.curated/ruby-refactor/SKILL.md",
+      "computedHash": "7ce7408cb5765e13d6c05b7522c8af1d524e27601cc9de8f5e6537f2ae19b123"
+    }
+  }
+}
