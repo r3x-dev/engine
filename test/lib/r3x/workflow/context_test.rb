@@ -117,6 +117,21 @@ module R3x
         end
       end
 
+      test "client proxy builds healthchecks client" do
+        with_env("HEALTHCHECKS_IO_URL" => "https://hc-ping.test") do
+          ctx = Context.new(
+            trigger: R3x::TriggerManager::Execution.new(
+              trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
+              workflow_key: "test"
+            ),
+            workflow_key: "test"
+          )
+          healthchecks = ctx.client.healthchecks_io("test-check")
+
+          assert_instance_of R3x::Client::HealthchecksIO, healthchecks
+        end
+      end
+
       test "client proxy markdownify returns markdown string" do
         with_env("R3X_MARKDOWNIFY_DRY_RUN" => "false") do
           stub_request(:post, "https://markdown.new/")

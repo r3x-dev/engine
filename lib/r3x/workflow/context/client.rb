@@ -12,6 +12,14 @@ module R3x
           R3x::Client::Prometheus.new(url_env: url_env)
         end
 
+        def healthchecks_io(check_uuid, ping_endpoint: nil, ping_endpoint_env: "HEALTHCHECKS_IO_URL")
+          R3x::Client::HealthchecksIO.new(
+            check_uuid,
+            ping_endpoint: ping_endpoint,
+            ping_endpoint_env: ping_endpoint_env
+          )
+        end
+
         def apify(api_key_env:)
           R3x::Client::Apify.new(api_key: R3x::Env.secure_fetch(api_key_env, prefix: "APIFY_API_KEY"))
         end
