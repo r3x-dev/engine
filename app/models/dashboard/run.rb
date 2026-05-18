@@ -5,6 +5,15 @@ module Dashboard
     CHANGE_DETECTION_CLASS_NAME = "R3x::ChangeDetectionJob"
     IGNORED_CLASS_NAMES = [ CHANGE_DETECTION_CLASS_NAME ].freeze
     STATUSES = %w[ blocked failed finished queued running scheduled ].freeze
+    LATEST_ACTIVITY_BUCKETS = [
+      [ "failed", :solid_queue_failed_executions, :created_at ],
+      [ "finished", :solid_queue_jobs, :finished_at ],
+      [ "running", :solid_queue_claimed_executions, :created_at ],
+      [ "queued_ready", :solid_queue_ready_executions, :created_at ],
+      [ "queued_waiting", :solid_queue_jobs, :created_at ],
+      [ "blocked", :solid_queue_blocked_executions, :created_at ],
+      [ "scheduled", :solid_queue_scheduled_executions, :scheduled_at ]
+    ].freeze
 
     self.table_name = "solid_queue_jobs"
 
@@ -120,6 +129,15 @@ module Dashboard
         ].flatten.uniq
       end
 
+      def latest_activity_candidates(class_names:)
+        ids = latest_activity_candidate_ids(class_names:)
+        return [] if ids.empty?
+
+        with_execution_associations.where(id: ids).to_a
+      rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
+        []
+      end
+
       def normalize_arguments(argument)
         case argument
         when Array
@@ -178,6 +196,53 @@ module Dashboard
           keyword_arguments = positional_arguments.last.is_a?(Hash) ? positional_arguments.pop.transform_keys(&:to_sym) : {}
 
           [ positional_arguments, keyword_arguments ]
+        end
+
+        def latest_activity_candidate_ids(class_names:)
+          visible_class_names = Array(class_names).compact_blank
+          return [] if visible_class_names.empty?
+
+          base_scope = dashboard_visible(visible_class_names)
+
+          LATEST_ACTIVITY_BUCKETS.flat_map do |status, table_name, column_name|
+            latest_activity_candidate_ids_for_status(
+              base_scope: base_scope,
+              status: status,
+              recorded_at: Arel::Table.new(table_name)[column_name]
+            )
+          end.uniq
+        end
+
+        def latest_activity_candidate_ids_for_status(base_scope:, status:, recorded_at:)
+          ranked_sql = latest_activity_status_scope(base_scope, status)
+            .select(run_table[:id].as("id"), latest_activity_rank(recorded_at).as("dashboard_rank"))
+            .to_sql
+
+          connection.select_values("SELECT id FROM (#{ranked_sql}) dashboard_latest_runs WHERE dashboard_rank = 1")
+        end
+
+        def latest_activity_status_scope(base_scope, status)
+          case status
+          when "queued_ready"
+            base_scope.for_status("queued").joins(:ready_execution)
+          when "queued_waiting"
+            base_scope.for_status("queued").where.missing(:ready_execution)
+          else
+            base_scope.for_status(status)
+          end
+        end
+
+        def latest_activity_rank(recorded_at)
+          window = Arel::Nodes::Window
+            .new
+            .partition(run_table[:class_name])
+            .order(recorded_at.desc, run_table[:id].desc)
+
+          Arel::Nodes::Over.new(Arel::Nodes::NamedFunction.new("ROW_NUMBER", []), window)
+        end
+
+        def run_table
+          arel_table
         end
     end
 

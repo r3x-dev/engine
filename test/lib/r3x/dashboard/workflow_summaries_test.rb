@@ -194,6 +194,28 @@ module R3x
         assert_equal "Last run failed", summary.dig(:health, :label)
       end
 
+      test "builds all summaries without per-workflow run lookups" do
+        create_dashboard_workflow(
+          workflow_key: "first_workflow",
+          trigger_key: "schedule:first",
+          run_status: "finished",
+          recorded_at: 3.minutes.ago
+        )
+        create_dashboard_workflow(
+          workflow_key: "second_workflow",
+          trigger_key: "schedule:second",
+          run_status: "failed",
+          recorded_at: 1.minute.ago
+        )
+
+        Workflow::Runs.stubs(:new).raises("per-workflow run lookup")
+
+        summaries = Workflow::Summaries.new.all
+
+        assert_equal %w[second_workflow first_workflow], summaries.map { |summary| summary[:workflow_key] }
+        assert_equal "Last run failed", summaries.first.dig(:health, :label)
+      end
+
       private
         def clear_tables
           TestDbCleanup.clear_runtime_tables!
