@@ -1,0 +1,16 @@
+module R3x
+  module Workflow
+    class Context
+      attr_reader trigger: untyped
+      attr_reader execution: R3x::Workflow::Execution
+      attr_reader workflow_class: singleton(R3x::Workflow::Base)?
+      attr_reader workflow_key: String
+
+      def initialize: (trigger: untyped trigger, workflow_key: String workflow_key, ?workflow_class: singleton(R3x::Workflow::Base)? workflow_class) -> void
+
+      def client: () -> singleton(R3x::Workflow::Context::Client)
+
+      def durable_set: (?Symbol | String name, ?ttl: untyped ttl) -> R3x::Workflow::DurableSet
+    end
+  end
+end

@@ -4,7 +4,7 @@ module R3x
   module Client
     class Http
       def initialize(verify_ssl: true, timeout: 10)
-        ssl_options = verify_ssl ? {} : { verify_mode: OpenSSL::SSL::VERIFY_NONE }
+        ssl_options = verify_ssl ? Hash.new : { verify_mode: OpenSSL::SSL::VERIFY_NONE }
         @client = HTTPX.with(
           timeout: { connect_timeout: 5, operation_timeout: timeout },
           ssl: ssl_options
@@ -82,7 +82,7 @@ module R3x
         filename = File.basename(URI.parse(url).path)
         filename = "downloaded_file" if filename.empty? || filename == "/"
 
-        extension = Rack::Mime::MIME_TYPES.invert[content_type]
+        extension = Rack::Mime::MIME_TYPES.invert[content_type] if content_type
         filename += extension if extension && File.extname(filename).empty?
 
         filename

@@ -168,6 +168,15 @@ bin/workflow [options] [command] [arguments]
 
 This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `bin/ci` which includes `bin/lint-r3x` to verify AGENTS.md references.
 
+## Static Typing
+
+- This repo uses RBS + Steep for static type checks. The current Steep scope is intentionally narrow and starts with the workflow-facing API contract.
+- Run `bin/typecheck` after changing files covered by `Steepfile`.
+- When changing `R3x::Workflow::Context`, `R3x::Workflow::Context::Client`, or `R3x::Client::Http`, update the matching files under `sig/`.
+- When adding a new workflow client method to `R3x::Workflow::Context::Client`, add its RBS signature and any minimal dependency stub needed for `bin/typecheck`.
+- Keep the Steep scope narrow. Do not expand it to the whole Rails app unless explicitly planned.
+- Treat `sig/r3x/client/_stubs.rbs` and `sig/r3x/external_stubs.rbs` as dependency stubs, not source of truth for unchecked implementation details.
+
 ## JSON
 
 - Prefer `MultiJSON` for JSON parsing and serialization work.
