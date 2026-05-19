@@ -62,11 +62,9 @@ module R3x
 
           Dir.foreach(base) do |entry|
             next if entry.start_with?(".")
-            subdir = File.join(base, entry)
-            if File.directory?(subdir)
-              workflow_file = File.join(subdir, WORKFLOW_ENTRYPOINT_FILENAME)
-              files << workflow_file if File.file?(workflow_file)
-            end
+
+            workflow_file = File.join(base, entry, WORKFLOW_ENTRYPOINT_FILENAME)
+            files << workflow_file if File.file?(workflow_file)
           end
 
           files

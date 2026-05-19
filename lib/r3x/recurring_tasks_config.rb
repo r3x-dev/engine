@@ -24,8 +24,7 @@ module R3x
 
         SolidQueue::RecurringTask.transaction do
           stale_scope = SolidQueue::RecurringTask.dynamic.where("key LIKE 'workflow:%'").where.not(key: current_keys)
-          stale_count = stale_scope.count
-          stale_scope.delete_all
+          stale_count = stale_scope.delete_all
 
           task_options.each do |key, options|
             task = SolidQueue::RecurringTask.dynamic.find_or_initialize_by(key: key)
