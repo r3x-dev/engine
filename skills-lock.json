@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "dhh-rails-style": {
+      "source": "EveryInc/compound-engineering-plugin",
+      "sourceType": "github",
+      "computedHash": "a074cffa30542487467f57d1a609376f3aac64842e30588e3fb84b35a4ed438a"
+    },
     "ruby-optimise": {
       "source": "pproenca/dot-skills",
       "sourceType": "github",
@@ -12,6 +17,11 @@
       "sourceType": "github",
       "skillPath": "skills/.curated/ruby-refactor/SKILL.md",
       "computedHash": "7ce7408cb5765e13d6c05b7522c8af1d524e27601cc9de8f5e6537f2ae19b123"
+    },
+    "ruby-resource-map": {
+      "source": ".agents/skills/ruby-resource-map",
+      "sourceType": "local",
+      "computedHash": "1a98c79c36d13098bfc84e9811fec9be31ead01d0dedf552ad7e160b58ae56b7"
     }
   }
 }
