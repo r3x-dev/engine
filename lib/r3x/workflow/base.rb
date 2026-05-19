@@ -19,30 +19,25 @@ module R3x
 
       def perform(trigger_key = nil, trigger_payload: nil)
         with_log_tags(*workflow_log_tags(trigger_key)) do
-          begin
-            context = R3x::Workflow::Executor.build_context(
-              workflow_class: self.class,
-              trigger_key: trigger_key,
-              trigger_payload: trigger_payload
-            )
-            @ctx = context
+          @ctx = R3x::Workflow::Executor.build_context(
+            workflow_class: self.class,
+            trigger_key: trigger_key,
+            trigger_payload: trigger_payload
+          )
+          logger.info "Running workflow trigger_type=#{ctx.trigger.type}"
 
-            logger.info "Running workflow trigger_type=#{context.trigger.type}"
-
-            run.tap do
-              with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "success")) do
-                logger.info "Workflow run completed"
-              end
-            end
-          rescue => e
-            with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "failed")) do
-              structured_error(message: "Workflow run failed", error: e)
-            end
-
-            raise
-          ensure
-            @ctx = nil
+          result = run
+          with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "success")) do
+            logger.info "Workflow run completed"
           end
+          result
+        rescue => e
+          with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "failed")) do
+            structured_error(message: "Workflow run failed", error: e)
+          end
+          raise
+        ensure
+          @ctx = nil
         end
       end
 
@@ -54,7 +49,7 @@ module R3x
         end
 
         if Rails.env.production?
-          raise RuntimeError, "with_cache is disabled in production, if you need to use it, please set R3X_SKIP_CACHE=true in the environment variables"
+          raise "with_cache is disabled in production, if you need to use it, please set R3X_SKIP_CACHE=true in the environment variables"
         end
 
         Rails.cache.fetch(cache_key_for(block), force: force, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes) do
@@ -85,26 +80,25 @@ module R3x
       end
 
       def cache_key_for(block)
-        source = cache_block_source(block)
+        file, line = block.source_location
+        source = if file && File.exist?(file)
+          extract_block_source(file, line)
+        else
+          "#{file}:#{line}"
+        end
         digest = Digest::SHA256.hexdigest(source)
 
         [ "r3x", "workflow", self.class.workflow_key, digest ].join(":")
       end
 
-      def cache_block_source(block)
-        file, line = block.source_location
-        return "#{file}:#{line}" unless file && File.exist?(file)
-
-        extract_block_source(File.readlines(file), line)
-      end
-
-      def extract_block_source(lines, start_line)
-        start_index = start_line - 1
+      def extract_block_source(file, start_line)
         source_lines = []
         depth = 0
         started = false
 
-        lines[start_index..].each do |line|
+        File.foreach(file).with_index(1) do |line, line_number|
+          next if line_number < start_line
+
           source_lines << line
 
           if source_lines.length == 1

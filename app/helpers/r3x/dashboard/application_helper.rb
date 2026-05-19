@@ -209,7 +209,7 @@ module R3x
       end
 
       def dashboard_error_multiline?(text)
-        dashboard_error_body(text).lines.size > 1
+        dashboard_error_body(text).each_line.first(2).size > 1
       end
 
       def dashboard_error_details_visible?(text)

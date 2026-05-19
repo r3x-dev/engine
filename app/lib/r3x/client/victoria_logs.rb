@@ -31,10 +31,17 @@ module R3x
         {
           "end" => format_time(end_at),
           "limit" => limit,
-          "query" => query,
+          "query" => sort_query(query),
           "start" => format_time(start_at),
           "timeout" => timeout
         }.compact
+      end
+
+      def sort_query(query)
+        query = query.to_s
+        return query if query.match?(/\|\s*sort\b/)
+
+        "#{query} | sort by (_time)"
       end
 
       def format_time(value)
