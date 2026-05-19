@@ -4,7 +4,7 @@ module Dashboard
 
     CHANGE_DETECTION_CLASS_NAME = "R3x::ChangeDetectionJob"
     IGNORED_CLASS_NAMES = [ CHANGE_DETECTION_CLASS_NAME ].freeze
-    STATUSES = %w[ blocked failed finished queued running scheduled ].freeze
+    STATUSES = %w[blocked failed finished queued running scheduled].freeze
     LATEST_ACTIVITY_BUCKETS = [
       [ "failed", :solid_queue_failed_executions, :created_at ],
       [ "finished", :solid_queue_jobs, :finished_at ],
@@ -80,7 +80,7 @@ module Dashboard
       rescue ActiveJob::SerializationError, ActiveRecord::ActiveRecordError, SolidQueue::Job::EnqueueError => e
         logger.error(
           "Dashboard direct enqueue failed class_name=#{class_name} " \
-          "queue=#{queue_name.presence || 'default'} priority=#{priority.inspect} " \
+          "queue=#{queue_name.presence || "default"} priority=#{priority.inspect} " \
           "error_class=#{e.class} error_message=#{e.message}"
         )
 
@@ -118,15 +118,12 @@ module Dashboard
       def recent_ids(limit:, class_names:)
         base_scope = dashboard_visible(class_names)
 
-        [
-          base_scope.for_status("failed").order("solid_queue_failed_executions.created_at DESC").limit(limit).pluck(:id),
-          base_scope.for_status("finished").order(finished_at: :desc).limit(limit).pluck(:id),
-          base_scope.for_status("running").order("solid_queue_claimed_executions.created_at DESC").limit(limit).pluck(:id),
-          base_scope.for_status("queued").joins(:ready_execution).order("solid_queue_ready_executions.created_at DESC").limit(limit).pluck(:id),
-          base_scope.for_status("queued").where.missing(:ready_execution).order(created_at: :desc).limit(limit).pluck(:id),
-          base_scope.for_status("blocked").order("solid_queue_blocked_executions.created_at DESC").limit(limit).pluck(:id),
-          base_scope.for_status("scheduled").order("solid_queue_scheduled_executions.scheduled_at DESC").limit(limit).pluck(:id)
-        ].flatten.uniq
+        LATEST_ACTIVITY_BUCKETS.flat_map do |status, table_name, column_name|
+          latest_activity_status_scope(base_scope, status)
+            .order(Arel::Table.new(table_name)[column_name].desc)
+            .limit(limit)
+            .pluck(:id)
+        end.uniq
       end
 
       def latest_activity_candidates(class_names:)
@@ -154,96 +151,97 @@ module Dashboard
       end
 
       private
-        def normalize_hash(argument)
-          argument.each_with_object({}) do |(key, value), normalized|
-            normalized[key] = normalize_arguments(value)
-          end.tap do |normalized|
-            symbolize_marked_keys!(normalized, "_aj_ruby2_keywords")
-            symbolize_marked_keys!(normalized, "_aj_symbol_keys")
+
+      def normalize_hash(argument)
+        argument.each_with_object({}) do |(key, value), normalized|
+          normalized[key] = normalize_arguments(value)
+        end.tap do |normalized|
+          symbolize_marked_keys!(normalized, "_aj_ruby2_keywords")
+          symbolize_marked_keys!(normalized, "_aj_symbol_keys")
+        end
+      end
+
+      def symbolize_marked_keys!(hash, marker)
+        Array(hash.delete(marker)).each do |key|
+          next unless hash.key?(key)
+
+          hash[key.to_sym] = hash.delete(key)
+        end
+      end
+
+      def build_active_job(class_name:, arguments:, queue_name:, priority:)
+        job_class_name = class_name.to_s
+        direct_job_class = Class.new(ActiveJob::Base) do
+          def perform(*)
           end
         end
 
-        def symbolize_marked_keys!(hash, marker)
-          Array(hash.delete(marker)).each do |key|
-            next unless hash.key?(key)
+        direct_job_class.define_singleton_method(:name) { job_class_name }
+        direct_job_class.queue_name = queue_name if queue_name.present?
+        direct_job_class.priority = priority unless priority.nil?
 
-            hash[key.to_sym] = hash.delete(key)
-          end
+        positional_arguments, keyword_arguments = split_arguments(arguments)
+
+        if keyword_arguments.empty?
+          direct_job_class.new(*positional_arguments)
+        else
+          direct_job_class.new(*positional_arguments, **keyword_arguments)
         end
+      end
 
-        def build_active_job(class_name:, arguments:, queue_name:, priority:)
-          job_class_name = class_name.to_s
-          direct_job_class = Class.new(ActiveJob::Base) do
-            def perform(*)
-            end
-          end
+      def split_arguments(raw_arguments)
+        positional_arguments = Array(normalize_arguments(raw_arguments)).dup
+        keyword_arguments = positional_arguments.last.is_a?(Hash) ? positional_arguments.pop.transform_keys(&:to_sym) : {}
 
-          direct_job_class.define_singleton_method(:name) { job_class_name }
-          direct_job_class.queue_name = queue_name if queue_name.present?
-          direct_job_class.priority = priority unless priority.nil?
+        [ positional_arguments, keyword_arguments ]
+      end
 
-          positional_arguments, keyword_arguments = split_arguments(arguments)
+      def latest_activity_candidate_ids(class_names:)
+        visible_class_names = Array(class_names).compact_blank
+        return [] if visible_class_names.empty?
 
-          if keyword_arguments.empty?
-            direct_job_class.new(*positional_arguments)
-          else
-            direct_job_class.new(*positional_arguments, **keyword_arguments)
-          end
+        base_scope = dashboard_visible(visible_class_names)
+
+        LATEST_ACTIVITY_BUCKETS.flat_map do |status, table_name, column_name|
+          latest_activity_candidate_ids_for_status(
+            base_scope: base_scope,
+            status: status,
+            recorded_at: Arel::Table.new(table_name)[column_name]
+          )
+        end.uniq
+      end
+
+      def latest_activity_candidate_ids_for_status(base_scope:, status:, recorded_at:)
+        ranked_sql = latest_activity_status_scope(base_scope, status)
+          .select(run_table[:id].as("id"), latest_activity_rank(recorded_at).as("dashboard_rank"))
+          .to_sql
+
+        connection.select_values("SELECT id FROM (#{ranked_sql}) dashboard_latest_runs WHERE dashboard_rank = 1")
+      end
+
+      def latest_activity_status_scope(base_scope, status)
+        case status
+        when "queued_ready"
+          base_scope.for_status("queued").joins(:ready_execution)
+        when "queued_waiting"
+          base_scope.for_status("queued").where.missing(:ready_execution)
+        else
+          base_scope.for_status(status)
         end
+      end
 
-        def split_arguments(raw_arguments)
-          positional_arguments = Array(normalize_arguments(raw_arguments)).dup
-          keyword_arguments = positional_arguments.last.is_a?(Hash) ? positional_arguments.pop.transform_keys(&:to_sym) : {}
+      def latest_activity_rank(recorded_at)
+        window = Arel::Nodes::Window
+          .new
+          .partition(run_table[:class_name])
+          .order(recorded_at.desc, run_table[:id].desc)
 
-          [ positional_arguments, keyword_arguments ]
-        end
+        Arel::Nodes::Over.new(Arel::Nodes::NamedFunction.new("ROW_NUMBER", []), window)
+      end
 
-        def latest_activity_candidate_ids(class_names:)
-          visible_class_names = Array(class_names).compact_blank
-          return [] if visible_class_names.empty?
-
-          base_scope = dashboard_visible(visible_class_names)
-
-          LATEST_ACTIVITY_BUCKETS.flat_map do |status, table_name, column_name|
-            latest_activity_candidate_ids_for_status(
-              base_scope: base_scope,
-              status: status,
-              recorded_at: Arel::Table.new(table_name)[column_name]
-            )
-          end.uniq
-        end
-
-        def latest_activity_candidate_ids_for_status(base_scope:, status:, recorded_at:)
-          ranked_sql = latest_activity_status_scope(base_scope, status)
-            .select(run_table[:id].as("id"), latest_activity_rank(recorded_at).as("dashboard_rank"))
-            .to_sql
-
-          connection.select_values("SELECT id FROM (#{ranked_sql}) dashboard_latest_runs WHERE dashboard_rank = 1")
-        end
-
-        def latest_activity_status_scope(base_scope, status)
-          case status
-          when "queued_ready"
-            base_scope.for_status("queued").joins(:ready_execution)
-          when "queued_waiting"
-            base_scope.for_status("queued").where.missing(:ready_execution)
-          else
-            base_scope.for_status(status)
-          end
-        end
-
-        def latest_activity_rank(recorded_at)
-          window = Arel::Nodes::Window
-            .new
-            .partition(run_table[:class_name])
-            .order(recorded_at.desc, run_table[:id].desc)
-
-          Arel::Nodes::Over.new(Arel::Nodes::NamedFunction.new("ROW_NUMBER", []), window)
-        end
-
-        def run_table
-          arel_table
-        end
+      def run_table
+        arel_table
+      end
     end
 
     def status
@@ -297,18 +295,19 @@ module Dashboard
     end
 
     private
-      def normalized_arguments
-        @normalized_arguments ||= self.class.normalize_arguments(arguments)
-      end
 
-      def serialized_active_job_payload?
-        normalized_arguments.is_a?(Hash) &&
-          fetch_key(normalized_arguments, "job_class").present? &&
-          normalized_arguments.key?("arguments")
-      end
+    def normalized_arguments
+      @normalized_arguments ||= self.class.normalize_arguments(arguments)
+    end
 
-      def fetch_key(hash, key)
-        hash[key] || hash[key.to_sym]
-      end
+    def serialized_active_job_payload?
+      normalized_arguments.is_a?(Hash) &&
+        fetch_key(normalized_arguments, "job_class").present? &&
+        normalized_arguments.key?("arguments")
+    end
+
+    def fetch_key(hash, key)
+      hash[key] || hash[key.to_sym]
+    end
   end
 end

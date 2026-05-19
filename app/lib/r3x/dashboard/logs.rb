@@ -79,7 +79,7 @@ module R3x
 
         {
           configured: true,
-          entries: raw_entries.filter_map { |entry| normalize_entry(entry, context: context) }.sort_by { |entry| entry[:time] || Time.at(0) },
+          entries: raw_entries.filter_map { |entry| normalize_entry(entry, context: context) },
           error: nil,
           provider: provider_name
         }
@@ -117,17 +117,28 @@ module R3x
       end
 
       def parse_message_payload(entry, context: {})
-        payload = parse_extracted_payload(entry, context: context)
-        return payload if payload.present?
+        if entry.key?("level")
+          message, tags = extract_message_and_tags(
+            entry["_msg"],
+            tags: normalize_array_field(entry["tags"]),
+            context: context
+          )
 
-        raw_message = entry["_msg"]
-        parsed = MultiJSON.parse(raw_message.to_s)
-
-        unless parsed.is_a?(Hash)
-          raise ArgumentError, "Expected log payload to decode to a hash, got #{parsed.class}"
+          return {
+            backtrace: normalize_array_field(entry["backtrace"]).presence,
+            error_class: entry["error_class"],
+            error_message: entry["error_message"],
+            level: normalize_level(entry["level"]),
+            message: message,
+            tags: tags
+          }
         end
 
-        unless parsed.key?("level") && parsed.key?("message")
+        raw_message = entry["_msg"]
+        payload = MultiJSON.parse(raw_message.to_s)
+        raise ArgumentError, "Expected log payload to decode to a hash, got #{payload.class}" unless payload.is_a?(Hash)
+
+        unless payload.key?("level") && payload.key?("message")
           message, tags = extract_message_and_tags(raw_message, context: context)
 
           return {
@@ -137,45 +148,24 @@ module R3x
           }
         end
 
-        message, tags = extract_message_and_tags(parsed["message"], tags: parsed["tags"], context: context)
+        message, tags = extract_message_and_tags(payload["message"], tags: payload["tags"], context: context)
 
         {
-          backtrace: normalize_array_field(parsed["backtrace"]).presence,
-          error_class: parsed["error_class"],
-          error_message: parsed["error_message"],
-          level: normalize_level(parsed["level"]),
+          backtrace: normalize_array_field(payload["backtrace"]).presence,
+          error_class: payload["error_class"],
+          error_message: payload["error_message"],
+          level: normalize_level(payload["level"]),
           message: message,
           tags: tags
         }
       rescue MultiJSON::ParseError
-        message, tags = extract_message_and_tags(raw_message, context: context)
+        message, tags = extract_message_and_tags(entry["_msg"], context: context)
 
         {
           level: "unknown",
           message: message,
           tags: tags
         }
-      end
-
-      def parse_extracted_payload(entry, context: {})
-        return unless entry.key?("level")
-
-        message, tags = extract_message_and_tags(
-          entry["_msg"],
-          tags: normalize_array_field(entry["tags"]),
-          context: context
-        )
-
-        {
-          backtrace: normalize_array_field(entry["backtrace"]).presence,
-          error_class: entry["error_class"],
-          error_message: entry["error_message"],
-          level: normalize_level(entry["level"]),
-          message: message,
-          tags: tags
-        }
-      rescue ArgumentError, MultiJSON::ParseError
-        nil
       end
 
       def normalize_level(value)

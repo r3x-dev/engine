@@ -26,7 +26,7 @@ module R3x
         ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
 
         stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
-          .with(body: hash_including("query" => "_time:5m error", "limit" => "2"))
+          .with(body: hash_including("query" => "_time:5m error | sort by (_time)", "limit" => "2"))
           .to_return(
             status: 200,
             body: [
@@ -40,6 +40,20 @@ module R3x
         assert_equal 2, result.size
         assert_equal "first", result.first["_msg"]
         assert_equal "second", result.second["_msg"]
+        assert_requested :post, "http://victoria-logs.test:9428/select/logsql/query",
+          body: hash_including("query" => "_time:5m error | sort by (_time)")
+      end
+
+      test "keeps caller-provided sort pipe" do
+        ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+        stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
+          .with(body: hash_including("query" => "_time:5m error | sort by (_time desc)"))
+          .to_return(status: 200, body: "")
+
+        VictoriaLogs.new.query(query: "_time:5m error | sort by (_time desc)", limit: 2)
+
+        assert_requested :post, "http://victoria-logs.test:9428/select/logsql/query"
       end
 
       test "preserves sub-second precision for start and end timestamps" do
