@@ -1,0 +1,54 @@
+module HTTPX
+  def self.with: (**untyped options) -> untyped
+end
+
+module OpenSSL
+  module SSL
+    VERIFY_NONE: untyped
+  end
+end
+
+module Rack
+  module Mime
+    MIME_TYPES: Hash[String, String]
+  end
+end
+
+module R3x
+  module Concerns
+    module Logger
+    end
+  end
+
+  module Env
+    def self.secure_fetch: (String name, prefix: String | Regexp prefix) -> String
+  end
+
+  module GemLoader
+    def self.require: (String feature) -> bool
+  end
+end
+
+class Tempfile
+  def self.new: (Array[String?] basename) -> Tempfile
+
+  def binmode: () -> Tempfile
+
+  def write: (untyped content) -> Integer
+
+  def rewind: () -> Integer
+
+  def close: () -> nil
+
+  def unlink: () -> nil
+end
+
+module URI
+  def self.parse: (String uri) -> untyped
+end
+
+module Marcel
+  module MimeType
+    def self.for: (untyped io) -> String?
+  end
+end
