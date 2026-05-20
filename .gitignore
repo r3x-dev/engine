@@ -48,3 +48,5 @@
 /workflows
 /docs/mvp
 /.worktrees
+
+/.antigravitycli/*.json
