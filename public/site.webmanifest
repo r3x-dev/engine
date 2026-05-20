@@ -1,0 +1,24 @@
+{
+  "name": "R3x Dashboard",
+  "short_name": "R3x",
+  "description": "Workflow runtime dashboard for r3x.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f8fa",
+  "theme_color": "#1f2328",
+  "icons": [
+    {
+      "src": "/icon-192.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    }
+  ]
+}
