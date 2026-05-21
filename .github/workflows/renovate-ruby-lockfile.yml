@@ -1,0 +1,58 @@
+name: Renovate Ruby Lockfile
+
+on:
+  push:
+    branches:
+      - "renovate/docker.io-library-ruby-*"
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    if: github.actor == 'renovate[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: false
+
+      - name: Install locked Bundler
+        run: gem install bundler -v "$(tail -n 1 Gemfile.lock | tr -d ' ')"
+
+      - name: Align Dockerfile Ruby version
+        run: |
+          ruby_version = File.read(".ruby-version").strip
+          dockerfile = "Dockerfile"
+          contents = File.read(dockerfile)
+
+          unless contents.sub!(/^ARG RUBY_VERSION=.*/, "ARG RUBY_VERSION=#{ruby_version}")
+            abort "Could not find ARG RUBY_VERSION in #{dockerfile}"
+          end
+
+          File.write(dockerfile, contents)
+        shell: ruby {0}
+
+      - name: Refresh lockfile Ruby version
+        run: bundle update --ruby
+
+      - name: Commit generated files
+        env:
+          RENOVATE_FIX_TOKEN: ${{ secrets.RENOVATE_FIX_TOKEN }}
+        run: |
+          if [ -z "$RENOVATE_FIX_TOKEN" ]; then
+            echo "RENOVATE_FIX_TOKEN secret is required to push the refreshed lockfile."
+            exit 1
+          fi
+
+          git config user.name "renovate-ruby-fix"
+          git config user.email "renovate-ruby-fix@users.noreply.github.com"
+          git add Dockerfile Gemfile.lock
+          git diff --cached --quiet && exit 0
+          git commit -m "Refresh Ruby lockfile"
+          git push "https://x-access-token:${RENOVATE_FIX_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
