@@ -16,7 +16,7 @@
 
   <div class="actions">
     <% if @workflow[:run_now_available] %>
-      <%= form_with url: run_trigger_workflow_path(@workflow[:workflow_key]), method: :post, local: true, class: "inline-form" do |form| %>
+      <%= form_with url: runs_workflow_path(@workflow[:workflow_key]), method: :post, local: true, class: "inline-form" do |form| %>
         <%= form.button dashboard_icon_label(:launch, "Run now"), class: "button success" %>
       <% end %>
     <% end %>
