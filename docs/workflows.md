@@ -90,7 +90,7 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
 
 ## Example Workflow
 
-See [docs/workflows/example_multi_step_digest.md](./workflows/example_multi_step_digest.md) for a
+See [docs/workflows/example_multi_step_digest.md](workflows/example_multi_step_digest.md) for a
 full worked example that combines `step`, `with_cache`, `ctx.durable_set`, structured LLM output,
 and multiple `ctx.client.*` integrations in one workflow.
 
