@@ -744,7 +744,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
   test "workflow detail can enqueue run now from recurring task" do
     assert_difference -> { SolidQueue::Job.where(class_name: WORKFLOW_JOB_CLASS_NAME).count }, 1 do
-      post "/workflows/test_workflow/run_trigger"
+      post "/workflows/test_workflow/runs"
     end
 
     job = SolidQueue::Job.order(:id).last
@@ -766,7 +766,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Manual Only Workflow"
-    assert_includes response.body, "/workflows/manual_only_workflow/run_trigger"
+    assert_includes response.body, "/workflows/manual_only_workflow/runs"
     refute_includes response.body, "Unavailable"
   end
 
@@ -781,7 +781,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     )
 
     assert_enqueued_jobs 1, only: R3x::ChangeDetectionJob do
-      post "/workflows/feed_watch/run_trigger", params: { trigger_key: "feed:123" }
+      post "/workflows/feed_watch/runs", params: { trigger_key: "feed:123" }
     end
 
     assert_redirected_to "/workflows/feed_watch"
@@ -816,7 +816,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       static: false
     )
 
-    post "/workflows/feed_watch/run_trigger"
+    post "/workflows/feed_watch/runs"
 
     job = SolidQueue::Job.order(:id).last
     assert_redirected_to "/workflow-runs/#{job.id}"
@@ -829,7 +829,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
   test "workflow detail run now returns not found for unknown workflow keys" do
     clear_tables
 
-    post "/workflows/missing_workflow/run_trigger"
+    post "/workflows/missing_workflow/runs"
 
     assert_response :not_found
   end
