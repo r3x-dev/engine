@@ -36,22 +36,6 @@ module R3x
         assert summary[:trigger_entries].first[:run_now_available]
       end
 
-      test "shows generic run now when only change detection metadata exists" do
-        SolidQueue::RecurringTask.create!(
-          key: "workflow:test_workflow:feed:abc123",
-          schedule: "*/5 * * * *",
-          class_name: Workflow::Catalog::CHANGE_DETECTION_CLASS_NAME,
-          arguments: [ "test_workflow", { "trigger_key" => "feed:abc123" } ],
-          queue_name: "feeds",
-          static: false
-        )
-
-        summary = Workflow::Summaries.new.find!("test_workflow")
-
-        assert summary[:run_now_available]
-        refute summary[:trigger_entries].first[:run_now_available]
-      end
-
       test "manual-only direct workflow runs stay visible without trigger metadata" do
         DashboardJobRows.create_job!(
           job_class_name: "Workflows::ManualOnlyWorkflow",
@@ -68,22 +52,6 @@ module R3x
         assert_equal "Workflows::ManualOnlyWorkflow", summary[:class_name]
       end
 
-      test "prefers trigger error health over last run status" do
-        R3x::TriggerState.create!(
-          workflow_key: "test_dashboard_change_feed",
-          trigger_key: "feed:123",
-          trigger_type: "fake_change_detecting",
-          state: {},
-          last_error_at: Time.current,
-          last_error_message: "feed offline"
-        )
-
-        summary = Workflow::Summaries.new.find!("test_dashboard_change_feed")
-
-        assert_equal "Trigger error", summary[:health][:label]
-        assert_equal "feed offline", summary[:health][:detail]
-      end
-
       test "orders the catalog by health severity by default" do
         create_dashboard_workflow(workflow_key: "idle_workflow", trigger_key: "schedule:idle")
         create_dashboard_workflow(
@@ -98,15 +66,9 @@ module R3x
           run_status: "failed",
           recorded_at: 2.minutes.ago
         )
-        create_dashboard_workflow(
-          workflow_key: "trigger_error_workflow",
-          trigger_key: "feed:error",
-          trigger_error_at: 1.minute.ago
-        )
-
         summaries = Workflow::Summaries.new.all
 
-        assert_equal %w[trigger_error_workflow failed_workflow healthy_workflow idle_workflow], summaries.map { |summary| summary[:workflow_key] }
+        assert_equal %w[failed_workflow healthy_workflow idle_workflow], summaries.map { |summary| summary[:workflow_key] }
       end
 
       test "reverses health severity order when sorted descending" do
@@ -123,15 +85,9 @@ module R3x
           run_status: "failed",
           recorded_at: 2.minutes.ago
         )
-        create_dashboard_workflow(
-          workflow_key: "trigger_error_workflow",
-          trigger_key: "feed:error",
-          trigger_error_at: 1.minute.ago
-        )
-
         summaries = Workflow::Summaries.new(sort: "health", direction: "desc").all
 
-        assert_equal %w[idle_workflow healthy_workflow failed_workflow trigger_error_workflow], summaries.map { |summary| summary[:workflow_key] }
+        assert_equal %w[idle_workflow healthy_workflow failed_workflow], summaries.map { |summary| summary[:workflow_key] }
       end
 
       test "supports workflow and last run sorting" do
@@ -221,7 +177,7 @@ module R3x
           TestDbCleanup.clear_runtime_tables!
         end
 
-        def create_dashboard_workflow(workflow_key:, trigger_key:, run_status: nil, recorded_at: nil, trigger_error_at: nil)
+        def create_dashboard_workflow(workflow_key:, trigger_key:, run_status: nil, recorded_at: nil)
           job_class_name = DashboardTestWorkflows.ensure_class(workflow_key.camelize)
 
           SolidQueue::RecurringTask.create!(
@@ -232,17 +188,6 @@ module R3x
             queue_name: "default",
             static: false
           )
-
-          if trigger_error_at.present?
-            R3x::TriggerState.create!(
-              workflow_key: workflow_key,
-              trigger_key: trigger_key,
-              trigger_type: "feed",
-              state: {},
-              last_error_at: trigger_error_at,
-              last_error_message: "#{workflow_key} error"
-            )
-          end
 
           return if run_status.blank?
 

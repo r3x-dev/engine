@@ -86,27 +86,6 @@ module R3x
         assert_equal "boom", run[:error]
       end
 
-      test "maps change-detection-driven workflow runs through trigger state observations" do
-        R3x::TriggerState.create!(
-          workflow_key: "feed_workflow",
-          trigger_key: "feed:123",
-          trigger_type: "feed",
-          state: {}
-        )
-        job = DashboardJobRows.create_job!(
-          job_class_name: "Workflows::FeedWorkflow",
-          arguments: [ "feed:123", { trigger_payload: { "id" => "99" } } ],
-          finished_at: 1.minute.ago,
-          created_at: 5.minutes.ago,
-          updated_at: 1.minute.ago
-        )
-
-        run = Workflow::Runs.new(workflow_key: "feed_workflow").all.find { |entry| entry[:job_id] == job.id }
-
-        assert_equal "feed_workflow", run[:workflow_key]
-        assert_equal "feed:123", run[:trigger_key]
-      end
-
       test "maps manual-only workflow runs from direct workflow class names without trigger metadata" do
         job = DashboardJobRows.create_job!(
           job_class_name: "Workflows::ManualOnlyWorkflow",
@@ -194,19 +173,6 @@ module R3x
         runs = Workflow::Runs.new(workflow_key: "test_workflow", status: "failed", limit: 10).all
 
         assert_equal [ failed_job.id ], runs.map { |run| run[:job_id] }
-      end
-
-      test "ignores change detection jobs in workflow run history" do
-        DashboardJobRows.create_job!(
-          job_class_name: "R3x::ChangeDetectionJob",
-          arguments: [ "test_workflow", { "trigger_key" => "feed:123" } ],
-          created_at: 5.minutes.ago,
-          updated_at: 1.minute.ago
-        )
-
-        runs = Workflow::Runs.new.all
-
-        assert_empty runs
       end
 
       private

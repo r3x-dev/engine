@@ -78,13 +78,6 @@ module R3x
           updated_at: 2.days.ago
         )
 
-        DashboardJobRows.create_job!(
-          job_class_name: "R3x::ChangeDetectionJob",
-          arguments: [ "test_workflow", { trigger_key: "feed:123" } ],
-          created_at: 10.minutes.ago,
-          updated_at: 10.minutes.ago
-        )
-
         counts = Workflow::RunCounts.new
 
         assert_equal 1, counts.running_count

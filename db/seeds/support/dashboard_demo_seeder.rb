@@ -9,7 +9,6 @@ module Seeds
 
       demo_definitions.map do |definition|
         create_recurring_task!(definition)
-        create_trigger_state!(definition)
         create_run!(definition)
       end
     end
@@ -37,10 +36,7 @@ module Seeds
           priority: 0,
           schedule: "15 * * * *",
           trigger_key: "schedule:hourly",
-          trigger_type: "schedule",
           seed_scheduled_at: now + 2.days,
-          last_checked_at: now - 18.hours,
-          last_triggered_at: now - 17.hours,
           status: "finished",
           created_at: now - 18.hours,
           updated_at: now - 17.hours,
@@ -53,11 +49,8 @@ module Seeds
           queue_name: "feeds",
           priority: 10,
           schedule: "*/10 * * * *",
-          trigger_key: "feed:external",
-          trigger_type: "feed",
+          trigger_key: "schedule:external",
           seed_scheduled_at: now + 2.days,
-          last_checked_at: now - 3.hours,
-          last_triggered_at: now - 3.hours,
           status: "failed",
           created_at: now - 3.hours,
           updated_at: now - 2.hours - 52.minutes,
@@ -76,10 +69,7 @@ module Seeds
           priority: 5,
           schedule: "0 */6 * * *",
           trigger_key: "schedule:dispatch",
-          trigger_type: "schedule",
           seed_scheduled_at: now + 2.days,
-          last_checked_at: now - 14.minutes,
-          last_triggered_at: now - 12.minutes,
           status: "running",
           created_at: now - 12.minutes,
           updated_at: now - 11.minutes,
@@ -93,10 +83,7 @@ module Seeds
           priority: 20,
           schedule: "*/5 * * * *",
           trigger_key: "schedule:inventory",
-          trigger_type: "schedule",
           seed_scheduled_at: now + 2.days,
-          last_checked_at: now - 26.minutes,
-          last_triggered_at: now - 24.minutes,
           status: "finished",
           created_at: now - 24.minutes,
           updated_at: now - 23.minutes,
@@ -110,9 +97,6 @@ module Seeds
           priority: 30,
           schedule: "30 2 * * *",
           trigger_key: "schedule:nightly",
-          trigger_type: "schedule",
-          last_checked_at: now - 1.hour,
-          last_triggered_at: now - 1.day,
           status: "scheduled",
           created_at: now - 5.minutes,
           updated_at: now - 5.minutes,
@@ -136,7 +120,6 @@ module Seeds
 
       SolidQueue::RecurringTask.where("key LIKE ?", "workflow:#{DEMO_WORKFLOW_PREFIX}%").delete_all
       SolidQueue::Process.where("name LIKE ?", "#{DEMO_PROCESS_PREFIX}%").delete_all
-      R3x::TriggerState.where("workflow_key LIKE ?", "#{DEMO_WORKFLOW_PREFIX}%").delete_all
     end
 
     def create_recurring_task!(definition)
@@ -148,17 +131,6 @@ module Seeds
         queue_name: definition.fetch(:queue_name),
         priority: definition.fetch(:priority),
         static: false
-      )
-    end
-
-    def create_trigger_state!(definition)
-      R3x::TriggerState.create!(
-        workflow_key: definition.fetch(:workflow_key),
-        trigger_key: definition.fetch(:trigger_key),
-        trigger_type: definition.fetch(:trigger_type),
-        state: {},
-        last_checked_at: definition[:last_checked_at],
-        last_triggered_at: definition[:last_triggered_at]
       )
     end
 

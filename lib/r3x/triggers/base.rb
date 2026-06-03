@@ -10,10 +10,6 @@ module R3x
         @options = options
       end
 
-      def change_detecting?
-        false
-      end
-
       def cron_schedulable?
         false
       end
