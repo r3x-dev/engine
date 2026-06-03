@@ -82,21 +82,12 @@ module R3x
 
       def task_options_for(workflow_class:, trigger:)
         queue_name = workflow_class.new.queue_name
-        if trigger.change_detecting?
-          {
-            class: "R3x::ChangeDetectionJob",
-            args: [ workflow_class.workflow_key, { "trigger_key" => trigger.unique_key } ],
-            schedule: trigger.schedule,
-            queue: queue_name
-          }
-        else
-          {
-            class: workflow_class.name,
-            args: [ trigger.unique_key ],
-            schedule: trigger.schedule,
-            queue: queue_name
-          }
-        end
+        {
+          class: workflow_class.name,
+          args: [ trigger.unique_key ],
+          schedule: trigger.schedule,
+          queue: queue_name
+        }
       end
 
       def workflow_and_trigger_for(key)

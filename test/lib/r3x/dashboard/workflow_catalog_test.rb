@@ -13,7 +13,7 @@ module R3x
         TestDbCleanup.clear_runtime_tables!
       end
 
-      test "collects workflow keys from recurring tasks trigger states and direct workflow runs" do
+      test "collects workflow keys from recurring tasks and direct workflow runs" do
         SolidQueue::RecurringTask.create!(
           key: "workflow:scheduled_workflow:schedule:123",
           schedule: "0 * * * *",
@@ -73,21 +73,13 @@ module R3x
         assert_includes catalog.class_names_for("manual_only_workflow"), "Workflows::ManualOnlyWorkflow"
       end
 
-      test "maps concrete workflow class names to workflow keys and excludes unrelated and change detection jobs" do
+      test "maps concrete workflow class names to workflow keys and excludes unrelated jobs" do
         SolidQueue::RecurringTask.create!(
           key: "workflow:test_workflow:schedule:123",
           schedule: "0 * * * *",
           class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: [ "schedule:123" ],
           queue_name: "default",
-          static: false
-        )
-        SolidQueue::RecurringTask.create!(
-          key: "workflow:test_workflow:feed:123",
-          schedule: "*/5 * * * *",
-          class_name: Workflow::Catalog::CHANGE_DETECTION_CLASS_NAME,
-          arguments: [ "test_workflow", { "trigger_key" => "feed:123" } ],
-          queue_name: "feeds",
           static: false
         )
         DashboardJobRows.create_job!(

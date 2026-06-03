@@ -34,7 +34,7 @@ module R3x
 
       def needs_attention
         @needs_attention ||= workflows
-          .select { |workflow| %w[failed trigger_error].include?(workflow.dig(:health, :status)) }
+          .select { |workflow| workflow.dig(:health, :status) == "failed" }
           .map do |workflow|
             workflow.merge(
               attention_at: attention_time_for(workflow),
@@ -65,17 +65,11 @@ module R3x
       end
 
       def attention_time_for(workflow)
-        return workflow.dig(:last_run, :recorded_at) if workflow.dig(:health, :status) == "failed"
-
-        workflow[:trigger_entries]
-          .filter_map { |entry| entry[:trigger_state]&.last_error_at }
-          .max
+        workflow.dig(:last_run, :recorded_at)
       end
 
       def attention_label_for(workflow)
-        return "Failed" if workflow.dig(:health, :status) == "failed"
-
-        "Trigger error"
+        "Failed"
       end
     end
   end
