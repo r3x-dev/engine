@@ -1,7 +1,5 @@
 module Dashboard
   class RecurringTask < ApplicationRecord
-    CHANGE_DETECTION_CLASS_NAME = "R3x::ChangeDetectionJob"
-
     self.table_name = "solid_queue_recurring_tasks"
 
     serialize :arguments, coder: SolidQueue::RecurringTask::Arguments, default: []
@@ -36,13 +34,7 @@ module Dashboard
       parsed_key.fetch(:trigger_key)
     end
 
-    def change_detection?
-      class_name == CHANGE_DETECTION_CLASS_NAME
-    end
-
     def direct_workflow_class_name
-      return if change_detection?
-
       class_name.presence
     end
 
