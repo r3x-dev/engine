@@ -11,7 +11,7 @@
 <section class="page-header">
   <div>
     <h2 class="page-title"><%= @workflow[:title] %></h2>
-    <p>Workflow drill-down built from persisted recurring tasks and runs.</p>
+    <p>Workflow drill-down built from persisted runs and trigger state.</p>
   </div>
 
   <div class="actions">
@@ -70,13 +70,17 @@
       </thead>
       <tbody>
         <% @workflow[:trigger_entries].each do |trigger_entry| %>
+          <% trigger_state = trigger_entry[:trigger_state] %>
           <tr>
             <td>
               <div><strong><%= dashboard_trigger_kind(trigger_entry) %></strong></div>
               <div class="meta"><code><%= dashboard_trigger_details(trigger_entry) %></code></div>
               <div class="pill-row trigger-badges">
+                <% if trigger_entry[:change_detecting] %>
+                  <%= dashboard_pill("Change detecting", "info") %>
+                <% end %>
                 <% if trigger_entry[:recurring_task].blank? %>
-                  <%= dashboard_pill("Observed from runtime", "muted") %>
+                  <%= dashboard_pill("Observed from runtime state", "muted") %>
                 <% end %>
               </div>
             </td>
@@ -90,6 +94,17 @@
                   <%= dashboard_pill(safe_join([ "Queue", content_tag(:code, trigger_entry[:queue_name]) ], " "), "muted") %>
                 <% end %>
               </div>
+
+              <% if trigger_state.present? %>
+                <div class="meta">Last checked <%= dashboard_timestamp(trigger_state.last_checked_at) %></div>
+                <div class="meta">Last triggered <%= dashboard_timestamp(trigger_state.last_triggered_at) %></div>
+
+                <% if trigger_state.last_error_at.present? %>
+                  <div class="meta">Last error <%= dashboard_error_summary(trigger_state.last_error_message) %></div>
+                <% end %>
+              <% else %>
+                <span class="muted">No persisted runtime state</span>
+              <% end %>
             </td>
           </tr>
         <% end %>

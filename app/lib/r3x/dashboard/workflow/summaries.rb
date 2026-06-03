@@ -11,7 +11,7 @@ module R3x
           "next_trigger" => "asc",
           "last_run" => "desc"
         }.freeze
-        HEALTH_SORT_ORDER = %w[failed healthy idle].freeze
+        HEALTH_SORT_ORDER = %w[trigger_error failed healthy idle].freeze
 
         attr_reader :direction, :sort
 
@@ -53,8 +53,9 @@ module R3x
         private
 
         def build_summary(workflow_key)
+          trigger_states = trigger_states_by_workflow_key.fetch(workflow_key, [])
           recurring_tasks = recurring_tasks_by_workflow_key.fetch(workflow_key, [])
-          trigger_entries = trigger_entries_for(workflow_key:, recurring_tasks:)
+          trigger_entries = trigger_entries_for(workflow_key:, trigger_states:, recurring_tasks:)
           last_run = latest_run_for(workflow_key)
           preferred_recurring_task = recurring_tasks.find { |task| task.direct_workflow_class_name.present? } || recurring_tasks.first
           manual_enqueue_options = ::Dashboard::Run.manual_enqueue_options_for(
@@ -66,8 +67,8 @@ module R3x
 
           {
             class_name: manual_enqueue_options&.fetch(:class_name),
-            health: health_for(last_run: last_run),
-            last_seen_at: last_seen_at_for(last_run: last_run),
+            health: health_for(last_run: last_run, trigger_states: trigger_states),
+            last_seen_at: last_seen_at_for(last_run: last_run, trigger_states: trigger_states),
             last_run: last_run && build_run_summary(last_run, workflow_key),
             mission_control_path: "/ops/jobs",
             next_trigger_at: trigger_entries.filter_map { |entry| entry[:next_trigger_at] }.min,
@@ -149,40 +150,58 @@ module R3x
         end
 
         def health_timestamp_for(workflow)
+          return workflow[:last_seen_at] if workflow.dig(:health, :status) == "trigger_error"
+
           workflow.dig(:last_run, :recorded_at) || workflow[:last_seen_at]
         end
 
-        def trigger_entries_for(workflow_key:, recurring_tasks:)
+        def trigger_entries_for(workflow_key:, trigger_states:, recurring_tasks:)
           trigger_keys = recurring_tasks.map(&:trigger_key)
+          trigger_keys |= trigger_states.map(&:trigger_key)
           recurring_tasks_by_trigger_key = recurring_tasks.index_by(&:trigger_key)
+          trigger_states_by_trigger_key = trigger_states.index_by(&:trigger_key)
 
           trigger_keys.sort.map do |trigger_key|
             build_trigger_entry(
               workflow_key: workflow_key,
               trigger_key: trigger_key,
-              recurring_task: recurring_tasks_by_trigger_key[trigger_key]
+              recurring_task: recurring_tasks_by_trigger_key[trigger_key],
+              trigger_state: trigger_states_by_trigger_key[trigger_key]
             )
           end
         end
 
-        def build_trigger_entry(workflow_key:, trigger_key:, recurring_task:)
+        def build_trigger_entry(workflow_key:, trigger_key:, recurring_task:, trigger_state:)
           {
+            change_detecting: change_detecting_trigger?(recurring_task, trigger_state),
             cron: recurring_task&.schedule,
-            mode: trigger_mode_for(recurring_task),
+            mode: trigger_mode_for(recurring_task, trigger_state),
             next_trigger_at: next_trigger_at_for(recurring_task),
             queue_name: recurring_task&.queue_name || latest_queue_name(workflow_key),
             recurring_task: recurring_task,
-            run_now_available: recurring_task.present?,
+            run_now_available: recurring_task.present? && !recurring_task.change_detection?,
+            trigger_state: trigger_state,
             unique_key: trigger_key,
             workflow_key: workflow_key
           }
         end
 
-        def health_for(last_run:)
+        def health_for(last_run:, trigger_states:)
+          trigger_error = latest_trigger_error_for(trigger_states)
+          return trigger_error_health(trigger_error) if trigger_error.present?
+
           return failed_run_health(last_run) if last_run&.status == "failed"
           return healthy_health if last_run.present?
 
           idle_health
+        end
+
+        def trigger_error_health(trigger_error)
+          {
+            detail: trigger_error.last_error_message,
+            label: "Trigger error",
+            status: "trigger_error"
+          }
         end
 
         def failed_run_health(last_run)
@@ -209,6 +228,19 @@ module R3x
           }
         end
 
+        def latest_trigger_error_for(trigger_states)
+          latest_trigger_error = nil
+
+          trigger_states.each do |state|
+            next if state.last_error_at.blank?
+            next if latest_trigger_error.present? && state.last_error_at <= latest_trigger_error.last_error_at
+
+            latest_trigger_error = state
+          end
+
+          latest_trigger_error
+        end
+
         def next_trigger_at_for(recurring_task)
           return if recurring_task.blank?
 
@@ -231,18 +263,41 @@ module R3x
           end
         end
 
+        def trigger_states_by_workflow_key
+          @trigger_states_by_workflow_key ||= begin
+            R3x::TriggerState
+              .order(:workflow_key, :trigger_key)
+              .group_by(&:workflow_key)
+          rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
+            {}
+          end
+        end
+
         def catalog
           @catalog ||= Workflow::Catalog.new
         end
 
-        def trigger_mode_for(recurring_task)
+        def change_detecting_trigger?(recurring_task, trigger_state)
+          return true if recurring_task&.change_detection?
+
+          trigger_state&.trigger_type.present? && !%w[manual schedule].include?(trigger_state.trigger_type) && recurring_task.blank?
+        end
+
+        def trigger_mode_for(recurring_task, trigger_state)
+          return "change_detecting" if change_detecting_trigger?(recurring_task, trigger_state)
           return "scheduled" if recurring_task.present?
+          return trigger_state.trigger_type if trigger_state&.trigger_type.present?
 
           "observed"
         end
 
-        def last_seen_at_for(last_run:)
-          last_run&.recorded_at
+        def last_seen_at_for(last_run:, trigger_states:)
+          activity_times = [
+            last_run&.recorded_at,
+            *trigger_states.flat_map { |state| [ state.last_checked_at, state.last_triggered_at, state.last_error_at ] }
+          ]
+
+          activity_times.compact.max
         end
 
         def latest_queue_name(workflow_key)

@@ -8,12 +8,23 @@ module R3x
         end
 
         def enqueue!
-          ::Dashboard::Run.enqueue_direct!(**direct_enqueue_options)
+          if trigger_key.present? && recurring_task.change_detection?
+            enqueue_change_detection_job
+            nil
+          else
+            ::Dashboard::Run.enqueue_direct!(**direct_enqueue_options)
+          end
         end
 
         private
 
         attr_reader :trigger_key, :workflow_key
+
+        def enqueue_change_detection_job
+          R3x::ChangeDetectionJob
+            .set(job_options)
+            .perform_later(workflow_key, trigger_key: trigger_key)
+        end
 
         def direct_enqueue_options
           trigger_key.present? ? trigger_enqueue_options : manual_enqueue_options
@@ -55,6 +66,13 @@ module R3x
 
         def catalog
           @catalog ||= Workflow::Catalog.new
+        end
+
+        def job_options
+          {
+            queue: recurring_task.queue_name,
+            priority: recurring_task.priority
+          }.compact
         end
       end
     end

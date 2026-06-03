@@ -1,4 +1,5 @@
 require "test_helper"
+require_relative "../../support/fake_change_detecting_trigger"
 
 module R3x
   class RecurringTasksConfigTest < ActiveSupport::TestCase
@@ -42,6 +43,32 @@ module R3x
       refute tasks.key?("no_schedule")
 
       Workflow::Registry.reset!
+    end
+
+    test "generates change detection tasks for change-detecting triggers" do
+      fake_trigger = R3x::TestSupport::FakeChangeDetectingTrigger.new(identity: "feed")
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::ChangeDetectingFeed"
+        end
+
+        stubs(:triggers).returns([ fake_trigger ])
+        stubs(:schedulable_triggers).returns([ fake_trigger ])
+      end
+
+      R3x::Workflow::Registry.register(workflow_class)
+
+      tasks = RecurringTasksConfig.to_h
+      expected_key = "workflow:change_detecting_feed:#{fake_trigger.unique_key}"
+      task = tasks.fetch(expected_key)
+
+      assert_equal "R3x::ChangeDetectionJob", task["class"]
+      assert_equal [ "change_detecting_feed", { "trigger_key" => fake_trigger.unique_key } ], task["args"]
+      assert_equal "every 15 minutes", task["schedule"]
+      assert_equal "default", task["queue"]
+    ensure
+      Workflow::Registry.reset!
+      Workflow::PackLoader.load!(force: true)
     end
 
     test "schedule_all! persists dynamic tasks via SolidQueue" do

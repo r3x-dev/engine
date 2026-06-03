@@ -14,6 +14,7 @@ module TestDbCleanup
       SolidQueue::Job.delete_all
       SolidQueue::Process.delete_all
       SolidQueue::RecurringTask.delete_all
+      R3x::TriggerState.delete_all
     rescue ActiveRecord::StatementTimeout => error
       attempts += 1
       raise error unless error.message.include?("database is locked") && attempts < 6
