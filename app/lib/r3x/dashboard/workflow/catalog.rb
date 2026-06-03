@@ -3,6 +3,7 @@ module R3x
     module Workflow
       class Catalog
         TRIGGER_OBSERVATION_JOB_LIMIT = 250
+        CHANGE_DETECTION_CLASS_NAME = ::Dashboard::RecurringTask::CHANGE_DETECTION_CLASS_NAME
 
         def all
           workflow_keys.map { |workflow_key| build_entry(workflow_key) }
@@ -17,13 +18,17 @@ module R3x
 
         def workflow_keys
           @workflow_keys ||= begin
-            keys = workflow_keys_from_recurring_tasks + observed_class_names_to_keys.values
+            keys = workflow_keys_from_recurring_tasks + workflow_keys_from_trigger_states + observed_class_names_to_keys.values
             keys.compact.uniq.sort
           end
         end
 
         def recurring_tasks_for(workflow_key)
           recurring_tasks_by_workflow_key.fetch(workflow_key.to_s, [])
+        end
+
+        def trigger_states_for(workflow_key)
+          trigger_states_by_workflow_key.fetch(workflow_key.to_s, [])
         end
 
         def class_names_for(workflow_key)
@@ -45,11 +50,18 @@ module R3x
           end
 
           def trigger_keys_for(workflow_key)
-            recurring_tasks_for(workflow_key).map(&:trigger_key).compact.uniq.sort
+            task_keys = recurring_tasks_for(workflow_key).map(&:trigger_key)
+            state_keys = trigger_states_for(workflow_key).map(&:trigger_key)
+
+            (task_keys + state_keys).compact.uniq.sort
           end
 
           def workflow_keys_from_recurring_tasks
             recurring_tasks_by_workflow_key.keys
+          end
+
+          def workflow_keys_from_trigger_states
+            trigger_states_by_workflow_key.keys
           end
 
           def recurring_tasks
@@ -62,6 +74,16 @@ module R3x
 
           def recurring_tasks_by_workflow_key
             @recurring_tasks_by_workflow_key ||= recurring_tasks.group_by(&:workflow_key)
+          end
+
+          def trigger_states_by_workflow_key
+            @trigger_states_by_workflow_key ||= begin
+              R3x::TriggerState
+                .order(:workflow_key, :trigger_key)
+                .group_by(&:workflow_key)
+            rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
+              {}
+            end
           end
 
           def recurring_task_class_names_to_keys
@@ -148,6 +170,12 @@ module R3x
 
               recurring_tasks.each do |task|
                 mapping[task.trigger_key] << task.workflow_key
+              end
+
+              trigger_states_by_workflow_key.each do |workflow_key, states|
+                states.each do |state|
+                  mapping[state.trigger_key] << workflow_key
+                end
               end
 
               mapping.transform_values { |values| values.compact.uniq }

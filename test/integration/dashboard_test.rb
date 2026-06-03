@@ -27,6 +27,14 @@ class DashboardTest < ActionDispatch::IntegrationTest
       created_at: 10.minutes.ago,
       updated_at: 1.minute.ago
     )
+    R3x::TriggerState.create!(
+      workflow_key: "test_workflow",
+      trigger_key: @trigger,
+      trigger_type: "schedule",
+      state: {},
+      last_checked_at: 2.minutes.ago,
+      last_triggered_at: 1.minute.ago
+    )
   end
 
   teardown do
@@ -180,6 +188,14 @@ class DashboardTest < ActionDispatch::IntegrationTest
       run_status: "failed",
       recorded_at: 2.days.ago
     )
+    R3x::TriggerState.create!(
+      workflow_key: "stale_failure_workflow",
+      trigger_key: "schedule:stale",
+      trigger_type: "schedule",
+      state: {},
+      last_checked_at: 1.minute.ago
+    )
+
     create_dashboard_workflow(
       workflow_key: "recent_failure_workflow",
       trigger_key: "schedule:recent",
@@ -195,7 +211,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Failed "
   end
 
-  test "workflow detail renders trigger and recent runs" do
+  test "workflow detail renders trigger state and recent runs" do
     ENV.delete("R3X_LOGS_PROVIDER")
 
     get "/workflows/test_workflow"
@@ -207,6 +223,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Last seen"
     assert_includes response.body, "Triggers"
     assert_includes response.body, @trigger
+    assert_includes response.body, "Last checked"
     assert_includes response.body, "Run now"
     refute_includes response.body, "Recent logs"
   end
@@ -286,11 +303,17 @@ class DashboardTest < ActionDispatch::IntegrationTest
       run_status: "failed",
       recorded_at: 2.minutes.ago
     )
+    create_dashboard_workflow(
+      workflow_key: "trigger_error_workflow",
+      trigger_key: "feed:error",
+      trigger_error_at: 1.minute.ago
+    )
+
     get "/workflows", params: { sort: "health", direction: "desc" }
 
     assert_response :success
     assert_equal(
-      [ "Idle Workflow", "Healthy Workflow", "Failed Workflow" ],
+      [ "Idle Workflow", "Healthy Workflow", "Failed Workflow", "Trigger Error Workflow" ],
       css_select("#workflows-catalog tbody tr .title-link").map { |link| link.text.strip }
     )
     assert_includes response.body, 'href="/workflows?direction=asc&amp;sort=health#workflows-catalog"'
@@ -747,6 +770,62 @@ class DashboardTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "Unavailable"
   end
 
+  test "workflow detail can enqueue run now for change detection task" do
+    SolidQueue::RecurringTask.create!(
+      key: "workflow:feed_watch:feed:123",
+      schedule: "*/5 * * * *",
+      class_name: "R3x::ChangeDetectionJob",
+      arguments: [ "feed_watch", { "trigger_key" => "feed:123" } ],
+      queue_name: "feed",
+      static: false
+    )
+
+    assert_enqueued_jobs 1, only: R3x::ChangeDetectionJob do
+      post "/workflows/feed_watch/runs", params: { trigger_key: "feed:123" }
+    end
+
+    assert_redirected_to "/workflows/feed_watch"
+  end
+
+  test "workflow detail shows generic run now for change-detecting-only workflows" do
+    clear_tables
+    SolidQueue::RecurringTask.create!(
+      key: "workflow:feed_watch:feed:123",
+      schedule: "*/5 * * * *",
+      class_name: "R3x::ChangeDetectionJob",
+      arguments: [ "feed_watch", { "trigger_key" => "feed:123" } ],
+      queue_name: "feed",
+      static: false
+    )
+
+    get "/workflows/feed_watch"
+
+    assert_response :success
+    assert_includes response.body, "Run now"
+  end
+
+  test "workflow detail run now enqueues a manual workflow job for change-detecting-only workflows" do
+    clear_tables
+    SolidQueue::RecurringTask.create!(
+      key: "workflow:feed_watch:feed:123",
+      schedule: "*/5 * * * *",
+      class_name: "R3x::ChangeDetectionJob",
+      arguments: [ "feed_watch", { "trigger_key" => "feed:123" } ],
+      queue_name: "feed",
+      priority: 4,
+      static: false
+    )
+
+    post "/workflows/feed_watch/runs"
+
+    job = SolidQueue::Job.order(:id).last
+    assert_redirected_to "/workflow-runs/#{job.id}"
+    assert_equal "Workflows::FeedWatch", job.class_name
+    assert_equal "feed", job.queue_name
+    assert_equal 4, job.priority
+    assert_equal [], Dashboard::Run.find(job.id).workflow_arguments
+  end
+
   test "workflow detail run now returns not found for unknown workflow keys" do
     clear_tables
 
@@ -775,7 +854,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: 30.seconds.ago)
   end
 
-  def create_dashboard_workflow(workflow_key:, trigger_key:, run_status: nil, recorded_at: nil)
+  def create_dashboard_workflow(workflow_key:, trigger_key:, run_status: nil, recorded_at: nil, trigger_error_at: nil)
     job_class_name = DashboardTestWorkflows.ensure_class(workflow_key.camelize)
 
     SolidQueue::RecurringTask.create!(
@@ -786,6 +865,17 @@ class DashboardTest < ActionDispatch::IntegrationTest
       queue_name: "default",
       static: false
     )
+
+    if trigger_error_at.present?
+      R3x::TriggerState.create!(
+        workflow_key: workflow_key,
+        trigger_key: trigger_key,
+        trigger_type: "feed",
+        state: {},
+        last_error_at: trigger_error_at,
+        last_error_message: "#{workflow_key} error"
+      )
+    end
 
     return if run_status.blank?
 

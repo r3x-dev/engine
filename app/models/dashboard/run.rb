@@ -2,6 +2,8 @@ module Dashboard
   class Run < ApplicationRecord
     include R3x::Concerns::Logger
 
+    CHANGE_DETECTION_CLASS_NAME = "R3x::ChangeDetectionJob"
+    IGNORED_CLASS_NAMES = [ CHANGE_DETECTION_CLASS_NAME ].freeze
     STATUSES = %w[blocked failed finished queued running scheduled].freeze
     LATEST_ACTIVITY_BUCKETS = [
       [ "failed", :solid_queue_failed_executions, :created_at ],
@@ -25,12 +27,13 @@ module Dashboard
     has_one :claimed_execution, class_name: "SolidQueue::ClaimedExecution", foreign_key: :job_id
 
     scope :with_execution_associations, -> { includes(:failed_execution, :scheduled_execution, :blocked_execution, :ready_execution, :claimed_execution) }
+    scope :excluding_ignored_classes, -> { where.not(class_name: IGNORED_CLASS_NAMES) }
     scope :dashboard_visible, ->(class_names) do
       visible_class_names = Array(class_names).compact_blank
       visible_class_names.present? ? where(class_name: visible_class_names) : none
     end
-    scope :direct_workflows, -> { where("class_name LIKE ?", "Workflows::%") }
-    scope :observed_triggers, -> { where(class_name: []) }
+    scope :direct_workflows, -> { excluding_ignored_classes.where("class_name LIKE ?", "Workflows::%") }
+    scope :observed_triggers, -> { excluding_ignored_classes.where(class_name: []) }
     scope :unfinished, -> { where(finished_at: nil).where.missing(:failed_execution) }
     scope :for_status, ->(status) do
       case status.to_s

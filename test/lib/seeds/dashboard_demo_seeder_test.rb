@@ -31,6 +31,7 @@ module Seeds
 
       assert_equal %w[failed finished finished running scheduled], runs.map { |run| run[:status] }.sort
       assert_equal 5, SolidQueue::RecurringTask.where("key LIKE ?", "workflow:demo_%").count
+      assert_equal 5, R3x::TriggerState.where("workflow_key LIKE ?", "demo_%").count
     end
 
     test "re-seeding replaces demo records instead of duplicating them" do
@@ -71,7 +72,8 @@ module Seeds
         processes: SolidQueue::Process.count,
         ready: SolidQueue::ReadyExecution.count,
         recurring_tasks: SolidQueue::RecurringTask.count,
-        scheduled: SolidQueue::ScheduledExecution.count
+        scheduled: SolidQueue::ScheduledExecution.count,
+        trigger_states: R3x::TriggerState.count
       }
     end
   end

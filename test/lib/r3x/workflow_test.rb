@@ -1,4 +1,5 @@
 require "test_helper"
+require_relative "../../support/fake_change_detecting_trigger"
 
 module R3x
   class WorkflowTest < ActiveSupport::TestCase
@@ -293,6 +294,30 @@ module R3x
 
       assert_match(/Unknown trigger type: nonexistent/, error.message)
       assert_match(/Supported types:.*:schedule/, error.message)
+    end
+
+    test "rejects duplicate change-detecting trigger keys in one workflow" do
+      R3x::Triggers.stubs(:resolve).returns(R3x::TestSupport::FakeChangeDetectingTrigger)
+
+      error = assert_raises(ArgumentError) do
+        Class.new(R3x::Workflow::Base) do
+          def self.name
+            "Workflows::DuplicateChangeDetecting"
+          end
+
+          trigger :fake_change_detecting, identity: "same"
+          trigger :fake_change_detecting, identity: "same", cron: "every hour"
+        end
+      end
+
+      assert_match(/Trigger with key .* already exists/, error.message)
+    end
+
+    test "change-detecting trigger key does not change when only cron changes" do
+      trigger_one = R3x::TestSupport::FakeChangeDetectingTrigger.new(identity: "feed", cron: "every 15 minutes")
+      trigger_two = R3x::TestSupport::FakeChangeDetectingTrigger.new(identity: "feed", cron: "every hour")
+
+      assert_equal trigger_one.unique_key, trigger_two.unique_key
     end
 
     # Default trigger behavior tests
