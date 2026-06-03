@@ -25,8 +25,7 @@ module R3x
           "idle" => "muted",
           "queued" => "info",
           "running" => "info",
-          "scheduled" => "info",
-          "trigger_error" => "danger"
+          "scheduled" => "info"
         }.fetch(value, "muted")
       end
 
@@ -138,7 +137,6 @@ module R3x
         return "Schedule: #{cron}" if cron.present?
 
         {
-          "change_detecting" => "Change detection",
           "manual" => "Manual",
           "observed" => "Observed trigger"
         }.fetch(mode.to_s, mode.to_s.humanize)
@@ -146,7 +144,6 @@ module R3x
 
       def dashboard_trigger_kind(trigger_entry)
         {
-          "change_detecting" => "Change detection",
           "manual" => "Manual",
           "observed" => "Observed",
           "schedule" => "Schedule",
