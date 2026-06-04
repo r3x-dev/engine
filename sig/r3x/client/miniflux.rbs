@@ -1,0 +1,13 @@
+module R3x
+  module Client
+    class Miniflux
+      def initialize: (url_env: String url_env, api_key_env: String api_key_env) -> void
+
+      def entries: (?status: String status, ?limit: Integer limit, ?order: String order, ?direction: String direction, **untyped filters) -> Hash[untyped, untyped]
+
+      def category_entries: (category_id: Integer | String category_id, ?status: String status, ?limit: Integer limit, ?order: String order, ?direction: String direction, **untyped filters) -> Hash[untyped, untyped]
+
+      def mark_category_entries_as_read: (category_id: Integer | String category_id) -> bool
+    end
+  end
+end
