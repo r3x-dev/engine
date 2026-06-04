@@ -329,6 +329,7 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - `scratchpad/` is for quick test scripts, one-off experiments, and prototyping — anything outside the main implementation code and test suite.
 - The directory is gitignored. Do not place production code there.
 - Use it when you need to verify something quickly (e.g., hitting an API, testing a query) without writing a proper test.
+- When creating a standalone test script under `scratchpad/`, always add `require_relative "../config/environment"` at the top of the file so that the Rails environment (including models, configurations, and database connections) is loaded and available for use in the script.
 
 ## CLI Scripts
 

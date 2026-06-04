@@ -53,6 +53,10 @@ module R3x
           R3x::Client::Google::Translate.new(project: project)
         end
 
+        def miniflux(url_env:, api_key_env:)
+          R3x::Client::Miniflux.new(url_env: url_env, api_key_env: api_key_env)
+        end
+
         def discord(webhook_url_env:)
           R3x::Client::Discord.new(webhook_url_env: webhook_url_env)
         end
