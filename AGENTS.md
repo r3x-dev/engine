@@ -309,6 +309,8 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - **Bad**: `ENV["VAULT_ADDR"].presence || raise(ArgumentError, "Missing VAULT_ADDR")` — use the helper instead of inline pattern
 - **Bad**: `ENV["VAULT_ADDR"] || raise(ArgumentError, "Missing VAULT_ADDR")` — allows empty strings to pass through
 - The helper lives in `lib/r3x/env.rb`. In Rails/Dotenv, misconfigured `.env` files often yield empty strings (e.g., `VAULT_ADDR=`), which are truthy but invalid. Failing fast with a clear error prevents confusing downstream failures.
+- Keep `docs/environment.md` synchronized when adding, renaming, or removing environment variables. Document the env name, whether it is required, where it is used, a short description, and a placeholder example that does not reveal real secret values.
+- Clients that accept explicit env-name overrides should expose sensible provider-level defaults such as `DISCORD_WEBHOOK_URL`, `MINIFLUX_URL`, and `MINIFLUX_API_KEY`. Reuse those default constants for variant validation by passing an underscore-suffixed prefix, e.g. `R3x::Env.secure_fetch(api_key_env, prefix: "#{DEFAULT_API_KEY_ENV}_")`. Do not add separate `*_PREFIX` constants just to restate the default. `secure_fetch` treats that convention as "the base env name or a suffixed variant", so `MINIFLUX_API_KEY` and `MINIFLUX_API_KEY_PERSONAL` are both valid while unrelated names are rejected.
 
 ## Object Design
 

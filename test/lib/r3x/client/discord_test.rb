@@ -21,6 +21,34 @@ module R3x
         end
       end
 
+      test "deliver sends content to default webhook url env" do
+        webhook_url = "https://discord.test/default-webhook"
+        delivered = nil
+
+        stub_request(:post, webhook_url)
+          .with do |req|
+            delivered = MultiJSON.parse(req.body)
+          end
+          .to_return(status: 204)
+
+        with_env("R3X_DISCORD_DRY_RUN" => "false", "DISCORD_WEBHOOK_URL" => webhook_url) do
+          result = Discord.new.deliver(content: "Hello Discord")
+
+          assert_equal({ "content" => "Hello Discord" }, delivered)
+          assert_equal({ "mode" => "real", "content" => "Hello Discord" }, result)
+        end
+      end
+
+      test "rejects webhook env names outside discord prefix" do
+        with_env("WEBHOOK_URL" => "https://discord.test/webhook") do
+          error = assert_raises(ArgumentError) do
+            Discord.new(webhook_url_env: "WEBHOOK_URL")
+          end
+
+          assert_equal "Key 'WEBHOOK_URL' must be 'DISCORD_WEBHOOK_URL' or start with 'DISCORD_WEBHOOK_URL_'", error.message
+        end
+      end
+
       test "deliver raises on non-2xx response" do
         webhook_url = "https://discord.test/webhook"
 

@@ -6,6 +6,7 @@ module R3x
       include R3x::Concerns::Logger
 
       BASE_URL = "https://api.apify.com/v2"
+      DEFAULT_API_KEY_ENV = "APIFY_API_KEY"
 
       def initialize(api_key:)
         @api_key = api_key

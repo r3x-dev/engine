@@ -3,12 +3,13 @@ module R3x
     class Context
       module Client
         extend self
+        LLM_API_KEY_ENV_PATTERN = /\A[A-Z]+_API_KEY_[A-Z0-9_]+\z/
 
         def http(verify_ssl: true, timeout: 10)
           R3x::Client::Http.new(verify_ssl: verify_ssl, timeout: timeout)
         end
 
-        def prometheus(url_env: "PROMETHEUS_URL")
+        def prometheus(url_env: R3x::Client::Prometheus::DEFAULT_URL_ENV)
           R3x::Client::Prometheus.new(url_env: url_env)
         end
 
@@ -20,13 +21,15 @@ module R3x
           )
         end
 
-        def apify(api_key_env:)
-          R3x::Client::Apify.new(api_key: R3x::Env.secure_fetch(api_key_env, prefix: "APIFY_API_KEY"))
+        def apify(api_key_env: R3x::Client::Apify::DEFAULT_API_KEY_ENV)
+          R3x::Client::Apify.new(
+            api_key: R3x::Env.secure_fetch(api_key_env, prefix: "#{R3x::Client::Apify::DEFAULT_API_KEY_ENV}_")
+          )
         end
 
         def llm(api_key_env:, max_retries: nil, retry_interval: nil, retry_backoff_factor: nil)
           R3x::Client::Llm.new(
-            api_key: R3x::Env.secure_fetch(api_key_env, prefix: /\A[A-Z]+_API_KEY_[A-Z0-9_]+\z/),
+            api_key: R3x::Env.secure_fetch(api_key_env, prefix: LLM_API_KEY_ENV_PATTERN),
             config_api_key_attr: "#{api_key_env.split("_").first.downcase}_api_key",
             max_retries: max_retries,
             retry_interval: retry_interval,
@@ -45,7 +48,7 @@ module R3x
           R3x::Client::Google::Gmail.new(project: project)
         end
 
-        def ocr(api_key_env:)
+        def ocr(api_key_env: R3x::Client::Ocr::DEFAULT_API_KEY_ENV)
           R3x::Client::Ocr.new(api_key_env: api_key_env)
         end
 
@@ -53,11 +56,14 @@ module R3x
           R3x::Client::Google::Translate.new(project: project)
         end
 
-        def miniflux(url_env:, api_key_env:)
+        def miniflux(
+          url_env: R3x::Client::Miniflux::DEFAULT_URL_ENV,
+          api_key_env: R3x::Client::Miniflux::DEFAULT_API_KEY_ENV
+        )
           R3x::Client::Miniflux.new(url_env: url_env, api_key_env: api_key_env)
         end
 
-        def discord(webhook_url_env:)
+        def discord(webhook_url_env: R3x::Client::Discord::DEFAULT_WEBHOOK_URL_ENV)
           R3x::Client::Discord.new(webhook_url_env: webhook_url_env)
         end
 

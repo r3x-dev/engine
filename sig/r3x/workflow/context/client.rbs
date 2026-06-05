@@ -2,13 +2,15 @@ module R3x
   module Workflow
     class Context
       module Client
+        LLM_API_KEY_ENV_PATTERN: Regexp
+
         def http: (?verify_ssl: bool verify_ssl, ?timeout: Integer timeout) -> R3x::Client::Http
 
         def prometheus: (?url_env: String url_env) -> R3x::Client::Prometheus
 
         def healthchecks_io: (String check_uuid, ?ping_endpoint: String? ping_endpoint, ?ping_endpoint_env: String ping_endpoint_env) -> R3x::Client::HealthchecksIO
 
-        def apify: (api_key_env: String api_key_env) -> R3x::Client::Apify
+        def apify: (?api_key_env: String api_key_env) -> R3x::Client::Apify
 
         def llm: (api_key_env: String api_key_env, ?max_retries: Integer? max_retries, ?retry_interval: Numeric? retry_interval, ?retry_backoff_factor: Numeric? retry_backoff_factor) -> R3x::Client::Llm
 
@@ -16,13 +18,13 @@ module R3x
 
         def gmail: (project: String project) -> R3x::Client::Google::Gmail
 
-        def ocr: (api_key_env: String api_key_env) -> R3x::Client::Ocr
+        def ocr: (?api_key_env: String api_key_env) -> R3x::Client::Ocr
 
         def google_translate: (project: String project) -> R3x::Client::Google::Translate
 
-        def miniflux: (url_env: String url_env, api_key_env: String api_key_env) -> R3x::Client::Miniflux
+        def miniflux: (?url_env: String url_env, ?api_key_env: String api_key_env) -> R3x::Client::Miniflux
 
-        def discord: (webhook_url_env: String webhook_url_env) -> R3x::Client::Discord
+        def discord: (?webhook_url_env: String webhook_url_env) -> R3x::Client::Discord
 
         def markdownify: (url: String url, ?method: String method, ?retain_images: bool retain_images) -> String
 
@@ -32,7 +34,7 @@ module R3x
 
         def self.healthchecks_io: (String check_uuid, ?ping_endpoint: String? ping_endpoint, ?ping_endpoint_env: String ping_endpoint_env) -> R3x::Client::HealthchecksIO
 
-        def self.apify: (api_key_env: String api_key_env) -> R3x::Client::Apify
+        def self.apify: (?api_key_env: String api_key_env) -> R3x::Client::Apify
 
         def self.llm: (api_key_env: String api_key_env, ?max_retries: Integer? max_retries, ?retry_interval: Numeric? retry_interval, ?retry_backoff_factor: Numeric? retry_backoff_factor) -> R3x::Client::Llm
 
@@ -40,13 +42,13 @@ module R3x
 
         def self.gmail: (project: String project) -> R3x::Client::Google::Gmail
 
-        def self.ocr: (api_key_env: String api_key_env) -> R3x::Client::Ocr
+        def self.ocr: (?api_key_env: String api_key_env) -> R3x::Client::Ocr
 
         def self.google_translate: (project: String project) -> R3x::Client::Google::Translate
 
-        def self.miniflux: (url_env: String url_env, api_key_env: String api_key_env) -> R3x::Client::Miniflux
+        def self.miniflux: (?url_env: String url_env, ?api_key_env: String api_key_env) -> R3x::Client::Miniflux
 
-        def self.discord: (webhook_url_env: String webhook_url_env) -> R3x::Client::Discord
+        def self.discord: (?webhook_url_env: String webhook_url_env) -> R3x::Client::Discord
 
         def self.markdownify: (url: String url, ?method: String method, ?retain_images: bool retain_images) -> String
       end

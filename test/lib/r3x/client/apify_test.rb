@@ -70,6 +70,52 @@ module R3x
 
         assert_instance_of HTTPX::Session, client.raw
       end
+
+      test "context client uses default api key env" do
+        with_env("APIFY_API_KEY" => "test-api-key") do
+          client = R3x::Workflow::Context::Client.apify
+
+          assert_instance_of Apify, client
+        end
+      end
+
+      test "context client accepts custom api key env with apify prefix" do
+        with_env("APIFY_API_KEY_CUSTOM" => "custom-api-key") do
+          client = R3x::Workflow::Context::Client.apify(api_key_env: "APIFY_API_KEY_CUSTOM")
+
+          assert_instance_of Apify, client
+        end
+      end
+
+      test "context client rejects api key env outside apify prefix" do
+        with_env("ACTOR_API_KEY" => "test-api-key") do
+          error = assert_raises(ArgumentError) do
+            R3x::Workflow::Context::Client.apify(api_key_env: "ACTOR_API_KEY")
+          end
+
+          assert_equal "Key 'ACTOR_API_KEY' must be 'APIFY_API_KEY' or start with 'APIFY_API_KEY_'", error.message
+        end
+      end
+
+      test "context client raises when default api key env is missing" do
+        with_env("APIFY_API_KEY" => nil) do
+          error = assert_raises(ArgumentError) do
+            R3x::Workflow::Context::Client.apify
+          end
+
+          assert_equal "Missing APIFY_API_KEY", error.message
+        end
+      end
+
+      private
+
+      def with_env(hash)
+        originals = hash.each_with_object({}) { |(key, _), memo| memo[key] = ENV[key] }
+        hash.each { |key, value| ENV[key] = value }
+        yield
+      ensure
+        originals.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+      end
     end
   end
 end

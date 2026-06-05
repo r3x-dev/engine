@@ -1,8 +1,10 @@
 module R3x
   module Client
     class Prometheus
-      def initialize(url_env: "PROMETHEUS_URL")
-        base_url = R3x::Env.secure_fetch(url_env, prefix: "PROMETHEUS_URL")
+      DEFAULT_URL_ENV = "PROMETHEUS_URL"
+
+      def initialize(url_env: DEFAULT_URL_ENV)
+        base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_")
         @client = HTTPX.with({})
         @base_url = base_url
       end

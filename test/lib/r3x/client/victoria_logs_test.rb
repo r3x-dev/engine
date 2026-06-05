@@ -22,6 +22,32 @@ module R3x
         assert_equal "Missing R3X_VICTORIA_LOGS_URL", error.message
       end
 
+      test "supports custom url_env with matching prefix" do
+        ENV["R3X_VICTORIA_LOGS_URL_CUSTOM"] = "http://custom-victoria-logs.test:9428"
+
+        stub_request(:post, "http://custom-victoria-logs.test:9428/select/logsql/query")
+          .with(body: hash_including("query" => "_msg:test | sort by (_time)"))
+          .to_return(status: 200, body: "")
+
+        result = VictoriaLogs.new(url_env: "R3X_VICTORIA_LOGS_URL_CUSTOM").query(query: "_msg:test")
+
+        assert_equal [], result
+      ensure
+        ENV.delete("R3X_VICTORIA_LOGS_URL_CUSTOM")
+      end
+
+      test "rejects url_env outside victoria logs prefix" do
+        ENV["VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+        error = assert_raises(ArgumentError) do
+          VictoriaLogs.new(url_env: "VICTORIA_LOGS_URL")
+        end
+
+        assert_equal "Key 'VICTORIA_LOGS_URL' must be 'R3X_VICTORIA_LOGS_URL' or start with 'R3X_VICTORIA_LOGS_URL_'", error.message
+      ensure
+        ENV.delete("VICTORIA_LOGS_URL")
+      end
+
       test "queries and parses json lines" do
         ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
 
