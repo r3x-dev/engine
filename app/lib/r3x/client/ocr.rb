@@ -7,6 +7,7 @@ module R3x
     class Ocr
       ENDPOINT = "parse/image"
       BASE_URL = "https://api.ocr.space"
+      DEFAULT_API_KEY_ENV = "OCRSPACE_API_KEY"
 
       MIME_TYPES = {
         ".png" => "image/png",
@@ -19,8 +20,8 @@ module R3x
         ".pdf" => "application/pdf"
       }.freeze
 
-      def initialize(api_key_env:)
-        @api_key = R3x::Env.secure_fetch(api_key_env, prefix: "OCRSPACE_API_KEY")
+      def initialize(api_key_env: DEFAULT_API_KEY_ENV)
+        @api_key = R3x::Env.secure_fetch(api_key_env, prefix: "#{DEFAULT_API_KEY_ENV}_")
       end
 
       def parse(io_or_path, language: nil, engine: nil, filetype: nil, overlay: false)

@@ -61,7 +61,7 @@ module R3x
           Prometheus.new(url_env: "MY_PROM_URL")
         end
 
-        assert_match(/must start with 'PROMETHEUS_URL'/, error.message)
+        assert_equal "Key 'MY_PROM_URL' must be 'PROMETHEUS_URL' or start with 'PROMETHEUS_URL_'", error.message
 
         ENV.delete("MY_PROM_URL")
       end

@@ -3,6 +3,8 @@
 This app is designed to run from environment variables only. Do not use Rails
 encrypted credentials in production deployments.
 
+See `docs/environment.md` for the central environment-variable index.
+
 ## Required Runtime Environment
 
 - `SECRET_KEY_BASE`: required for production runtime processes. Generate with
