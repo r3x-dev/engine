@@ -8,14 +8,17 @@ module R3x
     # to the official Miniflux API documentation:
     # See https://miniflux.app/docs/api.html
     class Miniflux
+      DEFAULT_URL_ENV = "MINIFLUX_URL"
+      DEFAULT_API_KEY_ENV = "MINIFLUX_API_KEY"
+
       DEFAULT_STATUS = "unread"
       DEFAULT_LIMIT = 20
       DEFAULT_ORDER = "published_at"
       DEFAULT_DIRECTION = "desc"
 
-      def initialize(url_env:, api_key_env:)
-        @base_url = R3x::Env.secure_fetch(url_env, prefix: "MINIFLUX_URL").delete_suffix("/")
-        @api_key = R3x::Env.secure_fetch(api_key_env, prefix: "MINIFLUX_API_KEY")
+      def initialize(url_env: DEFAULT_URL_ENV, api_key_env: DEFAULT_API_KEY_ENV)
+        @base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_").delete_suffix("/")
+        @api_key = R3x::Env.secure_fetch(api_key_env, prefix: "#{DEFAULT_API_KEY_ENV}_")
       end
 
       # GET /v1/entries

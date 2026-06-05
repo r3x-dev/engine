@@ -1,10 +1,11 @@
 module R3x
   module Client
     class VictoriaLogs
+      DEFAULT_URL_ENV = "R3X_VICTORIA_LOGS_URL"
       DEFAULT_TIMEOUT = "5s"
 
-      def initialize(url_env: "R3X_VICTORIA_LOGS_URL")
-        base_url = R3x::Env.secure_fetch(url_env, prefix: "R3X_VICTORIA_LOGS_URL")
+      def initialize(url_env: DEFAULT_URL_ENV)
+        base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_")
         @client = HTTPX.with(
           timeout: { connect_timeout: 5, operation_timeout: 10 }
         )

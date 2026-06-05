@@ -1,11 +1,15 @@
 module R3x
   module Client
     class Apify
+      DEFAULT_API_KEY_ENV: String
+
       def initialize: (api_key: String api_key) -> void
     end
 
     class Discord
-      def initialize: (webhook_url_env: String webhook_url_env) -> void
+      DEFAULT_WEBHOOK_URL_ENV: String
+
+      def initialize: (?webhook_url: String? webhook_url, ?webhook_url_env: String webhook_url_env) -> void
     end
 
     module Google
@@ -37,10 +41,14 @@ module R3x
     end
 
     class Ocr
-      def initialize: (api_key_env: String api_key_env) -> void
+      DEFAULT_API_KEY_ENV: String
+
+      def initialize: (?api_key_env: String api_key_env) -> void
     end
 
     class Prometheus
+      DEFAULT_URL_ENV: String
+
       def initialize: (?url_env: String url_env) -> void
     end
   end

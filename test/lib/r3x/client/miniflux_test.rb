@@ -33,7 +33,7 @@ module R3x
             Miniflux.new(url_env: "FEED_READER_URL", api_key_env: "MINIFLUX_API_KEY")
           end
 
-          assert_match(/must start with 'MINIFLUX_URL'/, error.message)
+          assert_equal "Key 'FEED_READER_URL' must be 'MINIFLUX_URL' or start with 'MINIFLUX_URL_'", error.message
         end
       end
 
@@ -43,7 +43,7 @@ module R3x
             Miniflux.new(url_env: "MINIFLUX_URL", api_key_env: "FEED_READER_API_KEY")
           end
 
-          assert_match(/must start with 'MINIFLUX_API_KEY'/, error.message)
+          assert_equal "Key 'FEED_READER_API_KEY' must be 'MINIFLUX_API_KEY' or start with 'MINIFLUX_API_KEY_'", error.message
         end
       end
 
@@ -62,6 +62,48 @@ module R3x
         assert_equal 1, result["total"]
         assert_equal "Hello", result.dig("entries", 0, "title")
         assert_equal "preserved", result["upstream_field"]
+      end
+
+      test "entries uses default env names without constructor arguments" do
+        stub_entries_request("/v1/entries", query: {
+          "status" => "unread",
+          "limit" => "20",
+          "order" => "published_at",
+          "direction" => "desc"
+        })
+
+        result = with_client_env do
+          Miniflux.new.entries
+        end
+
+        assert_equal 1, result["total"]
+      end
+
+      test "entries supports custom env names with miniflux prefixes" do
+        stub_request(:get, "https://custom-miniflux.test/v1/entries")
+          .with(
+            query: {
+              "status" => "unread",
+              "limit" => "20",
+              "order" => "published_at",
+              "direction" => "desc"
+            },
+            headers: { "X-Auth-Token" => "custom-api-key" }
+          )
+          .to_return(
+            status: 200,
+            body: MultiJSON.generate("total" => 0, "entries" => []),
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        result = with_env(
+          "MINIFLUX_URL_CUSTOM" => "https://custom-miniflux.test",
+          "MINIFLUX_API_KEY_CUSTOM" => "custom-api-key"
+        ) do
+          Miniflux.new(url_env: "MINIFLUX_URL_CUSTOM", api_key_env: "MINIFLUX_API_KEY_CUSTOM").entries
+        end
+
+        assert_equal 0, result["total"]
       end
 
       test "entries passes explicit query params" do
@@ -164,6 +206,21 @@ module R3x
 
           assert_instance_of Miniflux, client
         end
+      end
+
+      test "context client builds miniflux client with default env names" do
+        stub_entries_request("/v1/entries", query: {
+          "status" => "unread",
+          "limit" => "20",
+          "order" => "published_at",
+          "direction" => "desc"
+        })
+
+        result = with_client_env do
+          R3x::Workflow::Context::Client.miniflux.entries
+        end
+
+        assert_equal 1, result["total"]
       end
 
       private

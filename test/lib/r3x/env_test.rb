@@ -50,6 +50,14 @@ module R3x
       ENV.delete("GEMINI_API_KEY_TEST")
     end
 
+    test "secure_fetch with string prefix ending in underscore accepts base key" do
+      ENV["GEMINI_API_KEY"] = "AIza-base-key"
+
+      assert_equal "AIza-base-key", Env.secure_fetch("GEMINI_API_KEY", prefix: "GEMINI_API_KEY_")
+    ensure
+      ENV.delete("GEMINI_API_KEY")
+    end
+
     test "secure_fetch with string prefix rejects key not starting with prefix" do
       ENV["OTHER_KEY_TEST"] = "some-value"
 
@@ -57,7 +65,7 @@ module R3x
         Env.secure_fetch("OTHER_KEY_TEST", prefix: "GEMINI_API_KEY_")
       end
 
-      assert_match(/must start with/, error.message)
+      assert_equal "Key 'OTHER_KEY_TEST' must be 'GEMINI_API_KEY' or start with 'GEMINI_API_KEY_'", error.message
     ensure
       ENV.delete("OTHER_KEY_TEST")
     end

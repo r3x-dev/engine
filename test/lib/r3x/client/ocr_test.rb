@@ -38,7 +38,7 @@ module R3x
           Ocr.new(api_key_env: "SOME_OTHER_KEY")
         end
 
-        assert_equal "Key 'SOME_OTHER_KEY' must start with 'OCRSPACE_API_KEY'", error.message
+        assert_equal "Key 'SOME_OTHER_KEY' must be 'OCRSPACE_API_KEY' or start with 'OCRSPACE_API_KEY_'", error.message
       end
 
       test "accepts custom api_key_env with OCRSPACE_API_KEY prefix" do
@@ -47,6 +47,15 @@ module R3x
         stub_success("hello")
 
         client = Ocr.new(api_key_env: "OCRSPACE_API_KEY_CUSTOM")
+        result = client.parse(StringIO.new("fake"), filetype: "image/jpeg")
+
+        assert_equal "hello", result.text
+      end
+
+      test "uses default api key env without constructor arguments" do
+        stub_success("hello")
+
+        client = Ocr.new
         result = client.parse(StringIO.new("fake"), filetype: "image/jpeg")
 
         assert_equal "hello", result.text

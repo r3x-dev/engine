@@ -41,8 +41,8 @@ module R3x
 
       case prefix
       when String
-        unless key.start_with?(prefix)
-          raise ArgumentError, "Key '#{key}' must start with '#{prefix}'"
+        unless key == prefix.delete_suffix("_") || key.start_with?(prefix)
+          raise ArgumentError, "Key '#{key}' must be '#{prefix.delete_suffix("_")}' or start with '#{prefix}'"
         end
       when Regexp
         unless key.match?(prefix)
