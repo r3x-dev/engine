@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "ce-dhh-rails-style": {
+      "source": "EveryInc/compound-engineering-plugin",
+      "sourceType": "github",
+      "skillPath": "plugins/compound-engineering/skills/ce-dhh-rails-style/SKILL.md",
+      "computedHash": "49604154d82e6b43f6d49cb3b17a08be45544528a184aeba5d7728b2dd43d33c"
+    },
     "dhh-rails-style": {
       "source": "EveryInc/compound-engineering-plugin",
       "sourceType": "github",
