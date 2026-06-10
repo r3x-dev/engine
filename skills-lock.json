@@ -7,16 +7,16 @@
       "computedHash": "a074cffa30542487467f57d1a609376f3aac64842e30588e3fb84b35a4ed438a"
     },
     "ruby-optimise": {
-      "source": "pproenca/dot-skills",
+      "source": "zewelor/agents-skills",
       "sourceType": "github",
-      "skillPath": "skills/.curated/ruby-optimise/SKILL.md",
-      "computedHash": "9b6f45d217dc36f37be15fd0dc1cdd507101ebf50f6cb9c2e708929f166fd77e"
+      "skillPath": "skills/ruby-optimise/SKILL.md",
+      "computedHash": "511432038c08a649a9fe262d93b1a8f2b1aa3ad47b29212bed26387007a844b3"
     },
     "ruby-refactor": {
-      "source": "pproenca/dot-skills",
+      "source": "zewelor/agents-skills",
       "sourceType": "github",
-      "skillPath": "skills/.curated/ruby-refactor/SKILL.md",
-      "computedHash": "7ce7408cb5765e13d6c05b7522c8af1d524e27601cc9de8f5e6537f2ae19b123"
+      "skillPath": "skills/ruby-refactor/SKILL.md",
+      "computedHash": "c7e6a8a49a55d6fc72dd2038223732b5cc66a698fa2365323d65ab4dbc44e46c"
     },
     "ruby-resource-map": {
       "source": ".agents/skills/ruby-resource-map",
