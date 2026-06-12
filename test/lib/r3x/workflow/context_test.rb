@@ -153,6 +153,44 @@ module R3x
         end
       end
 
+      test "client proxy builds llm client for opencode provider with base env" do
+        with_env("OPENCODE_GO_API_KEY" => "go-base-key") do
+          ctx = Context.new(
+            trigger: R3x::TriggerManager::Execution.new(
+              trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
+              workflow_key: "test"
+            ),
+            workflow_key: "test"
+          )
+          llm = ctx.client.llm(api_key_env: "OPENCODE_GO_API_KEY")
+
+          assert_instance_of R3x::Client::Llm, llm
+          assert_equal({ provider: :opencode_go, assume_model_exists: true }, llm.instance_variable_get(:@chat_options))
+          context = llm.instance_variable_get(:@llm_context)
+          assert_equal "go-base-key", context.config.opencode_go_api_key
+        end
+      end
+
+      test "client proxy builds llm client for opencode provider with suffixed env" do
+        with_env("OPENCODE_GO_API_KEY_PROJECTA" => "go-test-key") do
+          ctx = Context.new(
+            trigger: R3x::TriggerManager::Execution.new(
+              trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
+              workflow_key: "test"
+            ),
+            workflow_key: "test"
+          )
+          llm = ctx.client.llm(api_key_env: "OPENCODE_GO_API_KEY_PROJECTA")
+
+          assert_instance_of R3x::Client::Llm, llm
+          assert_equal({ provider: :opencode_go, assume_model_exists: true }, llm.instance_variable_get(:@chat_options))
+          context = llm.instance_variable_get(:@llm_context)
+          assert_equal "go-test-key", context.config.opencode_go_api_key
+        end
+      end
+
+
+
       private
 
       def with_env(hash)

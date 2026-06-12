@@ -2,8 +2,6 @@ module R3x
   module Workflow
     class Context
       module Client
-        LLM_API_KEY_ENV_PATTERN: Regexp
-
         def http: (?verify_ssl: bool verify_ssl, ?timeout: Integer timeout) -> R3x::Client::Http
 
         def prometheus: (?url_env: String url_env) -> R3x::Client::Prometheus

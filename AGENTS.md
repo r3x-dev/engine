@@ -174,6 +174,12 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - Keep the Steep scope narrow. Do not expand it to the whole Rails app unless explicitly planned.
 - Treat `sig/r3x/client/_stubs.rbs` and `sig/r3x/external_stubs.rbs` as dependency stubs, not source of truth for unchecked implementation details.
 
+## Iterative Design Reviews
+
+- When the user is still reviewing the shape of a refactor or API design, keep the first pass focused on production code only unless they explicitly ask for full follow-through.
+- Do not update tests, fixtures, or RBS signatures for an unaccepted design sketch. Wait until the user accepts the code shape, then synchronize tests and `sig/` files in the follow-up pass.
+- It is still fine to run syntax checks on the touched Ruby files during the sketch phase. Do not treat typecheck failures caused only by intentionally stale RBS as blockers until the user accepts the design.
+
 ## JSON
 
 - Prefer `MultiJSON` for JSON parsing and serialization work.
@@ -349,6 +355,26 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - Do not use Thor reserved words as method names: `run`, `invoke`, `shell`, `options`, `behavior`, `root`, `action`, `create_file`, `inside`, `run_ruby_script`. Use `map "run" => :execute` if the CLI command name must be `run`.
 
 ## Code Style
+
+### Ruby/Rails Implementation Defaults
+
+- Prefer the smallest Ruby or Rails primitive that expresses the real contract. Do not add a new gem or concurrency abstraction for a tiny cache, registry, or value object when `Hash`, `Mutex`, constants, `Data.define`, or an existing Rails helper are enough.
+- For process-wide memoization, use an explicit process-wide cache keyed by the real lookup key and protect writes with `Mutex` when concurrent access is possible. Freeze cached values when callers should not mutate them.
+- Do not use `Thread.current`, `thread_mattr`, or `Current` for shared configuration, provider registries, or process-level caches. Use them only when the value is intentionally thread/request scoped.
+- Avoid `cattr_accessor`/`mattr_accessor` for mutable global state unless Rails-owned configuration behavior is specifically desired. Prefer constants plus narrow class methods for fixed defaults and small registries.
+- Memoize per domain key, not per boot, unless the product contract is truly "one value for the whole process". For provider/client code, caches should usually be keyed by provider, env name, account, or another explicit identifier.
+- Keep optional integration setup behind the lazy-load boundary that first needs it. If a custom provider or registry requires a heavy optional gem, register it after `R3x::GemLoader.require(...)`, not from a boot-time initializer.
+- Make registries idempotent. Repeated calls from parallel workflow/client setup should be safe, cheap, and should not duplicate provider registrations.
+- Prefer failing fast at the boundary for unknown env prefixes, provider names, modes, and other closed sets. Do not keep a permissive fallback that only fails later in a lower-level client.
+- For small immutable value objects, prefer the class form of `Data.define` and define constants inside the class body:
+
+  ```ruby
+  class ProviderConfiguration < Data.define(:api_key, :config_api_key_attr)
+    API_KEY_SUFFIX = "_API_KEY"
+  end
+  ```
+
+- Keep class-level APIs easy to scan: put constants first, then the public `class << self` methods near the top of the class. If a class-level helper is private, mark it with `private_class_method` close to the helper definition.
 
 ### Prefer Expressive, High-Level Methods
 
