@@ -1,0 +1,64 @@
+# frozen_string_literal: true
+
+module R3x
+  module Client
+    class Llm
+      module ProviderRegistry
+        extend self
+
+        MUTEX = Mutex.new
+
+        def register!
+          MUTEX.synchronize do
+            register_opencode_go!
+          end
+        end
+
+        private
+
+        def register_opencode_go!
+          RubyLLM::Providers.const_set(:OpenCodeGo, opencode_go_provider_class) unless RubyLLM::Providers.const_defined?(:OpenCodeGo, false)
+          return if RubyLLM::Provider.providers[:opencode_go] == RubyLLM::Providers::OpenCodeGo
+
+          RubyLLM::Provider.register(:opencode_go, RubyLLM::Providers::OpenCodeGo)
+        end
+
+        def opencode_go_provider_class
+          Class.new(RubyLLM::Providers::OpenAI) do
+            def api_base
+              "https://opencode.ai/zen/go/v1"
+            end
+
+            def headers
+              {
+                "Authorization" => "Bearer #{@config.opencode_go_api_key}"
+              }.compact
+            end
+
+            def list_models
+              []
+            end
+
+            class << self
+              def slug
+                "opencode_go"
+              end
+
+              def assume_models_exist?
+                true
+              end
+
+              def configuration_options
+                %i[opencode_go_api_key]
+              end
+
+              def configuration_requirements
+                %i[opencode_go_api_key]
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+end

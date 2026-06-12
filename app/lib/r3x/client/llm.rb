@@ -4,9 +4,48 @@ module R3x
       MAX_RETRIES = 3
       RETRY_INTERVAL = 60.0
       RETRY_BACKOFF_FACTOR = 2
+      DEFAULT_CHAT_OPTIONS = {}.freeze
+      CHAT_OPTIONS_BY_PROVIDER = {}
+      CHAT_OPTIONS_BY_PROVIDER_MUTEX = Mutex.new
 
-      def initialize(api_key:, config_api_key_attr:, max_retries: MAX_RETRIES, retry_interval: RETRY_INTERVAL, retry_backoff_factor: RETRY_BACKOFF_FACTOR)
+      class << self
+        def chat_options_for(provider)
+          CHAT_OPTIONS_BY_PROVIDER_MUTEX.synchronize do
+            CHAT_OPTIONS_BY_PROVIDER.fetch(provider) do
+              CHAT_OPTIONS_BY_PROVIDER[provider] = build_chat_options_for(provider)
+            end
+          end
+        end
+
+        private
+          def build_chat_options_for(provider)
+            provider_class = RubyLLM::Provider.providers.fetch(provider)
+
+            if provider_class.assume_models_exist?
+              {
+                provider: provider,
+                assume_model_exists: true
+              }.freeze
+            else
+              DEFAULT_CHAT_OPTIONS
+            end
+          end
+      end
+
+      def initialize(
+        api_key:,
+        config_api_key_attr:,
+        max_retries: MAX_RETRIES,
+        retry_interval: RETRY_INTERVAL,
+        retry_backoff_factor: RETRY_BACKOFF_FACTOR
+      )
         R3x::GemLoader.require("ruby_llm")
+        ProviderRegistry.register!
+
+        inferred_provider = config_api_key_attr.delete_suffix("_api_key").to_sym
+        raise ArgumentError, "Unsupported LLM provider: #{inferred_provider}" unless RubyLLM::Provider.providers.key?(inferred_provider)
+
+        @chat_options = self.class.chat_options_for(inferred_provider)
 
         @llm_context = RubyLLM.context do |config|
           config.public_send(:"#{config_api_key_attr}=", api_key)
@@ -20,25 +59,29 @@ module R3x
         io = StringIO.new(image_bytes)
         io.set_encoding(Encoding::BINARY)
 
-        chat = llm_context.chat(model: model)
-        chat = chat.with_schema(schema) if schema
-        chat.ask(prompt, with: [ io ]).content
+        conversation = chat(model)
+        conversation = conversation.with_schema(schema) if schema
+        conversation.ask(prompt, with: [ io ]).content
       end
 
       def message(model:, prompt:, schema: nil)
-        conversation = llm_context.chat(model: model)
+        conversation = chat(model)
         conversation = conversation.with_schema(schema) if schema
 
         conversation.ask(prompt)
       end
 
       def classify(...)
-        Classifier.new(llm_client: llm_context).classify(...)
+        Classifier.new(llm: self).classify(...)
       end
 
       private
 
-      attr_reader :llm_context
+      attr_reader :llm_context, :chat_options
+
+      def chat(model)
+        llm_context.chat(**chat_options.merge(model: model))
+      end
     end
   end
 end

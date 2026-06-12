@@ -79,7 +79,9 @@ that show shape only.
 | `OCRSPACE_API_KEY_*` | Optional variant | OCR explicit `api_key_env:` | Alternate OCR.space key env names. | `OCRSPACE_API_KEY_WORKFLOW=<token>` |
 | `APIFY_API_KEY` | Required when Apify context client uses default env | `ctx.client.apify` | Apify API token. Custom names may start with this prefix. | `APIFY_API_KEY=<token>` |
 | `APIFY_API_KEY_*` | Optional variant | Apify explicit `api_key_env:` | Alternate Apify token env names. | `APIFY_API_KEY_SCRAPERS=<token>` |
-| `<PROVIDER>_API_KEY_*` | Required when LLM client is used | `ctx.client.llm` | Dynamic LLM API key env names. Must match the uppercase provider/key pattern, such as Gemini. | `GEMINI_API_KEY_MAIN=<token>` |
+| `OPENCODE_GO_API_KEY` | Required when selected as `api_key_env` for `ctx.client.llm` | `ctx.client.llm` | OpenCode Go token. Routed through RubyLLM's OpenAI-compatible adapter with the OpenCode endpoint. | `OPENCODE_GO_API_KEY=<token>` |
+| `OPENCODE_GO_API_KEY_*` | Optional variant | `ctx.client.llm(api_key_env: ...)` | Alternate OpenCode Go token env names. | `OPENCODE_GO_API_KEY_PROJECTA=<token>` |
+| `<PROVIDER>_API_KEY` / `<PROVIDER>_API_KEY_*` | Required when LLM client is used | `ctx.client.llm` | Dynamic LLM API key env names. Must match the uppercase provider/key pattern, such as Gemini. | `GEMINI_API_KEY=<token>` / `GEMINI_API_KEY_MAIN=<token>` |
 | `GOOGLE_CLIENT_ID_*` | Required when Google OAuth clients are used | `R3x::Client::GoogleAuth` | OAuth client ID for the selected project suffix. | `GOOGLE_CLIENT_ID_MAIN=<client-id>` |
 | `GOOGLE_CLIENT_SECRET_*` | Required when Google OAuth clients are used | `R3x::Client::GoogleAuth` | OAuth client secret for the selected project suffix. | `GOOGLE_CLIENT_SECRET_MAIN=<client-secret>` |
 | `GOOGLE_REFRESH_TOKEN_*` | Required when Google OAuth clients are used | `R3x::Client::GoogleAuth`, `bin/google-oauth` | OAuth refresh token for the selected project suffix. | `GOOGLE_REFRESH_TOKEN_MAIN=<refresh-token>` |

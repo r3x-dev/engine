@@ -100,13 +100,40 @@ class WorkflowBootTest < ActiveSupport::TestCase
     FileUtils.rm_f(schedule_marker_path) if schedule_marker_path
   end
 
+  test "application boot does not load ruby_llm when llm client is unused" do
+    script_path = Rails.root.join("tmp/lazy_llm_boot_test_#{SecureRandom.hex(4)}.rb")
+    marker_path = Rails.root.join("tmp/lazy_llm_boot_#{SecureRandom.hex(4)}.txt")
+    FileUtils.mkdir_p(script_path.dirname)
+    File.write(script_path, <<~RUBY)
+      require_relative "../config/environment"
+
+      loaded = $LOADED_FEATURES.any? { |feature| feature.include?("/ruby_llm") }
+      File.write(#{marker_path.to_s.inspect}, loaded ? "loaded" : "unloaded")
+    RUBY
+
+    command_output = run_command(
+      "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
+      env: {
+        "RAILS_ENV" => "production",
+        "R3X_SKIP_VAULT_ENV_LOAD" => "true",
+        "SOLID_QUEUE_IN_PUMA" => nil
+      }
+    )
+
+    assert $?.success?, "boot command failed: #{command_output}"
+    assert_equal "unloaded", File.read(marker_path)
+  ensure
+    FileUtils.rm_f(script_path) if script_path
+    FileUtils.rm_f(marker_path) if marker_path
+  end
+
   private
 
   def run_command(command, env: {}, inject_production_secret: true)
-    if inject_production_secret && env["RAILS_ENV"] == "production"
-      env = { "SECRET_KEY_BASE" => "workflow-boot-test-secret" }.merge(env.compact)
+    env = if inject_production_secret && env["RAILS_ENV"] == "production"
+      { "SECRET_KEY_BASE" => "workflow-boot-test-secret" }.merge(env.compact)
     else
-      env = env.compact
+      env.compact
     end
 
     env_string = env.map { |key, value| "#{key}=#{Shellwords.escape(value)}" }.join(" ")
