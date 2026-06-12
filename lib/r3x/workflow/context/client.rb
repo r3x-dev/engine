@@ -53,6 +53,11 @@ module R3x
           R3x::Client::Ocr.new(api_key_env: api_key_env)
         end
 
+        def rss(url, timeout: 10)
+          R3x::GemLoader.require("rss")
+          ::RSS::Parser.parse(http(timeout: timeout).get(url).body.to_s, false)
+        end
+
         def google_translate(project:)
           R3x::Client::Google::Translate.new(project: project)
         end
