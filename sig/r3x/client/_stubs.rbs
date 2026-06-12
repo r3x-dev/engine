@@ -31,7 +31,27 @@ module R3x
     end
 
     class Llm
-      def initialize: (api_key: String api_key, config_api_key_attr: String config_api_key_attr, ?max_retries: Integer? max_retries, ?retry_interval: Numeric? retry_interval, ?retry_backoff_factor: Numeric? retry_backoff_factor) -> void
+      class ProviderConfiguration
+        API_KEY_SUFFIX: String
+
+        def self.resolve: (api_key_env: String api_key_env) -> R3x::Client::Llm::ProviderConfiguration
+
+        def api_key: () -> String
+
+        def config_api_key_attr: () -> String
+      end
+
+      module ProviderRegistry
+        def self.register!: () -> void
+      end
+
+      def initialize: (
+        api_key: String api_key,
+        config_api_key_attr: String config_api_key_attr,
+        ?max_retries: Integer? max_retries,
+        ?retry_interval: Numeric? retry_interval,
+        ?retry_backoff_factor: Numeric? retry_backoff_factor
+      ) -> void
     end
 
     class Markdownify
