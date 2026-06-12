@@ -102,7 +102,7 @@ module R3x
           .with(query: { "query" => "up" })
           .to_return(status: 500, body: "internal error")
 
-        assert_raises(RuntimeError) do
+        assert_raises(HTTPX::HTTPError) do
           Prometheus.new.query("up")
         end
       end

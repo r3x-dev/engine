@@ -195,9 +195,11 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - **JSON handling**: When making HTTP requests that send/receive JSON, use `httpx`'s native `json:` option instead of manually serializing with `MultiJSON`. This automatically sets the `Content-Type` header and handles serialization.
   - **Bad**: `request.body = MultiJSON.generate({"key" => "value"})`
   - **Good**: `client.post(url, json: { key: "value" })`
-- **Error handling**: `httpx` does not raise on 4xx/5xx by default. Call `.raise_for_status` on the response when the client should fail fast on HTTP errors, matching the previous `Faraday::Error` behavior.
+- **Error handling**: `httpx` does not raise on 4xx/5xx by default. Call `.raise_for_status` on the response when the client should fail fast on HTTP errors, matching the previous `Faraday::Error` behavior. Do not hand-roll ordinary HTTP status checks in thin `R3x::Client` wrappers.
   - **Bad**: `response = client.get(url)` (silently ignores 404/500)
-  - **Good**: `client.get(url).raise_for_status`
+  - **Bad**: `raise "Request failed: #{response.status}" unless response.status >= 200 && response.status < 300`
+  - **Good**: `response = client.post(url, json: payload).raise_for_status`
+  - Manual error translation is still fine for provider-specific response bodies after the transport status has succeeded, e.g. an API returns `200` with `{ "IsErroredOnProcessing": true }`.
 
 ## Naming Conventions
 

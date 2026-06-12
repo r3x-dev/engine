@@ -10,9 +10,7 @@ module R3x
       end
 
       def query(promql)
-        response = @client.get("#{@base_url}/api/v1/query", params: { query: promql })
-        raise "Prometheus query failed: #{response.status}" unless response.status >= 200 && response.status < 300
-
+        response = @client.get("#{@base_url}/api/v1/query", params: { query: promql }).raise_for_status
         Result.new(response.json["data"])
       end
 
