@@ -18,6 +18,8 @@ module R3x
 
         def ocr: (?api_key_env: String api_key_env) -> R3x::Client::Ocr
 
+        def rss: (String url, ?timeout: Integer timeout) -> untyped
+
         def google_translate: (project: String project) -> R3x::Client::Google::Translate
 
         def miniflux: (?url_env: String url_env, ?api_key_env: String api_key_env) -> R3x::Client::Miniflux
@@ -41,6 +43,8 @@ module R3x
         def self.gmail: (project: String project) -> R3x::Client::Google::Gmail
 
         def self.ocr: (?api_key_env: String api_key_env) -> R3x::Client::Ocr
+
+        def self.rss: (String url, ?timeout: Integer timeout) -> untyped
 
         def self.google_translate: (project: String project) -> R3x::Client::Google::Translate
 

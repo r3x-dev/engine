@@ -18,6 +18,7 @@ gem "multi_json"
 
 # HTML/XML parsing
 gem "nokogiri", require: false
+gem "rss", require: false
 
 # LLM integration
 gem "ruby_llm", require: false

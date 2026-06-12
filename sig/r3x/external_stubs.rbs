@@ -14,6 +14,12 @@ module Rack
   end
 end
 
+module RSS
+  module Parser
+    def self.parse: (String source, bool validate) -> untyped
+  end
+end
+
 module R3x
   module Concerns
     module Logger

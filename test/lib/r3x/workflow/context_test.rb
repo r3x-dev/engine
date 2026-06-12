@@ -132,6 +132,37 @@ module R3x
         end
       end
 
+      test "client proxy parses rss feed" do
+        stub_request(:get, "https://news.test/feed.xml")
+          .to_return(
+            status: 200,
+            body: <<~XML,
+              <?xml version="1.0" encoding="UTF-8"?>
+              <rss version="2.0">
+                <channel>
+                  <title>News</title>
+                  <item>
+                    <title>First item</title>
+                    <link>https://news.test/first</link>
+                  </item>
+                </channel>
+              </rss>
+            XML
+            headers: { "Content-Type" => "application/rss+xml" }
+          )
+        ctx = Context.new(
+          trigger: R3x::TriggerManager::Execution.new(
+            trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
+            workflow_key: "test"
+          ),
+          workflow_key: "test"
+        )
+
+        feed = ctx.client.rss("https://news.test/feed.xml")
+
+        assert_equal "First item", feed.items.first.title
+      end
+
       test "client proxy markdownify returns markdown string" do
         with_env("R3X_MARKDOWNIFY_DRY_RUN" => "false") do
           stub_request(:post, "https://markdown.new/")
