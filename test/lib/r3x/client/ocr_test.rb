@@ -151,11 +151,9 @@ module R3x
 
         client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
 
-        error = assert_raises(RuntimeError) do
+        assert_raises(HTTPX::HTTPError) do
           client.parse(StringIO.new("data"), filetype: "image/jpeg")
         end
-
-        assert_equal "OCR request failed: 500", error.message
       end
 
       test "parse raises on API error" do
