@@ -428,6 +428,8 @@ GEM
     retriable (3.8.0)
     retryable (3.0.5)
     rexml (3.4.4)
+    rss (0.3.3)
+      rexml
     rubocop (1.87.0)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -587,6 +589,7 @@ DEPENDENCIES
   rails (~> 8.1.2)
   rbs
   retryable (~> 3.0)
+  rss
   rubocop-minitest
   rubocop-rails-omakase
   rubocop-rubyfmt
@@ -763,6 +766,7 @@ CHECKSUMS
   retriable (3.8.0) sha256=9f2f1b0207594c7817f17f671587b8ec7587387ac6cebda6c941a802bb98a8e5
   retryable (3.0.5) sha256=c9f3dd6836bacf59c08b3f33548416debca7c0757e0c008d35df32ec9266d55f
   rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
+  rss (0.3.3) sha256=37ef1ec4d691d67edbe92159079a4e89a0965e6a6b32246009ae3d734d12d1ab
   rubocop (1.87.0) sha256=b9d9ddf55116a513f8ef2c7ae660662d8b49301f118d3f0df61865b33a5c188d
   rubocop-ast (1.49.1) sha256=4412f3ee70f6fe4546cc489548e0f6fcf76cafcfa80fa03af67098ffed755035
   rubocop-minitest (0.39.1) sha256=998398d6da4026d297f0f9bf709a1eac5f2b6947c24431f94af08138510cf7ed
