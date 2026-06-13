@@ -9,8 +9,8 @@ class Dashboard::RecurringTaskTest < ActiveSupport::TestCase
     TestDbCleanup.clear_runtime_tables!
   end
 
-  test "parses workflow and trigger keys for recurring workflow tasks" do
-    task = Dashboard::RecurringTask.create!(
+  test "parses workflow and trigger keys for direct and change-detection tasks" do
+    direct_task = Dashboard::RecurringTask.create!(
       key: "workflow:test_workflow:schedule:123",
       schedule: "0 * * * *",
       class_name: "Workflows::TestWorkflow",
@@ -18,10 +18,24 @@ class Dashboard::RecurringTaskTest < ActiveSupport::TestCase
       queue_name: "default",
       static: false
     )
+    change_detection_task = Dashboard::RecurringTask.create!(
+      key: "workflow:feed_watch:feed:123",
+      schedule: "*/5 * * * *",
+      class_name: Dashboard::RecurringTask::CHANGE_DETECTION_CLASS_NAME,
+      arguments: [ "feed_watch", { "trigger_key" => "feed:123" } ],
+      queue_name: "feeds",
+      static: false
+    )
 
-    assert_equal "test_workflow", task.workflow_key
-    assert_equal "schedule:123", task.trigger_key
-    assert_equal "Workflows::TestWorkflow", task.direct_workflow_class_name
+    assert_equal "test_workflow", direct_task.workflow_key
+    assert_equal "schedule:123", direct_task.trigger_key
+    assert_equal "Workflows::TestWorkflow", direct_task.direct_workflow_class_name
+    refute direct_task.change_detection?
+
+    assert_equal "feed_watch", change_detection_task.workflow_key
+    assert_equal "feed:123", change_detection_task.trigger_key
+    assert_nil change_detection_task.direct_workflow_class_name
+    assert change_detection_task.change_detection?
   end
 
   test "workflow key lookup matches literal underscores and percents" do
@@ -58,8 +72,16 @@ class Dashboard::RecurringTaskTest < ActiveSupport::TestCase
     assert_equal [ "workflow:foo%bar:schedule:1" ], Dashboard::RecurringTask.for_workflow_key("foo%bar").pluck(:key)
   end
 
-  test "preferred_for_workflow returns a matching recurring workflow task" do
-    task = Dashboard::RecurringTask.create!(
+  test "preferred_for_workflow prefers direct workflow classes over change detection tasks" do
+    change_detection_task = Dashboard::RecurringTask.create!(
+      key: "workflow:test_workflow:feed:123",
+      schedule: "*/5 * * * *",
+      class_name: Dashboard::RecurringTask::CHANGE_DETECTION_CLASS_NAME,
+      arguments: [ "test_workflow", { "trigger_key" => "feed:123" } ],
+      queue_name: "feeds",
+      static: false
+    )
+    direct_task = Dashboard::RecurringTask.create!(
       key: "workflow:test_workflow:schedule:123",
       schedule: "0 * * * *",
       class_name: "Workflows::TestWorkflow",
@@ -68,7 +90,7 @@ class Dashboard::RecurringTaskTest < ActiveSupport::TestCase
       static: false
     )
 
-    assert_equal task, Dashboard::RecurringTask.preferred_for_workflow("test_workflow")
-    assert_equal task, Dashboard::RecurringTask.find_by_workflow_and_trigger_key!(workflow_key: "test_workflow", trigger_key: "schedule:123")
+    assert_equal direct_task, Dashboard::RecurringTask.preferred_for_workflow("test_workflow")
+    assert_equal change_detection_task, Dashboard::RecurringTask.find_by_workflow_and_trigger_key!(workflow_key: "test_workflow", trigger_key: "feed:123")
   end
 end

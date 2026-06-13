@@ -71,7 +71,14 @@ module R3x
         assert_equal 7, job.priority
       end
 
-      test "enqueue without trigger key falls back to the last visible direct workflow run metadata" do
+      test "enqueue without trigger key falls back to the last visible direct workflow run metadata only" do
+        R3x::TriggerState.create!(
+          workflow_key: "test_workflow",
+          trigger_key: "feed:123",
+          trigger_type: "feed",
+          state: {},
+          last_checked_at: 1.minute.ago
+        )
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: [ "feed:123", { trigger_payload: { "id" => "42" } } ],
@@ -89,6 +96,30 @@ module R3x
 
         assert_instance_of ::Dashboard::Run, result
         job = SolidQueue::Job.order(:id).last
+        assert_equal "feeds", job.queue_name
+        assert_equal 3, job.priority
+        assert_equal [], ::Dashboard::Run.find(job.id).workflow_arguments
+      end
+
+      test "enqueue without trigger key derives workflow class for change-detecting-only workflows" do
+        SolidQueue::RecurringTask.create!(
+          key: "workflow:feed_watch:feed:123",
+          schedule: "*/5 * * * *",
+          class_name: "R3x::ChangeDetectionJob",
+          arguments: [ "feed_watch", { "trigger_key" => "feed:123" } ],
+          queue_name: "feeds",
+          priority: 3,
+          static: false
+        )
+
+        result = nil
+        assert_difference -> { SolidQueue::Job.where(class_name: "Workflows::FeedWatch").count }, 1 do
+          result = Workflow::RunEnqueuer.new(workflow_key: "feed_watch", trigger_key: nil).enqueue!
+        end
+
+        assert_instance_of ::Dashboard::Run, result
+        job = SolidQueue::Job.order(:id).last
+        assert_equal "Workflows::FeedWatch", job.class_name
         assert_equal "feeds", job.queue_name
         assert_equal 3, job.priority
         assert_equal [], ::Dashboard::Run.find(job.id).workflow_arguments
@@ -150,6 +181,30 @@ module R3x
         assert_equal "critical", job.queue_name
         assert_equal 7, job.priority
         assert_equal [ "schedule:123" ], ::Dashboard::Run.find(job.id).workflow_arguments
+      end
+
+      test "enqueue with change-detection task uses change detection job" do
+        SolidQueue::RecurringTask.create!(
+          key: "workflow:test_workflow:feed:123",
+          schedule: "*/5 * * * *",
+          class_name: "R3x::ChangeDetectionJob",
+          arguments: [ "test_workflow", { "trigger_key" => "feed:123" } ],
+          queue_name: "feeds",
+          priority: 3,
+          static: false
+        )
+
+        result = nil
+        assert_enqueued_with(
+          job: R3x::ChangeDetectionJob,
+          args: [ "test_workflow", { trigger_key: "feed:123" } ],
+          queue: "feeds",
+          priority: 3
+        ) do
+          result = Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: "feed:123").enqueue!
+        end
+
+        assert_nil result
       end
 
       test "enqueue without direct target raises a key error" do
