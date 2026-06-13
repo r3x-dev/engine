@@ -37,13 +37,7 @@ module R3x
         return unavailable_logs unless configured?
         return error_logs(provider_name, "This run does not have an Active Job id yet.") if active_job_id.blank?
 
-        query_logs(
-          build_query(%(tags:"#{R3x::Log.tag(R3x::Log::RUN_ACTIVE_JOB_ID_TAG, active_job_id)}")),
-          start_at: run[:enqueued_at] || 1.hour.ago,
-          end_at: run[:finished_at] || Time.current,
-          limit: RUN_LOG_LIMIT,
-          context: { class_name: run[:class_name] }
-        )
+        query_logs(build_query(%(tags:"#{R3x::Log.tag(R3x::Log::RUN_ACTIVE_JOB_ID_TAG, active_job_id)}")), start_at: run[:enqueued_at] || 1.hour.ago, end_at: run[:finished_at] || Time.current, limit: RUN_LOG_LIMIT, context: { class_name: run[:class_name] })
       end
 
       private
@@ -70,12 +64,7 @@ module R3x
       end
 
       def query_logs(query, start_at:, end_at:, limit:, context: {})
-        raw_entries = logs_client.query(
-          query: query,
-          start_at: start_at,
-          end_at: end_at,
-          limit: limit
-        )
+        raw_entries = logs_client.query(query: query, start_at: start_at, end_at: end_at, limit: limit)
 
         {
           configured: true,
@@ -118,11 +107,7 @@ module R3x
 
       def parse_message_payload(entry, context: {})
         if entry.key?("level")
-          message, tags = extract_message_and_tags(
-            entry["_msg"],
-            tags: normalize_array_field(entry["tags"]),
-            context: context
-          )
+          message, tags = extract_message_and_tags(entry["_msg"], tags: normalize_array_field(entry["tags"]), context: context)
 
           return {
             backtrace: normalize_array_field(entry["backtrace"]).presence,

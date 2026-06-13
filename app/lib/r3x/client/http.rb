@@ -5,10 +5,7 @@ module R3x
     class Http
       def initialize(verify_ssl: true, timeout: 10)
         ssl_options = verify_ssl ? Hash.new : { verify_mode: OpenSSL::SSL::VERIFY_NONE }
-        @client = HTTPX.with(
-          timeout: { connect_timeout: 5, operation_timeout: timeout },
-          ssl: ssl_options
-        )
+        @client = HTTPX.with(timeout: { connect_timeout: 5, operation_timeout: timeout }, ssl: ssl_options)
       end
 
       def get(url, params: {}, headers: {})
@@ -29,12 +26,7 @@ module R3x
         content_type = response.headers["content-type"]&.split(";")&.first
         filename = response.body.filename || filename_from_url(url, content_type: content_type)
 
-        DownloadedFile.new(
-          body: response.body.to_s,
-          content_type: content_type,
-          filename: filename,
-          url: url
-        )
+        DownloadedFile.new(body: response.body.to_s, content_type: content_type, filename: filename, url: url)
       end
 
       def upload_file(url, file, file_field: "file", filename: nil, content_type: nil, params: {}, headers: {})
@@ -57,11 +49,7 @@ module R3x
           temp
         end
 
-        file_value = {
-          body: upload_io,
-          filename: actual_filename || "file",
-          content_type: file_content_type || "application/octet-stream"
-        }
+        file_value = { body: upload_io, filename: actual_filename || "file", content_type: file_content_type || "application/octet-stream" }
 
         payload = params.merge(file_field => file_value)
 

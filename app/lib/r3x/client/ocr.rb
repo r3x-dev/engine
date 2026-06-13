@@ -9,16 +9,7 @@ module R3x
       BASE_URL = "https://api.ocr.space"
       DEFAULT_API_KEY_ENV = "OCRSPACE_API_KEY"
 
-      MIME_TYPES = {
-        ".png" => "image/png",
-        ".jpg" => "image/jpeg",
-        ".jpeg" => "image/jpeg",
-        ".gif" => "image/gif",
-        ".tif" => "image/tiff",
-        ".tiff" => "image/tiff",
-        ".bmp" => "image/bmp",
-        ".pdf" => "application/pdf"
-      }.freeze
+      MIME_TYPES = { ".png" => "image/png", ".jpg" => "image/jpeg", ".jpeg" => "image/jpeg", ".gif" => "image/gif", ".tif" => "image/tiff", ".tiff" => "image/tiff", ".bmp" => "image/bmp", ".pdf" => "application/pdf" }.freeze
 
       def initialize(api_key_env: DEFAULT_API_KEY_ENV)
         @api_key = R3x::Env.secure_fetch(api_key_env, prefix: "#{DEFAULT_API_KEY_ENV}_")
@@ -39,10 +30,7 @@ module R3x
       attr_reader :api_key
 
       def connection
-        @connection ||= HTTPX.with(
-          timeout: { connect_timeout: 5, operation_timeout: 30 },
-          headers: { "apikey" => api_key }
-        )
+        @connection ||= HTTPX.with(timeout: { connect_timeout: 5, operation_timeout: 30 }, headers: { "apikey" => api_key })
       end
 
       def detect_mime(io_or_path)
@@ -55,15 +43,11 @@ module R3x
         end
 
         ext = File.extname(io_or_path.to_s).downcase
-        MIME_TYPES.fetch(ext) do
-          raise ArgumentError, "Unsupported file extension: '#{ext}'. Pass filetype: explicitly."
-        end
+        MIME_TYPES.fetch(ext) { raise ArgumentError, "Unsupported file extension: '#{ext}'. Pass filetype: explicitly." }
       end
 
       def build_params(io_or_path, mime_type, language:, engine:, overlay:)
-        params = {
-          isOverlayRequired: overlay.to_s
-        }
+        params = { isOverlayRequired: overlay.to_s }
         params[:language] = language if language
         params[:OCREngine] = engine.to_s if engine
 

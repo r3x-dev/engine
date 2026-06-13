@@ -19,9 +19,7 @@ module R3x
 
           workflow_files.each do |entrypoint|
             if disabled_workflow?(entrypoint)
-              Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") do
-                logger.info "Skipping disabled workflow entrypoint"
-              end
+              Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") { logger.info "Skipping disabled workflow entrypoint" }
               next
             end
 
@@ -29,13 +27,9 @@ module R3x
             workflow_class = register_workflow(entrypoint)
             loaded << workflow_class
 
-            Rails.logger.tagged(R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_class.workflow_key)) do
-              logger.info "Loaded workflow class=#{workflow_class.name} entrypoint=#{entrypoint}"
-            end
+            Rails.logger.tagged(R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_class.workflow_key)) { logger.info "Loaded workflow class=#{workflow_class.name} entrypoint=#{entrypoint}" }
           rescue => e
-            Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") do
-              logger.error "Workflow load failed error_class=#{e.class} error_message=#{e.message}"
-            end
+            Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") { logger.error "Workflow load failed error_class=#{e.class} error_message=#{e.message}" }
 
             raise
           end
@@ -46,9 +40,7 @@ module R3x
       end
 
       def disabled_workflow?(entrypoint)
-        File.foreach(entrypoint).take(PRAGMA_SCAN_LINES).any? do |line|
-          line.strip.start_with?(DISABLE_PRAGMA_PREFIX)
-        end
+        File.foreach(entrypoint).take(PRAGMA_SCAN_LINES).any? { |line| line.strip.start_with?(DISABLE_PRAGMA_PREFIX) }
       end
 
       def workflow_files

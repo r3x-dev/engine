@@ -17,32 +17,22 @@ module R3x
 
       def perform(trigger_key = nil, trigger_payload: nil)
         with_log_tags(*workflow_log_tags(trigger_key)) do
-          @ctx = R3x::Workflow::Executor.build_context(
-            workflow_class: self.class,
-            trigger_key: trigger_key,
-            trigger_payload: trigger_payload
-          )
+          @ctx = R3x::Workflow::Executor.build_context(workflow_class: self.class, trigger_key: trigger_key, trigger_payload: trigger_payload)
           logger.info "Running workflow trigger_type=#{ctx.trigger.type}"
 
           skip_reason = unmet_workflow_condition_reason
           if skip_reason
             result = { "status" => "skipped", "reason" => skip_reason }
-            with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "success")) do
-              logger.info "Workflow run skipped reason=#{skip_reason}"
-            end
+            with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "success")) { logger.info "Workflow run skipped reason=#{skip_reason}" }
             return result
           end
 
           result = run
           run_completion_callbacks
-          with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "success")) do
-            logger.info "Workflow run completed"
-          end
+          with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "success")) { logger.info "Workflow run completed" }
           result
         rescue => e
-          with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "failed")) do
-            structured_error(message: "Workflow run failed", error: e)
-          end
+          with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "failed")) { structured_error(message: "Workflow run failed", error: e) }
           raise
         ensure
           @ctx = nil
@@ -60,15 +50,9 @@ module R3x
           raise "with_cache is disabled in production, if you need to use it, please set R3X_SKIP_CACHE=true in the environment variables"
         end
 
-        cache_key = R3x::Workflow::CacheKey.generate(
-          workflow_key: self.class.workflow_key,
-          block: block,
-          method_name: __method__
-        )
+        cache_key = R3x::Workflow::CacheKey.generate(workflow_key: self.class.workflow_key, block: block, method_name: __method__)
 
-        Rails.cache.fetch(cache_key, force: force, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes) do
-          yield
-        end
+        Rails.cache.fetch(cache_key, force: force, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes) { yield }
       end
 
       def run
@@ -80,11 +64,7 @@ module R3x
       attr_reader :ctx
 
       def workflow_dedup_key(value = nil, candidates: nil)
-        R3x::Workflow::DedupKey.build(
-          workflow_key: self.class.workflow_key,
-          value: value,
-          candidates: candidates
-        )
+        R3x::Workflow::DedupKey.build(workflow_key: self.class.workflow_key, value: value, candidates: candidates)
       end
 
       def workflow_log_tags(trigger_key)

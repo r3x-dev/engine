@@ -42,12 +42,7 @@ module R3x
       def write(member, ttl:, unless_exist: false)
         validate_ttl!(ttl)
 
-        Rails.cache.write(
-          cache_key_for(member),
-          { "added_at" => Time.current.iso8601 },
-          expires_in: ttl,
-          unless_exist: unless_exist
-        )
+        Rails.cache.write(cache_key_for(member), { "added_at" => Time.current.iso8601 }, expires_in: ttl, unless_exist: unless_exist)
       end
 
       def validate_ttl!(ttl)

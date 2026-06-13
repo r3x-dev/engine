@@ -39,14 +39,7 @@ module R3x
           end
         end
 
-        scheduled_logs.each do |workflow_key, trigger_key, options|
-          Rails.logger.tagged(
-            R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_key),
-            R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key)
-          ) do
-            logger.info "Scheduled recurring task class=#{options[:class]} schedule=#{options[:schedule]} queue=#{options[:queue]}"
-          end
-        end
+        scheduled_logs.each { |workflow_key, trigger_key, options| Rails.logger.tagged(R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_key), R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key)) { logger.info "Scheduled recurring task class=#{options[:class]} schedule=#{options[:schedule]} queue=#{options[:queue]}" } }
 
         logger.info("Scheduled #{current_keys.size} dynamic recurring tasks stale_removed=#{stale_count}")
       rescue => e
@@ -65,9 +58,7 @@ module R3x
 
           triggers.each do |trigger|
             result_key = namespaced_key(workflow_key, trigger)
-            result[result_key] = task_options_for(
-              workflow_class: workflow_class, trigger: trigger
-            ).stringify_keys
+            result[result_key] = task_options_for(workflow_class: workflow_class, trigger: trigger).stringify_keys
           end
         end
 
