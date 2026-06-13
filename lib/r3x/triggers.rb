@@ -14,7 +14,9 @@ module R3x
         supported = supported_types
 
         unless supported.include?(type_sym)
-          raise ArgumentError, "Unknown trigger type: #{type}. No file found for trigger '#{type_sym}.rb' in #{triggers_dir}. Supported types: #{supported.map { |t| ":#{t}" }.join(", ")}"
+          raise ArgumentError,
+                "Unknown trigger type: #{type}. No file found for trigger '#{type_sym}.rb' " \
+                "in #{triggers_dir}. Supported types: #{supported.map { |t| ":#{t}" }.join(', ')}"
         end
 
         full_class_name = "::R3x::Triggers::#{type.to_s.camelize}"

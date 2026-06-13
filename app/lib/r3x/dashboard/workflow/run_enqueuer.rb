@@ -36,7 +36,11 @@ module R3x
         end
 
         def recurring_task
-          @recurring_task ||= ::Dashboard::RecurringTask.find_by_workflow_and_trigger_key!(workflow_key: workflow_key, trigger_key: trigger_key)
+          @recurring_task ||= ::Dashboard::RecurringTask
+            .find_by_workflow_and_trigger_key!(
+              workflow_key: workflow_key,
+              trigger_key: trigger_key
+            )
         end
 
         def preferred_recurring_task

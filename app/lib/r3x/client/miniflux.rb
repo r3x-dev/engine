@@ -29,7 +29,10 @@ module R3x
 
       # GET /v1/categories/{categoryID}/entries
       # See https://miniflux.app/docs/api.html#endpoint-get-category-entries
-      def category_entries(category_id:, status: DEFAULT_STATUS, limit: DEFAULT_LIMIT, order: DEFAULT_ORDER, direction: DEFAULT_DIRECTION, **filters)
+      def category_entries(
+        category_id:, status: DEFAULT_STATUS, limit: DEFAULT_LIMIT,
+        order: DEFAULT_ORDER, direction: DEFAULT_DIRECTION, **filters
+      )
         get("/v1/categories/#{Integer(category_id)}/entries", status:, limit:, order:, direction:, **filters)
       end
 

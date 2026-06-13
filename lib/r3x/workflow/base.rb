@@ -17,7 +17,11 @@ module R3x
 
       def perform(trigger_key = nil, trigger_payload: nil)
         with_log_tags(*workflow_log_tags(trigger_key)) do
-          @ctx = R3x::Workflow::Executor.build_context(workflow_class: self.class, trigger_key: trigger_key, trigger_payload: trigger_payload)
+          @ctx = R3x::Workflow::Executor.build_context(
+            workflow_class: self.class,
+            trigger_key: trigger_key,
+            trigger_payload: trigger_payload
+          )
           logger.info "Running workflow trigger_type=#{ctx.trigger.type}"
 
           skip_reason = unmet_workflow_condition_reason

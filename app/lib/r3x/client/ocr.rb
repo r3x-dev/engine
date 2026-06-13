@@ -9,7 +9,16 @@ module R3x
       BASE_URL = "https://api.ocr.space"
       DEFAULT_API_KEY_ENV = "OCRSPACE_API_KEY"
 
-      MIME_TYPES = { ".png" => "image/png", ".jpg" => "image/jpeg", ".jpeg" => "image/jpeg", ".gif" => "image/gif", ".tif" => "image/tiff", ".tiff" => "image/tiff", ".bmp" => "image/bmp", ".pdf" => "application/pdf" }.freeze
+      MIME_TYPES = {
+        ".png" => "image/png",
+        ".jpg" => "image/jpeg",
+        ".jpeg" => "image/jpeg",
+        ".gif" => "image/gif",
+        ".tif" => "image/tiff",
+        ".tiff" => "image/tiff",
+        ".bmp" => "image/bmp",
+        ".pdf" => "application/pdf"
+      }.freeze
 
       def initialize(api_key_env: DEFAULT_API_KEY_ENV)
         @api_key = R3x::Env.secure_fetch(api_key_env, prefix: "#{DEFAULT_API_KEY_ENV}_")

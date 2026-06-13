@@ -10,7 +10,9 @@ module R3x
 
       class << self
         def chat_options_for(provider)
-          CHAT_OPTIONS_BY_PROVIDER_MUTEX.synchronize { CHAT_OPTIONS_BY_PROVIDER.fetch(provider) { CHAT_OPTIONS_BY_PROVIDER[provider] = build_chat_options_for(provider) } }
+          CHAT_OPTIONS_BY_PROVIDER_MUTEX.synchronize do
+            CHAT_OPTIONS_BY_PROVIDER.fetch(provider) { CHAT_OPTIONS_BY_PROVIDER[provider] = build_chat_options_for(provider) }
+          end
         end
 
         private

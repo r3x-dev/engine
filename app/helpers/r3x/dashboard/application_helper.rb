@@ -6,11 +6,27 @@ module R3x
       end
 
       def dashboard_status_label(status)
-        { "blocked" => "Blocked", "failed" => "Failed", "finished" => "Success", "queued" => "Queued", "running" => "Running", "scheduled" => "Scheduled" }.fetch(status, status.to_s.humanize)
+        {
+          "blocked" => "Blocked",
+          "failed" => "Failed",
+          "finished" => "Success",
+          "queued" => "Queued",
+          "running" => "Running",
+          "scheduled" => "Scheduled"
+        }.fetch(status, status.to_s.humanize)
       end
 
       def dashboard_tone_for(value)
-        { "blocked" => "warn", "failed" => "danger", "finished" => "ok", "healthy" => "ok", "idle" => "muted", "queued" => "info", "running" => "info", "scheduled" => "info" }.fetch(value, "muted")
+        {
+          "blocked" => "warn",
+          "failed" => "danger",
+          "finished" => "ok",
+          "healthy" => "ok",
+          "idle" => "muted",
+          "queued" => "info",
+          "running" => "info",
+          "scheduled" => "info"
+        }.fetch(value, "muted")
       end
 
       def dashboard_pill(label, tone, title: nil, class_name: nil)
@@ -70,7 +86,12 @@ module R3x
 
         displayed_time = dashboard_display_time(time)
 
-        time_tag(displayed_time, displayed_time.strftime("%H:%M:%S"), datetime: displayed_time.iso8601, title: displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z"))
+        time_tag(
+          displayed_time,
+          displayed_time.strftime("%H:%M:%S"),
+          datetime: displayed_time.iso8601,
+          title: displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z")
+        )
       end
 
       def dashboard_log_level_label(level)
@@ -119,7 +140,12 @@ module R3x
       end
 
       def dashboard_trigger_kind(trigger_entry)
-        { "manual" => "Manual", "observed" => "Observed", "schedule" => "Schedule", "scheduled" => "Schedule" }.fetch(trigger_entry.fetch(:mode).to_s, trigger_entry.fetch(:mode).to_s.humanize)
+        {
+          "manual" => "Manual",
+          "observed" => "Observed",
+          "schedule" => "Schedule",
+          "scheduled" => "Schedule"
+        }.fetch(trigger_entry.fetch(:mode).to_s, trigger_entry.fetch(:mode).to_s.humanize)
       end
 
       def dashboard_trigger_details(trigger_entry)
@@ -196,13 +222,25 @@ module R3x
 
         return if parsed_error.blank?
 
-        { exception_class: parsed_error["exception_class"].presence || parsed_error["error_class"].presence, message: parsed_error["message"].presence || parsed_error["error"].presence, backtrace: Array(parsed_error["backtrace"] || parsed_error["trace"] || parsed_error["stack"]).compact_blank }.compact_blank
+        {
+          exception_class: parsed_error["exception_class"].presence || parsed_error["error_class"].presence,
+          message: parsed_error["message"].presence || parsed_error["error"].presence,
+          backtrace: Array(parsed_error["backtrace"] || parsed_error["trace"] || parsed_error["stack"]).compact_blank
+        }.compact_blank
       end
 
       def dashboard_icon(name)
-        icon_name, variant = { alert: [ "exclamation-triangle", :outline ], history: [ "clock", :outline ], launch: [ "play", :solid ], logs: [ "document-text", :outline ], tune: [ "cog-6-tooth", :outline ], workflow: [ "queue-list", :outline ] }.fetch(name)
+        icon_name, variant = {
+          alert: [ "exclamation-triangle", :outline ],
+          history: [ "clock", :outline ],
+          launch: [ "play", :solid ],
+          logs: [ "document-text", :outline ],
+          tune: [ "cog-6-tooth", :outline ],
+          workflow: [ "queue-list", :outline ]
+        }.fetch(name)
 
-        content_tag(:span, raw(Heroicon::Icon.render(name: icon_name, variant: variant, options: { class: "icon" }, path_options: {})), class: "icon")
+        icon_html = Heroicon::Icon.render(name: icon_name, variant: variant, options: { class: "icon" }, path_options: {})
+        content_tag(:span, raw(icon_html), class: "icon")
       end
 
       def dashboard_icon_label(name, text)
@@ -233,7 +271,8 @@ module R3x
 
         active = active_sort == sort_key
 
-        link_to workflows_path(sort: sort_key, direction: next_direction, anchor: "workflows-catalog"), class: "sort-link#{" active" if active}" do
+        path = workflows_path(sort: sort_key, direction: next_direction, anchor: "workflows-catalog")
+        link_to path, class: "sort-link#{" active" if active}" do
           safe_join(
             [
               content_tag(:span, label, class: "sort-label"),
@@ -305,14 +344,22 @@ module R3x
       end
 
       def extract_ruby_hash_error_value(text, key)
-        match = text.match(/"#{Regexp.escape(key)}"\s*(?:=>|:)\s*"(?<value>.*?)"\s*(?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)/m)
+        pattern = /
+          "#{Regexp.escape(key)}"\s*(?:=>|:)\s*"(?<value>.*?)"\s*
+          (?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)
+        /mx
+        match = text.match(pattern)
         return unless match
 
         unescape_dashboard_error_string(match[:value])
       end
 
       def extract_ruby_hash_error_array(text, key)
-        match = text.match(/"#{Regexp.escape(key)}"\s*(?:=>|:)\s*\[(?<value>.*?)\]\s*(?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)/m)
+        pattern = /
+          "#{Regexp.escape(key)}"\s*(?:=>|:)\s*\[(?<value>.*?)\]\s*
+          (?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)
+        /mx
+        match = text.match(pattern)
         return [] unless match
 
         match[:value]

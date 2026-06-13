@@ -37,7 +37,14 @@ module R3x
         return unavailable_logs unless configured?
         return error_logs(provider_name, "This run does not have an Active Job id yet.") if active_job_id.blank?
 
-        query_logs(build_query(%(tags:"#{R3x::Log.tag(R3x::Log::RUN_ACTIVE_JOB_ID_TAG, active_job_id)}")), start_at: run[:enqueued_at] || 1.hour.ago, end_at: run[:finished_at] || Time.current, limit: RUN_LOG_LIMIT, context: { class_name: run[:class_name] })
+        tag = R3x::Log.tag(R3x::Log::RUN_ACTIVE_JOB_ID_TAG, active_job_id)
+        query_logs(
+          build_query(%(tags:"#{tag}")),
+          start_at: run[:enqueued_at] || 1.hour.ago,
+          end_at: run[:finished_at] || Time.current,
+          limit: RUN_LOG_LIMIT,
+          context: { class_name: run[:class_name] }
+        )
       end
 
       private
@@ -51,7 +58,8 @@ module R3x
       end
 
       def build_query(filter)
-        "(#{filter}) | fields _time, kubernetes.pod_name, kubernetes.container_name, _msg, level, tags, error_class, error_message, backtrace"
+        "(#{filter}) | fields _time, kubernetes.pod_name, kubernetes.container_name, " \
+          "_msg, level, tags, error_class, error_message, backtrace"
       end
 
       def error_logs(provider, error)
