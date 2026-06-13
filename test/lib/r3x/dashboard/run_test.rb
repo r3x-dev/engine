@@ -185,8 +185,8 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       assert_includes error.message, "Direct workflow enqueue failed"
     end
 
-      assert_includes output, "Dashboard direct enqueue failed"
-      assert_includes output, "error_class=SolidQueue::Job::EnqueueError"
+    assert_includes output, "Dashboard direct enqueue failed"
+    assert_includes output, "error_class=SolidQueue::Job::EnqueueError"
   end
 
   test "latest_activity_candidates keeps the latest candidate per class and status" do
@@ -244,17 +244,18 @@ class Dashboard::RunTest < ActiveSupport::TestCase
   end
 
   private
-    def claim_job!(job, claimed_at:)
-      process = SolidQueue::Process.create!(
-        kind: "Worker",
-        last_heartbeat_at: Time.current,
-        pid: Process.pid,
-        hostname: "test",
-        metadata: "{}",
-        name: "test-worker-#{job.id}",
-        created_at: Time.current
-      )
 
-      SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: claimed_at)
-    end
+  def claim_job!(job, claimed_at:)
+    process = SolidQueue::Process.create!(
+      kind: "Worker",
+      last_heartbeat_at: Time.current,
+      pid: Process.pid,
+      hostname: "test",
+      metadata: "{}",
+      name: "test-worker-#{job.id}",
+      created_at: Time.current
+    )
+
+    SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: claimed_at)
+  end
 end

@@ -28,36 +28,37 @@ module Dashboard
     end
 
     private
-      attr_reader :arguments, :class_name, :priority, :queue_name
 
-      # Deliberately bypasses constantizing workflow classes. Web pods can enqueue
-      # workflow runs from persisted runtime data without loading workflow packs;
-      # jobs pods resolve and execute the real class when Solid Queue performs it.
-      def active_job
-        job_class_name = class_name
-        direct_job_class = Class.new(ActiveJob::Base) do
-          def perform(*)
-          end
-        end
+    attr_reader :arguments, :class_name, :priority, :queue_name
 
-        direct_job_class.define_singleton_method(:name) { job_class_name }
-        direct_job_class.queue_name = queue_name if queue_name.present?
-        direct_job_class.priority = priority unless priority.nil?
-
-        positional_arguments, keyword_arguments = split_arguments(arguments)
-
-        if keyword_arguments.empty?
-          direct_job_class.new(*positional_arguments)
-        else
-          direct_job_class.new(*positional_arguments, **keyword_arguments)
+    # Deliberately bypasses constantizing workflow classes. Web pods can enqueue
+    # workflow runs from persisted runtime data without loading workflow packs;
+    # jobs pods resolve and execute the real class when Solid Queue performs it.
+    def active_job
+      job_class_name = class_name
+      direct_job_class = Class.new(ActiveJob::Base) do
+        def perform(*)
         end
       end
 
-      def split_arguments(raw_arguments)
-        positional_arguments = Array(Dashboard::Run.normalize_arguments(raw_arguments)).dup
-        keyword_arguments = positional_arguments.last.is_a?(Hash) ? positional_arguments.pop.transform_keys(&:to_sym) : {}
+      direct_job_class.define_singleton_method(:name) { job_class_name }
+      direct_job_class.queue_name = queue_name if queue_name.present?
+      direct_job_class.priority = priority unless priority.nil?
 
-        [ positional_arguments, keyword_arguments ]
+      positional_arguments, keyword_arguments = split_arguments(arguments)
+
+      if keyword_arguments.empty?
+        direct_job_class.new(*positional_arguments)
+      else
+        direct_job_class.new(*positional_arguments, **keyword_arguments)
       end
+    end
+
+    def split_arguments(raw_arguments)
+      positional_arguments = Array(Dashboard::Run.normalize_arguments(raw_arguments)).dup
+      keyword_arguments = positional_arguments.last.is_a?(Hash) ? positional_arguments.pop.transform_keys(&:to_sym) : {}
+
+      [ positional_arguments, keyword_arguments ]
+    end
   end
 end

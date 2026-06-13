@@ -8,29 +8,30 @@ module R3x
       rescue_from KeyError, with: :render_not_found
 
       private
-        def finished_runs_retention_label
-          duration = Rails.configuration.solid_queue.clear_finished_jobs_after
-          return "unknown" unless duration.respond_to?(:parts)
 
-          parts = duration.parts
-          return "unknown" if parts.blank?
+      def finished_runs_retention_label
+        duration = Rails.configuration.solid_queue.clear_finished_jobs_after
+        return "unknown" unless duration.respond_to?(:parts)
 
-          parts.map do |unit, value|
-            "#{value} #{unit.to_s.pluralize(value)}"
-          end.to_sentence
-        end
+        parts = duration.parts
+        return "unknown" if parts.blank?
 
-        def mission_control_path
-          "/ops/jobs"
-        end
+        parts.map do |unit, value|
+          "#{value} #{unit.to_s.pluralize(value)}"
+        end.to_sentence
+      end
 
-        def logs_configured?
-          Logs.configured?
-        end
+      def mission_control_path
+        "/ops/jobs"
+      end
 
-        def render_not_found
-          head :not_found
-        end
+      def logs_configured?
+        Logs.configured?
+      end
+
+      def render_not_found
+        head :not_found
+      end
     end
   end
 end

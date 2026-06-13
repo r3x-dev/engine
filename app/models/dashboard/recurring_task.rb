@@ -39,13 +39,14 @@ module Dashboard
     end
 
     private
-      def parsed_key
-        @parsed_key ||= begin
-          prefix, workflow_key, trigger_key = key.to_s.split(":", 3)
-          raise ArgumentError, "Unsupported recurring task key: #{key.inspect}" unless prefix == "workflow" && workflow_key.present? && trigger_key.present?
 
-          { workflow_key: workflow_key, trigger_key: trigger_key }
-        end
+    def parsed_key
+      @parsed_key ||= begin
+        prefix, workflow_key, trigger_key = key.to_s.split(":", 3)
+        raise ArgumentError, "Unsupported recurring task key: #{key.inspect}" unless prefix == "workflow" && workflow_key.present? && trigger_key.present?
+
+        { workflow_key: workflow_key, trigger_key: trigger_key }
       end
+    end
   end
 end
