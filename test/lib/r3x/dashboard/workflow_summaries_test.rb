@@ -173,36 +173,37 @@ module R3x
       end
 
       private
-        def clear_tables
-          TestDbCleanup.clear_runtime_tables!
-        end
 
-        def create_dashboard_workflow(workflow_key:, trigger_key:, run_status: nil, recorded_at: nil)
-          job_class_name = DashboardTestWorkflows.ensure_class(workflow_key.camelize)
+      def clear_tables
+        TestDbCleanup.clear_runtime_tables!
+      end
 
-          SolidQueue::RecurringTask.create!(
-            key: "workflow:#{workflow_key}:#{trigger_key}",
-            schedule: "0 * * * *",
-            class_name: job_class_name,
-            arguments: [ trigger_key ],
-            queue_name: "default",
-            static: false
-          )
+      def create_dashboard_workflow(workflow_key:, trigger_key:, run_status: nil, recorded_at: nil)
+        job_class_name = DashboardTestWorkflows.ensure_class(workflow_key.camelize)
 
-          return if run_status.blank?
+        SolidQueue::RecurringTask.create!(
+          key: "workflow:#{workflow_key}:#{trigger_key}",
+          schedule: "0 * * * *",
+          class_name: job_class_name,
+          arguments: [ trigger_key ],
+          queue_name: "default",
+          static: false
+        )
 
-          job = DashboardJobRows.create_job!(
-            job_class_name: job_class_name,
-            arguments: [ trigger_key ],
-            finished_at: run_status == "finished" ? recorded_at : nil,
-            created_at: recorded_at - 1.minute,
-            updated_at: recorded_at
-          )
+        return if run_status.blank?
 
-          return unless run_status == "failed"
+        job = DashboardJobRows.create_job!(
+          job_class_name: job_class_name,
+          arguments: [ trigger_key ],
+          finished_at: run_status == "finished" ? recorded_at : nil,
+          created_at: recorded_at - 1.minute,
+          updated_at: recorded_at
+        )
 
-          SolidQueue::FailedExecution.create!(job_id: job.id, error: "#{workflow_key} failed", created_at: recorded_at)
-        end
+        return unless run_status == "failed"
+
+        SolidQueue::FailedExecution.create!(job_id: job.id, error: "#{workflow_key} failed", created_at: recorded_at)
+      end
     end
   end
 end

@@ -160,30 +160,31 @@ module R3x
       end
 
       private
-        def seed_runtime_catalog
-          SolidQueue::RecurringTask.create!(
-            key: "workflow:test_workflow:schedule:abc123",
-            schedule: "0 * * * *",
-            class_name: WORKFLOW_JOB_CLASS_NAME,
-            arguments: [ "schedule:abc123" ],
-            queue_name: "default",
-            static: false
-          )
-        end
 
-        def claim_job!(job, claimed_at:)
-          process = SolidQueue::Process.create!(
-            kind: "Worker",
-            last_heartbeat_at: Time.current,
-            pid: Process.pid,
-            hostname: "test",
-            metadata: "{}",
-            name: "test-worker-#{job.id}",
-            created_at: Time.current
-          )
+      def seed_runtime_catalog
+        SolidQueue::RecurringTask.create!(
+          key: "workflow:test_workflow:schedule:abc123",
+          schedule: "0 * * * *",
+          class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          queue_name: "default",
+          static: false
+        )
+      end
 
-          SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: claimed_at)
-        end
+      def claim_job!(job, claimed_at:)
+        process = SolidQueue::Process.create!(
+          kind: "Worker",
+          last_heartbeat_at: Time.current,
+          pid: Process.pid,
+          hostname: "test",
+          metadata: "{}",
+          name: "test-worker-#{job.id}",
+          created_at: Time.current
+        )
+
+        SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: claimed_at)
+      end
     end
   end
 end
