@@ -10,9 +10,9 @@ module R3x
       MUTEX = Mutex.new
       LOADED = Concurrent::AtomicBoolean.new(false)
 
-      def load!(force: false)
+      def load!(rebuild_registry: false)
         MUTEX.synchronize do
-          return if LOADED.true? && !force
+          return if LOADED.true? && !rebuild_registry
 
           R3x::Workflow::Registry.reset!
           loaded = []
