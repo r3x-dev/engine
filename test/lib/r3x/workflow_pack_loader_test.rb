@@ -1,11 +1,13 @@
 require "test_helper"
+require "fileutils"
+require "tmpdir"
 
 module R3x
   class WorkflowPackLoaderTest < ActiveSupport::TestCase
     setup do
       @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
       ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
-      R3x::Workflow::PackLoader.load!(force: true)
+      R3x::Workflow::PackLoader.load!(rebuild_registry: true)
     end
 
     teardown do
@@ -48,13 +50,48 @@ module R3x
 
     test "logs loaded workflows with workflow tags" do
       output = capture_logged_output do
-        R3x::Workflow::PackLoader.load!(force: true)
+        R3x::Workflow::PackLoader.load!(rebuild_registry: true)
       end
 
       assert_includes output, "R3x::Workflow::PackLoader"
       assert_includes output, "r3x.workflow_key=test_workflow"
       assert_includes output, "Loaded workflow class=Workflows::TestWorkflow"
       assert_includes output, "Skipping disabled workflow entrypoint"
+    end
+
+    test "rebuild_registry does not reload already required workflow source" do
+      Dir.mktmpdir do |dir|
+        workflow_dir = File.join(dir, "reload_semantics")
+        workflow_file = File.join(workflow_dir, "workflow.rb")
+        FileUtils.mkdir_p(workflow_dir)
+        File.write(workflow_file, workflow_source(message: "original"))
+
+        ENV["R3X_WORKFLOW_PATHS"] = dir
+        R3x::Workflow::PackLoader.load!(rebuild_registry: true)
+        assert_equal "original", R3x::Workflow::Registry.fetch("reload_semantics").new.run.fetch("message")
+
+        File.write(workflow_file, workflow_source(message: "changed"))
+        R3x::Workflow::PackLoader.load!(rebuild_registry: true)
+
+        workflow_class = R3x::Workflow::Registry.fetch("reload_semantics")
+        assert_equal "original", workflow_class.new.run.fetch("message")
+      ensure
+        Workflows.send(:remove_const, :ReloadSemantics) if defined?(Workflows::ReloadSemantics)
+      end
+    end
+
+    private
+
+    def workflow_source(message:)
+      <<~RUBY
+        module Workflows
+          class ReloadSemantics < R3x::Workflow::Base
+            def run
+              { "message" => #{message.inspect} }
+            end
+          end
+        end
+      RUBY
     end
   end
 end

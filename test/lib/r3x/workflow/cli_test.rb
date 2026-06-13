@@ -9,7 +9,7 @@ module R3x
         @fixture_path = @fixture_dir.join("test_workflow/workflow.rb")
         @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
         ENV["R3X_WORKFLOW_PATHS"] = @fixture_dir.to_s
-        R3x::Workflow::PackLoader.load!(force: true)
+        R3x::Workflow::PackLoader.load!(rebuild_registry: true)
       end
 
       teardown do
