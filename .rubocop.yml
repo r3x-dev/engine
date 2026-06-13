@@ -1,6 +1,9 @@
 # https://docs.rubocop.org/rubocop/configuration.html
 # Omakase Ruby styling for Rails
-inherit_gem: {rubocop-rails-omakase: rubocop.yml}
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+  rubocop-rubyfmt:
+    - config/default.yml
 plugins:
   - rubocop-thread_safety
   - rubocop-rubyfmt
