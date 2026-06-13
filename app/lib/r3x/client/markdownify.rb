@@ -65,11 +65,7 @@ module R3x
           return dry_run_result
         end
 
-        response = connection.post("https://markdown.new/", json: {
-          "url" => @url,
-          "method" => @method,
-          "retain_images" => @retain_images
-        }).raise_for_status
+        response = connection.post("https://markdown.new/", json: { "url" => @url, "method" => @method, "retain_images" => @retain_images }).raise_for_status
 
         parsed = MultiJSON.parse(response.body.to_s)
 

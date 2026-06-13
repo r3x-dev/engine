@@ -87,9 +87,7 @@ module R3x
       def build_connection(token: nil)
         headers = {}
         headers["X-Vault-Token"] = token if token.present?
-        HTTPX.with(
-          headers: headers
-        )
+        HTTPX.with(headers: headers)
       end
 
       def vault_token
@@ -101,21 +99,11 @@ module R3x
       end
 
       def lookup_summary
-        lookup_self.slice(
-          "display_name",
-          "policies",
-          "ttl",
-          "renewable",
-          "period",
-          "explicit_max_ttl"
-        )
+        lookup_self.slice("display_name", "policies", "ttl", "renewable", "period", "explicit_max_ttl")
       end
 
       def auth
-        @auth ||= Auth.build(
-          config: config,
-          connection_builder: -> { build_connection }
-        )
+        @auth ||= Auth.build(config: config, connection_builder: -> { build_connection })
       end
 
       def get(path)

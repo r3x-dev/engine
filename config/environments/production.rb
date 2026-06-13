@@ -34,18 +34,12 @@ Rails.application.configure do
 
   if R3x::Log.json?
     config.log_formatter = R3x::Log::JsonFormatter.new
-    config.logger = ActiveSupport::TaggedLogging.new(
-      ActiveSupport::Logger.new(STDOUT).tap do |logger|
-        logger.formatter = config.log_formatter
-      end
-    )
+    config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT).tap { |logger| logger.formatter = config.log_formatter })
   else
     config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT))
   end
 
-  config.after_initialize do
-    Rails.logger.info { "Log format: #{R3x::Log.format} (set R3X_LOG_FORMAT=json for structured output)" }
-  end
+  config.after_initialize { Rails.logger.info { "Log format: #{R3x::Log.format} (set R3X_LOG_FORMAT=json for structured output)" } }
 
   # Change to "debug" to log everything (including potentially personally-identifiable information!).
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")

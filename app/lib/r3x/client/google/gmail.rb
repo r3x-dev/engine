@@ -35,12 +35,7 @@ module R3x
         def build_service
           R3x::Client::GoogleAuth.require_gmail!
 
-          ::Google::Apis::GmailV1::GmailService.new.tap do |service|
-            service.authorization = R3x::Client::GoogleAuth.from_env(
-              project: project,
-              scope: "gmail.send"
-            )
-          end
+          ::Google::Apis::GmailV1::GmailService.new.tap { |service| service.authorization = R3x::Client::GoogleAuth.from_env(project: project, scope: "gmail.send") }
         end
 
         def raw_message(to:, subject:, body:, attachments: [])
@@ -52,13 +47,9 @@ module R3x
             mail.subject = subject
 
             if attachments.any?
-              mail.text_part = Mail::Part.new do
-                body body
-              end
+              mail.text_part = Mail::Part.new { body body }
 
-              attachments.each do |attachment|
-                mail.add_file(filename: attachment[:filename], content: attachment[:content])
-              end
+              attachments.each { |attachment| mail.add_file(filename: attachment[:filename], content: attachment[:content]) }
             else
               mail.body = body
             end

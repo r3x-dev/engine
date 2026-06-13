@@ -18,9 +18,7 @@ module Seeds
       puts "  /"
       puts "  /workflow-runs"
 
-      runs.each do |run|
-        puts "  /workflow-runs/#{run.fetch(:job_id)}  #{run.fetch(:status)}  #{run.fetch(:workflow_key).titleize}"
-      end
+      runs.each { |run| puts "  /workflow-runs/#{run.fetch(:job_id)}  #{run.fetch(:status)}  #{run.fetch(:workflow_key).titleize}" }
     end
 
     private
@@ -123,15 +121,7 @@ module Seeds
     end
 
     def create_recurring_task!(definition)
-      SolidQueue::RecurringTask.create!(
-        key: recurring_task_key(definition),
-        schedule: definition.fetch(:schedule),
-        class_name: definition.fetch(:class_name),
-        arguments: [ definition.fetch(:trigger_key) ],
-        queue_name: definition.fetch(:queue_name),
-        priority: definition.fetch(:priority),
-        static: false
-      )
+      SolidQueue::RecurringTask.create!(key: recurring_task_key(definition), schedule: definition.fetch(:schedule), class_name: definition.fetch(:class_name), arguments: [ definition.fetch(:trigger_key) ], queue_name: definition.fetch(:queue_name), priority: definition.fetch(:priority), static: false)
     end
 
     def create_run!(definition)
@@ -140,22 +130,14 @@ module Seeds
       case definition.fetch(:status)
       when "failed"
         clear_scheduled_state!(job)
-        SolidQueue::FailedExecution.create!(
-          job_id: job.id,
-          error: definition.fetch(:error),
-          created_at: definition.fetch(:failed_at)
-        )
+        SolidQueue::FailedExecution.create!(job_id: job.id, error: definition.fetch(:error), created_at: definition.fetch(:failed_at))
       when "finished"
         clear_scheduled_state!(job)
         job.update_columns(finished_at: definition.fetch(:finished_at), updated_at: definition.fetch(:updated_at))
       when "running"
         clear_scheduled_state!(job)
         SolidQueue::ClaimedExecution.where(job_id: job.id).delete_all
-        SolidQueue::ClaimedExecution.create!(
-          job_id: job.id,
-          process_id: create_process!(definition).id,
-          created_at: definition.fetch(:claimed_at)
-        )
+        SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: create_process!(definition).id, created_at: definition.fetch(:claimed_at))
       when "scheduled"
         SolidQueue::ScheduledExecution.where(job_id: job.id).update_all(created_at: definition.fetch(:created_at))
       else
@@ -166,22 +148,7 @@ module Seeds
     end
 
     def create_job!(definition)
-      SolidQueue::Job.create!(
-        queue_name: definition.fetch(:queue_name),
-        class_name: definition.fetch(:class_name),
-        priority: definition.fetch(:priority),
-        active_job_id: definition.fetch(:active_job_id),
-        arguments: serialized_job_payload(
-          job_class_name: definition.fetch(:class_name),
-          arguments: [ definition.fetch(:trigger_key) ],
-          queue_name: definition.fetch(:queue_name),
-          priority: definition.fetch(:priority)
-        ),
-        created_at: definition.fetch(:created_at),
-        updated_at: definition.fetch(:updated_at),
-        scheduled_at: definition[:seed_scheduled_at] || definition[:scheduled_at],
-        finished_at: nil
-      )
+      SolidQueue::Job.create!(queue_name: definition.fetch(:queue_name), class_name: definition.fetch(:class_name), priority: definition.fetch(:priority), active_job_id: definition.fetch(:active_job_id), arguments: serialized_job_payload(job_class_name: definition.fetch(:class_name), arguments: [ definition.fetch(:trigger_key) ], queue_name: definition.fetch(:queue_name), priority: definition.fetch(:priority)), created_at: definition.fetch(:created_at), updated_at: definition.fetch(:updated_at), scheduled_at: definition[:seed_scheduled_at] || definition[:scheduled_at], finished_at: nil)
     end
 
     def clear_scheduled_state!(job)
@@ -190,15 +157,7 @@ module Seeds
     end
 
     def create_process!(definition)
-      SolidQueue::Process.create!(
-        kind: "Worker",
-        last_heartbeat_at: definition.fetch(:claimed_at),
-        pid: Process.pid,
-        hostname: "localhost",
-        metadata: "{}",
-        name: "#{DEMO_PROCESS_PREFIX}#{definition.fetch(:workflow_key)}",
-        created_at: definition.fetch(:claimed_at)
-      )
+      SolidQueue::Process.create!(kind: "Worker", last_heartbeat_at: definition.fetch(:claimed_at), pid: Process.pid, hostname: "localhost", metadata: "{}", name: "#{DEMO_PROCESS_PREFIX}#{definition.fetch(:workflow_key)}", created_at: definition.fetch(:claimed_at))
     end
 
     def recurring_task_key(definition)

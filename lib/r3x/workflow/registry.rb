@@ -22,9 +22,7 @@ module R3x
       end
 
       def reset!
-        MUTEX.synchronize do
-          REGISTRATIONS.clear
-        end
+        MUTEX.synchronize { REGISTRATIONS.clear }
       end
     end
   end

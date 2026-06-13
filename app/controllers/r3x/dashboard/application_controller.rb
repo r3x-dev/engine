@@ -16,9 +16,7 @@ module R3x
         parts = duration.parts
         return "unknown" if parts.blank?
 
-        parts.map do |unit, value|
-          "#{value} #{unit.to_s.pluralize(value)}"
-        end.to_sentence
+        parts.map { |unit, value| "#{value} #{unit.to_s.pluralize(value)}" }.to_sentence
       end
 
       def mission_control_path

@@ -75,9 +75,7 @@ module R3x
         end
 
         def class_names_by_workflow_key
-          @class_names_by_workflow_key ||= class_names_to_keys.each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |(class_name, workflow_key), mapping|
-            mapping[workflow_key] << class_name
-          end
+          @class_names_by_workflow_key ||= class_names_to_keys.each_with_object(Hash.new { |hash, key| hash[key] = [] }) { |(class_name, workflow_key), mapping| mapping[workflow_key] << class_name }
         end
 
         def observed_class_names_to_keys
@@ -116,12 +114,7 @@ module R3x
 
         def recent_trigger_observed_jobs
           @recent_trigger_observed_jobs ||= begin
-            ::Dashboard::Run
-              .observed_triggers
-              .select(:class_name, :arguments)
-              .order(created_at: :desc)
-              .limit(TRIGGER_OBSERVATION_JOB_LIMIT)
-              .to_a
+            ::Dashboard::Run.observed_triggers.select(:class_name, :arguments).order(created_at: :desc).limit(TRIGGER_OBSERVATION_JOB_LIMIT).to_a
           rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
             []
           end
@@ -147,9 +140,7 @@ module R3x
           @trigger_keys_to_workflow_keys ||= begin
             mapping = Hash.new { |hash, key| hash[key] = [] }
 
-            recurring_tasks.each do |task|
-              mapping[task.trigger_key] << task.workflow_key
-            end
+            recurring_tasks.each { |task| mapping[task.trigger_key] << task.workflow_key }
 
             mapping.transform_values { |values| values.compact.uniq }
           end

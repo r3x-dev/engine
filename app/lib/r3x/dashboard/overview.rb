@@ -33,23 +33,11 @@ module R3x
       end
 
       def needs_attention
-        @needs_attention ||= workflows
-          .select { |workflow| workflow.dig(:health, :status) == "failed" }
-          .map do |workflow|
-            workflow.merge(
-              attention_at: attention_time_for(workflow),
-              attention_label: attention_label_for(workflow)
-            )
-          end
-          .sort_by { |workflow| workflow[:attention_at] || Time.at(0) }
-          .reverse
+        @needs_attention ||= workflows.select { |workflow| workflow.dig(:health, :status) == "failed" }.map { |workflow| workflow.merge(attention_at: attention_time_for(workflow), attention_label: attention_label_for(workflow)) }.sort_by { |workflow| workflow[:attention_at] || Time.at(0) }.reverse
       end
 
       def recent_runs
-        @recent_runs ||= Workflow::Runs.new(
-          job_ids: run_counts.recent_run_ids(limit: RECENT_RUN_LIMIT),
-          limit: RECENT_RUN_LIMIT
-        ).all
+        @recent_runs ||= Workflow::Runs.new(job_ids: run_counts.recent_run_ids(limit: RECENT_RUN_LIMIT), limit: RECENT_RUN_LIMIT).all
       end
 
       private

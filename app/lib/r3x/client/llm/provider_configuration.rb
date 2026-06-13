@@ -16,10 +16,7 @@ module R3x
           provider = base_name.downcase.to_sym
           raise ArgumentError, "Unsupported LLM provider for #{api_key_env}: #{provider}" unless RubyLLM::Provider.providers.key?(provider)
 
-          new(
-            api_key: R3x::Env.secure_fetch(api_key_env, prefix: "#{base_name}_API_KEY_"),
-            config_api_key_attr: "#{provider}_api_key"
-          )
+          new(api_key: R3x::Env.secure_fetch(api_key_env, prefix: "#{base_name}_API_KEY_"), config_api_key_attr: "#{provider}_api_key")
         end
       end
     end

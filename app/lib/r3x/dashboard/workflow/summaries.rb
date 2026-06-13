@@ -5,12 +5,7 @@ module R3x
     module Workflow
       class Summaries
         DEFAULT_SORT = "health"
-        DEFAULT_DIRECTIONS = {
-          "workflow" => "asc",
-          "health" => "asc",
-          "next_trigger" => "asc",
-          "last_run" => "desc"
-        }.freeze
+        DEFAULT_DIRECTIONS = { "workflow" => "asc", "health" => "asc", "next_trigger" => "asc", "last_run" => "desc" }.freeze
         HEALTH_SORT_ORDER = %w[failed healthy idle].freeze
 
         attr_reader :direction, :sort
@@ -57,12 +52,7 @@ module R3x
           trigger_entries = trigger_entries_for(workflow_key:, recurring_tasks:)
           last_run = latest_run_for(workflow_key)
           preferred_recurring_task = recurring_tasks.find { |task| task.direct_workflow_class_name.present? } || recurring_tasks.first
-          manual_enqueue_options = ::Dashboard::Run.manual_enqueue_options_for(
-            workflow_key: workflow_key,
-            class_name: preferred_recurring_task&.direct_workflow_class_name,
-            recurring_task: preferred_recurring_task,
-            last_run: last_run
-          )
+          manual_enqueue_options = ::Dashboard::Run.manual_enqueue_options_for(workflow_key: workflow_key, class_name: preferred_recurring_task&.direct_workflow_class_name, recurring_task: preferred_recurring_task, last_run: last_run)
 
           {
             class_name: manual_enqueue_options&.fetch(:class_name),
@@ -112,11 +102,7 @@ module R3x
         end
 
         def compare_health(left, right)
-          comparison = compare_numbers(
-            health_rank(left.dig(:health, :status)),
-            health_rank(right.dig(:health, :status)),
-            direction:
-          )
+          comparison = compare_numbers(health_rank(left.dig(:health, :status)), health_rank(right.dig(:health, :status)), direction:)
           return comparison unless comparison.zero?
 
           comparison = compare_time(health_timestamp_for(left), health_timestamp_for(right), direction: "desc")
@@ -156,13 +142,7 @@ module R3x
           trigger_keys = recurring_tasks.map(&:trigger_key)
           recurring_tasks_by_trigger_key = recurring_tasks.index_by(&:trigger_key)
 
-          trigger_keys.sort.map do |trigger_key|
-            build_trigger_entry(
-              workflow_key: workflow_key,
-              trigger_key: trigger_key,
-              recurring_task: recurring_tasks_by_trigger_key[trigger_key]
-            )
-          end
+          trigger_keys.sort.map { |trigger_key| build_trigger_entry(workflow_key: workflow_key, trigger_key: trigger_key, recurring_task: recurring_tasks_by_trigger_key[trigger_key]) }
         end
 
         def build_trigger_entry(workflow_key:, trigger_key:, recurring_task:)
@@ -222,10 +202,7 @@ module R3x
 
         def recurring_tasks_by_workflow_key
           @recurring_tasks_by_workflow_key ||= begin
-            ::Dashboard::RecurringTask
-              .workflow_tasks
-              .to_a
-              .group_by(&:workflow_key)
+            ::Dashboard::RecurringTask.workflow_tasks.to_a.group_by(&:workflow_key)
           rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
             {}
           end

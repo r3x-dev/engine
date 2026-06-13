@@ -31,10 +31,7 @@ module R3x
         R3x::Client::GoogleAuth.require_sheets!
 
         service = ::Google::Apis::SheetsV4::SheetsService.new
-        service.authorization = R3x::Client::GoogleAuth.from_env(
-          project: project,
-          scope: "sheets.readonly"
-        )
+        service.authorization = R3x::Client::GoogleAuth.from_env(project: project, scope: "sheets.readonly")
         service
       end
 
