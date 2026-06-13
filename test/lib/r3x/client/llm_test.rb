@@ -39,14 +39,14 @@ module R3x
 
         mock_chat = mock("chat")
         context.expects(:chat).with(model: "deepseek-chat", provider: :opencode_go, assume_model_exists: true).returns(mock_chat)
-        mock_chat.expects(:ask).with("hello").returns(stub(content: "response"))
+        mock_chat.expects(:ask).with("hello", with: nil).returns(stub(content: "response"))
 
         assert_equal "response", llm.message(model: "deepseek-chat", prompt: "hello").content
 
         mock_classify_chat = mock("classify_chat")
         context.expects(:chat).with(model: "deepseek-chat", provider: :opencode_go, assume_model_exists: true).returns(mock_classify_chat)
         mock_classify_chat.expects(:with_schema).with(anything).returns(mock_classify_chat)
-        mock_classify_chat.expects(:ask).with(anything).returns(stub(content: '{"category":"other"}'))
+        mock_classify_chat.expects(:ask).with(anything, with: nil).returns(stub(content: '{"category":"other"}'))
 
         result = llm.classify(text: "some text", model: "deepseek-chat", categories: { "billing" => "billing issues" })
         assert_equal '{"category":"other"}', result
@@ -66,12 +66,16 @@ module R3x
       end
 
       test "does not scan ruby llm model registry during initialization" do
+        R3x::GemLoader.require("ruby_llm")
+
         RubyLLM::Models.instance.expects(:any?).never
 
         Llm.new(api_key: "opencode-key", config_api_key_attr: "opencode_go_api_key")
       end
 
       test "provider registry is idempotent" do
+        R3x::GemLoader.require("ruby_llm")
+
         Llm::ProviderRegistry.register!
         Llm::ProviderRegistry.register!
 
@@ -84,9 +88,27 @@ module R3x
 
         mock_chat = mock("chat")
         context.expects(:chat).with(model: "gemini-1.5-flash").returns(mock_chat)
-        mock_chat.expects(:ask).with("hello").returns(stub(content: "response"))
+        mock_chat.expects(:ask).with("hello", with: nil).returns(stub(content: "response"))
 
         assert_equal "response", llm.message(model: "gemini-1.5-flash", prompt: "hello").content
+      end
+
+      test "analyze_image asks with binary image attachment and returns response content" do
+        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key")
+        context = llm.instance_variable_get(:@llm_context)
+
+        mock_chat = mock("chat")
+        context.expects(:chat).with(model: "gemini-1.5-flash").returns(mock_chat)
+        mock_chat.expects(:with_schema).with(:schema).returns(mock_chat)
+        mock_chat.expects(:ask).with do |prompt, options|
+          image = options.fetch(:with).sole
+
+          prompt == "describe" &&
+            image.is_a?(StringIO) &&
+            image.external_encoding == Encoding::BINARY
+        end.returns(stub(content: "image response"))
+
+        assert_equal "image response", llm.analyze_image("bytes", prompt: "describe", model: "gemini-1.5-flash", schema: :schema)
       end
 
       test "does not pin chat options to the first provider initialized in a process" do
