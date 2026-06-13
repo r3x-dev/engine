@@ -40,24 +40,15 @@ Layout/RedundantLineBreak:
   InspectBlocks: true
   Exclude:
     - 'test/**/*'
-    - '**/test/**/*'
-    - 'spec/**/*'
-    - '**/spec/**/*'
 
 Style/BlockDelimiters:
   Enabled: true
   Exclude:
     - 'test/**/*'
-    - '**/test/**/*'
-    - 'spec/**/*'
-    - '**/spec/**/*'
 
 Layout/LineLength:
-  Enabled: false
+  Enabled: true
   Max: 140
   AutoCorrect: false
   Exclude:
     - 'test/**/*'
-    - '**/test/**/*'
-    - 'spec/**/*'
-    - '**/spec/**/*'

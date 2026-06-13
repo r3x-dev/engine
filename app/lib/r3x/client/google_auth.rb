@@ -3,7 +3,12 @@
 module R3x
   module Client
     module GoogleAuth
-      GMAIL_SCOPE_ALIASES = { "gmail.readonly" => "AUTH_GMAIL_READONLY", "gmail.send" => "AUTH_GMAIL_SEND", "gmail.compose" => "AUTH_GMAIL_COMPOSE", "gmail.modify" => "AUTH_GMAIL_MODIFY" }.freeze
+      GMAIL_SCOPE_ALIASES = {
+        "gmail.readonly" => "AUTH_GMAIL_READONLY",
+        "gmail.send" => "AUTH_GMAIL_SEND",
+        "gmail.compose" => "AUTH_GMAIL_COMPOSE",
+        "gmail.modify" => "AUTH_GMAIL_MODIFY"
+      }.freeze
 
       SHEETS_SCOPE_ALIASES = { "sheets.readonly" => "AUTH_SPREADSHEETS_READONLY", "sheets" => "AUTH_SPREADSHEETS" }.freeze
 
@@ -18,13 +23,25 @@ module R3x
       def self.from_env(project:, scope:)
         require_googleauth!
 
-        ::Signet::OAuth2::Client.new(client_id: R3x::Env.fetch!("GOOGLE_CLIENT_ID_#{project}"), client_secret: R3x::Env.fetch!("GOOGLE_CLIENT_SECRET_#{project}"), refresh_token: R3x::Env.fetch!("GOOGLE_REFRESH_TOKEN_#{project}"), token_credential_uri: "https://oauth2.googleapis.com/token", scope: Array(scope).map { |value| resolve_scope(value) }).tap(&:fetch_access_token!)
+        ::Signet::OAuth2::Client.new(
+          client_id: R3x::Env.fetch!("GOOGLE_CLIENT_ID_#{project}"),
+          client_secret: R3x::Env.fetch!("GOOGLE_CLIENT_SECRET_#{project}"),
+          refresh_token: R3x::Env.fetch!("GOOGLE_REFRESH_TOKEN_#{project}"),
+          token_credential_uri: "https://oauth2.googleapis.com/token",
+          scope: Array(scope).map { |value| resolve_scope(value) }
+        ).tap(&:fetch_access_token!)
       end
 
       def self.from_json(parsed_json, scope:)
         require_googleauth!
 
-        ::Signet::OAuth2::Client.new(client_id: parsed_json.fetch("client_id"), client_secret: parsed_json.fetch("client_secret"), refresh_token: parsed_json.fetch("refresh_token"), token_credential_uri: "https://oauth2.googleapis.com/token", scope: Array(scope).map { |value| resolve_scope(value) }).tap(&:fetch_access_token!)
+        ::Signet::OAuth2::Client.new(
+          client_id: parsed_json.fetch("client_id"),
+          client_secret: parsed_json.fetch("client_secret"),
+          refresh_token: parsed_json.fetch("refresh_token"),
+          token_credential_uri: "https://oauth2.googleapis.com/token",
+          scope: Array(scope).map { |value| resolve_scope(value) }
+        ).tap(&:fetch_access_token!)
       end
 
       def self.resolve_scope(alias_or_scope)

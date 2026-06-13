@@ -27,9 +27,13 @@ module R3x
             workflow_class = register_workflow(entrypoint)
             loaded << workflow_class
 
-            Rails.logger.tagged(R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_class.workflow_key)) { logger.info "Loaded workflow class=#{workflow_class.name} entrypoint=#{entrypoint}" }
+            Rails.logger.tagged(R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_class.workflow_key)) do
+              logger.info "Loaded workflow class=#{workflow_class.name} entrypoint=#{entrypoint}"
+            end
           rescue => e
-            Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") { logger.error "Workflow load failed error_class=#{e.class} error_message=#{e.message}" }
+            Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") do
+              logger.error "Workflow load failed error_class=#{e.class} error_message=#{e.message}"
+            end
 
             raise
           end

@@ -11,7 +11,8 @@ module R3x
       end
 
       def query(query:, start_at: nil, end_at: nil, limit: 100, timeout: DEFAULT_TIMEOUT)
-        response = @client.post("#{@base_url}/select/logsql/query", form: query_params(query: query, start_at: start_at, end_at: end_at, limit: limit, timeout: timeout)).raise_for_status
+        params = query_params(query: query, start_at: start_at, end_at: end_at, limit: limit, timeout: timeout)
+        response = @client.post("#{@base_url}/select/logsql/query", form: params).raise_for_status
 
         parse_json_lines(response.body)
       end
@@ -21,7 +22,13 @@ module R3x
       attr_reader :client, :base_url
 
       def query_params(query:, start_at:, end_at:, limit:, timeout:)
-        { "end" => format_time(end_at), "limit" => limit, "query" => sort_query(query), "start" => format_time(start_at), "timeout" => timeout }.compact
+        {
+          "end" => format_time(end_at),
+          "limit" => limit,
+          "query" => sort_query(query),
+          "start" => format_time(start_at),
+          "timeout" => timeout
+        }.compact
       end
 
       def sort_query(query)

@@ -11,7 +11,10 @@ module R3x
           end
 
           def client_token
-            response = unauthenticated_connection.post("#{config.vault_addr}/v1/#{config.kubernetes_auth_path}/login", json: { role: config.kubernetes_role, jwt: service_account_token })
+            response = unauthenticated_connection.post(
+              "#{config.vault_addr}/v1/#{config.kubernetes_auth_path}/login",
+              json: { role: config.kubernetes_role, jwt: service_account_token }
+            )
 
             raise_login_error(response) unless response.status >= 200 && response.status < 300
 
@@ -48,7 +51,11 @@ module R3x
               " (#{identity.fetch(:namespace)}/#{identity.fetch(:service_account_name)})"
             end
 
-            raise "Vault Kubernetes auth login failed with status #{response.status}: #{request_errors(response)}. Vault could not exchange the Kubernetes service account token for a Vault token. Check the auth/kubernetes backend configuration (reviewer JWT, Kubernetes host, CA certificate, and issuer settings) and verify that role #{config.kubernetes_role.inspect} is bound to the expected service account and namespace#{scope}."
+            raise "Vault Kubernetes auth login failed with status #{response.status}: #{request_errors(response)}. " \
+                  "Vault could not exchange the Kubernetes service account token for a Vault token. " \
+                  "Check the auth/kubernetes backend configuration (reviewer JWT, Kubernetes host, " \
+                  "CA certificate, and issuer settings) and verify that role #{config.kubernetes_role.inspect} " \
+                  "is bound to the expected service account and namespace#{scope}."
           end
 
           def service_account_identity
