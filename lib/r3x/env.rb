@@ -1,10 +1,7 @@
 module R3x
   module Env
+    extend R3x::Concerns::Logger
     INTERNAL_PREFIX = "R3X_"
-
-    def self.logger
-      Rails.logger.tagged(name)
-    end
 
     def self.fetch(key)
       ENV[key].presence
@@ -44,6 +41,7 @@ module R3x
         unless key == prefix.delete_suffix("_") || key.start_with?(prefix)
           raise ArgumentError, "Key '#{key}' must be '#{prefix.delete_suffix("_")}' or start with '#{prefix}'"
         end
+
       when Regexp
         unless key.match?(prefix)
           raise ArgumentError, "Key '#{key}' must match #{prefix}"
@@ -59,13 +57,13 @@ module R3x
       return {} if path.blank?
 
       unless R3x::Env.present?("R3X_VAULT_ADDR")
-        logger.info "Vault auth not configured - skipping Vault"
+        logger.info("Vault auth not configured - skipping Vault")
         return {}
       end
 
       R3x::Client::HashiCorpVault.validate_auth_configuration!
 
-      logger.info "Loading secrets from Vault: #{path}"
+      logger.info("Loading secrets from Vault: #{path}")
       secrets = R3x::Client::HashiCorpVault.read(path)
       loaded = {}
 
@@ -73,16 +71,17 @@ module R3x
         if key.start_with?(INTERNAL_PREFIX)
           raise "Vault secret key '#{key}' starts with reserved prefix '#{INTERNAL_PREFIX}'"
         end
+
         ENV[key] = value.to_s
         loaded[key] = true
       end
 
-      logger.info "Loaded #{loaded.size} secrets from Vault"
+      logger.info("Loaded #{loaded.size} secrets from Vault")
       loaded
     rescue ArgumentError, RuntimeError
       raise
     rescue => e
-      logger.warn "Vault error: #{e.message}"
+      logger.warn("Vault error: #{e.message}")
       {}
     end
   end

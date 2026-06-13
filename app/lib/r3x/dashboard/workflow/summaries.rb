@@ -5,7 +5,7 @@ module R3x
     module Workflow
       class Summaries
         DEFAULT_SORT = "health"
-        DEFAULT_DIRECTIONS = { "workflow" => "asc", "health" => "asc", "next_trigger" => "asc", "last_run" => "desc" }.freeze
+        DEFAULT_DIRECTIONS = {"workflow" => "asc", "health" => "asc", "next_trigger" => "asc", "last_run" => "desc"}.freeze
         HEALTH_SORT_ORDER = %w[failed healthy idle].freeze
 
         attr_reader :direction, :sort
@@ -51,7 +51,8 @@ module R3x
           recurring_tasks = recurring_tasks_by_workflow_key.fetch(workflow_key, [])
           trigger_entries = trigger_entries_for(workflow_key:, recurring_tasks:)
           last_run = latest_run_for(workflow_key)
-          preferred_recurring_task = recurring_tasks.find { |task| task.direct_workflow_class_name.present? } || recurring_tasks.first
+          preferred_recurring_task = recurring_tasks.find { |task| task.direct_workflow_class_name.present? } ||
+            recurring_tasks.first
           manual_enqueue_options = ::Dashboard::Run.manual_enqueue_options_for(
             workflow_key: workflow_key,
             class_name: preferred_recurring_task&.direct_workflow_class_name,
@@ -107,7 +108,11 @@ module R3x
         end
 
         def compare_health(left, right)
-          comparison = compare_numbers(health_rank(left.dig(:health, :status)), health_rank(right.dig(:health, :status)), direction:)
+          comparison = compare_numbers(
+            health_rank(left.dig(:health, :status)),
+            health_rank(right.dig(:health, :status)),
+            direction:
+          )
           return comparison unless comparison.zero?
 
           comparison = compare_time(health_timestamp_for(left), health_timestamp_for(right), direction: "desc")
@@ -256,8 +261,8 @@ module R3x
         end
 
         def compare_latest_runs(left, right)
-          left_time = left.recorded_at || left.created_at || Time.at(0)
-          right_time = right.recorded_at || right.created_at || Time.at(0)
+          left_time = left.recorded_at || left.created_at || Time.zone.at(0)
+          right_time = right.recorded_at || right.created_at || Time.zone.at(0)
           comparison = left_time <=> right_time
           return comparison unless comparison.zero?
 
