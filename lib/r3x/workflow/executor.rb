@@ -12,7 +12,15 @@ module R3x
       end
 
       def build_context
-        Context.new(trigger: TriggerManager::Execution.new(trigger: resolve_trigger, workflow_key: workflow_class.workflow_key, payload: trigger_payload), workflow_key: workflow_class.workflow_key, workflow_class: workflow_class)
+        Context.new(
+          trigger: TriggerManager::Execution.new(
+            trigger: resolve_trigger,
+            workflow_key: workflow_class.workflow_key,
+            payload: trigger_payload
+          ),
+          workflow_key: workflow_class.workflow_key,
+          workflow_class: workflow_class
+        )
       end
 
       private

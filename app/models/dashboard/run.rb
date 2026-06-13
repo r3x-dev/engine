@@ -3,7 +3,15 @@ module Dashboard
     include R3x::Concerns::Logger
 
     STATUSES = %w[blocked failed finished queued running scheduled].freeze
-    LATEST_ACTIVITY_BUCKETS = [ [ "failed", :solid_queue_failed_executions, :created_at ], [ "finished", :solid_queue_jobs, :finished_at ], [ "running", :solid_queue_claimed_executions, :created_at ], [ "queued_ready", :solid_queue_ready_executions, :created_at ], [ "queued_waiting", :solid_queue_jobs, :created_at ], [ "blocked", :solid_queue_blocked_executions, :created_at ], [ "scheduled", :solid_queue_scheduled_executions, :scheduled_at ] ].freeze
+    LATEST_ACTIVITY_BUCKETS = [
+      [ "failed", :solid_queue_failed_executions, :created_at ],
+      [ "finished", :solid_queue_jobs, :finished_at ],
+      [ "running", :solid_queue_claimed_executions, :created_at ],
+      [ "queued_ready", :solid_queue_ready_executions, :created_at ],
+      [ "queued_waiting", :solid_queue_jobs, :created_at ],
+      [ "blocked", :solid_queue_blocked_executions, :created_at ],
+      [ "scheduled", :solid_queue_scheduled_executions, :scheduled_at ]
+    ].freeze
 
     self.table_name = "solid_queue_jobs"
 
@@ -16,7 +24,9 @@ module Dashboard
     has_one :ready_execution, class_name: "SolidQueue::ReadyExecution", foreign_key: :job_id
     has_one :claimed_execution, class_name: "SolidQueue::ClaimedExecution", foreign_key: :job_id
 
-    scope :with_execution_associations, -> { includes(:failed_execution, :scheduled_execution, :blocked_execution, :ready_execution, :claimed_execution) }
+    scope :with_execution_associations, -> {
+      includes(:failed_execution, :scheduled_execution, :blocked_execution, :ready_execution, :claimed_execution)
+    }
     scope :dashboard_visible, ->(class_names) do
       visible_class_names = Array(class_names).compact_blank
       visible_class_names.present? ? where(class_name: visible_class_names) : none
@@ -64,7 +74,10 @@ module Dashboard
       end
 
       def manual_enqueue_options_for(workflow_key:, class_name: nil, recurring_task: nil, last_run: nil)
-        resolved_class_name = class_name.presence || recurring_task&.direct_workflow_class_name || last_run&.class_name || default_workflow_class_name(workflow_key)
+        resolved_class_name = class_name.presence ||
+                              recurring_task&.direct_workflow_class_name ||
+                              last_run&.class_name ||
+                              default_workflow_class_name(workflow_key)
 
         return if resolved_class_name.blank?
 
@@ -79,7 +92,9 @@ module Dashboard
       def recent_ids(limit:, class_names:)
         base_scope = dashboard_visible(class_names)
 
-        LATEST_ACTIVITY_BUCKETS.flat_map { |status, table_name, column_name| latest_activity_status_scope(base_scope, status).order(Arel::Table.new(table_name)[column_name].desc).limit(limit).pluck(:id) }.uniq
+        LATEST_ACTIVITY_BUCKETS.flat_map do |status, table_name, column_name|
+          latest_activity_status_scope(base_scope, status).order(Arel::Table.new(table_name)[column_name].desc).limit(limit).pluck(:id)
+        end.uniq
       end
 
       def latest_activity_candidates(class_names:)
@@ -131,11 +146,16 @@ module Dashboard
 
         base_scope = dashboard_visible(visible_class_names)
 
-        LATEST_ACTIVITY_BUCKETS.flat_map { |status, table_name, column_name| latest_activity_candidate_ids_for_status(base_scope: base_scope, status: status, recorded_at: Arel::Table.new(table_name)[column_name]) }.uniq
+        LATEST_ACTIVITY_BUCKETS.flat_map do |status, table_name, column_name|
+          recorded_at = Arel::Table.new(table_name)[column_name]
+          latest_activity_candidate_ids_for_status(base_scope: base_scope, status: status, recorded_at: recorded_at)
+        end.uniq
       end
 
       def latest_activity_candidate_ids_for_status(base_scope:, status:, recorded_at:)
-        ranked_sql = latest_activity_status_scope(base_scope, status).select(run_table[:id].as("id"), latest_activity_rank(recorded_at).as("dashboard_rank")).to_sql
+        ranked_sql = latest_activity_status_scope(base_scope, status)
+                     .select(run_table[:id].as("id"), latest_activity_rank(recorded_at).as("dashboard_rank"))
+                     .to_sql
 
         connection.select_values("SELECT id FROM (#{ranked_sql}) dashboard_latest_runs WHERE dashboard_rank = 1")
       end

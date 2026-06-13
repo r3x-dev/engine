@@ -34,7 +34,9 @@ Rails.application.configure do
 
   if R3x::Log.json?
     config.log_formatter = R3x::Log::JsonFormatter.new
-    config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT).tap { |logger| logger.formatter = config.log_formatter })
+    config.logger = ActiveSupport::TaggedLogging.new(
+      ActiveSupport::Logger.new(STDOUT).tap { |logger| logger.formatter = config.log_formatter }
+    )
   else
     config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT))
   end
@@ -86,6 +88,7 @@ Rails.application.configure do
     # Intentionally uses ActiveModel::Type::Boolean instead of R3x::Env.fetch_boolean.
     # A typo in this env var should fail-open (auth stays enabled) rather than crash
     # the app on boot.
-    config.mission_control.jobs.http_basic_auth_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch("MISSION_CONTROL_AUTH_ENABLED", true))
+    config.mission_control.jobs.http_basic_auth_enabled =
+      ActiveModel::Type::Boolean.new.cast(ENV.fetch("MISSION_CONTROL_AUTH_ENABLED", true))
   end
 end

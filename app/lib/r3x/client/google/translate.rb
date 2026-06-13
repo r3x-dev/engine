@@ -14,8 +14,13 @@ module R3x
           input = text.to_s
           return input if input.empty?
 
-          response = connection.post(API_URL, json: request_body(input, to: to, from: from, format: format), headers: authorization_header).raise_for_status
-          translation = Array(response.json.dig("data", "translations")).first || raise(ArgumentError, "Missing translations in Google Translate response")
+          response = connection.post(
+            API_URL,
+            json: request_body(input, to: to, from: from, format: format),
+            headers: authorization_header
+          ).raise_for_status
+          translation = Array(response.json.dig("data", "translations")).first ||
+                        raise(ArgumentError, "Missing translations in Google Translate response")
           translation.fetch("translatedText")
         end
 

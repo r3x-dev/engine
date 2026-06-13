@@ -41,7 +41,10 @@ module R3x
       attr_reader :api_key
 
       def connection
-        @connection ||= HTTPX.with(timeout: { connect_timeout: 10, operation_timeout: 360 }, headers: { "Authorization" => "Bearer #{api_key}" })
+        @connection ||= HTTPX.with(
+          timeout: { connect_timeout: 10, operation_timeout: 360 },
+          headers: { "Authorization" => "Bearer #{api_key}" }
+        )
       end
     end
   end

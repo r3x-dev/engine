@@ -23,7 +23,13 @@ module R3x
         def llm(api_key_env:, max_retries: nil, retry_interval: nil, retry_backoff_factor: nil)
           configuration = R3x::Client::Llm::ProviderConfiguration.resolve(api_key_env: api_key_env)
 
-          R3x::Client::Llm.new(api_key: configuration.api_key, config_api_key_attr: configuration.config_api_key_attr, max_retries: max_retries, retry_interval: retry_interval, retry_backoff_factor: retry_backoff_factor)
+          R3x::Client::Llm.new(
+            api_key: configuration.api_key,
+            config_api_key_attr: configuration.config_api_key_attr,
+            max_retries: max_retries,
+            retry_interval: retry_interval,
+            retry_backoff_factor: retry_backoff_factor
+          )
         end
 
         def google_sheets(spreadsheet_id:, project:)
