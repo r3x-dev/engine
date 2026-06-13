@@ -10,9 +10,7 @@ module R3x
       def run(path, dry_run: false, skip_cache: false)
         stdout.puts run_message(path, dry_run:, skip_cache:)
 
-        with_run_env(dry_run:, skip_cache:) do
-          load_workflow(path).new.perform
-        end
+        with_run_env(dry_run:, skip_cache:) { load_workflow(path).new.perform }
       end
 
       def list
@@ -25,9 +23,7 @@ module R3x
         end
 
         stdout.puts "Available workflows:"
-        workflows.each do |workflow|
-          stdout.puts "  #{workflow.workflow_key}  (triggers: #{trigger_types_for(workflow)})"
-        end
+        workflows.each { |workflow| stdout.puts "  #{workflow.workflow_key}  (triggers: #{trigger_types_for(workflow)})" }
 
         workflows
       end
@@ -39,9 +35,7 @@ module R3x
         stdout.puts "Workflow: #{key}"
         stdout.puts "  Class:    #{workflow_class}"
         stdout.puts "  Triggers:"
-        workflow_class.triggers.each do |trigger|
-          stdout.puts "    #{trigger.type}  key=#{trigger.unique_key}"
-        end
+        workflow_class.triggers.each { |trigger| stdout.puts "    #{trigger.type}  key=#{trigger.unique_key}" }
 
         workflow_class
       end
@@ -54,11 +48,7 @@ module R3x
         full_path = workflow_file_path(path)
         require full_path
 
-        workflow = ObjectSpace.each_object(Class).find do |klass|
-          klass < R3x::Workflow::Base &&
-            klass.name.present? &&
-            Object.const_source_location(klass.name)&.first == full_path
-        end
+        workflow = ObjectSpace.each_object(Class).find { |klass| klass < R3x::Workflow::Base && klass.name.present? && Object.const_source_location(klass.name)&.first == full_path }
         raise ArgumentError, "No workflow class found in #{path}" unless workflow
 
         workflow
@@ -91,9 +81,7 @@ module R3x
 
         originals = overrides.keys.each_with_object({}) { |key, memo| memo[key] = ENV[key] }
 
-        overrides.each do |key, value|
-          ENV[key] = value
-        end
+        overrides.each { |key, value| ENV[key] = value }
 
         yield
       ensure

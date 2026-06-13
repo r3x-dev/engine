@@ -10,11 +10,7 @@ module R3x
 
       class << self
         def chat_options_for(provider)
-          CHAT_OPTIONS_BY_PROVIDER_MUTEX.synchronize do
-            CHAT_OPTIONS_BY_PROVIDER.fetch(provider) do
-              CHAT_OPTIONS_BY_PROVIDER[provider] = build_chat_options_for(provider)
-            end
-          end
+          CHAT_OPTIONS_BY_PROVIDER_MUTEX.synchronize { CHAT_OPTIONS_BY_PROVIDER.fetch(provider) { CHAT_OPTIONS_BY_PROVIDER[provider] = build_chat_options_for(provider) } }
         end
 
         private
@@ -23,10 +19,7 @@ module R3x
           provider_class = RubyLLM::Provider.providers.fetch(provider)
 
           if provider_class.assume_models_exist?
-            {
-              provider: provider,
-              assume_model_exists: true
-            }.freeze
+            { provider: provider, assume_model_exists: true }.freeze
           else
             DEFAULT_CHAT_OPTIONS
           end

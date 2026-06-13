@@ -9,9 +9,7 @@ module R3x
         MUTEX = Mutex.new
 
         def register!
-          MUTEX.synchronize do
-            register_opencode_go!
-          end
+          MUTEX.synchronize { register_opencode_go! }
         end
 
         private
@@ -30,9 +28,7 @@ module R3x
             end
 
             def headers
-              {
-                "Authorization" => "Bearer #{@config.opencode_go_api_key}"
-              }.compact
+              { "Authorization" => "Bearer #{@config.opencode_go_api_key}" }.compact
             end
 
             def list_models

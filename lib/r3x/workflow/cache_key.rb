@@ -25,9 +25,7 @@ module R3x
         path_digest = Digest::SHA256.hexdigest(File.expand_path(file))
         # RubyVM::InstructionSequence#to_a[4] is metadata, e.g.
         # { code_location: [1, 13, 1, 18], parser: :prism }.
-        location_digest = Digest::SHA256.hexdigest(
-          RubyVM::InstructionSequence.of(block).to_a.dig(4, :code_location).join(":")
-        )
+        location_digest = Digest::SHA256.hexdigest(RubyVM::InstructionSequence.of(block).to_a.dig(4, :code_location).join(":"))
         file_digest = Digest::SHA256.file(file).hexdigest
         fingerprint = "#{path_digest}:#{location_digest}:#{file_digest}"
 

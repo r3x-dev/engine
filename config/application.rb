@@ -18,14 +18,8 @@ Bundler.require(*Rails.groups(*R3x::RuntimeProfile.bundler_groups))
 
 module R3x
   class Application < Rails::Application
-    HEADLESS_AUTOLOAD_IGNORES = [
-      Rails.root.join("app/controllers"),
-      Rails.root.join("app/helpers"),
-      Rails.root.join("app/lib/r3x/dashboard")
-    ].freeze
-    JOBS_ONLY_AUTOLOAD_IGNORES = [
-      Rails.root.join("lib/r3x/workflow/cli.rb")
-    ].freeze
+    HEADLESS_AUTOLOAD_IGNORES = [ Rails.root.join("app/controllers"), Rails.root.join("app/helpers"), Rails.root.join("app/lib/r3x/dashboard") ].freeze
+    JOBS_ONLY_AUTOLOAD_IGNORES = [ Rails.root.join("lib/r3x/workflow/cli.rb") ].freeze
 
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1

@@ -13,10 +13,7 @@ module R3x
       private
 
       def payload_for(severity, time, progname, msg)
-        base = {
-          "level" => normalize_level(severity),
-          "time" => time.utc.iso8601(6)
-        }
+        base = { "level" => normalize_level(severity), "time" => time.utc.iso8601(6) }
         base["progname"] = progname if progname
 
         case msg

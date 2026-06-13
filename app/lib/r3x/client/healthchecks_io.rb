@@ -91,9 +91,7 @@ module R3x
       attr_reader :ping_url
 
       def connection
-        @connection ||= HTTPX.with(
-          timeout: { connect_timeout: 5, operation_timeout: 10 }
-        )
+        @connection ||= HTTPX.with(timeout: { connect_timeout: 5, operation_timeout: 10 })
       end
 
       def send_start(rid: nil)

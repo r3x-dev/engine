@@ -6,20 +6,12 @@ module R3x
 
       def initialize(url_env: DEFAULT_URL_ENV)
         base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_")
-        @client = HTTPX.with(
-          timeout: { connect_timeout: 5, operation_timeout: 10 }
-        )
+        @client = HTTPX.with(timeout: { connect_timeout: 5, operation_timeout: 10 })
         @base_url = base_url
       end
 
       def query(query:, start_at: nil, end_at: nil, limit: 100, timeout: DEFAULT_TIMEOUT)
-        response = @client.post("#{@base_url}/select/logsql/query", form: query_params(
-          query: query,
-          start_at: start_at,
-          end_at: end_at,
-          limit: limit,
-          timeout: timeout
-        )).raise_for_status
+        response = @client.post("#{@base_url}/select/logsql/query", form: query_params(query: query, start_at: start_at, end_at: end_at, limit: limit, timeout: timeout)).raise_for_status
 
         parse_json_lines(response.body)
       end
@@ -29,13 +21,7 @@ module R3x
       attr_reader :client, :base_url
 
       def query_params(query:, start_at:, end_at:, limit:, timeout:)
-        {
-          "end" => format_time(end_at),
-          "limit" => limit,
-          "query" => sort_query(query),
-          "start" => format_time(start_at),
-          "timeout" => timeout
-        }.compact
+        { "end" => format_time(end_at), "limit" => limit, "query" => sort_query(query), "start" => format_time(start_at), "timeout" => timeout }.compact
       end
 
       def sort_query(query)
