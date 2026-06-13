@@ -6,7 +6,7 @@ module R3x
       @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
       @original_timezone = ENV["R3X_TIMEZONE"]
       ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
-      R3x::Workflow::PackLoader.load!(force: true)
+      R3x::Workflow::PackLoader.load!(rebuild_registry: true)
     end
 
     teardown do
@@ -91,7 +91,7 @@ module R3x
       assert_equal "0 13 * * * Europe/Paris", task["schedule"]
     ensure
       Workflow::Registry.reset!
-      Workflow::PackLoader.load!(force: true)
+      Workflow::PackLoader.load!(rebuild_registry: true)
     end
 
     test "to_h uses default timezone env for schedules without explicit timezone" do
@@ -124,7 +124,7 @@ module R3x
       assert_equal "0 13 * * * Europe/Paris", task["schedule"]
     ensure
       Workflow::Registry.reset!
-      Workflow::PackLoader.load!(force: true)
+      Workflow::PackLoader.load!(rebuild_registry: true)
     end
 
     test "schedule_all! removes stale dynamic tasks" do
