@@ -176,16 +176,17 @@ module R3x
       end
 
       private
-        def seed_runtime_catalog
-          SolidQueue::RecurringTask.create!(
-            key: "workflow:test_workflow:schedule:abc123",
-            schedule: "0 * * * *",
-            class_name: WORKFLOW_JOB_CLASS_NAME,
-            arguments: [ "schedule:abc123" ],
-            queue_name: "default",
-            static: false
-          )
-        end
+
+      def seed_runtime_catalog
+        SolidQueue::RecurringTask.create!(
+          key: "workflow:test_workflow:schedule:abc123",
+          schedule: "0 * * * *",
+          class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          queue_name: "default",
+          static: false
+        )
+      end
     end
   end
 end

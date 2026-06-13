@@ -10,9 +10,9 @@ module R3x
 
           validates_with R3x::Validators::Timezone, timezone_field: :timezone
 
-        def initialize(timezone:)
-          @timezone = timezone
-        end
+          def initialize(timezone:)
+            @timezone = timezone
+          end
       end
 
       test "accepts IANA timezone names" do

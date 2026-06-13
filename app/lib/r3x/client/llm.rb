@@ -18,18 +18,19 @@ module R3x
         end
 
         private
-          def build_chat_options_for(provider)
-            provider_class = RubyLLM::Provider.providers.fetch(provider)
 
-            if provider_class.assume_models_exist?
-              {
-                provider: provider,
-                assume_model_exists: true
-              }.freeze
-            else
-              DEFAULT_CHAT_OPTIONS
-            end
+        def build_chat_options_for(provider)
+          provider_class = RubyLLM::Provider.providers.fetch(provider)
+
+          if provider_class.assume_models_exist?
+            {
+              provider: provider,
+              assume_model_exists: true
+            }.freeze
+          else
+            DEFAULT_CHAT_OPTIONS
           end
+        end
       end
 
       def initialize(

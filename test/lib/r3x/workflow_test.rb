@@ -475,9 +475,10 @@ module R3x
         end
 
         private
-          def ready?
-            false
-          end
+
+        def ready?
+          false
+        end
       end
 
       result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
@@ -575,9 +576,10 @@ module R3x
         end
 
         private
-          def ready?
-            false
-          end
+
+        def ready?
+          false
+        end
       end
 
       result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
@@ -599,9 +601,10 @@ module R3x
         end
 
         private
-          def ready?
-            true
-          end
+
+        def ready?
+          true
+        end
       end
 
       result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
@@ -624,13 +627,14 @@ module R3x
         end
 
         private
-          def first_ready?
-            false
-          end
 
-          def second_ready?
-            raise "should not evaluate"
-          end
+        def first_ready?
+          false
+        end
+
+        def second_ready?
+          raise "should not evaluate"
+        end
       end
 
       result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
@@ -652,9 +656,10 @@ module R3x
         end
 
         private
-          def ready?
-            raise "should not evaluate"
-          end
+
+        def ready?
+          raise "should not evaluate"
+        end
       end
 
       workflow = workflow_class.new
@@ -1198,8 +1203,8 @@ module R3x
 
     private
 
-      def write_fragile_cache_workflow(path, value)
-        File.write(path, <<~RUBY)
+    def write_fragile_cache_workflow(path, value)
+      File.write(path, <<~RUBY)
           module Workflows
             class FragileCacheWorkflow < R3x::Workflow::Base
               def self.name
@@ -1220,16 +1225,16 @@ module R3x
             end
           end
         RUBY
-      end
+    end
 
-      def load_fragile_cache_workflow(path)
-        remove_fragile_cache_workflow
-        load path
-        Workflows::FragileCacheWorkflow
-      end
+    def load_fragile_cache_workflow(path)
+      remove_fragile_cache_workflow
+      load path
+      Workflows::FragileCacheWorkflow
+    end
 
-      def remove_fragile_cache_workflow
-        Workflows.send(:remove_const, :FragileCacheWorkflow) if defined?(Workflows::FragileCacheWorkflow)
-      end
+    def remove_fragile_cache_workflow
+      Workflows.send(:remove_const, :FragileCacheWorkflow) if defined?(Workflows::FragileCacheWorkflow)
+    end
   end
 end

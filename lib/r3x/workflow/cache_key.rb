@@ -35,7 +35,8 @@ module R3x
       end
 
       private
-        attr_reader :workflow_key, :block, :method_name
+
+      attr_reader :workflow_key, :block, :method_name
     end
   end
 end
