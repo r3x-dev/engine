@@ -1,4 +1,5 @@
 require "test_helper"
+require "tmpdir"
 
 module R3x
   class WorkflowTest < ActiveSupport::TestCase
@@ -510,19 +511,28 @@ module R3x
         def self.name
           "Workflows::CacheTest"
         end
+
+        def run
+          @calls ||= 0
+
+          with_cache { @calls += 1; { "calls" => @calls } }
+        end
+
+        def calls
+          @calls
+        end
       end
 
       workflow = workflow_class.new
       cache = ActiveSupport::Cache::MemoryStore.new
       original_cache = Rails.cache
-      calls = 0
 
       Rails.cache = cache
       begin
-        first = workflow.with_cache { calls += 1; { "calls" => calls } }
-        second = workflow.with_cache { calls += 1; { "calls" => calls } }
+        first = workflow.run
+        second = workflow.run
 
-        assert_equal 1, calls
+        assert_equal 1, workflow.calls
         assert_equal({ "calls" => 1 }, first)
         assert_equal({ "calls" => 1 }, second)
       ensure
@@ -530,19 +540,59 @@ module R3x
       end
     end
 
-    test "with_cache regenerates the cache key when block code changes" do
+    test "with_cache refreshes when workflow file changes at the same call site" do
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "workflow.rb")
+
+        write_fragile_cache_workflow(path, "first")
+        assert_equal "first", load_fragile_cache_workflow(path).new.run
+
+        write_fragile_cache_workflow(path, "second")
+        assert_equal "second", load_fragile_cache_workflow(path).new.run
+      end
+    ensure
+      remove_fragile_cache_workflow
+      Rails.cache = original_cache
+    end
+
+    test "with_cache raises when block source file cannot be fingerprinted" do
+      block = proc { "cached" }
+      block.stubs(:source_location).returns([ nil, nil ])
+
+      error = assert_raises(RuntimeError) do
+        R3x::Workflow::CacheKey.generate(workflow_key: "missing_cache_source_test", block: block, method_name: :with_cache)
+      end
+
+      assert_equal "with_cache requires a block backed by a readable Ruby source file", error.message
+    end
+
+    test "with_cache separates multiple calls on the same source line" do
       workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
-          "Workflows::CacheKeyTest"
+          "Workflows::SameLineCacheTest"
+        end
+      end
+      workflow = workflow_class.new
+
+      assert_equal [ "one", "two" ], [ workflow.with_cache { "one" }, workflow.with_cache { "two" } ]
+    end
+
+    test "with_cache allows method name text in strings and comments" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::CacheMethodTextTest"
+        end
+
+        def run
+          with_cache { "with_cache" } # with_cache in a comment
         end
       end
 
-      workflow = workflow_class.new
-
-      key_one = workflow.send(:cache_key_for, proc { "one" })
-      key_two = workflow.send(:cache_key_for, proc { "two" })
-
-      refute_equal key_one, key_two
+      assert_equal "with_cache", workflow_class.new.run
     end
 
     test "with_cache force option bypasses the cached value" do
@@ -550,23 +600,32 @@ module R3x
         def self.name
           "Workflows::ForceCacheTest"
         end
+
+        def cached(force: false)
+          @calls ||= 0
+
+          with_cache(force: force) { @calls += 1; { "calls" => @calls } }
+        end
+
+        def calls
+          @calls
+        end
       end
 
       workflow = workflow_class.new
       cache = ActiveSupport::Cache::MemoryStore.new
       original_cache = Rails.cache
-      calls = 0
 
       Rails.cache = cache
       begin
-        workflow.with_cache { calls += 1; { "calls" => calls } }
-        workflow.with_cache(force: true) { calls += 1; { "calls" => calls } }
+        workflow.cached
+        workflow.cached(force: true)
 
-        assert_equal 2, calls
-        ensure
-          Rails.cache = original_cache
-        end
+        assert_equal 2, workflow.calls
+      ensure
+        Rails.cache = original_cache
       end
+    end
 
     test "with_cache raises in production" do
       workflow_class = Class.new(R3x::Workflow::Base) do
@@ -590,22 +649,26 @@ module R3x
         def self.name
           "Workflows::SkipCacheTest"
         end
+
+        def cached
+          @calls ||= 0
+
+          with_cache { @calls += 1; { "calls" => @calls } }
+        end
       end
 
       workflow = workflow_class.new
       cache = ActiveSupport::Cache::MemoryStore.new
       original_cache = Rails.cache
       original_skip_cache = ENV["R3X_SKIP_CACHE"]
-      calls = 0
 
       Rails.cache = cache
       ENV["R3X_SKIP_CACHE"] = "true"
 
       begin
-        first = workflow.with_cache { calls += 1; { "calls" => calls } }
-        second = workflow.with_cache { calls += 1; { "calls" => calls } }
+        first = workflow.cached
+        second = workflow.cached
 
-        assert_equal 2, calls
         assert_equal({ "calls" => 1 }, first)
         assert_equal({ "calls" => 2 }, second)
       ensure
@@ -883,5 +946,41 @@ module R3x
         Rails.cache = original_cache
       end
     end
+
+    private
+
+      def write_fragile_cache_workflow(path, value)
+        File.write(path, <<~RUBY)
+          module Workflows
+            class FragileCacheWorkflow < R3x::Workflow::Base
+              def self.name
+                "Workflows::FragileCacheWorkflow"
+              end
+
+              def run
+                with_cache do
+                  ignored = "not a real end"
+                  # also not a real end
+                  text = <<~TEXT
+                    still not a real end
+                  TEXT
+
+                  #{value.inspect}
+                end
+              end
+            end
+          end
+        RUBY
+      end
+
+      def load_fragile_cache_workflow(path)
+        remove_fragile_cache_workflow
+        load path
+        Workflows::FragileCacheWorkflow
+      end
+
+      def remove_fragile_cache_workflow
+        Workflows.send(:remove_const, :FragileCacheWorkflow) if defined?(Workflows::FragileCacheWorkflow)
+      end
   end
 end
