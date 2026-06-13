@@ -1,5 +1,3 @@
-require "digest"
-
 module R3x
   module Workflow
     class Base < ApplicationJob
@@ -52,7 +50,13 @@ module R3x
           raise "with_cache is disabled in production, if you need to use it, please set R3X_SKIP_CACHE=true in the environment variables"
         end
 
-        Rails.cache.fetch(cache_key_for(block), force: force, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes) do
+        cache_key = R3x::Workflow::CacheKey.generate(
+          workflow_key: self.class.workflow_key,
+          block: block,
+          method_name: __method__
+        )
+
+        Rails.cache.fetch(cache_key, force: force, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes) do
           yield
         end
       end
@@ -77,44 +81,6 @@ module R3x
         [
           R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key)
         ]
-      end
-
-      def cache_key_for(block)
-        file, line = block.source_location
-        source = if file && File.exist?(file)
-          extract_block_source(file, line)
-        else
-          "#{file}:#{line}"
-        end
-        digest = Digest::SHA256.hexdigest(source)
-
-        [ "r3x", "workflow", self.class.workflow_key, digest ].join(":")
-      end
-
-      def extract_block_source(file, start_line)
-        source_lines = []
-        depth = 0
-        started = false
-
-        File.foreach(file).with_index(1) do |line, line_number|
-          next if line_number < start_line
-
-          source_lines << line
-
-          if source_lines.length == 1
-            source_lines[0] = source_lines[0].sub(/\A.*?(?=\bwith_cache\b)/, "")
-          end
-
-          depth += line.scan(/\bdo\b/).size
-          depth += line.count("{")
-          depth -= line.scan(/\bend\b/).size
-          depth -= line.count("}")
-          started ||= line.match?(/\bdo\b/) || line.include?("{")
-
-          break if started && depth <= 0
-        end
-
-        source_lines.join.strip
       end
     end
   end
