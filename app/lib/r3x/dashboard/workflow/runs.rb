@@ -19,11 +19,11 @@ module R3x
           runs = jobs.filter_map { |job| build_run(job) }
           runs.select! { |run| run[:workflow_key] == workflow_key } if workflow_key.present?
           runs.select! { |run| run[:status] == status } if status.present?
-          runs.sort_by { |run| run[:recorded_at] || run[:enqueued_at] || Time.at(0) }.reverse.first(limit)
+          runs.sort_by { |run| run[:recorded_at] || run[:enqueued_at] || Time.zone.at(0) }.reverse.first(limit)
         end
 
         def find!(job_id)
-          @jobs = [ find_job!(job_id) ]
+          @jobs = [find_job!(job_id)]
 
           build_run(@jobs.first) || raise(KeyError, "Unknown workflow run '#{job_id}'")
         rescue ActiveRecord::RecordNotFound
@@ -87,7 +87,12 @@ module R3x
 
         def recurring_tasks_by_workflow_and_trigger_key
           @recurring_tasks_by_workflow_and_trigger_key ||= begin
-            ::Dashboard::RecurringTask.workflow_tasks.to_a.each_with_object(Hash.new { |hash, key| hash[key] = {} }) { |task, mapping| mapping[task.workflow_key][task.trigger_key] ||= task }
+            ::Dashboard::RecurringTask
+              .workflow_tasks
+              .to_a
+              .each_with_object(Hash.new { |hash, key| hash[key] = {} }) { |task, mapping|
+                mapping[task.workflow_key][task.trigger_key] ||= task
+              }
           rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
             {}
           end
@@ -117,7 +122,7 @@ module R3x
           return nil if job_ids.present?
           return limit unless workflow_key.present? || status.present?
 
-          [ limit * 10, DEFAULT_LIMIT ].max
+          [limit * 10, DEFAULT_LIMIT].max
         end
       end
     end
