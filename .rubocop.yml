@@ -4,6 +4,8 @@ inherit_gem:
   rubocop-rails-omakase: rubocop.yml
   rubocop-rubyfmt:
     - config/default.yml
+require:
+  - ./.rubocop/cop/r3x/prefer_logger_concern.rb
 plugins:
   - rubocop-thread_safety
   - rubocop-rubyfmt
@@ -39,15 +41,16 @@ Style/ItBlockParameter:
   EnforcedStyle: allow_single_line
 
 Layout/RedundantLineBreak:
-  Enabled: true
-  InspectBlocks: true
-  Exclude:
-    - 'test/**/*'
+  Enabled: false
 
 Style/BlockDelimiters:
-  Enabled: true
-  Exclude:
-    - 'test/**/*'
+  Enabled: false
+
+Layout/SpaceInsideArrayLiteralBrackets:
+  Enabled: false
+
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
 
 Layout/LineLength:
   Enabled: true
@@ -55,3 +58,12 @@ Layout/LineLength:
   AutoCorrect: false
   Exclude:
     - 'test/**/*'
+
+Rails/TimeZone:
+  Enabled: true
+  EnforcedStyle: strict
+
+R3x/PreferLoggerConcern:
+  Enabled: true
+  Include:
+    - 'app/lib/r3x/client/**/*'
