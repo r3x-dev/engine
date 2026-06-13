@@ -24,7 +24,17 @@ module R3x
           )
           logger.info "Running workflow trigger_type=#{ctx.trigger.type}"
 
+          skip_reason = unmet_workflow_condition_reason
+          if skip_reason
+            result = { "status" => "skipped", "reason" => skip_reason }
+            with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "success")) do
+              logger.info "Workflow run skipped reason=#{skip_reason}"
+            end
+            return result
+          end
+
           result = run
+          run_completion_callbacks
           with_log_tags(R3x::Log.tag(R3x::Log::JOB_OUTCOME_TAG, "success")) do
             logger.info "Workflow run completed"
           end
@@ -81,6 +91,20 @@ module R3x
         [
           R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key)
         ]
+      end
+
+      def unmet_workflow_condition_reason
+        return unless initial_execution?
+
+        self.class._conditions.find { |condition| !send(condition.predicate) }&.reason
+      end
+
+      def run_completion_callbacks
+        self.class._completion_callbacks.each { |callback| instance_exec(&callback) }
+      end
+
+      def initial_execution?
+        !continuation.started?
       end
     end
   end

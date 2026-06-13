@@ -34,10 +34,16 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
   work, or other distinct phases.
 - Keep steps small and meaningful. A step should mark a real unit of progress, not just wrap every
   line.
+- Use `condition` for high-level guards that must be true before `run` starts.
+  Conditions are evaluated only on the initial execution, not when `ActiveJob::Continuable`
+  resumes an isolated or interrupted step.
 
 ## Step Semantics
 
 - `step` is a resumable boundary, not a value-return helper.
+- Use `isolated: true` for steps that should run in their own execution after prior progress is
+  serialized. Pair it with workflow-specific `resume_options` when the next step should run after a
+  deliberate delay instead of blocking a worker with `sleep`.
 - Do not assign the result of a `step` block to a variable and assume it is the block result.
 - Put data-fetching logic in a normal helper, then use `step` around the resumable work that consumes
   that data.
@@ -58,6 +64,35 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
   end
   ```
 
+## Conditions
+
+Use `condition` for workflow-level preconditions that must be true before any work starts:
+
+```ruby
+condition :nobody_home?, reason: "Somebody is home"
+```
+
+The predicate is an instance method, so it can use `ctx` and workflow helpers. If the predicate
+returns false, the workflow returns `{ "status" => "skipped", "reason" => reason }` and logs the
+skip instead of calling `run`. Conditions do not run during Continuable resumes, so they are safe to
+combine with delayed or isolated steps.
+
+## Completion Callbacks
+
+Use `on_complete` for tiny side effects that should happen only after the whole workflow succeeds:
+
+```ruby
+on_complete { ctx.client.healthchecks_io(HEALTHCHECK_UUID).ping }
+```
+
+Completion callbacks run after `run` returns and before the workflow logs `Workflow run completed`.
+Blocks execute on the workflow instance, so they can use `ctx`, constants, and private workflow
+helpers. Multiple callbacks run in declaration order.
+
+`on_complete` does not run when `condition` skips the workflow, when `run` raises, or when
+`ActiveJob::Continuable` interrupts before the full workflow completes. If a completion callback
+raises, the workflow fails instead of logging a false success.
+
 ## Available Helpers
 
 - `ctx`
@@ -68,6 +103,15 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
   - Marks a resumable boundary using `ActiveJob::Continuable`.
   - Use it around slow or externally dependent phases that should resume cleanly after interruption
     or retry.
+  - Use `isolated: true` plus `resume_options = { wait: ... }` when the next step should be queued
+    for later instead of sleeping inside the current job.
+- `condition`
+  - Declares a workflow-level guard that must return true before `run` on the initial execution.
+  - Requires a positive predicate method and a human-readable reason for skipped runs.
+- `on_complete`
+  - Runs a block after successful full workflow completion.
+  - Keep it for small final side effects, such as success healthcheck pings.
+  - A raised callback error fails the workflow.
 - `with_cache`
   - Wraps an expensive block in `Rails.cache` so repeated local runs can reuse the same result.
   - Good for slow, noisy, or hard-to-reproduce API calls while iterating on a workflow.

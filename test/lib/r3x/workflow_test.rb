@@ -396,6 +396,151 @@ module R3x
       assert_equal "manual", result["trigger_type"]
     end
 
+    test "on_complete runs after successful run" do
+      events = []
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::CompletionWorkflow"
+        end
+
+        trigger :manual
+        on_complete { events << :complete }
+
+        define_method :run do
+          events << :run
+          { "status" => "ran" }
+        end
+      end
+
+      result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
+
+      assert_equal({ "status" => "ran" }, result)
+      assert_equal [ :run, :complete ], events
+    end
+
+    test "on_complete runs multiple blocks in declaration order" do
+      events = []
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::MultipleCompletionWorkflow"
+        end
+
+        trigger :manual
+        on_complete { events << :first }
+        on_complete { events << :second }
+
+        define_method :run do
+          events << :run
+        end
+      end
+
+      workflow_class.perform_now(workflow_class.triggers.first.unique_key)
+
+      assert_equal [ :run, :first, :second ], events
+    end
+
+    test "on_complete can access ctx" do
+      events = []
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::CompletionContextWorkflow"
+        end
+
+        trigger :manual
+        on_complete { events << ctx.trigger.type }
+
+        def run
+          { "status" => "ran" }
+        end
+      end
+
+      workflow_class.perform_now(workflow_class.triggers.first.unique_key)
+
+      assert_equal [ :manual ], events
+    end
+
+    test "on_complete does not run when condition skips workflow" do
+      events = []
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::SkippedCompletionWorkflow"
+        end
+
+        trigger :manual
+        condition :ready?, reason: "Not ready"
+        on_complete { events << :complete }
+
+        define_method :run do
+          events << :run
+        end
+
+        private
+          def ready?
+            false
+          end
+      end
+
+      result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
+
+      assert_equal({ "status" => "skipped", "reason" => "Not ready" }, result)
+      assert_empty events
+    end
+
+    test "on_complete failure raises and marks workflow failed" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::FailingCompletionWorkflow"
+        end
+
+        trigger :manual
+        on_complete { raise ArgumentError, "completion failed" }
+
+        def run
+          { "status" => "ran" }
+        end
+      end
+
+      output = capture_logged_output do
+        error = assert_raises(ArgumentError) do
+          workflow_class.perform_now(workflow_class.triggers.first.unique_key)
+        end
+        assert_equal "completion failed", error.message
+      end
+
+      assert_includes output, "r3x.job_outcome=failed"
+      assert_includes output, "Workflow run failed"
+      refute_includes output, "Workflow run completed"
+    end
+
+    test "on_complete does not run when workflow is interrupted before completion" do
+      events = []
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::InterruptedCompletionWorkflow"
+        end
+
+        trigger :manual
+        on_complete { events << :complete }
+
+        define_method :run do
+          step :first do
+            events << :first
+          end
+
+          step :second, isolated: true do
+            events << :second
+          end
+        end
+      end
+
+      workflow = workflow_class.new
+      assert_raises(ActiveJob::Continuation::Interrupt) do
+        workflow.perform(workflow_class.triggers.first.unique_key)
+      end
+
+      assert_equal [ :first ], events
+    end
+
     test "perform does not reload workflow packs" do
       workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
@@ -414,6 +559,110 @@ module R3x
       result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
 
       assert_equal "manual", result["trigger_type"]
+    end
+
+    test "condition returns skipped result before running workflow when predicate is false" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::SkippedWorkflow"
+        end
+
+        trigger :manual
+        condition :ready?, reason: "Not ready"
+
+        def run
+          raise "should not execute"
+        end
+
+        private
+          def ready?
+            false
+          end
+      end
+
+      result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
+
+      assert_equal({ "status" => "skipped", "reason" => "Not ready" }, result)
+    end
+
+    test "condition allows workflow when predicate is true" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::AllowedWorkflow"
+        end
+
+        trigger :manual
+        condition :ready?, reason: "Not ready"
+
+        def run
+          { "status" => "ran" }
+        end
+
+        private
+          def ready?
+            true
+          end
+      end
+
+      result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
+
+      assert_equal({ "status" => "ran" }, result)
+    end
+
+    test "condition stops at the first unmet condition" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::MultiSkipWorkflow"
+        end
+
+        trigger :manual
+        condition :first_ready?, reason: "First reason"
+        condition :second_ready?, reason: "Second reason"
+
+        def run
+          raise "should not execute"
+        end
+
+        private
+          def first_ready?
+            false
+          end
+
+          def second_ready?
+            raise "should not evaluate"
+          end
+      end
+
+      result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
+
+      assert_equal({ "status" => "skipped", "reason" => "First reason" }, result)
+    end
+
+    test "condition is not evaluated on continuation resumes" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::ResumedWorkflow"
+        end
+
+        trigger :manual
+        condition :ready?, reason: "Not ready"
+
+        def run
+          { "status" => "resumed" }
+        end
+
+        private
+          def ready?
+            raise "should not evaluate"
+          end
+      end
+
+      workflow = workflow_class.new
+      workflow.continuation = ActiveJob::Continuation.new(workflow, "completed" => [ "previous_step" ])
+
+      result = workflow.perform(workflow_class.triggers.first.unique_key)
+
+      assert_equal({ "status" => "resumed" }, result)
     end
 
     test "perform logs workflow run outcome" do
