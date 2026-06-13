@@ -31,3 +31,6 @@ Layout/EmptyLinesAroundAccessModifier:
   Enabled: true
   EnforcedStyle: around
 
+Style/ItBlockParameter:
+  Enabled: true
+  EnforcedStyle: allow_single_line

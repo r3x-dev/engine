@@ -57,19 +57,13 @@ module R3x
       end
 
       def analyze_image(image_bytes, prompt:, model:, schema: nil)
-        io = StringIO.new(image_bytes)
-        io.set_encoding(Encoding::BINARY)
+        image = StringIO.new(image_bytes).tap { it.set_encoding(Encoding::BINARY) }
 
-        conversation = chat(model)
-        conversation = conversation.with_schema(schema) if schema
-        conversation.ask(prompt, with: [ io ]).content
+        ask_model(model:, prompt:, schema:, attachments: [ image ]).content
       end
 
       def message(model:, prompt:, schema: nil)
-        conversation = chat(model)
-        conversation = conversation.with_schema(schema) if schema
-
-        conversation.ask(prompt)
+        ask_model(model:, prompt:, schema:)
       end
 
       def classify(...)
@@ -80,8 +74,11 @@ module R3x
 
       attr_reader :llm_context, :chat_options
 
-      def chat(model)
-        llm_context.chat(**chat_options.merge(model: model))
+      def ask_model(model:, prompt:, schema:, attachments: nil)
+        conversation = llm_context.chat(**chat_options.merge(model: model))
+        conversation = conversation.with_schema(schema) if schema
+
+        conversation.ask(prompt, with: attachments)
       end
     end
   end
