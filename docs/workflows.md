@@ -132,6 +132,43 @@ raises, the workflow fails instead of logging a false success.
 - Prefer this for best-effort dedup across runs; prefer a real table only when you need permanent
   history or hard uniqueness guarantees.
 
+## Reusing HTTP Clients
+
+- `ctx.client.http` returns a new instance of the HTTP client (`R3x::Client::Http`) on every call.
+- When making requests in a loop, instantiate the client once outside the loop so timeout and SSL
+  configuration is built once and the workflow code stays clear.
+- **Good:**
+
+  ```ruby
+  http = ctx.client.http
+  urls.map do |url|
+    response = http.get(url)
+    # ...
+  end
+  ```
+
+- **Bad:**
+
+  ```ruby
+  urls.map do |url|
+    response = ctx.client.http.get(url)
+    # ...
+  end
+  ```
+
+- For ad hoc batch work that benefits from a persistent HTTPX session, use
+  `ctx.client.persistent_http` so connection lifecycle is explicit:
+
+  ```ruby
+  ctx.client.persistent_http(timeout: 30) do |http|
+    urls.each { |url| http.get(url) }
+  end
+  ```
+
+- Do not add `persistent:` options to thin clients such as Discord, Google Translate, Prometheus,
+  or VictoriaLogs unless there is a measured hot path that performs many requests in one controlled
+  scope.
+
 ## Example Workflow
 
 See [docs/workflows/example_multi_step_digest.md](workflows/example_multi_step_digest.md) for a
