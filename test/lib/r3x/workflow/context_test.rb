@@ -166,6 +166,31 @@ module R3x
         assert_equal "First item", feed.items.first.title
       end
 
+      test "client proxy yields persistent http client" do
+        stub_request(:get, "https://api.test/one")
+          .to_return(status: 200, body: "first")
+        stub_request(:get, "https://api.test/two")
+          .to_return(status: 200, body: "second")
+        ctx = Context.new(
+          trigger: R3x::TriggerManager::Execution.new(
+            trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
+            workflow_key: "test"
+          ),
+          workflow_key: "test"
+        )
+
+        bodies = ctx.client.persistent_http(timeout: 30) do |http|
+          [
+            http.get("https://api.test/one").body.to_s,
+            http.get("https://api.test/two").body.to_s
+          ]
+        end
+
+        assert_equal [ "first", "second" ], bodies
+        assert_requested :get, "https://api.test/one"
+        assert_requested :get, "https://api.test/two"
+      end
+
       test "client proxy markdownify returns markdown string" do
         with_env("R3X_MARKDOWNIFY_DRY_RUN" => "false") do
           stub_request(:post, "https://markdown.new/")

@@ -20,7 +20,7 @@ module R3x
           return { "mode" => "dry_run" }
         end
 
-        connection.post(webhook_url, json: { "content" => content }).raise_for_status
+        HTTPX.post(webhook_url, json: { "content" => content }).raise_for_status
 
         { "mode" => "real", "content" => content }
       end
@@ -28,10 +28,6 @@ module R3x
       private
 
       attr_reader :webhook_url
-
-      def connection
-        HTTPX.with({})
-      end
     end
   end
 end

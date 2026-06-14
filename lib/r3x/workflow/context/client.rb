@@ -8,6 +8,10 @@ module R3x
           R3x::Client::Http.new(verify_ssl: verify_ssl, timeout: timeout)
         end
 
+        def persistent_http(verify_ssl: true, timeout: 10, &block)
+          R3x::Client::Http.with_persistence(verify_ssl: verify_ssl, timeout: timeout, &block)
+        end
+
         def prometheus(url_env: R3x::Client::Prometheus::DEFAULT_URL_ENV)
           R3x::Client::Prometheus.new(url_env: url_env)
         end

@@ -193,6 +193,8 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - `Faraday` remains in `Gemfile.lock` as a transitive dependency of `googleauth`, `ruby_llm`, and `google-apis-*`. Do not add new direct Faraday dependencies or use Faraday in internal clients.
 - For small integration clients under `R3x::Client`, build the `httpx` client inside the class instead of injecting a `connection` dependency.
 - Reasoning: these clients are thin integration boundaries, so passing a raw HTTP client through the initializer adds indirection without improving the public interface we actually want to use.
+- Do not use empty `HTTPX.with({})`; call `HTTPX.get/post/...` directly when there are no shared options. When multiple code paths need the same timeout/SSL/options payload for `HTTPX.with`, build that payload once in a small helper and pass it with keyword splat. Use Ruby keyword argument shorthand (`verify_ssl:, timeout:`) when the local variable names match the keyword names. In options helpers, set only the timeout by default and conditionally assign the `ssl` key (e.g. `opts[:ssl] = ... unless verify_ssl`) so the `ssl` option is entirely omitted when SSL verification is enabled.
+- For workflow code that needs repeated HTTP requests in one controlled scope, prefer the block-scoped `ctx.client.persistent_http(...) { |http| ... }` helper over exposing raw `HTTPX.plugin(:persistent)` usage in workflows. Keep persistence opt-in for measured batch/hot paths, not as a default for thin clients.
 - **JSON handling**: When making HTTP requests that send/receive JSON, use `httpx`'s native `json:` option instead of manually serializing with `MultiJSON`. This automatically sets the `Content-Type` header and handles serialization.
   - **Bad**: `request.body = MultiJSON.generate({"key" => "value"})`
   - **Good**: `client.post(url, json: { key: "value" })`
@@ -423,6 +425,35 @@ rows.map { |e| [e.fetch("name"), e.fetch("location"), e.fetch("date_time")].join
 - `slice` communicates "I want a subset of the hash" and works well when the resulting hash is passed onward.
 - Both are shorter, easier to scan, and less prone to copy-paste errors when adding or reordering keys.
 - They are also more efficient: a single `values_at` or `slice` call performs one internal hash traversal instead of multiple separate lookups, and avoids allocating intermediate arrays or throwaway wrapper objects. Ruby's standard library is designed so that expressive, readable methods often coincide with the faster path — prefer them instead of manually chaining lower-level operations.
+
+### Building Hashes with Conditional Keys
+
+When constructing a configuration hash or payload where certain keys should only be present based on conditions (e.g., settings that should be omitted entirely rather than being passed as `nil` or empty objects), build the base hash first, conditionally assign the optional keys, and return the hash. Avoid using `Hash#tap` or `Hash#merge` for simple conditional key assignments.
+
+**Good:**
+```ruby
+def session_options(verify_ssl:, timeout:)
+  opts = { timeout: { connect_timeout: 5, operation_timeout: timeout } }
+  opts[:ssl] = { verify_mode: OpenSSL::SSL::VERIFY_NONE } unless verify_ssl
+  opts
+end
+```
+
+**Bad:**
+```ruby
+# Avoid tap nesting for simple conditional key additions
+def session_options(verify_ssl:, timeout:)
+  {
+    timeout: { connect_timeout: 5, operation_timeout: timeout }
+  }.tap do |opts|
+    opts[:ssl] = { verify_mode: OpenSSL::SSL::VERIFY_NONE } unless verify_ssl
+  end
+end
+```
+
+**Rationale:**
+- Simple assignment (`opts[:key] = value`) is flat, easy to read, and carries zero block/closure overhead.
+- Keeping the flow linear avoids the cognitive nesting introduced by `tap` blocks.
 
 ### Method Chaining
 

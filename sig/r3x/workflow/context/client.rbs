@@ -4,6 +4,8 @@ module R3x
       module Client
         def http: (?verify_ssl: bool verify_ssl, ?timeout: Integer timeout) -> R3x::Client::Http
 
+        def persistent_http: (?verify_ssl: bool verify_ssl, ?timeout: Integer timeout) { (R3x::Client::Http) -> untyped } -> untyped
+
         def prometheus: (?url_env: String url_env) -> R3x::Client::Prometheus
 
         def healthchecks_io: (String check_uuid, ?ping_endpoint: String? ping_endpoint, ?ping_endpoint_env: String ping_endpoint_env) -> R3x::Client::HealthchecksIO
@@ -29,6 +31,8 @@ module R3x
         def markdownify: (url: String url, ?method: String method, ?retain_images: bool retain_images) -> String
 
         def self.http: (?verify_ssl: bool verify_ssl, ?timeout: Integer timeout) -> R3x::Client::Http
+
+        def self.persistent_http: (?verify_ssl: bool verify_ssl, ?timeout: Integer timeout) { (R3x::Client::Http) -> untyped } -> untyped
 
         def self.prometheus: (?url_env: String url_env) -> R3x::Client::Prometheus
 

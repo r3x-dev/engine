@@ -4,19 +4,17 @@ module R3x
       DEFAULT_URL_ENV = "PROMETHEUS_URL"
 
       def initialize(url_env: DEFAULT_URL_ENV)
-        base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_")
-        @client = HTTPX.with({})
-        @base_url = base_url
+        @base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_")
       end
 
       def query(promql)
-        response = @client.get("#{@base_url}/api/v1/query", params: { query: promql }).raise_for_status
+        response = HTTPX.get("#{base_url}/api/v1/query", params: { query: promql }).raise_for_status
         Result.new(response.json["data"])
       end
 
       private
 
-      attr_reader :client, :base_url
+      attr_reader :base_url
     end
   end
 end

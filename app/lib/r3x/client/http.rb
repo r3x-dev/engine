@@ -3,9 +3,28 @@
 module R3x
   module Client
     class Http
+      class << self
+        def with_persistence(verify_ssl: true, timeout: 10)
+          session = HTTPX.plugin(:persistent, close_on_fork: true)
+            .with(**session_options(verify_ssl:, timeout:))
+
+          session.wrap do |client|
+            http = allocate
+            http.instance_variable_set(:@client, client)
+
+            yield http
+          end
+        end
+
+        def session_options(verify_ssl:, timeout:)
+          opts = { timeout: { connect_timeout: 5, operation_timeout: timeout } }
+          opts[:ssl] = { verify_mode: OpenSSL::SSL::VERIFY_NONE } unless verify_ssl
+          opts
+        end
+      end
+
       def initialize(verify_ssl: true, timeout: 10)
-        ssl_options = verify_ssl ? Hash.new : { verify_mode: OpenSSL::SSL::VERIFY_NONE }
-        @client = HTTPX.with(timeout: { connect_timeout: 5, operation_timeout: timeout }, ssl: ssl_options)
+        @client = HTTPX.with(**self.class.session_options(verify_ssl:, timeout:))
       end
 
       def get(url, params: {}, headers: {})
