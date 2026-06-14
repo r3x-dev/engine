@@ -20,9 +20,9 @@ module R3x
     test "defaults to web profile" do
       assert_equal "web", RuntimeProfile.current
       assert_equal [ :web ], RuntimeProfile.bundler_groups
-      refute RuntimeProfile.jobs?
-      refute RuntimeProfile.workflow_cli?
-      refute RuntimeProfile.headless?
+      refute_predicate RuntimeProfile, :jobs?
+      refute_predicate RuntimeProfile, :workflow_cli?
+      refute_predicate RuntimeProfile, :headless?
     end
 
     test "recognizes jobs profile" do
@@ -30,9 +30,9 @@ module R3x
 
       assert_equal "jobs", RuntimeProfile.current
       assert_equal [], RuntimeProfile.bundler_groups
-      assert RuntimeProfile.jobs?
-      refute RuntimeProfile.workflow_cli?
-      assert RuntimeProfile.headless?
+      assert_predicate RuntimeProfile, :jobs?
+      refute_predicate RuntimeProfile, :workflow_cli?
+      assert_predicate RuntimeProfile, :headless?
     end
 
     test "recognizes workflow_cli profile" do
@@ -40,9 +40,9 @@ module R3x
 
       assert_equal "workflow_cli", RuntimeProfile.current
       assert_equal [], RuntimeProfile.bundler_groups
-      refute RuntimeProfile.jobs?
-      assert RuntimeProfile.workflow_cli?
-      assert RuntimeProfile.headless?
+      refute_predicate RuntimeProfile, :jobs?
+      assert_predicate RuntimeProfile, :workflow_cli?
+      assert_predicate RuntimeProfile, :headless?
     end
 
     test "rejects unsupported profiles" do

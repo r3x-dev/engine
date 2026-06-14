@@ -21,7 +21,7 @@ module R3x
 
         response = @client.ping
 
-        assert response.success?
+        assert_predicate response, :success?
       end
 
       test "ping raises HTTPX::HTTPError on non-2xx response" do

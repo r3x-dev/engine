@@ -29,10 +29,10 @@ module R3x
         summary = Workflow::Summaries.new.find!("test_workflow")
 
         assert_equal "Healthy", summary[:health][:label]
-        assert summary[:next_trigger_at].present?
+        assert_predicate summary[:next_trigger_at], :present?
         assert summary[:run_now_available]
         assert_equal 1, summary[:trigger_entries].size
-        assert summary[:trigger_entries].first[:recurring_task].present?
+        assert_predicate summary[:trigger_entries].first[:recurring_task], :present?
         assert summary[:trigger_entries].first[:run_now_available]
       end
 

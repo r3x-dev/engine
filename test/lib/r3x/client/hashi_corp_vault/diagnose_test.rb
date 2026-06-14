@@ -56,7 +56,7 @@ module R3x
         assert_equal "https://vault.test", result[:vault_addr]
         assert_equal "secret/data/env/r3x", result[:secret_path]
         assert_equal "token-r3x-env", result[:token]["display_name"]
-        assert_equal true, result[:token]["renewable"]
+        assert result[:token]["renewable"]
         assert_equal [ "read" ], result[:capabilities]["secret/data/env/r3x"]
         assert_equal [ "GEMINI_API_KEY", "OPENAI_API_KEY" ], result[:secret][:keys]
 
@@ -111,7 +111,7 @@ module R3x
 
         result = HashiCorpVault.diagnose
 
-        assert_equal true, result[:token]["renewable"]
+        assert result[:token]["renewable"]
         assert_equal [ "read" ], result[:capabilities]["auth/token/lookup-self"]
       end
 

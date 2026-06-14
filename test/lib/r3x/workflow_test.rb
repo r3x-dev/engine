@@ -61,6 +61,7 @@ module R3x
       end
 
       schedule = klass.schedulable_triggers.first
+
       assert schedule
       assert_equal :schedule, schedule.type
       assert_equal "0 13 * * *", schedule.cron
@@ -82,6 +83,7 @@ module R3x
       end
 
       schedule = klass.schedulable_triggers.first
+
       assert schedule
       assert_equal "every day at 13:00", schedule.cron
       assert_nil schedule.timezone
@@ -100,6 +102,7 @@ module R3x
       end
 
       schedule = klass.schedulable_triggers.first
+
       assert schedule
       assert_equal "Europe/Paris", schedule.timezone
       assert_equal "0 13 * * * Europe/Paris", schedule.schedule
@@ -115,6 +118,7 @@ module R3x
       end
 
       schedule = klass.schedulable_triggers.first
+
       assert schedule
       assert_equal "America/Los_Angeles", schedule.timezone
       assert_equal "0 13 * * * America/Los_Angeles", schedule.schedule
@@ -133,6 +137,7 @@ module R3x
       end
 
       schedule = klass.schedulable_triggers.first
+
       assert schedule
       assert_equal "UTC", schedule.timezone
       assert_equal "0 13 * * * UTC", schedule.schedule
@@ -153,6 +158,7 @@ module R3x
       end
 
       schedule = klass.schedulable_triggers.first
+
       assert schedule
       assert_equal "Europe/Paris", schedule.timezone
       assert_equal "every day at 13:00 Europe/Paris", schedule.schedule
@@ -254,6 +260,7 @@ module R3x
       end
 
       triggers = klass.triggers
+
       assert_equal 1, triggers.size
       assert_equal [ :schedule ], triggers.map(&:type)
     end
@@ -278,6 +285,7 @@ module R3x
 
     test "supported_types returns list of available trigger files" do
       types = R3x::Triggers.supported_types
+
       assert_includes types, :schedule
       refute_includes types, :base
     end
@@ -306,6 +314,7 @@ module R3x
       end
 
       triggers = klass.triggers
+
       assert_equal 1, triggers.size
       assert_equal :manual, triggers.first.type
     end
@@ -320,6 +329,7 @@ module R3x
       end
 
       triggers = klass.triggers
+
       assert_equal 1, triggers.size
       assert_equal :manual, triggers.first.type
     end
@@ -803,9 +813,11 @@ module R3x
         path = File.join(dir, "workflow.rb")
 
         write_fragile_cache_workflow(path, "first")
+
         assert_equal "first", load_fragile_cache_workflow(path).new.run
 
         write_fragile_cache_workflow(path, "second")
+
         assert_equal "second", load_fragile_cache_workflow(path).new.run
       end
     ensure
@@ -972,9 +984,10 @@ module R3x
       begin
         durable_set = context.durable_set
 
-        refute durable_set.include?("item-1")
+        refute_includes durable_set, "item-1"
         durable_set.add("item-1")
-        assert durable_set.include?("item-1")
+
+        assert_includes durable_set, "item-1"
       ensure
         Rails.cache = original_cache
       end
@@ -999,8 +1012,8 @@ module R3x
 
         default_set.add("item-1")
 
-        assert default_set.include?("item-1")
-        refute sent_set.include?("item-1")
+        assert_includes default_set, "item-1"
+        refute_includes sent_set, "item-1"
       ensure
         Rails.cache = original_cache
       end
@@ -1023,8 +1036,8 @@ module R3x
       begin
         first_context.durable_set.add("item-1")
 
-        assert first_context.durable_set.include?("item-1")
-        refute second_context.durable_set.include?("item-1")
+        assert_includes first_context.durable_set, "item-1"
+        refute_includes second_context.durable_set, "item-1"
       ensure
         Rails.cache = original_cache
       end
@@ -1122,11 +1135,11 @@ module R3x
 
         assert durable_set.add?("item-1")
         refute durable_set.add?("item-1")
-        assert durable_set.include?("item-1")
+        assert_includes durable_set, "item-1"
 
         assert durable_set.add?("item-2")
         refute durable_set.add?("item-2")
-        assert durable_set.include?("item-2")
+        assert_includes durable_set, "item-2"
       ensure
         Rails.cache = original_cache
       end
@@ -1191,11 +1204,11 @@ module R3x
         durable_set = context.durable_set
         durable_set.add("item-1")
 
-        assert durable_set.include?("item-1")
+        assert_includes durable_set, "item-1"
 
         durable_set.delete("item-1")
 
-        refute durable_set.include?("item-1")
+        refute_includes durable_set, "item-1"
       ensure
         Rails.cache = original_cache
       end

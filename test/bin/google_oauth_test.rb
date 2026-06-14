@@ -35,6 +35,7 @@ class GoogleOAuthCLITest < ActiveSupport::TestCase
 
     _, _ = capture_io do
       result = @cli.send(:interactive_scope_selection)
+
       assert_equal all_aliases.sort, result.split(",").sort
     end
   ensure
@@ -54,7 +55,7 @@ class GoogleOAuthCLITest < ActiveSupport::TestCase
       capture_io { @cli.authorize }
     end
 
-    assert_equal false, scope_selection_called, "interactive_scope_selection should not be called when credentials are missing"
+    refute scope_selection_called, "interactive_scope_selection should not be called when credentials are missing"
   end
 
   test "authorize fails fast before scope selection when GOOGLE_CLIENT_SECRET is missing" do
@@ -78,7 +79,7 @@ class GoogleOAuthCLITest < ActiveSupport::TestCase
       capture_io { @cli.authorize }
     end
 
-    assert_equal false, scope_selection_called, "interactive_scope_selection should not be called when client_secret is missing"
+    refute scope_selection_called, "interactive_scope_selection should not be called when client_secret is missing"
   ensure
     R3x::Env.define_singleton_method(:fetch, original_fetch)
   end

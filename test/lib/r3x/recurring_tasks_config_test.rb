@@ -39,6 +39,7 @@ module R3x
       R3x::Workflow::Registry.register(workflow_class)
 
       tasks = RecurringTasksConfig.to_h
+
       refute tasks.key?("no_schedule")
 
       Workflow::Registry.reset!
@@ -50,9 +51,11 @@ module R3x
       RecurringTasksConfig.schedule_all!
 
       dynamic_tasks = SolidQueue::RecurringTask.dynamic.where("key LIKE 'workflow:test_workflow:%'")
-      assert dynamic_tasks.any?, "Expected dynamic tasks to be created"
+
+      assert_predicate dynamic_tasks, :any?, "Expected dynamic tasks to be created"
 
       task = dynamic_tasks.find { |t| t.key.include?(":schedule:") }
+
       assert task, "Expected a schedule trigger task"
       assert_equal "Workflows::TestWorkflow", task.class_name
       assert_equal "0 * * * *", task.schedule

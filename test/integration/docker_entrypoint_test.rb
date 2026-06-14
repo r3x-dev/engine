@@ -9,7 +9,7 @@ class DockerEntrypointTest < ActiveSupport::TestCase
       inject_production_secret: false
     )
 
-    refute $?.success?, "docker entrypoint unexpectedly succeeded: #{command_output}"
+    refute_predicate $?, :success?, "docker entrypoint unexpectedly succeeded: #{command_output}"
     assert_includes command_output, "Missing SECRET_KEY_BASE for production runtime"
   end
 
@@ -20,7 +20,7 @@ class DockerEntrypointTest < ActiveSupport::TestCase
       inject_production_secret: false
     )
 
-    assert $?.success?, "docker entrypoint command failed: #{command_output}"
+    assert_predicate $?, :success?, "docker entrypoint command failed: #{command_output}"
   end
 
   private

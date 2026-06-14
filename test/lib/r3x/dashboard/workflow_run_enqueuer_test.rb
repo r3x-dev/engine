@@ -35,6 +35,7 @@ module R3x
 
         assert_instance_of ::Dashboard::Run, result
         job = SolidQueue::Job.order(:id).last
+
         assert_equal "critical", job.queue_name
         assert_equal 7, job.priority
         assert_equal [], ::Dashboard::Run.find(job.id).workflow_arguments
@@ -67,6 +68,7 @@ module R3x
 
         assert_instance_of ::Dashboard::Run, result
         job = SolidQueue::Job.order(:id).last
+
         assert_equal "critical", job.queue_name
         assert_equal 7, job.priority
       end
@@ -89,6 +91,7 @@ module R3x
 
         assert_instance_of ::Dashboard::Run, result
         job = SolidQueue::Job.order(:id).last
+
         assert_equal "feeds", job.queue_name
         assert_equal 3, job.priority
         assert_equal [], ::Dashboard::Run.find(job.id).workflow_arguments
@@ -124,6 +127,7 @@ module R3x
 
         assert_instance_of ::Dashboard::Run, result
         job = SolidQueue::Job.order(:id).last
+
         assert_equal "Workflows::FooBar", job.class_name
         assert_equal "expected", job.queue_name
         assert_equal 7, job.priority
@@ -147,6 +151,7 @@ module R3x
 
         assert_instance_of ::Dashboard::Run, result
         job = SolidQueue::Job.order(:id).last
+
         assert_equal "critical", job.queue_name
         assert_equal 7, job.priority
         assert_equal [ "schedule:123" ], ::Dashboard::Run.find(job.id).workflow_arguments

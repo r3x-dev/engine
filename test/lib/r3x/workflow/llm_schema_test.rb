@@ -8,7 +8,7 @@ module R3x
           string :status
         end
 
-        assert klass < RubyLLM::Schema
+        assert_operator klass, :<, RubyLLM::Schema
         assert_equal [ :status ], klass.properties.keys
       end
     end

@@ -38,10 +38,10 @@ class WorkflowBootTest < ActiveSupport::TestCase
       env: { "RAILS_ENV" => "production", "SOLID_QUEUE_IN_PUMA" => nil }
     )
 
-    assert $?.success?, "server hook command failed: #{command_output}"
-    assert File.exist?(idle_marker_path), "expected server hook script to finish: #{command_output}"
-    assert File.exist?(load_marker_path), "expected server hook to call load!: #{command_output}"
-    refute File.exist?(unexpected_schedule_marker_path), "expected server hook not to call load_and_schedule!: #{command_output}"
+    assert_predicate $?, :success?, "server hook command failed: #{command_output}"
+    assert_path_exists idle_marker_path, "expected server hook script to finish: #{command_output}"
+    assert_path_exists load_marker_path, "expected server hook to call load!: #{command_output}"
+    refute_path_exists unexpected_schedule_marker_path, "expected server hook not to call load_and_schedule!: #{command_output}"
   ensure
     FileUtils.rm_f(script_path) if script_path
     FileUtils.rm_f(idle_marker_path) if idle_marker_path
@@ -89,10 +89,10 @@ class WorkflowBootTest < ActiveSupport::TestCase
       env: { "RAILS_ENV" => "production", "SOLID_QUEUE_IN_PUMA" => nil }
     )
 
-    assert $?.success?, "jobs command failed: #{command_output}"
-    assert File.exist?(cli_marker_path), "expected jobs entrypoint to start cli: #{command_output}"
-    refute File.exist?(load_marker_path), "expected jobs entrypoint not to call load! directly: #{command_output}"
-    assert File.exist?(schedule_marker_path), "expected jobs entrypoint to call load_and_schedule!: #{command_output}"
+    assert_predicate $?, :success?, "jobs command failed: #{command_output}"
+    assert_path_exists cli_marker_path, "expected jobs entrypoint to start cli: #{command_output}"
+    refute_path_exists load_marker_path, "expected jobs entrypoint not to call load! directly: #{command_output}"
+    assert_path_exists schedule_marker_path, "expected jobs entrypoint to call load_and_schedule!: #{command_output}"
   ensure
     FileUtils.rm_f(script_path) if script_path
     FileUtils.rm_f(cli_marker_path) if cli_marker_path
@@ -120,7 +120,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
       }
     )
 
-    assert $?.success?, "boot command failed: #{command_output}"
+    assert_predicate $?, :success?, "boot command failed: #{command_output}"
     assert_equal "unloaded", File.read(marker_path)
   ensure
     FileUtils.rm_f(script_path) if script_path

@@ -29,7 +29,7 @@ module R3x
 
         result = logs.run_logs(active_job_id: "aj-123")
 
-        assert_equal false, result[:configured]
+        refute result[:configured]
         assert_empty result[:entries]
       end
 
@@ -39,7 +39,7 @@ module R3x
 
         result = Logs.new(provider_name: "victorialogs").run_logs(active_job_id: "aj-123")
 
-        assert_equal false, result[:configured]
+        refute result[:configured]
         assert_empty result[:entries]
       ensure
         ENV["R3X_VICTORIA_LOGS_URL"] = original_url
@@ -61,7 +61,7 @@ module R3x
 
         result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
 
-        assert_equal true, result[:configured]
+        assert result[:configured]
         assert_nil result[:error]
         assert_equal 1, result[:entries].size
         assert_includes client.calls.first[:query], 'tags:"r3x.run_active_job_id=aj-123"'
@@ -215,7 +215,7 @@ module R3x
 
         result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
 
-        assert_equal true, result[:configured]
+        assert result[:configured]
         assert_nil result[:error]
         assert_equal 2, result[:entries].size
         assert_equal "unknown", result[:entries].first[:level]
@@ -238,7 +238,7 @@ module R3x
 
         result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
 
-        assert_equal true, result[:configured]
+        assert result[:configured]
         assert_nil result[:error]
         assert_equal 2, result[:entries].size
         assert_equal "unknown", result[:entries].first[:level]
@@ -260,7 +260,7 @@ module R3x
 
         result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
 
-        assert_equal true, result[:configured]
+        assert result[:configured]
         assert_nil result[:error]
         assert_equal 1, result[:entries].size
         assert_equal "valid line", result[:entries].first[:message]
@@ -301,7 +301,7 @@ module R3x
       test "returns provider error when provider is unsupported" do
         result = Logs.new(provider_name: "unknown").run_logs(active_job_id: "aj-123")
 
-        assert_equal true, result[:configured]
+        assert result[:configured]
         assert_equal "Unsupported logs provider: unknown", result[:error]
       end
 
@@ -310,7 +310,7 @@ module R3x
 
         result = Logs.new(provider_name: "victorialogs", client: client).run_logs(active_job_id: "aj-123")
 
-        assert_equal true, result[:configured]
+        assert result[:configured]
         assert_equal "boom", result[:error]
       end
     end
