@@ -2,13 +2,10 @@
 # Omakase Ruby styling for Rails
 inherit_gem:
   rubocop-rails-omakase: rubocop.yml
-  rubocop-rubyfmt:
-    - config/default.yml
 require:
   - ./.rubocop/cop/r3x/prefer_logger_concern.rb
 plugins:
   - rubocop-thread_safety
-  - rubocop-rubyfmt
 
 AllCops:
   Exclude:
