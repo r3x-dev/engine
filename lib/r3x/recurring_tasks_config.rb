@@ -77,7 +77,8 @@ module R3x
       end
 
       def task_options_for(workflow_class:, trigger:)
-        queue_name = workflow_class.new.queue_name
+        queue_attr = workflow_class.queue_name
+        queue_name = queue_attr.is_a?(Proc) ? ActiveJob::Base.default_queue_name : queue_attr
         {
           class: workflow_class.name,
           args: [ trigger.unique_key ],

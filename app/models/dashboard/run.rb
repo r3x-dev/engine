@@ -124,12 +124,12 @@ module Dashboard
       private
 
       def normalize_hash(argument)
-        argument.each_with_object({}) do |(key, value), normalized|
-          normalized[key] = normalize_arguments(value)
-        end.tap do |normalized|
-          symbolize_marked_keys!(normalized, "_aj_ruby2_keywords")
-          symbolize_marked_keys!(normalized, "_aj_symbol_keys")
+        normalized = argument.each_with_object({}) do |(key, value), hash|
+          hash[key] = normalize_arguments(value)
         end
+        symbolize_marked_keys!(normalized, "_aj_ruby2_keywords")
+        symbolize_marked_keys!(normalized, "_aj_symbol_keys")
+        normalized
       end
 
       def symbolize_marked_keys!(hash, marker)
@@ -146,18 +146,15 @@ module Dashboard
 
         base_scope = dashboard_visible(visible_class_names)
 
-        LATEST_ACTIVITY_BUCKETS.flat_map do |status, table_name, column_name|
+        sqls = LATEST_ACTIVITY_BUCKETS.map do |status, table_name, column_name|
           recorded_at = Arel::Table.new(table_name)[column_name]
-          latest_activity_candidate_ids_for_status(base_scope: base_scope, status: status, recorded_at: recorded_at)
-        end.uniq
-      end
+          ranked_sql = latest_activity_status_scope(base_scope, status)
+                       .select(run_table[:id].as("id"), latest_activity_rank(recorded_at).as("dashboard_rank"))
+                       .to_sql
+          "SELECT id FROM (#{ranked_sql}) dashboard_latest_runs WHERE dashboard_rank = 1"
+        end
 
-      def latest_activity_candidate_ids_for_status(base_scope:, status:, recorded_at:)
-        ranked_sql = latest_activity_status_scope(base_scope, status)
-                     .select(run_table[:id].as("id"), latest_activity_rank(recorded_at).as("dashboard_rank"))
-                     .to_sql
-
-        connection.select_values("SELECT id FROM (#{ranked_sql}) dashboard_latest_runs WHERE dashboard_rank = 1")
+        connection.select_values(sqls.join(" UNION "))
       end
 
       def latest_activity_status_scope(base_scope, status)
