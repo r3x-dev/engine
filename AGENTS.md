@@ -376,6 +376,7 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 ### Ruby/Rails Implementation Defaults
 
 - Prefer the smallest Ruby or Rails primitive that expresses the real contract. Do not add a new gem or concurrency abstraction for a tiny cache, registry, or value object when `Hash`, `Mutex`, constants, `Data.define`, or an existing Rails helper are enough.
+- Minimize database query round-trips by performing filtering, deduplication, and aggregation inside the database (using SQL features like window functions, groupings, or `UNION`) instead of pulling raw records and manipulating them in Ruby (e.g., avoiding looping database queries or `flat_map { ... }.uniq` patterns in Ruby). Let the database engine do the heavy lifting.
 - For process-wide memoization, use an explicit process-wide cache keyed by the real lookup key and protect writes with `Mutex` when concurrent access is possible. Freeze cached values when callers should not mutate them.
 - Do not use `Thread.current`, `thread_mattr`, or `Current` for shared configuration, provider registries, or process-level caches. Use them only when the value is intentionally thread/request scoped.
 - Avoid `cattr_accessor`/`mattr_accessor` for mutable global state unless Rails-owned configuration behavior is specifically desired. Prefer constants plus narrow class methods for fixed defaults and small registries.
