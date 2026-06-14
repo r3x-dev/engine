@@ -62,7 +62,7 @@ module R3x
       end
 
       def classify(...)
-        Classifier.new(llm: self).classify(...)
+        Classifier.new(method(:message)).classify(...)
       end
 
       private

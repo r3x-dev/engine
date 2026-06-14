@@ -4,8 +4,8 @@ module R3x
   module Client
     class Llm
       class Classifier
-        def initialize(llm:)
-          @llm = llm
+        def initialize(message_method)
+          @message_method = message_method
         end
 
         def classify(text:, model:, categories:, include_reason: false, allow_other: true)
@@ -13,12 +13,12 @@ module R3x
           schema = build_schema(all_categories.keys, include_reason: include_reason)
           prompt = build_prompt(text, all_categories, include_reason: include_reason)
 
-          llm.message(model: model, prompt: prompt, schema: schema).content
+          message_method.call(model: model, prompt: prompt, schema: schema).content
         end
 
         private
 
-        attr_reader :llm
+        attr_reader :message_method
 
         def build_categories(user_categories, allow_other:)
           cats = user_categories.transform_keys(&:to_s)
