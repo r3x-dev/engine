@@ -18,35 +18,35 @@ module R3x
       Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("test"))
 
       with_env("R3X_DRY_RUN" => nil, "R3X_GMAIL_DRY_RUN" => nil) do
-        assert_equal true, Policy.default_dry_run_for(:gmail)
+        assert Policy.default_dry_run_for(:gmail)
       end
     end
 
     test "dry_run_for prefers explicit value" do
-      assert_equal false, Policy.dry_run_for(:gmail, false)
-      assert_equal true, Policy.dry_run_for(:gmail, true)
+      refute Policy.dry_run_for(:gmail, false)
+      assert Policy.dry_run_for(:gmail, true)
     end
 
     test "real_delivery_for? inverts dry run" do
-      assert_equal true, Policy.real_delivery_for?(:gmail, false)
-      assert_equal false, Policy.real_delivery_for?(:gmail, true)
+      assert Policy.real_delivery_for?(:gmail, false)
+      refute Policy.real_delivery_for?(:gmail, true)
     end
 
     test "defaults to real delivery in production" do
       Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("production"))
 
-      assert_equal false, Policy.default_dry_run_for(:gmail)
+      refute Policy.default_dry_run_for(:gmail)
     end
 
     test "specific env override wins" do
       with_env("R3X_GMAIL_DRY_RUN" => "false") do
-        assert_equal false, Policy.default_dry_run_for(:gmail)
+        refute Policy.default_dry_run_for(:gmail)
       end
     end
 
     test "global env override wins when specific is absent" do
       with_env("R3X_GMAIL_DRY_RUN" => nil, "R3X_DRY_RUN" => "false") do
-        assert_equal false, Policy.default_dry_run_for(:discord)
+        refute Policy.default_dry_run_for(:discord)
       end
     end
 
@@ -61,12 +61,12 @@ module R3x
     end
 
     test "skip_cache? defaults to false" do
-      assert_equal false, Policy.skip_cache?
+      refute_predicate Policy, :skip_cache?
     end
 
     test "skip_cache? reads env override" do
       with_env("R3X_SKIP_CACHE" => "true") do
-        assert_equal true, Policy.skip_cache?
+        assert_predicate Policy, :skip_cache?
       end
     end
 

@@ -5,6 +5,7 @@ module R3x
     class ExecutionTest < ActiveSupport::TestCase
       test "previous_run_at returns nil when no execution in solid_queue" do
         execution = Execution.new(workflow_key: "nonexistent_workflow")
+
         assert_nil execution.previous_run_at
       end
 
@@ -33,7 +34,7 @@ module R3x
         t2 = execution.previous_run_at
 
         assert_equal t1, t2
-        assert t1.present?
+        assert_predicate t1, :present?
       ensure
         SolidQueue::RecurringExecution.where(task_key: "test_memo").delete_all
         SolidQueue::RecurringTask.where(key: "test_memo").delete_all
@@ -42,7 +43,8 @@ module R3x
 
       test "first_run? returns true when no previous_run_at" do
         execution = Execution.new(workflow_key: "new_workflow")
-        assert execution.first_run?
+
+        assert_predicate execution, :first_run?
       end
 
       test "first_run? returns false when previous_run_at exists" do
@@ -65,7 +67,8 @@ module R3x
         )
 
         execution = Execution.new(workflow_key: "test_fr")
-        refute execution.first_run?
+
+        refute_predicate execution, :first_run?
       ensure
         SolidQueue::RecurringExecution.where(task_key: "test_fr").delete_all
         SolidQueue::RecurringTask.where(key: "test_fr").delete_all
@@ -80,8 +83,8 @@ module R3x
         ctx = Context.new(trigger: trigger_execution, workflow_key: "test")
 
         assert_equal :schedule, ctx.trigger.type
-        assert ctx.trigger.schedule?
-        assert ctx.execution.is_a?(Execution)
+        assert_predicate ctx.trigger, :schedule?
+        assert_kind_of Execution, ctx.execution
       end
 
       test "client proxy builds gmail client from project" do
@@ -198,6 +201,7 @@ module R3x
           assert_instance_of R3x::Client::Llm, llm
           assert_equal({ provider: :opencode_go, assume_model_exists: true }, llm.instance_variable_get(:@chat_options))
           context = llm.instance_variable_get(:@llm_context)
+
           assert_equal "go-base-key", context.config.opencode_go_api_key
         end
       end
@@ -216,6 +220,7 @@ module R3x
           assert_instance_of R3x::Client::Llm, llm
           assert_equal({ provider: :opencode_go, assume_model_exists: true }, llm.instance_variable_get(:@chat_options))
           context = llm.instance_variable_get(:@llm_context)
+
           assert_equal "go-test-key", context.config.opencode_go_api_key
         end
       end

@@ -6,11 +6,14 @@ require:
   - ./.rubocop/cop/r3x/prefer_logger_concern.rb
 plugins:
   - rubocop-thread_safety
+  - rubocop-minitest
 
 AllCops:
+  NewCops: enable
   Exclude:
     - docs/**/*
     - workflows/**/*
+
 
 Rails/Output:
   Exclude:
@@ -93,4 +96,8 @@ Layout/MultilineMethodCallBraceLayout:
 Layout/MultilineMethodDefinitionBraceLayout:
   Enabled: true
   EnforcedStyle: symmetrical
+
+Minitest/MultipleAssertions:
+  Enabled: false
+
 

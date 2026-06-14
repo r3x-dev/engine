@@ -6,26 +6,30 @@ module R3x
       test "delegates type to trigger" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
         execution = Execution.new(trigger: trigger, workflow_key: "test")
+
         assert_equal :schedule, execution.type
       end
 
       test "dynamic schedule? predicate" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
         execution = Execution.new(trigger: trigger, workflow_key: "test")
-        assert execution.schedule?
-        refute execution.manual?
+
+        assert_predicate execution, :schedule?
+        refute_predicate execution, :manual?
       end
 
       test "dynamic manual? predicate" do
         trigger = R3x::Triggers::Manual.new
         execution = Execution.new(trigger: trigger, workflow_key: "test")
-        refute execution.schedule?
-        assert execution.manual?
+
+        refute_predicate execution, :schedule?
+        assert_predicate execution, :manual?
       end
 
       test "delegates options to trigger" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
         execution = Execution.new(trigger: trigger, workflow_key: "test")
+
         assert_equal({ cron: "0 13 * * *" }, execution.options)
       end
 

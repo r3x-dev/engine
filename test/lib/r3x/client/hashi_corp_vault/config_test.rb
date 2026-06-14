@@ -11,7 +11,7 @@ module R3x
         ENV.delete("R3X_VAULT_AUTH_METHOD")
         ENV.delete("R3X_VAULT_KUBERNETES_ROLE")
 
-        assert_equal true, HashiCorpVault.configured?
+        assert_predicate HashiCorpVault, :configured?
       end
 
       test "configured? returns true when kubernetes auth is configured" do
@@ -20,28 +20,28 @@ module R3x
         ENV["R3X_VAULT_AUTH_METHOD"] = "kubernetes"
         ENV["R3X_VAULT_KUBERNETES_ROLE"] = "r3x"
 
-        assert_equal true, HashiCorpVault.configured?
+        assert_predicate HashiCorpVault, :configured?
       end
 
       test "configured? returns false when VAULT_ADDR is missing" do
         ENV.delete("R3X_VAULT_ADDR")
         ENV["R3X_VAULT_TOKEN"] = "test-token"
 
-        assert_equal false, HashiCorpVault.configured?
+        refute_predicate HashiCorpVault, :configured?
       end
 
       test "configured? returns false when VAULT_TOKEN is missing" do
         ENV["R3X_VAULT_ADDR"] = "https://vault.test"
         ENV.delete("R3X_VAULT_TOKEN")
 
-        assert_equal false, HashiCorpVault.configured?
+        refute_predicate HashiCorpVault, :configured?
       end
 
       test "configured? returns false when env vars are blank" do
         ENV["R3X_VAULT_ADDR"] = ""
         ENV["R3X_VAULT_TOKEN"] = ""
 
-        assert_equal false, HashiCorpVault.configured?
+        refute_predicate HashiCorpVault, :configured?
       end
 
       test "configured? raises for unsupported auth method" do

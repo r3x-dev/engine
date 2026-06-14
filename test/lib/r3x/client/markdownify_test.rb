@@ -26,7 +26,7 @@ module R3x
           assert_equal "# Hello World\n\nThis is a test.", result["markdown"]
           assert_equal 42, result["tokens"]
           assert_equal "auto", result["method"]
-          assert_equal false, result["retain_images"]
+          refute result["retain_images"]
         end
       end
 
@@ -67,7 +67,7 @@ module R3x
           ).convert
 
           assert_equal "ai", result["method"]
-          assert_equal true, result["retain_images"]
+          assert result["retain_images"]
           assert_equal "# Converted", result["markdown"]
         end
       end
@@ -80,7 +80,7 @@ module R3x
           assert_equal "", result["markdown"]
           assert_nil result["tokens"]
           assert_equal "browser", result["method"]
-          assert_equal true, result["retain_images"]
+          assert result["retain_images"]
         end
       end
 
@@ -122,7 +122,7 @@ module R3x
 
           assert_equal "https://example.com", captured_payload["url"]
           assert_equal "auto", captured_payload["method"]
-          assert_equal false, captured_payload["retain_images"]
+          refute captured_payload["retain_images"]
         end
       end
 

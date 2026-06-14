@@ -26,6 +26,7 @@ module R3x
         @client.run do |client, rid|
           executed = true
           received_rid = rid
+
           assert_instance_of HealthchecksIO, client
           assert_match(/\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/, rid)
         end
@@ -64,7 +65,7 @@ module R3x
 
         response = @client.ping
 
-        assert response.success?
+        assert_predicate response, :success?
         assert_equal 200, response.status
         assert_equal "OK", response.body
         assert_requested request
@@ -77,7 +78,7 @@ module R3x
 
         response = @client.ping(body: "Custom data")
 
-        assert response.success?
+        assert_predicate response, :success?
         assert_requested request
       end
 
@@ -87,7 +88,7 @@ module R3x
 
         response = @client.ping(rid: rid)
 
-        assert response.success?
+        assert_predicate response, :success?
         assert_requested :head, "#{@ping_url}?rid=#{rid}", times: 1
       end
 
@@ -97,7 +98,7 @@ module R3x
 
         response = @client.fail
 
-        assert response.success?
+        assert_predicate response, :success?
         assert_requested request
       end
 
@@ -108,7 +109,7 @@ module R3x
 
         response = @client.fail(body: "Error details")
 
-        assert response.success?
+        assert_predicate response, :success?
         assert_requested request
       end
 
@@ -119,7 +120,7 @@ module R3x
 
         response = @client.log(lines: [ "Line 1", "Line 2", "Line 3" ])
 
-        assert response.success?
+        assert_predicate response, :success?
         assert_requested request
       end
 
@@ -130,7 +131,7 @@ module R3x
 
         response = @client.log(lines: "Single log line")
 
-        assert response.success?
+        assert_predicate response, :success?
         assert_requested request
       end
 
@@ -140,7 +141,7 @@ module R3x
 
         response = @client.exit_status(code: 0)
 
-        assert response.success?
+        assert_predicate response, :success?
         assert_requested request
       end
 
@@ -150,7 +151,7 @@ module R3x
 
         response = @client.exit_status(code: 1)
 
-        assert response.success?
+        assert_predicate response, :success?
         assert_requested request
       end
 

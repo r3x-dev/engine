@@ -21,6 +21,7 @@ module R3x
       assert_equal "test_workflow", workflow_class.workflow_key
 
       schedule = workflow_class.schedulable_triggers.first
+
       assert schedule
       assert_equal :schedule, schedule.type
       assert_equal "0 * * * *", schedule.cron
@@ -44,7 +45,7 @@ module R3x
       workflow_class = R3x::Workflow::Registry.fetch("test_workflow")
       result = workflow_class.new.run
 
-      assert_equal true, result["test"]
+      assert result["test"]
       assert_equal "Test workflow executed successfully", result["message"]
     end
 
@@ -68,12 +69,14 @@ module R3x
 
         ENV["R3X_WORKFLOW_PATHS"] = dir
         R3x::Workflow::PackLoader.load!(rebuild_registry: true)
+
         assert_equal "original", R3x::Workflow::Registry.fetch("reload_semantics").new.run.fetch("message")
 
         File.write(workflow_file, workflow_source(message: "changed"))
         R3x::Workflow::PackLoader.load!(rebuild_registry: true)
 
         workflow_class = R3x::Workflow::Registry.fetch("reload_semantics")
+
         assert_equal "original", workflow_class.new.run.fetch("message")
       ensure
         Workflows.send(:remove_const, :ReloadSemantics) if defined?(Workflows::ReloadSemantics)

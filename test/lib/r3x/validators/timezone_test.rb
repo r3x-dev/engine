@@ -69,8 +69,8 @@ module R3x
       end
 
       test "allows blank timezone" do
-        assert DummyModel.new(timezone: "").valid?
-        assert DummyModel.new(timezone: nil).valid?
+        assert_predicate DummyModel.new(timezone: ""), :valid?
+        assert_predicate DummyModel.new(timezone: nil), :valid?
       end
 
       test "ActiveModel form rejects invalid timezone" do

@@ -90,6 +90,7 @@ module R3x
 
         assert_equal "vector", result.result_type
         series = result.first
+
         assert_equal "1", series.value
         assert_equal 1700000000, series.timestamp
         assert_equal({ "__name__" => "up", "job" => "test" }, series.metric)
