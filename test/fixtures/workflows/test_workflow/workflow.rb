@@ -4,7 +4,7 @@ module Workflows
 
     def run
       {
-        "test" => true,
+        "test"    => true,
         "message" => "Test workflow executed successfully"
       }
     end

@@ -61,7 +61,7 @@ module R3x
         assert_equal "true", default_env["SOLID_QUEUE_SKIP_RECURRING"]
 
         override_env = {
-          "SOLID_QUEUE_CONFIG" => "config/custom.yml",
+          "SOLID_QUEUE_CONFIG"         => "config/custom.yml",
           "SOLID_QUEUE_SKIP_RECURRING" => "false"
         }
         Entrypoint.start_jobs_worker!(argv: [ "--skip-daemon" ], env: override_env, boot: boot, cli: cli)

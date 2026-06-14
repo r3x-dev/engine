@@ -112,7 +112,7 @@ module R3x
             status: 200,
             body: binary_data,
             headers: {
-              "Content-Type" => "image/png",
+              "Content-Type"        => "image/png",
               "Content-Disposition" => "attachment; filename=\"photo.png\""
             }
           )

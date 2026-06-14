@@ -37,18 +37,6 @@ Style/ItBlockParameter:
   Enabled: true
   EnforcedStyle: allow_single_line
 
-Layout/RedundantLineBreak:
-  Enabled: false
-
-Style/BlockDelimiters:
-  Enabled: false
-
-Layout/SpaceInsideArrayLiteralBrackets:
-  Enabled: false
-
-Layout/SpaceInsideHashLiteralBraces:
-  Enabled: false
-
 Layout/LineLength:
   Enabled: true
   Max: 140
@@ -64,3 +52,45 @@ R3x/PreferLoggerConcern:
   Enabled: true
   Include:
     - 'app/lib/r3x/client/**/*'
+
+Layout/HashAlignment:
+  Enabled: true
+  EnforcedHashRocketStyle: table
+
+
+Layout/ArgumentAlignment:
+  Enabled: true
+  EnforcedStyle: with_fixed_indentation
+
+Layout/ArrayAlignment:
+  Enabled: true
+  EnforcedStyle: with_fixed_indentation
+
+Layout/FirstArgumentIndentation:
+  Enabled: true
+  EnforcedStyle: consistent
+
+Layout/FirstArrayElementIndentation:
+  Enabled: true
+  EnforcedStyle: consistent
+
+Layout/FirstHashElementIndentation:
+  Enabled: true
+  EnforcedStyle: consistent
+
+Layout/MultilineArrayBraceLayout:
+  Enabled: true
+  EnforcedStyle: symmetrical
+
+Layout/MultilineHashBraceLayout:
+  Enabled: true
+  EnforcedStyle: symmetrical
+
+Layout/MultilineMethodCallBraceLayout:
+  Enabled: true
+  EnforcedStyle: symmetrical
+
+Layout/MultilineMethodDefinitionBraceLayout:
+  Enabled: true
+  EnforcedStyle: symmetrical
+

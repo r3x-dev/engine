@@ -22,7 +22,7 @@ module R3x
         end
 
         with_env(
-          "GOOGLE_CLIENT_ID_TESTPROJ" => "client-id",
+          "GOOGLE_CLIENT_ID_TESTPROJ"     => "client-id",
           "GOOGLE_CLIENT_SECRET_TESTPROJ" => "client-secret",
           "GOOGLE_REFRESH_TOKEN_TESTPROJ" => "refresh-token"
         ) do
@@ -44,7 +44,7 @@ module R3x
         Signet::OAuth2::Client.stubs(:new).returns(stub_client)
 
         with_env(
-          "GOOGLE_CLIENT_ID_TESTPROJ" => "client-id",
+          "GOOGLE_CLIENT_ID_TESTPROJ"     => "client-id",
           "GOOGLE_CLIENT_SECRET_TESTPROJ" => "client-secret",
           "GOOGLE_REFRESH_TOKEN_TESTPROJ" => "refresh-token"
         ) do
@@ -76,7 +76,7 @@ module R3x
 
         GoogleAuth.from_json(
           {
-            "client_id" => "client-id",
+            "client_id"     => "client-id",
             "client_secret" => "client-secret",
             "refresh_token" => "refresh-token"
           },
@@ -104,7 +104,7 @@ module R3x
 
         GoogleAuth.from_json(
           {
-            "client_id" => "client-id",
+            "client_id"     => "client-id",
             "client_secret" => "client-secret",
             "refresh_token" => "refresh-token"
           },

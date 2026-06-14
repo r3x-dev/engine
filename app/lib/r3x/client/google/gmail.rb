@@ -23,7 +23,7 @@ module R3x
           )
 
           {
-            "mode" => "real",
+            "mode"       => "real",
             "message_id" => result.id
           }
         end

@@ -49,7 +49,7 @@ module R3x
         client = FakeLogsClient.new(entries: [
           {
             "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => MultiJSON.generate("level" => "info", "message" => "hello")
+            "_msg"  => MultiJSON.generate("level" => "info", "message" => "hello")
           }
         ])
 
@@ -71,15 +71,15 @@ module R3x
       test "run logs read collector-extracted structured fields" do
         client = FakeLogsClient.new(entries: [
           {
-            "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => "Workflow run completed",
-            "level" => "info",
-            "tags" => MultiJSON.generate([ "ActiveJob", "r3x.run_active_job_id=aj-123", "r3x.trigger_key=schedule:123" ]),
-            "error_class" => nil,
-            "error_message" => nil,
-            "backtrace" => MultiJSON.generate([]),
+            "_time"                     => "2026-04-15T12:00:01Z",
+            "_msg"                      => "Workflow run completed",
+            "level"                     => "info",
+            "tags"                      => MultiJSON.generate([ "ActiveJob", "r3x.run_active_job_id=aj-123", "r3x.trigger_key=schedule:123" ]),
+            "error_class"               => nil,
+            "error_message"             => nil,
+            "backtrace"                 => MultiJSON.generate([]),
             "kubernetes.container_name" => "app",
-            "kubernetes.pod_name" => "r3x-jobs-123"
+            "kubernetes.pod_name"       => "r3x-jobs-123"
           }
         ])
 
@@ -101,15 +101,15 @@ module R3x
       test "run logs keep extracted error fields from collector" do
         client = FakeLogsClient.new(entries: [
           {
-            "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => "Workflow run failed",
-            "level" => "error",
-            "tags" => [ "ActiveJob", "r3x.run_active_job_id=aj-123" ],
-            "error_class" => "NameError",
-            "error_message" => "uninitialized constant",
-            "backtrace" => [ "app/lib/a.rb:1", "app/lib/b.rb:2" ],
+            "_time"                     => "2026-04-15T12:00:01Z",
+            "_msg"                      => "Workflow run failed",
+            "level"                     => "error",
+            "tags"                      => [ "ActiveJob", "r3x.run_active_job_id=aj-123" ],
+            "error_class"               => "NameError",
+            "error_message"             => "uninitialized constant",
+            "backtrace"                 => [ "app/lib/a.rb:1", "app/lib/b.rb:2" ],
             "kubernetes.container_name" => "app",
-            "kubernetes.pod_name" => "r3x-jobs-123"
+            "kubernetes.pod_name"       => "r3x-jobs-123"
           }
         ])
 
@@ -132,13 +132,13 @@ module R3x
       test "run logs strip repeated correlation tags from the message body" do
         client = FakeLogsClient.new(entries: [
           {
-            "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => MultiJSON.generate(
-              "level" => "info",
+            "_time"                     => "2026-04-15T12:00:01Z",
+            "_msg"                      => MultiJSON.generate(
+              "level"   => "info",
               "message" => "[r3x.run_active_job_id=aj-123] [r3x.workflow_key=test_workflow] [r3x.trigger_key=schedule:123] [Workflows::TestWorkflow] Running workflow trigger_type=schedule"
             ),
             "kubernetes.container_name" => "app",
-            "kubernetes.pod_name" => "r3x-jobs-123"
+            "kubernetes.pod_name"       => "r3x-jobs-123"
           }
         ])
 
@@ -163,8 +163,8 @@ module R3x
         client = FakeLogsClient.new(entries: [
           {
             "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => MultiJSON.generate(
-              "level" => "info",
+            "_msg"  => MultiJSON.generate(
+              "level"   => "info",
               "message" => "[DRY-RUN]: Email send skipped"
             )
           }
@@ -269,16 +269,16 @@ module R3x
       test "parses structured error fields from hash payload" do
         client = FakeLogsClient.new(entries: [
           {
-            "_time" => "2026-04-15T12:00:01Z",
-            "_msg" => MultiJSON.generate(
-              "level" => "error",
-              "message" => "Workflow run failed",
-              "error_class" => "NameError",
+            "_time"                     => "2026-04-15T12:00:01Z",
+            "_msg"                      => MultiJSON.generate(
+              "level"         => "error",
+              "message"       => "Workflow run failed",
+              "error_class"   => "NameError",
               "error_message" => "uninitialized constant",
-              "backtrace" => [ "app/lib/a.rb:1", "app/lib/b.rb:2" ]
+              "backtrace"     => [ "app/lib/a.rb:1", "app/lib/b.rb:2" ]
             ),
             "kubernetes.container_name" => "app",
-            "kubernetes.pod_name" => "r3x-jobs-123"
+            "kubernetes.pod_name"       => "r3x-jobs-123"
           }
         ])
 

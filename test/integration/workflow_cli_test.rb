@@ -29,9 +29,9 @@ class WorkflowCliTest < ActiveSupport::TestCase
     output = run_cli(
       "list",
       env: {
-        "RAILS_ENV" => "production",
+        "RAILS_ENV"               => "production",
         "R3X_SKIP_VAULT_ENV_LOAD" => "true",
-        "SECRET_KEY_BASE" => "workflow-cli-production-smoke-secret"
+        "SECRET_KEY_BASE"         => "workflow-cli-production-smoke-secret"
       }
     )
 
