@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Auto-format staged YAML files with dprint
+staged_yaml_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(yml|yaml)$' || true)
+if [ -n "$staged_yaml_files" ]; then
+  echo "Auto-formatting staged YAML files with dprint..."
+  echo "$staged_yaml_files" | tr '\n' '\0' | xargs -0 bin/dprint fmt
+  echo "$staged_yaml_files" | tr '\n' '\0' | xargs -0 git add
+fi
+
+
 echo "Running bin/ci..."
 bin/ci
+

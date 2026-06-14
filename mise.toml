@@ -3,6 +3,7 @@ idiomatic_version_file_enable_tools = ["ruby"]
 
 [tools]
 "gem:ruby-lsp" = "latest"
+dprint = "latest"
 
 [env]
 RAILS_ENV = "development"
