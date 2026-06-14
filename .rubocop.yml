@@ -45,7 +45,7 @@ Layout/LineLength:
   Max: 140
   AutoCorrect: false
   Exclude:
-    - 'test/**/*'
+    - "test/**/*"
 
 Rails/TimeZone:
   Enabled: true
@@ -54,7 +54,7 @@ Rails/TimeZone:
 R3x/PreferLoggerConcern:
   Enabled: true
   Include:
-    - 'app/lib/r3x/client/**/*'
+    - "app/lib/r3x/client/**/*"
 
 R3x/AvoidHashTap:
   Enabled: true
@@ -101,4 +101,3 @@ Layout/MultilineMethodDefinitionBraceLayout:
 
 Minitest/MultipleAssertions:
   Enabled: false
-

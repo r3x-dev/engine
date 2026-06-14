@@ -1,0 +1,20 @@
+{
+  "yaml": {
+    "indentWidth": 2
+  },
+  "excludes": [
+    "**/node_modules",
+    "**/*-lock.json",
+    ".bundle",
+    ".git",
+    "vendor",
+    "tmp",
+    "storage",
+    "workflows",
+    "config/database.yml",
+    "config/cache.yml",
+    "config/queue.yml",
+    "config/queue.worker.yml"
+  ],
+  "plugins": ["https://plugins.dprint.dev/g-plane/pretty_yaml-v0.5.0.wasm"]
+}
