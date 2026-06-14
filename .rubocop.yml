@@ -15,7 +15,6 @@ AllCops:
     - docs/**/*
     - workflows/**/*
 
-
 Rails/Output:
   Exclude:
     - db/**/*
@@ -60,11 +59,9 @@ R3x/PreferLoggerConcern:
 R3x/AvoidHashTap:
   Enabled: true
 
-
 Layout/HashAlignment:
   Enabled: true
   EnforcedHashRocketStyle: table
-
 
 Layout/ArgumentAlignment:
   Enabled: true
@@ -104,5 +101,4 @@ Layout/MultilineMethodDefinitionBraceLayout:
 
 Minitest/MultipleAssertions:
   Enabled: false
-
 
