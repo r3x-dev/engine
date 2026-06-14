@@ -1,4 +1,5 @@
 module HTTPX
+  def self.plugin: (*untyped plugins, **untyped keywords) -> untyped
   def self.with: (?untyped options, **untyped keywords) -> untyped
 end
 
@@ -70,4 +71,3 @@ module MultiJSON
   def self.parse: (String string, ?untyped options) -> untyped
   def self.generate: (untyped object, ?untyped options) -> String
 end
-

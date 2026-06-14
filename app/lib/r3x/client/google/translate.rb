@@ -14,7 +14,7 @@ module R3x
           input = text.to_s
           return input if input.empty?
 
-          response = connection.post(
+          response = HTTPX.post(
             API_URL,
             json: request_body(input, to: to, from: from, format: format),
             headers: authorization_header
@@ -41,10 +41,6 @@ module R3x
         def access_token
           authorization.fetch_access_token! if authorization.access_token.nil? || authorization.expires_within?(30)
           authorization.access_token
-        end
-
-        def connection
-          @connection ||= HTTPX.with({})
         end
 
         def request_body(text, to:, from:, format:)

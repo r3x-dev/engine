@@ -95,6 +95,20 @@ module R3x
         assert_not_nil client
       end
 
+      test "session_options omits ssl key when verify_ssl is true" do
+        opts = Http.session_options(verify_ssl: true, timeout: 15)
+
+        assert_nil opts[:ssl]
+        assert_equal({ connect_timeout: 5, operation_timeout: 15 }, opts[:timeout])
+      end
+
+      test "session_options includes ssl key when verify_ssl is false" do
+        opts = Http.session_options(verify_ssl: false, timeout: 15)
+
+        assert_equal({ verify_mode: OpenSSL::SSL::VERIFY_NONE }, opts[:ssl])
+        assert_equal({ connect_timeout: 5, operation_timeout: 15 }, opts[:timeout])
+      end
+
       test "verify_ssl false creates connection without verification" do
         stub_request(:get, "https://selfsigned.lan/snapshot")
           .to_return(status: 200, body: "image-data")
@@ -104,6 +118,24 @@ module R3x
 
         assert_equal 200, response.status
         assert_equal "image-data", response.body
+      end
+
+      test "with_persistence yields http client and returns block value" do
+        stub_request(:get, "https://example.com/one")
+          .to_return(status: 200, body: "first")
+        stub_request(:get, "https://example.com/two")
+          .to_return(status: 200, body: "second")
+
+        bodies = Http.with_persistence(timeout: 30) do |http|
+          [
+            http.get("https://example.com/one").body.to_s,
+            http.get("https://example.com/two").body.to_s
+          ]
+        end
+
+        assert_equal [ "first", "second" ], bodies
+        assert_requested :get, "https://example.com/one"
+        assert_requested :get, "https://example.com/two"
       end
 
       test "download_file returns DownloadedFile with body and metadata" do
