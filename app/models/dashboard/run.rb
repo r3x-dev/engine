@@ -140,6 +140,12 @@ module Dashboard
         end
       end
 
+      # Returns the latest activity run candidate IDs for the specified workflow class names.
+      # To avoid N+1 database round-trips when fetching the latest run for each execution status,
+      # we generate ranked subqueries for each of the 7 statuses and combine them using a UNION.
+      #
+      # Note: This UNION is highly performant and safe from query planner bloating because the number
+      # of buckets (7) is static and we only project the indexed job ID fields.
       def latest_activity_candidate_ids(class_names:)
         visible_class_names = Array(class_names).compact_blank
         return [] if visible_class_names.empty?
