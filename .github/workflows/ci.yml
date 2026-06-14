@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [ main, "renovate/**" ]
+    branches: [main, "renovate/**"]
 
 env:
   OLD_VERSIONS_TO_KEEP: "10"
@@ -23,10 +23,10 @@ jobs:
 
       - name: Scan for common Rails security vulnerabilities using static analysis
         run: bin/brakeman --no-pager
-      
+
       - name: Scan for known security vulnerabilities in gems used
         run: bin/bundler-audit
-      
+
   agents_lint:
     runs-on: ubuntu-latest
     steps:
@@ -66,6 +66,15 @@ jobs:
 
       - name: Lint code for consistent style
         run: bin/rubocop -f github
+
+  lint_yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Lint YAML for consistent style
+        uses: dprint/check@v2.2
 
   test:
     runs-on: ubuntu-latest
@@ -123,6 +132,7 @@ jobs:
       - scan_ruby
       - agents_lint
       - lint
+      - lint_yaml
       - test
       - docker_validate
     runs-on: ubuntu-latest
