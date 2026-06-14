@@ -1,6 +1,7 @@
 module HTTPX
-  def self.with: (**untyped options) -> untyped
+  def self.with: (?untyped options, **untyped keywords) -> untyped
 end
+
 
 module OpenSSL
   module SSL
@@ -23,7 +24,12 @@ end
 module R3x
   module Concerns
     module Logger
+      def logger: () -> untyped
     end
+  end
+
+  module Policy
+    def self.dry_run_for: (Symbol key, ?untyped dry_run) -> bool
   end
 
   module Env
@@ -34,6 +40,7 @@ module R3x
     def self.require: (String feature) -> bool
   end
 end
+
 
 class Tempfile
   def self.new: (Array[String?] basename) -> Tempfile
@@ -58,3 +65,9 @@ module Marcel
     def self.for: (untyped io) -> String?
   end
 end
+
+module MultiJSON
+  def self.parse: (String string, ?untyped options) -> untyped
+  def self.generate: (untyped object, ?untyped options) -> String
+end
+
