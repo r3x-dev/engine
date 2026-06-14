@@ -48,7 +48,16 @@ module R3x
         full_path = workflow_file_path(path)
         require full_path
 
-        workflow = ObjectSpace.each_object(Class).find { |klass| klass < R3x::Workflow::Base && klass.name.present? && Object.const_source_location(klass.name)&.first == full_path }
+        dir_name = File.basename(File.dirname(full_path))
+        class_name = "Workflows::#{dir_name.camelize}"
+        workflow = class_name.safe_constantize
+
+        workflow ||= ObjectSpace.each_object(Class).find do |klass|
+          klass < R3x::Workflow::Base &&
+            klass.name.present? &&
+            Object.const_source_location(klass.name)&.first == full_path
+        end
+
         raise ArgumentError, "No workflow class found in #{path}" unless workflow
 
         workflow
