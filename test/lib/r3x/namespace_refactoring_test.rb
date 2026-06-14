@@ -22,7 +22,8 @@ class NamespaceRefactoringTest < ActiveSupport::TestCase
   test "removed files no longer exist on disk" do
     REMOVED_FILES.each_key do |path|
       full = REPO_ROOT.join(path)
-      refute File.exist?(full), "#{path} should have been deleted in the refactoring"
+
+      refute_path_exists full, "#{path} should have been deleted in the refactoring"
     end
   end
 

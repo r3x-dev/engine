@@ -5,8 +5,8 @@ module R3x
     test "defaults to plain when env is unset" do
       with_env("R3X_LOG_FORMAT" => nil) do
         assert_equal "plain", Log.format
-        assert Log.plain?
-        refute Log.json?
+        assert_predicate Log, :plain?
+        refute_predicate Log, :json?
       end
     end
 
@@ -19,8 +19,8 @@ module R3x
     test "returns json when env is json" do
       with_env("R3X_LOG_FORMAT" => "json") do
         assert_equal "json", Log.format
-        assert Log.json?
-        refute Log.plain?
+        assert_predicate Log, :json?
+        refute_predicate Log, :plain?
       end
     end
 

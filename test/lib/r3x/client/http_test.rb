@@ -91,6 +91,7 @@ module R3x
 
       test "verify_ssl true by default" do
         client = Http.new
+
         assert_not_nil client
       end
 

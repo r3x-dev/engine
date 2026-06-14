@@ -194,7 +194,7 @@ module R3x
             .mark_category_entries_as_read(category_id: 12)
         end
 
-        assert_equal true, result
+        assert result
       end
 
       test "context client builds miniflux client" do

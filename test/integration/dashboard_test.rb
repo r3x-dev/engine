@@ -92,6 +92,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     first_row_text = css_select(".overview-recent-runs-table tbody tr").first.text
+
     assert_includes first_row_text, "Slow Workflow"
     assert_includes response.body, "/workflow-runs/#{long_running_job.id}"
     assert_equal 10, css_select(".overview-recent-runs-table tbody tr").size
@@ -191,6 +192,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     first_card = css_select(".overview-needs-attention-card").first
+
     assert_includes first_card.text, "Recent Failure Workflow"
     assert_includes response.body, "Failed "
   end
@@ -725,6 +727,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     end
 
     job = SolidQueue::Job.order(:id).last
+
     assert_redirected_to "/workflow-runs/#{job.id}"
     assert_equal [], Dashboard::Run.find(job.id).workflow_arguments
   end

@@ -50,7 +50,7 @@ class WorkflowCliTest < ActiveSupport::TestCase
     output = `#{cmd}`
 
     unless allow_failure
-      assert $?.success?, "CLI command failed: #{output}"
+      assert_predicate $?, :success?, "CLI command failed: #{output}"
     end
 
     output

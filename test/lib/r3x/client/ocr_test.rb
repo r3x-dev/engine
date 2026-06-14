@@ -183,7 +183,7 @@ module R3x
         client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg")
 
-        assert result.success?
+        assert_predicate result, :success?
       end
 
       test "result partial? returns true when exit code is 2" do
@@ -205,7 +205,7 @@ module R3x
         client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg")
 
-        assert result.partial?
+        assert_predicate result, :partial?
         assert_equal "page 1\npage 2", result.text
         assert_equal 1500, result.processing_time_ms
       end
@@ -239,7 +239,7 @@ module R3x
         client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg")
 
-        assert result.first.success?
+        assert_predicate result.first, :success?
         assert_nil result.first.error_message
       end
 
@@ -265,7 +265,7 @@ module R3x
         client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg")
 
-        refute result.first.success?
+        refute_predicate result.first, :success?
         assert_equal "OCR Engine Error", result.first.error_message
         assert_equal "Could not process image", result.first.error_details
       end

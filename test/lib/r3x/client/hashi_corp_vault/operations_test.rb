@@ -28,7 +28,7 @@ module R3x
 
         assert_equal "token-r3x-env", result["display_name"]
         assert_equal [ "default", "r3x-env-read" ], result["policies"]
-        assert_equal true, result["renewable"]
+        assert result["renewable"]
       end
 
       test "checks current token capabilities" do

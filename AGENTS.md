@@ -255,7 +255,19 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
   - Use block-style only when you need a temporary override in the middle of a test (rare; prefer splitting the test).
 - **Regression rule**: If removing the real implementation under the stub does not break the test, the stub covers too much. Roll back the migration for that test.
 
+### Minitest Styling & Best Practices
+
+- **Follow Minitest/RuboCop conventions** for assertions:
+  - Prefer using semantic assertions over generic `assert_equal` on boolean or collection checks.
+  - **Good**: `assert(result)` / `refute(result)` — **Bad**: `assert_equal(true, result)` / `assert_equal(false, result)`.
+  - **Good**: `assert_predicate(object, :empty?)` or `assert_empty(collection)` — **Bad**: `assert(collection.empty?)` or `assert_equal({}, collection)`.
+  - **Good**: `assert_includes(collection, item)` / `refute_includes(collection, item)` — **Bad**: `assert(collection.include?(item))` / `refute(collection.include?(item))`.
+  - **Good**: `assert_nil(value)` — **Bad**: `assert_equal(nil, value)`.
+- **Assertion Line Spacing**: Ensure there is an empty line before assertion methods (like `assert`, `refute`, `assert_equal`, `assert_raises`) if they are preceded by other code or setups.
+- **Assertion Scope**: Wrap only the exact expression expected to raise an error inside `assert_raises` blocks, rather than wrapping mock/setup code or large blocks of test logic inside it.
+
 ## Logging
+
 
 - Use Rails tagged logging with `self.class.name` for per-class log prefixes.
 - **Good**: `logger.tagged(self.class.name) { logger.info("message") }`

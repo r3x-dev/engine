@@ -52,7 +52,7 @@ class JobsRuntimeProfileBootTest < ActiveSupport::TestCase
     command = %(#{env_string} bundle exec ruby -e #{Shellwords.escape(script)})
     output = `#{command}`
 
-    assert $?.success?, "jobs runtime boot command failed: #{output}"
+    assert_predicate $?, :success?, "jobs runtime boot command failed: #{output}"
     output
   end
 end

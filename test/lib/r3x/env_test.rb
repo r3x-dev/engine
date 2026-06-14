@@ -155,7 +155,8 @@ module R3x
     test "fetch_boolean returns true for truthy values" do
       %w[1 true yes on].each do |value|
         ENV["R3X_TEST_ENV_VAR"] = value
-        assert_equal true, Env.fetch_boolean("R3X_TEST_ENV_VAR"), "Expected true for #{value.inspect}"
+
+        assert Env.fetch_boolean("R3X_TEST_ENV_VAR"), "Expected true for #{value.inspect}"
       end
     ensure
       ENV.delete("R3X_TEST_ENV_VAR")
@@ -164,7 +165,8 @@ module R3x
     test "fetch_boolean returns false for falsy values" do
       %w[0 false no off].each do |value|
         ENV["R3X_TEST_ENV_VAR"] = value
-        assert_equal false, Env.fetch_boolean("R3X_TEST_ENV_VAR"), "Expected false for #{value.inspect}"
+
+        refute Env.fetch_boolean("R3X_TEST_ENV_VAR"), "Expected false for #{value.inspect}"
       end
     ensure
       ENV.delete("R3X_TEST_ENV_VAR")
@@ -172,11 +174,13 @@ module R3x
 
     test "fetch_boolean returns nil when env var is missing" do
       ENV.delete("R3X_TEST_ENV_VAR")
+
       assert_nil Env.fetch_boolean("R3X_TEST_ENV_VAR")
     end
 
     test "fetch_boolean returns nil when env var is blank" do
       ENV["R3X_TEST_ENV_VAR"] = ""
+
       assert_nil Env.fetch_boolean("R3X_TEST_ENV_VAR")
     ensure
       ENV.delete("R3X_TEST_ENV_VAR")
@@ -193,10 +197,12 @@ module R3x
 
     test "fetch_boolean is case-insensitive" do
       ENV["R3X_TEST_ENV_VAR"] = "TRUE"
-      assert_equal true, Env.fetch_boolean("R3X_TEST_ENV_VAR")
+
+      assert Env.fetch_boolean("R3X_TEST_ENV_VAR")
 
       ENV["R3X_TEST_ENV_VAR"] = "FALSE"
-      assert_equal false, Env.fetch_boolean("R3X_TEST_ENV_VAR")
+
+      refute Env.fetch_boolean("R3X_TEST_ENV_VAR")
     ensure
       ENV.delete("R3X_TEST_ENV_VAR")
     end
