@@ -41,6 +41,7 @@ module R3x
 
         scheduled_logs.each do |workflow_key, trigger_key, options|
           tags = [ R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_key), R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key) ]
+
           Rails.logger.tagged(*tags) do
             logger.info "Scheduled recurring task class=#{options[:class]} schedule=#{options[:schedule]} queue=#{options[:queue]}"
           end
@@ -79,6 +80,7 @@ module R3x
       def task_options_for(workflow_class:, trigger:)
         queue_attr = workflow_class.queue_name
         queue_name = queue_attr.is_a?(Proc) ? ActiveJob::Base.default_queue_name : queue_attr
+
         {
           class: workflow_class.name,
           args: [ trigger.unique_key ],
