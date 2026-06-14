@@ -24,7 +24,7 @@ module R3x
           body: {
             data: {
               data: {
-                "GEMINI_API_KEY_TEST" => "secret-value",
+                "GEMINI_API_KEY_TEST"     => "secret-value",
                 "R3X_DISCORD_WEBHOOK_URL" => "https://discord.example.test"
               }
             }

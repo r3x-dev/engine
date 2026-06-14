@@ -53,9 +53,9 @@ module VaultTestHelpers
 
   def kubernetes_jwt(namespace:, service_account_name:)
     encode_jwt_payload({
-      "sub" => "system:serviceaccount:#{namespace}:#{service_account_name}",
+      "sub"           => "system:serviceaccount:#{namespace}:#{service_account_name}",
       "kubernetes.io" => {
-        "namespace" => namespace,
+        "namespace"      => namespace,
         "serviceaccount" => {
           "name" => service_account_name
         }

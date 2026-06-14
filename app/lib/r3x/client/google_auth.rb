@@ -5,9 +5,9 @@ module R3x
     module GoogleAuth
       GMAIL_SCOPE_ALIASES = {
         "gmail.readonly" => "AUTH_GMAIL_READONLY",
-        "gmail.send" => "AUTH_GMAIL_SEND",
-        "gmail.compose" => "AUTH_GMAIL_COMPOSE",
-        "gmail.modify" => "AUTH_GMAIL_MODIFY"
+        "gmail.send"     => "AUTH_GMAIL_SEND",
+        "gmail.compose"  => "AUTH_GMAIL_COMPOSE",
+        "gmail.modify"   => "AUTH_GMAIL_MODIFY"
       }.freeze
 
       SHEETS_SCOPE_ALIASES = { "sheets.readonly" => "AUTH_SPREADSHEETS_READONLY", "sheets" => "AUTH_SPREADSHEETS" }.freeze

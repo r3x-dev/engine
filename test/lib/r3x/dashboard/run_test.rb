@@ -132,7 +132,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       "arguments" => [
         "schedule:abc123",
         {
-          "trigger_payload" => { "id" => "99", "_aj_symbol_keys" => [] },
+          "trigger_payload"    => { "id" => "99", "_aj_symbol_keys" => [] },
           "_aj_ruby2_keywords" => [ "trigger_payload" ]
         }
       ]

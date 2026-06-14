@@ -31,7 +31,7 @@ module R3x
           .to_return(
             status: 200,
             body: {
-              "secret/data/env/r3x" => [ "read" ],
+              "secret/data/env/r3x"    => [ "read" ],
               "auth/token/lookup-self" => [ "read" ]
             }.to_json,
             headers: { "Content-Type" => "application/json" }
@@ -90,7 +90,7 @@ module R3x
           .to_return(
             status: 200,
             body: {
-              "secret/data/env/r3x" => [ "read" ],
+              "secret/data/env/r3x"    => [ "read" ],
               "auth/token/lookup-self" => [ "read" ]
             }.to_json,
             headers: { "Content-Type" => "application/json" }

@@ -10,14 +10,14 @@ module R3x
       DEFAULT_API_KEY_ENV = "OCRSPACE_API_KEY"
 
       MIME_TYPES = {
-        ".png" => "image/png",
-        ".jpg" => "image/jpeg",
+        ".png"  => "image/png",
+        ".jpg"  => "image/jpeg",
         ".jpeg" => "image/jpeg",
-        ".gif" => "image/gif",
-        ".tif" => "image/tiff",
+        ".gif"  => "image/gif",
+        ".tif"  => "image/tiff",
         ".tiff" => "image/tiff",
-        ".bmp" => "image/bmp",
-        ".pdf" => "application/pdf"
+        ".bmp"  => "image/bmp",
+        ".pdf"  => "application/pdf"
       }.freeze
 
       def initialize(api_key_env: DEFAULT_API_KEY_ENV)

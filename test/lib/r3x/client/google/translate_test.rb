@@ -33,7 +33,7 @@ module R3x
 
           assert_equal(
             {
-              "q" => " Ola mundo ",
+              "q"      => " Ola mundo ",
               "target" => "en",
               "source" => "pt",
               "format" => "text"

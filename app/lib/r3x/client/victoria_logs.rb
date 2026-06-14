@@ -23,10 +23,10 @@ module R3x
 
       def query_params(query:, start_at:, end_at:, limit:, timeout:)
         {
-          "end" => format_time(end_at),
-          "limit" => limit,
-          "query" => sort_query(query),
-          "start" => format_time(start_at),
+          "end"     => format_time(end_at),
+          "limit"   => limit,
+          "query"   => sort_query(query),
+          "start"   => format_time(start_at),
           "timeout" => timeout
         }.compact
       end
