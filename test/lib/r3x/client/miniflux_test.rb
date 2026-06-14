@@ -49,9 +49,9 @@ module R3x
 
       test "entries fetches latest unread entries with defaults and auth header" do
         stub_entries_request("/v1/entries", query: {
-          "status" => "unread",
-          "limit" => "20",
-          "order" => "published_at",
+          "status"    => "unread",
+          "limit"     => "20",
+          "order"     => "published_at",
           "direction" => "desc"
         })
 
@@ -66,9 +66,9 @@ module R3x
 
       test "entries uses default env names without constructor arguments" do
         stub_entries_request("/v1/entries", query: {
-          "status" => "unread",
-          "limit" => "20",
-          "order" => "published_at",
+          "status"    => "unread",
+          "limit"     => "20",
+          "order"     => "published_at",
           "direction" => "desc"
         })
 
@@ -83,9 +83,9 @@ module R3x
         stub_request(:get, "https://custom-miniflux.test/v1/entries")
           .with(
             query: {
-              "status" => "unread",
-              "limit" => "20",
-              "order" => "published_at",
+              "status"    => "unread",
+              "limit"     => "20",
+              "order"     => "published_at",
               "direction" => "desc"
             },
             headers: { "X-Auth-Token" => "custom-api-key" }
@@ -97,7 +97,7 @@ module R3x
           )
 
         result = with_env(
-          "MINIFLUX_URL_CUSTOM" => "https://custom-miniflux.test",
+          "MINIFLUX_URL_CUSTOM"     => "https://custom-miniflux.test",
           "MINIFLUX_API_KEY_CUSTOM" => "custom-api-key"
         ) do
           Miniflux.new(url_env: "MINIFLUX_URL_CUSTOM", api_key_env: "MINIFLUX_API_KEY_CUSTOM").entries
@@ -108,9 +108,9 @@ module R3x
 
       test "entries passes explicit query params" do
         stub_entries_request("/v1/entries", query: {
-          "status" => "read",
-          "limit" => "5",
-          "order" => "id",
+          "status"    => "read",
+          "limit"     => "5",
+          "order"     => "id",
           "direction" => "asc"
         })
 
@@ -128,9 +128,9 @@ module R3x
 
       test "category_entries uses category path and query params" do
         stub_entries_request("/v1/categories/22/entries", query: {
-          "status" => "unread",
-          "limit" => "5",
-          "order" => "published_at",
+          "status"    => "unread",
+          "limit"     => "5",
+          "order"     => "published_at",
           "direction" => "desc"
         })
 
@@ -146,12 +146,12 @@ module R3x
 
       test "entries supports passing arbitrary custom query filters" do
         stub_entries_request("/v1/entries", query: {
-          "status" => "unread",
-          "limit" => "20",
-          "order" => "published_at",
+          "status"    => "unread",
+          "limit"     => "20",
+          "order"     => "published_at",
           "direction" => "desc",
-          "starred" => "true",
-          "offset" => "10"
+          "starred"   => "true",
+          "offset"    => "10"
         })
 
         result = with_client_env do
@@ -168,9 +168,9 @@ module R3x
         stub_request(:get, "https://miniflux.test/v1/entries")
           .with(
             query: {
-              "status" => "unread",
-              "limit" => "20",
-              "order" => "published_at",
+              "status"    => "unread",
+              "limit"     => "20",
+              "order"     => "published_at",
               "direction" => "desc"
             },
             headers: { "X-Auth-Token" => "api-key" }
@@ -210,9 +210,9 @@ module R3x
 
       test "context client builds miniflux client with default env names" do
         stub_entries_request("/v1/entries", query: {
-          "status" => "unread",
-          "limit" => "20",
-          "order" => "published_at",
+          "status"    => "unread",
+          "limit"     => "20",
+          "order"     => "published_at",
           "direction" => "desc"
         })
 
@@ -234,14 +234,14 @@ module R3x
           .to_return(
             status: 200,
             body: MultiJSON.generate(
-              "total" => 1,
-              "entries" => [
+              "total"          => 1,
+              "entries"        => [
                 {
-                  "id" => 123,
-                  "status" => query.fetch("status"),
+                  "id"           => 123,
+                  "status"       => query.fetch("status"),
                   "published_at" => "2026-06-04T08:15:00Z",
-                  "title" => "Hello",
-                  "url" => "https://example.test/hello"
+                  "title"        => "Hello",
+                  "url"          => "https://example.test/hello"
                 }
               ],
               "upstream_field" => "preserved"
@@ -252,7 +252,7 @@ module R3x
 
       def with_client_env(&block)
         with_env(
-          "MINIFLUX_URL" => "https://miniflux.test/",
+          "MINIFLUX_URL"     => "https://miniflux.test/",
           "MINIFLUX_API_KEY" => "api-key",
           &block
         )

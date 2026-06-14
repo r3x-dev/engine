@@ -91,7 +91,7 @@ module R3x
         stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
           .with(body: hash_including(
             "start" => "2026-04-17T14:02:10.658368Z",
-            "end" => "2026-04-17T14:09:42.734160Z"
+            "end"   => "2026-04-17T14:09:42.734160Z"
           ))
           .to_return(status: 200, body: "")
 

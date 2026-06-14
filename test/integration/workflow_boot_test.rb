@@ -114,9 +114,9 @@ class WorkflowBootTest < ActiveSupport::TestCase
     command_output = run_command(
       "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
       env: {
-        "RAILS_ENV" => "production",
+        "RAILS_ENV"               => "production",
         "R3X_SKIP_VAULT_ENV_LOAD" => "true",
-        "SOLID_QUEUE_IN_PUMA" => nil
+        "SOLID_QUEUE_IN_PUMA"     => nil
       }
     )
 

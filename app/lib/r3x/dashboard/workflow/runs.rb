@@ -23,7 +23,7 @@ module R3x
         end
 
         def find!(job_id)
-          @jobs = [find_job!(job_id)]
+          @jobs = [ find_job!(job_id) ]
 
           build_run(@jobs.first) || raise(KeyError, "Unknown workflow run '#{job_id}'")
         rescue ActiveRecord::RecordNotFound
@@ -122,7 +122,7 @@ module R3x
           return nil if job_ids.present?
           return limit unless workflow_key.present? || status.present?
 
-          [limit * 10, DEFAULT_LIMIT].max
+          [ limit * 10, DEFAULT_LIMIT ].max
         end
       end
     end

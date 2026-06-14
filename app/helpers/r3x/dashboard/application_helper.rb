@@ -7,24 +7,24 @@ module R3x
 
       def dashboard_status_label(status)
         {
-          "blocked" => "Blocked",
-          "failed" => "Failed",
-          "finished" => "Success",
-          "queued" => "Queued",
-          "running" => "Running",
+          "blocked"   => "Blocked",
+          "failed"    => "Failed",
+          "finished"  => "Success",
+          "queued"    => "Queued",
+          "running"   => "Running",
           "scheduled" => "Scheduled"
         }.fetch(status, status.to_s.humanize)
       end
 
       def dashboard_tone_for(value)
         {
-          "blocked" => "warn",
-          "failed" => "danger",
-          "finished" => "ok",
-          "healthy" => "ok",
-          "idle" => "muted",
-          "queued" => "info",
-          "running" => "info",
+          "blocked"   => "warn",
+          "failed"    => "danger",
+          "finished"  => "ok",
+          "healthy"   => "ok",
+          "idle"      => "muted",
+          "queued"    => "info",
+          "running"   => "info",
           "scheduled" => "info"
         }.fetch(value, "muted")
       end
@@ -141,9 +141,9 @@ module R3x
 
       def dashboard_trigger_kind(trigger_entry)
         {
-          "manual" => "Manual",
-          "observed" => "Observed",
-          "schedule" => "Schedule",
+          "manual"    => "Manual",
+          "observed"  => "Observed",
+          "schedule"  => "Schedule",
           "scheduled" => "Schedule"
         }.fetch(trigger_entry.fetch(:mode).to_s, trigger_entry.fetch(:mode).to_s.humanize)
       end

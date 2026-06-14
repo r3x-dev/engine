@@ -73,10 +73,10 @@ module R3x
         parsed = MultiJSON.parse(response.body.to_s)
 
         {
-          "url" => @url,
-          "markdown" => parsed["content"] || "",
-          "tokens" => response.headers["x-markdown-tokens"]&.to_i || parsed["tokens"],
-          "method" => @method,
+          "url"           => @url,
+          "markdown"      => parsed["content"] || "",
+          "tokens"        => response.headers["x-markdown-tokens"]&.to_i || parsed["tokens"],
+          "method"        => @method,
           "retain_images" => @retain_images
         }
       end
@@ -87,10 +87,10 @@ module R3x
 
       def dry_run_result
         {
-          "url" => @url,
-          "markdown" => "",
-          "tokens" => nil,
-          "method" => @method,
+          "url"           => @url,
+          "markdown"      => "",
+          "tokens"        => nil,
+          "method"        => @method,
           "retain_images" => @retain_images
         }
       end

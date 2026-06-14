@@ -9,12 +9,12 @@ class NamespaceRefactoringTest < ActiveSupport::TestCase
   # Maps old deleted file paths to the error message if references to them still exist.
   # These files no longer exist and should not be referenced anywhere.
   REMOVED_FILES = {
-    "lib/r3x/trigger_collection.rb"    => "R3x::TriggerCollection",
-    "lib/r3x/trigger_execution.rb"     => "R3x::TriggerExecution",
-    "lib/r3x/workflow_context.rb"      => "R3x::WorkflowContext",
-    "lib/r3x/workflow_execution.rb"    => "R3x::WorkflowExecution",
-    "lib/r3x/workflow_pack_loader.rb"  => "R3x::WorkflowPackLoader",
-    "lib/r3x/workflow_registry.rb"     => "R3x::WorkflowRegistry"
+    "lib/r3x/trigger_collection.rb"   => "R3x::TriggerCollection",
+    "lib/r3x/trigger_execution.rb"    => "R3x::TriggerExecution",
+    "lib/r3x/workflow_context.rb"     => "R3x::WorkflowContext",
+    "lib/r3x/workflow_execution.rb"   => "R3x::WorkflowExecution",
+    "lib/r3x/workflow_pack_loader.rb" => "R3x::WorkflowPackLoader",
+    "lib/r3x/workflow_registry.rb"    => "R3x::WorkflowRegistry"
   }.freeze
 
   SCAN_EXTENSIONS = %w[.rb .rake .yml .yaml .erb .md].freeze
