@@ -47,7 +47,7 @@ module R3x
             mail.subject = subject
 
             if attachments.any?
-              mail.text_part = Mail::Part.new { body body }
+              mail.text_part = Mail::Part.new { |part| part.body = body }
 
               attachments.each { |attachment| mail.add_file(filename: attachment[:filename], content: attachment[:content]) }
             else

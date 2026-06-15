@@ -163,15 +163,26 @@ This is brittle against interpreter changes and hard to understand.
 
 ## Phase 4 — long-term / optional
 
-### [ ] K. RBS signatures are stale for new clients
+### [x] K. RBS signatures are stale for new clients
 
-**Files:** `sig/r3x/client/*.rbs`
+**Files:** `sig/r3x/client/*.rbs`, `Steepfile`
 
-Many newer clients (`discord`, `google/gmail`, `google/translate`, `google_sheets`, `apify`, `ocr`, `healthchecks_io`, `prometheus`, `markdownify`, `llm/classifier`, `llm/provider_configuration`, …) lack signatures.
+**Done:**
 
-`AGENTS.md` says to update `sig/` when changing client methods.
+- Added per-client RBS signatures under `sig/r3x/client/` for:
+  - `apify`, `discord`, `google/gmail`, `google/translate`, `google_sheets`, `healthchecks_io`, `markdownify`, `ocr`, `prometheus`, `llm` (and nested `Classifier`, `ProviderConfiguration`, `ProviderRegistry`).
+- Added signatures for client result/response objects: `Ocr::Result`, `HealthchecksIO::Response`, `Prometheus::Result`.
+- Removed the stale `sig/r3x/workflow/base.rbs` (the class was not in `Steepfile` and the signature was incomplete).
+- Removed the consolidated `sig/r3x/client/_stubs.rbs` in favor of explicit per-client signature files.
+- Added the new clients to `Steepfile` so `bin/typecheck` covers them.
+- Added missing dependency stubs to `sig/r3x/external_stubs.rbs` (`HTTPX.get/post/head`, `R3x::Env.fetch!`, `R3x::Client::GoogleAuth`, `Google::Apis::*`, `Mail::Part`, `RubyLLM`, `SecureRandom`, `Base64`, `String#blank?`).
+- Made small code tweaks to keep type-checking clean:
+  - `Ocr#build_params` now starts with an empty `Hash.new`.
+  - `Llm` uses `Hash.new` for class-level caches and an explicit block param instead of `it`.
+  - `Google::Translate#translate` validates the translations array explicitly.
+  - `Google::Gmail#raw_message` uses an explicit `Mail::Part` block param.
 
-**Suggested fix:** add minimal RBS signatures for the workflow-facing client methods.
+**Verification:** `bin/typecheck` passes; `bin/rails test` passes; `bin/lint-r3x` passes.
 
 ---
 
