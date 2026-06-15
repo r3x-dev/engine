@@ -130,7 +130,7 @@ module R3x
         .with(headers: { "X-Vault-Token" => "test-token" })
         .to_return(
           status: 500,
-          body: { errors: ["internal error"] }.to_json,
+          body: { errors: [ "internal error" ] }.to_json,
           headers: { "Content-Type" => "application/json" }
         )
 
