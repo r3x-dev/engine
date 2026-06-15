@@ -16,7 +16,7 @@ class WorkflowCliTest < ActiveSupport::TestCase
   test "run command executes workflow from file path" do
     output = run_cli("run #{@fixture_path}")
 
-    assert_includes output, "Running: #{@fixture_path}"
+    assert_includes output, "Running with dry run: #{@fixture_path}"
   end
 
   test "nonexistent file shows error" do

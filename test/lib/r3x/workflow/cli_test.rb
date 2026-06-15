@@ -32,7 +32,8 @@ module R3x
       test "list prints empty state when no workflows are registered" do
         output = StringIO.new
         pack_loader = Module.new do
-          def self.load!; end
+          def self.load!
+          end
         end
         registry = Module.new do
           def self.all = []
@@ -58,7 +59,7 @@ module R3x
 
         result = Cli.new(stdout: output).run(@fixture_path.to_s)
 
-        assert_includes output.string, "Running: #{@fixture_path}"
+        assert_includes output.string, "Running with dry run: #{@fixture_path}"
         assert_equal({ "test" => true, "message" => "Test workflow executed successfully" }, result)
       end
 
@@ -67,7 +68,8 @@ module R3x
 
         Cli.new(stdout: output).run(@fixture_path.to_s, dry_run: true, skip_cache: true)
 
-        assert_includes output.string, "Dry run without cache: #{@fixture_path}"
+        assert_includes output.string, "Running with dry run + skip cache: #{@fixture_path}"
+        assert_includes output.string, "(--dry-run is redundant in this environment)"
         assert_nil ENV["R3X_DRY_RUN"]
         assert_nil ENV["R3X_SKIP_CACHE"]
       end
@@ -77,7 +79,15 @@ module R3x
 
         Cli.new(stdout: output).run(@fixture_path.expand_path.to_s)
 
-        assert_includes output.string, "Running: #{@fixture_path.expand_path}"
+        assert_includes output.string, "Running with dry run: #{@fixture_path.expand_path}"
+      end
+
+      test "run with --no-dry-run disables dry run even in test environment" do
+        output = StringIO.new
+
+        Cli.new(stdout: output).run(@fixture_path.to_s, dry_run: false)
+
+        assert_includes output.string, "Running: #{@fixture_path}"
       end
 
       test "run ignores unrelated workflow packs when executing a direct file path" do
@@ -99,7 +109,7 @@ module R3x
 
           Cli.new(stdout: output).run(@fixture_path.to_s)
 
-          assert_includes output.string, "Running: #{@fixture_path}"
+          assert_includes output.string, "Running with dry run: #{@fixture_path}"
         end
       end
 

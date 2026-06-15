@@ -19,7 +19,7 @@ module R3x
         override = env_override(key)
         return override unless override.nil?
 
-        Rails.env.test?
+        Rails.env.test? || Rails.env.development?
       end
 
       private

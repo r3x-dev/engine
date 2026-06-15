@@ -198,12 +198,22 @@ bin/workflow run --dry-run workflows/porto_santo_news/workflow.rb
 
 - `list` and `info` load workflow packs from `R3X_WORKFLOW_PATHS`.
 - `run` always takes a direct path to a `workflow.rb` file.
-- `--dry-run` sets `R3X_DRY_RUN=true` for that run, so dry-run-aware clients avoid real side effects.
+- In `development` and `test`, `bin/workflow run` defaults to dry-run, so dry-run-aware clients avoid
+  real side effects.
+- `--dry-run` explicitly enables dry-run for that run (`R3X_DRY_RUN=true`).
+- `--no-dry-run` explicitly disables dry-run for that run (`R3X_DRY_RUN=false`), even in
+  `development`.
 - `--skip-cache` sets `R3X_SKIP_CACHE=true` for that run and bypasses `with_cache`.
-- Use both flags together when you want a fresh, low-risk local run:
+- Use `--dry-run --skip-cache` together when you want a fresh, low-risk local run:
 
   ```bash
   bin/workflow run --dry-run --skip-cache workflows/<workflow_name>/workflow.rb
+  ```
+
+- To run with real delivery in `development`, use `--no-dry-run` or set `R3X_DRY_RUN=false`:
+
+  ```bash
+  R3X_DRY_RUN=false bin/workflow run workflows/<workflow_name>/workflow.rb
   ```
 
 ## Testing Workflows
