@@ -2,8 +2,6 @@ module R3x
   module Dashboard
     module Workflow
       class Catalog
-        TRIGGER_OBSERVATION_JOB_LIMIT = 250
-
         def all
           workflow_keys.map { |workflow_key| build_entry(workflow_key) }
         end
@@ -83,20 +81,7 @@ module R3x
         end
 
         def observed_class_names_to_keys
-          @observed_class_names_to_keys ||= begin
-            mapping = observed_workflow_class_names_to_keys
-
-            recent_trigger_observed_jobs.each do |job|
-              next if mapping.key?(job.class_name)
-
-              workflow_key = workflow_key_from_trigger(job)
-              next if workflow_key.blank?
-
-              mapping[job.class_name] = workflow_key
-            end
-
-            mapping
-          end
+          @observed_class_names_to_keys ||= observed_workflow_class_names_to_keys
         end
 
         def observed_workflow_class_names_to_keys
@@ -114,28 +99,6 @@ module R3x
           rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
             {}
           end
-        end
-
-        def recent_trigger_observed_jobs
-          @recent_trigger_observed_jobs ||= begin
-            ::Dashboard::Run.observed_triggers
-                            .select(:class_name, :arguments)
-                            .order(created_at: :desc)
-                            .limit(TRIGGER_OBSERVATION_JOB_LIMIT)
-                            .to_a
-          rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
-            []
-          end
-        end
-
-        def workflow_key_from_trigger(job)
-          trigger_key = job.trigger_key
-          return if trigger_key.blank?
-
-          workflow_keys = trigger_keys_to_workflow_keys.fetch(trigger_key, [])
-          return unless workflow_keys.one?
-
-          workflow_keys.first
         end
 
         def workflow_key_from_class_name(class_name)
