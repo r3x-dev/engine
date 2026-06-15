@@ -21,26 +21,13 @@ Items are ordered by expected impact (Pareto: biggest payoff for smallest effort
 
 ---
 
-### [ ] B. `R3x::Env.load_from_vault` should fail-fast on bad Vault config
+### [x] B. `R3x::Env.load_from_vault` should fail-fast on bad Vault config
 
 **File:** `lib/r3x/env.rb:81-86`
 
-Current code:
+**Done:** removed the broad `rescue => e` block in `load_from_vault` so all Vault configuration and request errors propagate and fail fast. Added test verification in `test/lib/r3x/env/vault_test.rb`.
 
-```ruby
-rescue ArgumentError, RuntimeError
-  raise
-rescue => e
-  logger.warn("Vault error: #{e.message}")
-  {}
-end
-```
-
-`AGENTS.md` says: *“If `R3X_VAULT_SECRETS_PATH` is set and `R3X_VAULT_ADDR` is also set, invalid or incomplete Vault auth configuration should fail fast during boot rather than silently skipping secrets.”*
-
-Network/auth/timeout errors are currently swallowed and the app boots without secrets, only failing later in client calls.
-
-**Suggested fix:** remove the broad `rescue => e`; let errors propagate. Only skip Vault when `R3X_VAULT_ADDR` is absent.
+**Verification:** `bin/rails test` (504 runs, 0 failures).
 
 ---
 
@@ -195,6 +182,34 @@ Many newer clients (`discord`, `google/gmail`, `google/translate`, `google_sheet
 The hook runs `bin/ci`, which includes `bin/lint-r3x`, RuboCop, dprint, typecheck, bundler-audit, brakeman, and the full test suite. This can be slow for every commit.
 
 **Suggested fix:** consider a lighter pre-commit (format + lint references) and run the full suite on push / in CI.
+
+---
+
+## Architectural notes — what would DHH and Sandi Metz say?
+
+These are not actionable todos yet; they are framing notes for larger refactor discussions.
+
+### DHH / 37signals perspective
+
+- **Less layering, more Rails.** Much of `app/lib/r3x/dashboard/workflow/` (`Catalog`, `Summaries`, `Runs`) is logic that belongs in models under `app/models/dashboard/`, not in parallel service/query layers. `Dashboard::Run` is the model — let it own its queries and summaries.
+- **Pre-commit running full CI is expensive.** Running `bin/ci` (RuboCop, dprint, typecheck, bundler-audit, brakeman, full test suite) on every commit slows the local loop. A lighter pre-commit with full CI on push is more Rails-like.
+- **RBS/Steep may be overhead at this size.** Keeping signatures in sync is a tax. If the team is not actively relying on Steep, the narrow scope is good, but widening it would be a mistake.
+- **Fail fast, don't swallow errors.** `R3x::Env.load_from_vault` catching `StandardError` violates the 37signals preference for loud failures over silent degradation.
+- **Use your own conventions everywhere.** Direct `ENV.fetch` calls in `config/puma.rb` and `production.rb` undermine the `R3x::Env` helper and create inconsistent semantics.
+
+### Sandi Metz perspective
+
+- **Classes are too large.** `Dashboard::Run` (254 lines), `Summaries` (274 lines), and `ApplicationHelper` (378 lines) violate SRP. Extract `StatusResolver`, `ArgumentsNormalizer`, and `ErrorParser`.
+- **Avoid magic predicates.** `R3x::TriggerManager::Execution` uses `method_missing` for trigger type predicates. Replace with explicit methods (`schedule?`, `manual?`) or a capability-based API.
+- **Don't use bytecode introspection.** `R3x::Workflow::CacheKey` relies on `RubyVM::InstructionSequence.of(block)`. It will break on interpreter changes and is hard to reason about. Use an explicit, stable key.
+- **Don't stub what you don't own.** `test/lib/r3x/client/llm_test.rb` stubs internal `RubyLLM` objects. Wrap LLM behind a narrow adapter and test your own boundary.
+- **Duplicate HTTP setup signals a missing object.** Every client builds `HTTPX.with(...)` by hand. A shared `R3x::Client::HttpBuilder` (or extension of `R3x::Client::Http`) would remove copy-paste and make SSL/timeout policy consistent.
+
+### Top 3 rewrites worth considering
+
+1. **Split `Dashboard::Run` and `Summaries` into smaller, single-responsibility classes.** This is the highest-impact structural improvement.
+2. **Introduce a shared HTTP builder and unify dry-run logging across clients.** Removes duplication and makes new integrations cheaper.
+3. **Replace `method_missing` trigger predicates and bytecode-based cache keys with explicit implementations.** Eliminates two sources of fragility.
 
 ---
 
