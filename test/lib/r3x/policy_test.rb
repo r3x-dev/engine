@@ -32,6 +32,14 @@ module R3x
       refute Policy.real_delivery_for?(:gmail, true)
     end
 
+    test "defaults to dry run in development environment" do
+      Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("development"))
+
+      with_env("R3X_DRY_RUN" => nil, "R3X_GMAIL_DRY_RUN" => nil) do
+        assert Policy.default_dry_run_for(:gmail)
+      end
+    end
+
     test "defaults to real delivery in production" do
       Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("production"))
 

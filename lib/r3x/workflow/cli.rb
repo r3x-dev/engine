@@ -7,10 +7,11 @@ module R3x
         @registry = registry
       end
 
-      def run(path, dry_run: false, skip_cache: false)
-        stdout.puts run_message(path, dry_run:, skip_cache:)
-
-        with_run_env(dry_run:, skip_cache:) { load_workflow(path).new.perform }
+      def run(path, dry_run: nil, skip_cache: false)
+        with_run_env(dry_run:, skip_cache:) do
+          stdout.puts run_message(path, dry_run_explicit: dry_run == true)
+          load_workflow(path).new.perform
+        end
       end
 
       def list
@@ -63,12 +64,21 @@ module R3x
         workflow
       end
 
-      def run_message(path, dry_run:, skip_cache:)
-        return "Dry run without cache: #{path}" if dry_run && skip_cache
-        return "Dry run: #{path}" if dry_run
-        return "Running without cache: #{path}" if skip_cache
+      def run_message(path, dry_run_explicit: false)
+        mode_notes = []
+        policy_dry_run = R3x::Policy.dry_run_for(:workflow)
+        mode_notes << "dry run" if policy_dry_run
+        mode_notes << "skip cache" if R3x::Policy.skip_cache?
 
-        "Running: #{path}"
+        message = if mode_notes.any?
+          "Running with #{mode_notes.join(" + ")}: #{path}"
+        else
+          "Running: #{path}"
+        end
+
+        message += " (--dry-run is redundant in this environment)" if dry_run_explicit && policy_dry_run
+
+        message
       end
 
       def trigger_types_for(workflow)
@@ -85,7 +95,7 @@ module R3x
 
       def with_run_env(dry_run:, skip_cache:)
         overrides = {}
-        overrides["R3X_DRY_RUN"] = "true" if dry_run
+        overrides["R3X_DRY_RUN"] = dry_run.to_s unless dry_run.nil?
         overrides["R3X_SKIP_CACHE"] = "true" if skip_cache
 
         originals = overrides.keys.each_with_object({}) { |key, memo| memo[key] = ENV[key] }
