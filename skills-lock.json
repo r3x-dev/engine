@@ -7,10 +7,34 @@
       "skillPath": "plugins/compound-engineering/skills/ce-dhh-rails-style/SKILL.md",
       "computedHash": "49604154d82e6b43f6d49cb3b17a08be45544528a184aeba5d7728b2dd43d33c"
     },
+    "coordinator": {
+      "source": "raine/workmux",
+      "sourceType": "github",
+      "skillPath": "skills/coordinator/SKILL.md",
+      "computedHash": "1ede776a06bcb19abf7afef806a1fc81a7e509ea1f1335348287b4a7b2b20ccd"
+    },
     "dhh-rails-style": {
       "source": "EveryInc/compound-engineering-plugin",
       "sourceType": "github",
       "computedHash": "a074cffa30542487467f57d1a609376f3aac64842e30588e3fb84b35a4ed438a"
+    },
+    "merge": {
+      "source": "raine/workmux",
+      "sourceType": "github",
+      "skillPath": "skills/merge/SKILL.md",
+      "computedHash": "c0185d9c78d9756b1d26873138f8bcf71a3f62bd84772f2b1a4213894f00b5e2"
+    },
+    "open-pr": {
+      "source": "raine/workmux",
+      "sourceType": "github",
+      "skillPath": "skills/open-pr/SKILL.md",
+      "computedHash": "f79fdc14a6bbb5e4d0158a659b75a4ec2b0993d60c932e72dc683c4163f578ed"
+    },
+    "rebase": {
+      "source": "raine/workmux",
+      "sourceType": "github",
+      "skillPath": "skills/rebase/SKILL.md",
+      "computedHash": "eb77e391bc379b386a2efdc52caeb8933d86f529acba55d9663896ae65217d2f"
     },
     "ruby-optimise": {
       "source": "zewelor/agents-skills",
@@ -28,6 +52,18 @@
       "source": ".agents/skills/ruby-resource-map",
       "sourceType": "local",
       "computedHash": "1a98c79c36d13098bfc84e9811fec9be31ead01d0dedf552ad7e160b58ae56b7"
+    },
+    "workmux": {
+      "source": "raine/workmux",
+      "sourceType": "github",
+      "skillPath": "skills/workmux/SKILL.md",
+      "computedHash": "93466fa1a101b4917ddf8b5e633a47d46ac286b1134576f7462273a1c0a71a0b"
+    },
+    "worktree": {
+      "source": "raine/workmux",
+      "sourceType": "github",
+      "skillPath": "skills/worktree/SKILL.md",
+      "computedHash": "03b6c8e06b3476a8999108b460b6e2cd864b221e4a993b685a20c1990904a70c"
     }
   }
 }
