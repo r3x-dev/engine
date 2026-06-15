@@ -1,0 +1,15 @@
+module R3x
+  module Client
+    class Prometheus
+      DEFAULT_URL_ENV: String
+
+      def initialize: (?url_env: String url_env) -> void
+
+      def query: (String promql) -> Prometheus::Result
+
+      private
+
+      attr_reader base_url: String
+    end
+  end
+end

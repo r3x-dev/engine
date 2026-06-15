@@ -56,7 +56,8 @@ module R3x
       end
 
       def build_params(io_or_path, mime_type, language:, engine:, overlay:)
-        params = { isOverlayRequired: overlay.to_s }
+        params = Hash.new
+        params[:isOverlayRequired] = overlay.to_s
         params[:language] = language if language
         params[:OCREngine] = engine.to_s if engine
 

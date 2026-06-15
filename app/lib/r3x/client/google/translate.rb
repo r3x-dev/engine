@@ -19,9 +19,10 @@ module R3x
             json: request_body(input, to: to, from: from, format: format),
             headers: authorization_header
           ).raise_for_status
-          translation = Array(response.json.dig("data", "translations")).first ||
-                        raise(ArgumentError, "Missing translations in Google Translate response")
-          translation.fetch("translatedText")
+          translations = response.json.dig("data", "translations")
+          raise ArgumentError, "Missing translations in Google Translate response" unless translations.is_a?(Array) && translations.any?
+
+          translations.first.fetch("translatedText")
         end
 
         private

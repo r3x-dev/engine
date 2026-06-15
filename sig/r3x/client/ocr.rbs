@@ -1,0 +1,27 @@
+module R3x
+  module Client
+    class Ocr
+      ENDPOINT: String
+      BASE_URL: String
+      DEFAULT_API_KEY_ENV: String
+
+      MIME_TYPES: Hash[String, String]
+
+      def initialize: (?api_key_env: String api_key_env) -> void
+
+      def parse: (untyped io_or_path, ?language: String? language, ?engine: Integer? engine, ?filetype: String? filetype, ?overlay: bool overlay) -> Ocr::Result
+
+      private
+
+      attr_reader api_key: String
+
+      def connection: () -> untyped
+
+      def detect_mime: (untyped io_or_path) -> String
+
+      def build_params: (untyped io_or_path, String mime_type, language: String? language, engine: Integer? engine, overlay: bool overlay) -> Hash[Symbol, untyped]
+
+      def binary_string?: (untyped value) -> bool
+    end
+  end
+end
