@@ -14,3 +14,4 @@ panes:
   - command: <agent>
     zoom: true
   - command: just setup
+    split: horizontal
