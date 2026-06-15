@@ -1,0 +1,24 @@
+module R3x
+  module Client
+    class Apify
+      include R3x::Concerns::Logger
+
+      BASE_URL: String
+      DEFAULT_API_KEY_ENV: String
+
+      def initialize: (api_key: String api_key) -> void
+
+      def run_actor: (String actor_id, ?input: untyped input, **untyped options) -> Hash[untyped, untyped]
+
+      def run_actor_sync_get_items: (String actor_id, ?input: untyped input, ?format: String format, ?clean: bool clean, ?limit: Integer? limit, **untyped options) -> untyped
+
+      def raw: () -> untyped
+
+      private
+
+      attr_reader api_key: String
+
+      def connection: () -> untyped
+    end
+  end
+end
