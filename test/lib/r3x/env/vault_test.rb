@@ -121,5 +121,24 @@ module R3x
 
       assert_match(/Vault Kubernetes service account token not found/, error.message)
     end
+
+    test "load_from_vault propagates Vault request/client errors" do
+      ENV["R3X_VAULT_ADDR"] = "https://vault.test"
+      ENV["R3X_VAULT_TOKEN"] = "test-token"
+
+      stub_request(:get, "https://vault.test/v1/secret/data/test")
+        .with(headers: { "X-Vault-Token" => "test-token" })
+        .to_return(
+          status: 500,
+          body: { errors: ["internal error"] }.to_json,
+          headers: { "Content-Type" => "application/json" }
+        )
+
+      error = assert_raises(RuntimeError) do
+        Env.load_from_vault("secret/data/test")
+      end
+
+      assert_match(/Vault request failed with status 500/, error.message)
+    end
   end
 end
