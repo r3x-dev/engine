@@ -13,26 +13,11 @@ Items are ordered by expected impact (Pareto: biggest payoff for smallest effort
 
 ## Phase 1 — safety and AGENTS.md compliance
 
-### [ ] A. `R3x::Policy` — development should default to dry-run
+### [x] A. `R3x::Policy` — development should default to dry-run
 
 **File:** `lib/r3x/policy.rb:22`
 
-Current code:
-
-```ruby
-def default_dry_run_for(key = nil)
-  # ...
-  Rails.env.test?
-end
-```
-
-`AGENTS.md` says: *“development and test should be dry-run by default, production should default to real delivery”*.
-
-In `development` every external client (Gmail, Discord, HTTP, Apify, OCR, …) currently performs **real** requests unless the user explicitly sets `R3X_*_DRY_RUN=true`. This is a real risk of sending real emails or writing real data during local iteration.
-
-**Suggested fix:** change to `Rails.env.test? || Rails.env.development?` and add a regression test.
-
-**Test to update:** `test/lib/r3x/policy_test.rb`
+**Done:** changed default to `Rails.env.test? || Rails.env.development?`, added a regression test, and updated CLI to support `--no-dry-run` so real delivery is an explicit opt-out in development. Updated `README.md`, `docs/workflows.md`, and `docs/environment.md`.
 
 ---
 

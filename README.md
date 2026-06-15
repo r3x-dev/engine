@@ -101,8 +101,10 @@ bin/workflow info porto_santo_news
 bin/workflow run --dry-run workflows/porto_santo_news/workflow.rb
 ```
 
-`bin/workflow run --dry-run` enables the global dry-run policy for side-effecting clients. Use
-`--skip-cache` when you want a fresh local run without changing workflow code.
+`bin/workflow run --dry-run` enables the global dry-run policy for side-effecting clients. In
+`development` and `test`, `bin/workflow run` defaults to dry-run, so side-effecting clients skip real
+delivery unless you opt out with `--no-dry-run` or `R3X_DRY_RUN=false`. Use `--skip-cache` when you
+want a fresh local run without changing workflow code.
 
 ## Build Your Workflow Catalog
 
