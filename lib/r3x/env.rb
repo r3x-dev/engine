@@ -78,11 +78,6 @@ module R3x
 
       logger.info("Loaded #{loaded.size} secrets from Vault")
       loaded
-    rescue ArgumentError, RuntimeError
-      raise
-    rescue => e
-      logger.warn("Vault error: #{e.message}")
-      {}
     end
   end
 end
