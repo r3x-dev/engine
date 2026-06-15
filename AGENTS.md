@@ -139,6 +139,7 @@ bin/workflow [options] [command] [arguments]
 ## Maintenance Warning
 
 - Keep this file synchronized with the real codebase. If you change workflow loading, trigger discovery, scheduling flow, top-level directory structure, namespaces, or the framework/user-workflow boundary, update the relevant `AGENTS.md` sections in the same change.
+- Future ideas, improvement proposals, and design-debt backlog live in `todo.md` at the repo root. When a task from that file is picked up, update its status there and keep `AGENTS.md` synchronized with the resulting code changes.
 - In particular, update examples and notes here when changing files such as `lib/r3x/workflow.rb`, `lib/r3x/workflow/pack_loader.rb`, `lib/r3x/workflow/registry.rb`, `lib/r3x/workflow/boot.rb`, `lib/r3x/recurring_tasks_config.rb`, `lib/r3x/triggers.rb`, `bin/workflow`, `bin/jobs`, or `config/application.rb`.
 - Also update this file when changing the shared DSL validation contract in files such as `lib/r3x/dsl/validatable.rb`, `lib/r3x/configuration_error.rb`, or the base classes for workflow-declared objects.
 - Also update this file when changing Active Job backend semantics, `Solid Queue` database wiring, or any logic that depends on enqueueing being inside the same database transaction as app writes.

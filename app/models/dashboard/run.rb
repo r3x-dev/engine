@@ -32,7 +32,6 @@ module Dashboard
       visible_class_names.present? ? where(class_name: visible_class_names) : none
     end
     scope :direct_workflows, -> { where("class_name LIKE ?", "Workflows::%") }
-    scope :observed_triggers, -> { where(class_name: []) }
     scope :unfinished, -> { where(finished_at: nil).where.missing(:failed_execution) }
     scope :for_status, ->(status) do
       case status.to_s
@@ -75,9 +74,9 @@ module Dashboard
 
       def manual_enqueue_options_for(workflow_key:, class_name: nil, recurring_task: nil, last_run: nil)
         resolved_class_name = class_name.presence ||
-                              recurring_task&.direct_workflow_class_name ||
-                              last_run&.class_name ||
-                              default_workflow_class_name(workflow_key)
+          recurring_task&.direct_workflow_class_name ||
+          last_run&.class_name ||
+          default_workflow_class_name(workflow_key)
 
         return if resolved_class_name.blank?
 
@@ -155,8 +154,8 @@ module Dashboard
         sqls = LATEST_ACTIVITY_BUCKETS.map do |status, table_name, column_name|
           recorded_at = Arel::Table.new(table_name)[column_name]
           ranked_sql = latest_activity_status_scope(base_scope, status)
-                       .select(run_table[:id].as("id"), latest_activity_rank(recorded_at).as("dashboard_rank"))
-                       .to_sql
+            .select(run_table[:id].as("id"), latest_activity_rank(recorded_at).as("dashboard_rank"))
+            .to_sql
           "SELECT id FROM (#{ranked_sql}) dashboard_latest_runs WHERE dashboard_rank = 1"
         end
 
