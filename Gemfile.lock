@@ -110,7 +110,7 @@ GEM
     et-orbi (1.4.0)
       tzinfo
     event_stream_parser (1.0.0)
-    faraday (2.14.2)
+    faraday (2.14.3)
       faraday-net_http (>= 2.0, < 3.5)
       json
       logger
@@ -209,7 +209,7 @@ GEM
       grpc (~> 1.41)
     googleapis-common-protos-types (1.23.0)
       google-protobuf (~> 4.26)
-    googleauth (1.17.0)
+    googleauth (1.17.1)
       faraday (>= 1.0, < 3.a)
       google-cloud-env (~> 2.2)
       google-logging-utils (~> 0.1)
@@ -593,7 +593,7 @@ CHECKSUMS
   erubi (1.13.1) sha256=a082103b0885dbc5ecf1172fede897f9ebdb745a4b97a5e8dc63953db1ee4ad9
   et-orbi (1.4.0) sha256=6c7e3c90779821f9e3b324c5e96fda9767f72995d6ae435b96678a4f3e2de8bc
   event_stream_parser (1.0.0) sha256=a2683bab70126286f8184dc88f7968ffc4028f813161fb073ec90d171f7de3c8
-  faraday (2.14.2) sha256=73ccb9994a9e8648f010e32eca2ae82e41c57860aa10932cda29418b9e0223ad
+  faraday (2.14.3) sha256=1882247e6766615c8220b4392bf1d27f6ebb63d8e28267587cef1fb0bf37f278
   faraday-follow_redirects (0.5.0) sha256=5cde93c894b30943a5d2b93c2fe9284216a6b756f7af406a1e55f211d97d10ad
   faraday-multipart (1.2.0) sha256=7d89a949693714176f612323ca13746a2ded204031a6ba528adee788694ef757
   faraday-net_http (3.4.4) sha256=0e78af151747ed1b00f33e25973b4bc220d7f16c00c39676817c8b12331eb588
@@ -623,7 +623,7 @@ CHECKSUMS
   google-protobuf (4.35.1-x86_64-linux-musl) sha256=91890eb0002934a339fdb7d77a147c46b7474b6799db27872b747b905837f744
   googleapis-common-protos (1.9.0) sha256=207be372d8d25e3876e1e1155d057e14f3c92f8f5428772864a8ce04a0b756e4
   googleapis-common-protos-types (1.23.0) sha256=992e740a523794d9fc5f29a504465d8fc737aaa16c930fe7228e3346860faf0a
-  googleauth (1.17.0) sha256=dbddcaa3b78469fa9392c0e784ab6d8f3f760a1e5f6c6dbbbaa44a612c4198b0
+  googleauth (1.17.1) sha256=0f7e6fc70e204cee1b2d71f1e1de2d3b349d432404197fe68ebf7fa23d0821b9
   grpc (1.81.1) sha256=9e5772153fe13a389654e9d397a90400f0077307fb4369f79f941d96c72e89cb
   grpc (1.81.1-aarch64-linux-gnu) sha256=aa24d7253a2b15d2c3570265a2f58bb8aca0ecd2e1116b7a259d633ebf582445
   grpc (1.81.1-aarch64-linux-musl) sha256=36af13b712e33b323878096ddcab7ec75d107d2e03ffce4aa2fcb70835747c8c
