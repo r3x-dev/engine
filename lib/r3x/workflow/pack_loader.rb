@@ -48,7 +48,7 @@ module R3x
       end
 
       def workflow_files
-        ENV.fetch("R3X_WORKFLOW_PATHS", "").split(File::PATH_SEPARATOR).flat_map do |path|
+        R3x::Env.fetch("R3X_WORKFLOW_PATHS").to_s.split(File::PATH_SEPARATOR).flat_map do |path|
           base = File.expand_path(path.strip)
           next [] unless File.directory?(base)
 

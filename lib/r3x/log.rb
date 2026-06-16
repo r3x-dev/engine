@@ -25,7 +25,7 @@ module R3x
     end
 
     def self.resolve_format
-      format = ENV["R3X_LOG_FORMAT"].presence
+      format = R3x::Env.fetch("R3X_LOG_FORMAT")
       case format
       when nil, "plain"
         "plain"
