@@ -163,18 +163,26 @@ This is brittle against interpreter changes and hard to understand.
 
 ## Phase 4 — long-term / optional
 
-### [x] K. Remove RBS + Steep static type checks
+### [x] K. RBS signatures are stale for new clients
 
-**Files:** `sig/`, `Steepfile`, `bin/typecheck`, `Gemfile`, `config/ci.rb`
+**Files:** `sig/r3x/client/*.rbs`, `Steepfile`
 
 **Done:**
 
-- Removed the `sig/` directory, `Steepfile`, and `bin/typecheck` script.
-- Removed `rbs` and `steep` gems from `Gemfile` and regenerated `Gemfile.lock`.
-- Removed the "Types: Static Types" step from `config/ci.rb`.
-- Removed the Static Typing section from `AGENTS.md` and updated references in `docs/todo.md`.
+- Added per-client RBS signatures under `sig/r3x/client/` for:
+  - `apify`, `discord`, `google/gmail`, `google/translate`, `google_sheets`, `healthchecks_io`, `markdownify`, `ocr`, `prometheus`, `llm` (and nested `Classifier`, `ProviderConfiguration`, `ProviderRegistry`).
+- Added signatures for client result/response objects: `Ocr::Result`, `HealthchecksIO::Response`, `Prometheus::Result`.
+- Removed the stale `sig/r3x/workflow/base.rbs` (the class was not in `Steepfile` and the signature was incomplete).
+- Removed the consolidated `sig/r3x/client/_stubs.rbs` in favor of explicit per-client signature files.
+- Added the new clients to `Steepfile` so `bin/typecheck` covers them.
+- Added missing dependency stubs to `sig/r3x/external_stubs.rbs` (`HTTPX.get/post/head`, `R3x::Env.fetch!`, `R3x::Client::GoogleAuth`, `Google::Apis::*`, `Mail::Part`, `RubyLLM`, `SecureRandom`, `Base64`, `String#blank?`).
+- Made small code tweaks to keep type-checking clean:
+  - `Ocr#build_params` now starts with an empty `Hash.new`.
+  - `Llm` uses `Hash.new` for class-level caches and an explicit block param instead of `it`.
+  - `Google::Translate#translate` validates the translations array explicitly.
+  - `Google::Gmail#raw_message` uses an explicit `Mail::Part` block param.
 
-**Reason:** Steep does not yet support Ruby 3.4's `it` block parameter (see https://github.com/soutaro/steep/pull/2238). Keeping RBS signatures in sync was also adding friction without enough payoff at the current project size. Static typing can be reintroduced once the upstream blocker is resolved.
+**Verification:** `bin/typecheck` passes; `bin/rails test` passes; `bin/lint-r3x` passes.
 
 ---
 
@@ -182,7 +190,7 @@ This is brittle against interpreter changes and hard to understand.
 
 **File:** `.githooks/pre-commit`
 
-The hook runs `bin/ci`, which includes `bin/lint-r3x`, RuboCop, dprint, bundler-audit, brakeman, and the full test suite. This can be slow for every commit.
+The hook runs `bin/ci`, which includes `bin/lint-r3x`, RuboCop, dprint, typecheck, bundler-audit, brakeman, and the full test suite. This can be slow for every commit.
 
 **Suggested fix:** consider a lighter pre-commit (format + lint references) and run the full suite on push / in CI.
 
@@ -195,7 +203,8 @@ These are not actionable todos yet; they are framing notes for larger refactor d
 ### DHH / 37signals perspective
 
 - **Less layering, more Rails.** Much of `app/lib/r3x/dashboard/workflow/` (`Catalog`, `Summaries`, `Runs`) is logic that belongs in models under `app/models/dashboard/`, not in parallel service/query layers. `Dashboard::Run` is the model — let it own its queries and summaries.
-- **Pre-commit running full CI is expensive.** Running `bin/ci` (RuboCop, dprint, bundler-audit, brakeman, full test suite) on every commit slows the local loop. A lighter pre-commit with full CI on push is more Rails-like.
+- **Pre-commit running full CI is expensive.** Running `bin/ci` (RuboCop, dprint, typecheck, bundler-audit, brakeman, full test suite) on every commit slows the local loop. A lighter pre-commit with full CI on push is more Rails-like.
+- **RBS/Steep may be overhead at this size.** Keeping signatures in sync is a tax. If the team is not actively relying on Steep, the narrow scope is good, but widening it would be a mistake.
 - **Fail fast, don't swallow errors.** `R3x::Env.load_from_vault` catching `StandardError` violates the 37signals preference for loud failures over silent degradation.
 - **Use your own conventions everywhere.** Direct `ENV.fetch` calls in `config/puma.rb` and `production.rb` undermine the `R3x::Env` helper and create inconsistent semantics.
 

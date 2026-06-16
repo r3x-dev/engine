@@ -4,8 +4,8 @@ module R3x
       MAX_RETRIES = 3
       RETRY_INTERVAL = 60.0
       RETRY_BACKOFF_FACTOR = 2
-      DEFAULT_CHAT_OPTIONS = {}.freeze
-      CHAT_OPTIONS_BY_PROVIDER = {}
+      DEFAULT_CHAT_OPTIONS = Hash.new.freeze
+      CHAT_OPTIONS_BY_PROVIDER = Hash.new
       CHAT_OPTIONS_BY_PROVIDER_MUTEX = Mutex.new
 
       class << self
@@ -52,7 +52,7 @@ module R3x
       end
 
       def analyze_image(image_bytes, prompt:, model:, schema: nil)
-        image = StringIO.new(image_bytes).tap { it.set_encoding(Encoding::BINARY) }
+        image = StringIO.new(image_bytes).tap { |io| io.set_encoding(Encoding::BINARY) }
 
         ask_model(model:, prompt:, schema:, attachments: [ image ]).content
       end

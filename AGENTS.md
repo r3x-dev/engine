@@ -167,11 +167,20 @@ bin/workflow [options] [command] [arguments]
 
 This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `bin/ci` which includes `bin/lint-r3x` to verify AGENTS.md references.
 
+## Static Typing
+
+- This repo uses RBS + Steep for static type checks. The current Steep scope is intentionally narrow and starts with the workflow-facing API contract.
+- Run `bin/typecheck` after changing files covered by `Steepfile`.
+- When changing `R3x::Workflow::Context`, `R3x::Workflow::Context::Client`, or `R3x::Client::Http`, update the matching files under `sig/`.
+- When adding a new workflow client method to `R3x::Workflow::Context::Client`, add its RBS signature and any minimal dependency stub needed for `bin/typecheck`.
+- Keep the Steep scope narrow. Do not expand it to the whole Rails app unless explicitly planned.
+- Treat `sig/r3x/client/_stubs.rbs` and `sig/r3x/external_stubs.rbs` as dependency stubs, not source of truth for unchecked implementation details.
+
 ## Iterative Design Reviews
 
 - When the user is still reviewing the shape of a refactor or API design, keep the first pass focused on production code only unless they explicitly ask for full follow-through.
-- Do not update tests or fixtures for an unaccepted design sketch. Wait until the user accepts the code shape, then synchronize tests in the follow-up pass.
-- It is still fine to run syntax checks on the touched Ruby files during the sketch phase.
+- Do not update tests, fixtures, or RBS signatures for an unaccepted design sketch. Wait until the user accepts the code shape, then synchronize tests and `sig/` files in the follow-up pass.
+- It is still fine to run syntax checks on the touched Ruby files during the sketch phase. Do not treat typecheck failures caused only by intentionally stale RBS as blockers until the user accepts the design.
 
 ## JSON
 
