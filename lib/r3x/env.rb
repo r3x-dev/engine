@@ -1,5 +1,9 @@
 module R3x
   module Env
+    # R3x::Env is loaded during early boot (e.g. config/runtime_profile.rb),
+    # before Rails autoloading is available. It therefore cannot depend on
+    # R3x::Concerns::Logger, which lives under app/lib/. Vault logging uses
+    # Rails.logger directly because it is only called once Rails is booted.
     INTERNAL_PREFIX = "R3X_"
 
     def self.fetch(key)
