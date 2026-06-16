@@ -1,0 +1,33 @@
+module R3x
+  module Client
+    class Http
+      def self.with_persistence: (?verify_ssl: bool verify_ssl, ?timeout: Integer timeout) { (R3x::Client::Http) -> untyped } -> untyped
+
+      def self.session_options: (verify_ssl: bool verify_ssl, timeout: Integer timeout) -> Hash[Symbol, untyped]
+
+      def initialize: (?verify_ssl: bool verify_ssl, ?timeout: Integer timeout) -> void
+
+      def get: (String url, ?params: Hash[untyped, untyped] params, ?headers: Hash[untyped, untyped] headers) -> untyped
+
+      def head: (String url, ?params: Hash[untyped, untyped] params, ?headers: Hash[untyped, untyped] headers) -> untyped
+
+      def post: (String url, Hash[untyped, untyped] payload, ?headers: Hash[untyped, untyped] headers) -> untyped
+
+      def download_file: (String url, ?headers: Hash[untyped, untyped] headers) -> R3x::Client::Http::DownloadedFile
+
+      def upload_file: (String url, untyped file, ?file_field: String file_field, ?filename: String? filename, ?content_type: String? content_type, ?params: Hash[untyped, untyped] params, ?headers: Hash[untyped, untyped] headers) -> untyped
+
+      private
+
+      def filename_from_url: (String url, content_type: String? content_type) -> String
+
+      def sniff_content_type: (untyped file_io) -> String?
+
+      def default_filename: (untyped file_io) -> String?
+
+      def rewind_file: (untyped file_io) -> nil
+
+      def restore_file_position: (untyped file_io, ?Integer? position) -> nil
+    end
+  end
+end

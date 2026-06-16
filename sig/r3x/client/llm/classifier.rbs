@@ -1,0 +1,21 @@
+module R3x
+  module Client
+    class Llm
+      class Classifier
+        def initialize: (untyped message_method) -> void
+
+        def classify: (text: String text, model: String model, categories: Hash[String, String] categories, ?include_reason: bool include_reason, ?allow_other: bool allow_other) -> untyped
+
+        private
+
+        attr_reader message_method: untyped
+
+        def build_categories: (Hash[String, String] user_categories, allow_other: bool allow_other) -> Hash[String, String]
+
+        def build_schema: (Array[String] category_names, include_reason: bool include_reason) -> untyped
+
+        def build_prompt: (String text, Hash[String, String] categories, include_reason: bool include_reason) -> String
+      end
+    end
+  end
+end
