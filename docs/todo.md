@@ -45,21 +45,16 @@ The `observed_triggers` scope always returned `where(class_name: [])`, making th
 
 ## Phase 2 — configuration and client consistency
 
-### [ ] D. Replace direct `ENV` reads with `R3x::Env`
+### [x] D. Replace direct `R3X_*` ENV reads with `R3x::Env`
 
 **Files:**
 
 - `config/runtime_profile.rb:11`
-- `config/puma.rb:28,31,34,40,44`
-- `config/environments/production.rb:5,47,92`
 - `config/initializers/r3x_vault_env.rb:4`
 - `lib/r3x/log.rb:28`
-- `lib/r3x/workflow/entrypoint.rb:17,22`
 - `lib/r3x/workflow/pack_loader.rb:51`
 
-Many places read `ENV` directly instead of the project’s own helper. This allows empty strings from `.env` files to pass as valid values and skips fail-fast boolean parsing.
-
-**Suggested fix:** migrate to `R3x::Env.fetch` / `fetch!` / `fetch_boolean` / `present?`. Pay special attention to `config/puma.rb:31`, which uses `ActiveModel::Type::Boolean.new.cast` and silently accepts typos.
+**Done:** migrated `R3X_*` variable reads to `R3x::Env.fetch` / `present?`. Added custom RuboCop cop `R3x/PreferR3xEnv` to enforce this in `app/` and `lib/`. Left standard Rails / Puma / Solid Queue variables (`RAILS_MAX_THREADS`, `PORT`, `RAILS_ENV`, `SOLID_QUEUE_IN_PUMA`, etc.) using direct `ENV` reads, since they follow external conventions.
 
 ---
 

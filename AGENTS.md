@@ -2,6 +2,12 @@
 
 This Rails app uses a small set of preferred libraries for common integration work. Follow these defaults for new code and agent-authored changes unless an existing subsystem already requires a different interface.
 
+## Agent Workflow
+
+- Do not create git commits on your own. You may stage changes with `git add`, but the user decides when and how to commit.
+- Before finishing work, run `bin/ci` and fix any failures. Only report completion when the suite is green or the user has explicitly accepted known failures.
+- Do not push branches, open pull requests, or merge without explicit user approval.
+
 ## Project Overview
 
 - `r3x` is a Rails API app that acts as a Ruby-native workflow executor and automation engine.
