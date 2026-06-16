@@ -40,6 +40,9 @@ Style/ItBlockParameter:
   Enabled: true
   EnforcedStyle: allow_single_line
 
+Style/EmptyLiteral:
+  Enabled: true
+
 Layout/LineLength:
   Enabled: true
   Max: 140
