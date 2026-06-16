@@ -1,6 +1,5 @@
 module R3x
   module Env
-    extend R3x::Concerns::Logger
     INTERNAL_PREFIX = "R3X_"
 
     def self.fetch(key)
@@ -57,13 +56,13 @@ module R3x
       return {} if path.blank?
 
       unless R3x::Env.present?("R3X_VAULT_ADDR")
-        logger.info("Vault auth not configured - skipping Vault")
+        Rails.logger.info("Vault auth not configured - skipping Vault")
         return {}
       end
 
       R3x::Client::HashiCorpVault.validate_auth_configuration!
 
-      logger.info("Loading secrets from Vault: #{path}")
+      Rails.logger.info("Loading secrets from Vault: #{path}")
       secrets = R3x::Client::HashiCorpVault.read(path)
       loaded = {}
 
@@ -76,7 +75,7 @@ module R3x
         loaded[key] = true
       end
 
-      logger.info("Loaded #{loaded.size} secrets from Vault")
+      Rails.logger.info("Loaded #{loaded.size} secrets from Vault")
       loaded
     end
   end
