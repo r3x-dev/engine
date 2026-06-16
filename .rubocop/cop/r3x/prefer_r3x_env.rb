@@ -3,9 +3,9 @@
 module RuboCop
   module Cop
     module R3x
-      # This cop flags direct reads of R3X_* environment variables outside of
-      # config/. Application code should use R3x::Env helpers, which treat blank
-      # env values as missing and provide strict boolean parsing.
+      # This cop flags direct reads of R3X_* environment variables.
+      # Application code should use R3x::Env helpers, which treat blank env
+      # values as missing and provide strict boolean parsing.
       #
       # @example
       #   # bad

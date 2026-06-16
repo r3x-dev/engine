@@ -1,12 +1,11 @@
 require "active_support/core_ext/integer/time"
-require_relative "../../lib/r3x/env"
 require "r3x/log"
 require "r3x/log/json_formatter"
 
-shutdown_timeout_seconds = Integer(R3x::Env.fetch("R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS") || 900)
+shutdown_timeout_seconds = Integer(ENV.fetch("SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS", 900))
 
 unless shutdown_timeout_seconds.positive?
-  raise ArgumentError, "R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS must be positive"
+  raise ArgumentError, "SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS must be positive"
 end
 
 Rails.application.configure do

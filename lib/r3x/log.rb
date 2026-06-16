@@ -1,3 +1,5 @@
+require_relative "env"
+
 module R3x
   class Log
     TAG_PATTERN = /\A(?:\[(?<tag>[^\]]+)\]\s+)+/
