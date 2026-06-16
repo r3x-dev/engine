@@ -1,3 +1,5 @@
+require_relative "../lib/r3x/env"
+
 module R3x
   module RuntimeProfile
     extend self
@@ -8,8 +10,7 @@ module R3x
 
     def current
       @current ||= begin
-        profile = ENV.fetch("R3X_RUNTIME_PROFILE", "").to_s
-        profile = DEFAULT_PROFILE if profile.empty?
+        profile = R3x::Env.fetch("R3X_RUNTIME_PROFILE") || DEFAULT_PROFILE
 
         case profile
         when *SUPPORTED_PROFILES
