@@ -1,5 +1,3 @@
-require_relative "env"
-
 module R3x
   class Log
     TAG_PATTERN = /\A(?:\[(?<tag>[^\]]+)\]\s+)+/
@@ -7,6 +5,7 @@ module R3x
     TRIGGER_KEY_TAG = "r3x.trigger_key"
     WORKFLOW_KEY_TAG = "r3x.workflow_key"
     JOB_OUTCOME_TAG = "r3x.job_outcome"
+    FORMAT_MUTEX = Mutex.new
 
     def self.tag(name, value)
       return if value.blank?
@@ -15,7 +14,21 @@ module R3x
     end
 
     def self.format
-      resolve_format
+      FORMAT_MUTEX.synchronize do
+        @format ||= begin
+          require_relative "env" unless defined?(R3x::Env)
+
+          format = R3x::Env.fetch("R3X_LOG_FORMAT")
+          case format
+          when nil, "plain"
+            "plain"
+          when "json"
+            "json"
+          else
+            raise ArgumentError, "Unsupported R3X_LOG_FORMAT: #{format.inspect}. Use 'json' or 'plain'."
+          end
+        end
+      end
     end
 
     def self.json?
@@ -25,18 +38,5 @@ module R3x
     def self.plain?
       !json?
     end
-
-    def self.resolve_format
-      format = R3x::Env.fetch("R3X_LOG_FORMAT")
-      case format
-      when nil, "plain"
-        "plain"
-      when "json"
-        "json"
-      else
-        raise ArgumentError, "Unsupported R3X_LOG_FORMAT: #{format.inspect}. Use 'json' or 'plain'."
-      end
-    end
-    private_class_method :resolve_format
   end
 end

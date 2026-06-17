@@ -2,6 +2,10 @@ require "test_helper"
 
 module R3x
   class LogTest < ActiveSupport::TestCase
+    def setup
+      Log.instance_variable_set(:@format, nil)
+    end
+
     test "defaults to plain when env is unset" do
       with_env("R3X_LOG_FORMAT" => nil) do
         assert_equal "plain", Log.format
