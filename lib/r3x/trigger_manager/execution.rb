@@ -13,16 +13,12 @@ module R3x
         @trigger.type
       end
 
-      def method_missing(name, *args, &block)
-        if name.to_s.end_with?("?")
-          type_name = name.to_s.chomp("?").to_sym
-          return @trigger.type == type_name
-        end
-        super
+      def manual?
+        type == :manual
       end
 
-      def respond_to_missing?(name, include_private = false)
-        name.to_s.end_with?("?")
+      def schedule?
+        type == :schedule
       end
 
       def options
