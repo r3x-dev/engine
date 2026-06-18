@@ -881,13 +881,31 @@ module R3x
       block.stubs(:source_location).returns([ nil, nil ])
 
       error = assert_raises(RuntimeError) do
-        R3x::Workflow::CacheKey.generate(workflow_key: "missing_cache_source_test", block: block, method_name: :with_cache)
+        R3x::Workflow::CacheKey.generate(workflow_key: "missing_cache_source_test", block:, method_name: :with_cache, key: "missing")
       end
 
       assert_equal "with_cache requires a block backed by a readable Ruby source file", error.message
     end
 
-    test "with_cache separates multiple calls on the same source line" do
+    test "with_cache raises when multiple cache calls share the same source line without keys" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::AmbiguousCacheLineTest"
+        end
+      end
+      workflow = workflow_class.new
+
+      error = assert_raises(RuntimeError) do
+        [ workflow.with_cache { "one" }, workflow.with_cache { "two" } ]
+      end
+
+      assert_match(
+        /with_cache cannot infer a unique cache key when multiple with_cache calls share line \d+; move them to separate lines or pass key:/,
+        error.message
+      )
+    end
+
+    test "with_cache separates multiple calls on the same source line with explicit keys" do
       workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
           "Workflows::SameLineCacheTest"
@@ -895,7 +913,13 @@ module R3x
       end
       workflow = workflow_class.new
 
-      assert_equal [ "one", "two" ], [ workflow.with_cache { "one" }, workflow.with_cache { "two" } ]
+      assert_equal(
+        [ "one", "two" ],
+        [
+          workflow.with_cache(key: "one") { "one" },
+          workflow.with_cache(key: "two") { "two" }
+        ]
+      )
     end
 
     test "with_cache allows method name text in strings and comments" do

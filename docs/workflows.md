@@ -120,6 +120,8 @@ raises, the workflow fails instead of logging a false success.
   - `R3X_SKIP_CACHE=true` does the same override at the env level.
   - In production, `with_cache` still raises by default unless `R3X_SKIP_CACHE=true` is set.
   - Use `with_cache(force: true)` when you need to refresh a stale cached value.
+  - Use `with_cache(key: "name")` when multiple cache blocks share the same source line or when a
+    stable human-readable discriminator makes the cached boundary clearer.
 - `ctx.durable_set(name = :default, ttl: 90.days)`
   - Returns a workflow-scoped durable set backed by `Rails.cache`.
   - Good for remembering which items were already processed, sent, uploaded, or otherwise handled
@@ -327,6 +329,9 @@ Keep the distinction clear:
 
 - Prefer `with_cache` only around clearly expensive or noisy calls, not around the whole workflow.
 - Prefer `ctx.durable_set` for cross-run item dedup, not `with_cache`.
+- A normal `with_cache` key is derived from the workflow key, source file, source line, and file
+  digest. If multiple `with_cache` calls share one line, the workflow raises and asks for separate
+  lines or explicit `key:` values instead of silently reusing the wrong cache entry.
 - The normal workflow is:
   - add `with_cache` around the slowest boundary while iterating
   - use `bin/workflow run --skip-cache <path>` when you want a fresh uncached run
