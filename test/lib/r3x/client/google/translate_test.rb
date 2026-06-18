@@ -24,9 +24,9 @@ module R3x
               headers: { "Content-Type" => "application/json" }
             )
 
-          R3x::Client::GoogleAuth.stubs(:from_env).with { |**kwargs|
+          R3x::Client::GoogleAuth.stubs(:from_env).with do |**kwargs|
             kwargs[:project] == "TEST_APP" && kwargs[:scope] == "https://www.googleapis.com/auth/cloud-translation"
-          }.returns(authorization)
+          end.returns(authorization)
 
           result = Translate.new(project: "TEST_APP")
             .translate(" Ola mundo ", to: "en", from: "pt")
