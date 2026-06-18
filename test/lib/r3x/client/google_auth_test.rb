@@ -97,10 +97,10 @@ module R3x
 
         stub_client.define_singleton_method(:fetch_access_token!) { true }
 
-        Signet::OAuth2::Client.stubs(:new).with { |**kwargs|
+        Signet::OAuth2::Client.stubs(:new).with do |**kwargs|
           captured_scope = kwargs.fetch(:scope)
           true
-        }.returns(stub_client)
+        end.returns(stub_client)
 
         GoogleAuth.from_json(
           {

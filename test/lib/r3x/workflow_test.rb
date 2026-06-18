@@ -779,12 +779,13 @@ module R3x
         def run
           @calls ||= 0
 
-          with_cache { @calls += 1; { "calls" => @calls } }
+          with_cache do
+            @calls += 1
+            { "calls" => @calls }
+          end
         end
 
-        def calls
-          @calls
-        end
+        attr_reader :calls
       end
 
       workflow = workflow_class.new
@@ -870,12 +871,13 @@ module R3x
         def cached(force: false)
           @calls ||= 0
 
-          with_cache(force: force) { @calls += 1; { "calls" => @calls } }
+          with_cache(force: force) do
+            @calls += 1
+            { "calls" => @calls }
+          end
         end
 
-        def calls
-          @calls
-        end
+        attr_reader :calls
       end
 
       workflow = workflow_class.new
@@ -919,7 +921,10 @@ module R3x
         def cached
           @calls ||= 0
 
-          with_cache { @calls += 1; { "calls" => @calls } }
+          with_cache do
+            @calls += 1
+            { "calls" => @calls }
+          end
         end
       end
 

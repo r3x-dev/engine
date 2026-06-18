@@ -90,9 +90,9 @@ module R3x
             ::Dashboard::RecurringTask
               .workflow_tasks
               .to_a
-              .each_with_object(Hash.new { |hash, key| hash[key] = {} }) { |task, mapping|
+              .each_with_object(Hash.new { |hash, key| hash[key] = {} }) do |task, mapping|
                 mapping[task.workflow_key][task.trigger_key] ||= task
-              }
+              end
           rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
             {}
           end
