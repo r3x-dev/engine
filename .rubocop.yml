@@ -7,6 +7,7 @@ require:
   - ./.rubocop/cop/r3x/avoid_hash_tap.rb
   - ./.rubocop/cop/r3x/prefer_r3x_env.rb
   - ./.rubocop/cop/r3x/prefer_httpx_response_json.rb
+  - ./.rubocop/cop/r3x/prefer_httpx_raise_for_status.rb
 plugins:
   - rubocop-thread_safety
   - rubocop-minitest
@@ -75,6 +76,12 @@ R3x/PreferR3xEnv:
     - "lib/**/*.rb"
 
 R3x/PreferHttpxResponseJson:
+  Enabled: true
+  Include:
+    - "app/**/*.rb"
+    - "lib/**/*.rb"
+
+R3x/PreferHttpxRaiseForStatus:
   Enabled: true
   Include:
     - "app/**/*.rb"

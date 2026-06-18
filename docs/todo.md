@@ -191,7 +191,7 @@ These are not actionable todos yet; they are framing notes for larger refactor d
 
 - **Less layering, more Rails.** Much of `app/lib/r3x/dashboard/workflow/` (`Catalog`, `Summaries`, `Runs`) is logic that belongs in models under `app/models/dashboard/`, not in parallel service/query layers. `Dashboard::Run` is the model — let it own its queries and summaries.
 - **Pre-commit running full CI is expensive.** Running `bin/ci` (RuboCop, dprint, bundler-audit, brakeman, full test suite) on every commit slows the local loop. A lighter pre-commit with full CI on push is more Rails-like.
-- **Fail fast, don't swallow errors.** `R3x::Env.load_from_vault` catching `StandardError` violates the 37signals preference for loud failures over silent degradation.
+- **Keep boot-time failures loud.** `R3x::Env.load_from_vault` now propagates Vault configuration and request errors; preserve that fail-fast behavior when changing secret bootstrapping.
 - **Use your own conventions everywhere.** Direct `ENV.fetch` calls in `config/puma.rb` and `production.rb` undermine the `R3x::Env` helper and create inconsistent semantics.
 
 ### Sandi Metz perspective
@@ -214,4 +214,3 @@ These are not actionable todos yet; they are framing notes for larger refactor d
 
 - This backlog is intentionally read-only design-debt tracking. Pick items in order; do not try to fix everything at once.
 - When an item changes code covered by `AGENTS.md`, update `AGENTS.md` in the same PR.
-- When an item changes `R3x::Workflow::Context`, `R3x::Workflow::Context::Client`, or `R3x::Client::Http`, update matching `sig/` files.
