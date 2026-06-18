@@ -117,7 +117,7 @@ logger.info "[DRY-RUN]: content: #{content}"
 
 ## Phase 3 — architecture and tests
 
-### [ ] H. Refactor tests to use Mocha and add missing coverage
+### [x] H. Refactor tests to use Mocha and add missing coverage
 
 **Files:**
 
@@ -128,17 +128,21 @@ logger.info "[DRY-RUN]: content: #{content}"
 
 `AGENTS.md` strongly recommends Mocha and warns against manual monkey-patching and stubbing third-party internals.
 
-**Suggested fix:** rewrite to Mocha `stubs`/`expects`, add the missing `development` policy test, and wrap RubyLLM behind a narrow client boundary so tests can stub our own API instead of the gem.
+**Suggested fix:** rewrite to Mocha `stubs`/`expects`, add the missing `development` policy test, and keep RubyLLM tests at the closest external boundary instead of stubbing inner chat/model-registry objects.
+
+**Done:** `gmail_test` and `run_test` no longer monkey-patch global methods; `llm_test` stubs only the `RubyLLM.context` boundary and uses plain fake context/chat objects; policy development dry-run coverage is present.
 
 ---
 
-### [ ] I. `R3x::TriggerManager::Execution` uses `method_missing` for type predicates
+### [x] I. `R3x::TriggerManager::Execution` uses `method_missing` for type predicates
 
 **File:** `lib/r3x/trigger_manager/execution.rb:16-26`
 
 Metaprogramming makes static analysis hard and can answer `true` to any `foo?` question.
 
 **Suggested fix:** replace with explicit predicates (`schedule?`, `manual?`) or a capability-based API.
+
+**Done:** `Execution` now exposes explicit `manual?` and `schedule?` predicates and no longer synthesizes arbitrary `foo?` methods.
 
 ---
 
@@ -197,16 +201,14 @@ These are not actionable todos yet; they are framing notes for larger refactor d
 ### Sandi Metz perspective
 
 - **Classes are too large.** `Dashboard::Run` (254 lines), `Summaries` (274 lines), and `ApplicationHelper` (378 lines) violate SRP. Extract `StatusResolver`, `ArgumentsNormalizer`, and `ErrorParser`.
-- **Avoid magic predicates.** `R3x::TriggerManager::Execution` uses `method_missing` for trigger type predicates. Replace with explicit methods (`schedule?`, `manual?`) or a capability-based API.
 - **Don't use bytecode introspection.** `R3x::Workflow::CacheKey` relies on `RubyVM::InstructionSequence.of(block)`. It will break on interpreter changes and is hard to reason about. Use an explicit, stable key.
-- **Don't stub what you don't own.** `test/lib/r3x/client/llm_test.rb` stubs internal `RubyLLM` objects. Wrap LLM behind a narrow adapter and test your own boundary.
 - **Duplicate HTTP setup signals a missing object.** Every client builds `HTTPX.with(...)` by hand. A shared `R3x::Client::HttpBuilder` (or extension of `R3x::Client::Http`) would remove copy-paste and make SSL/timeout policy consistent.
 
 ### Top 3 rewrites worth considering
 
 1. **Split `Dashboard::Run` and `Summaries` into smaller, single-responsibility classes.** This is the highest-impact structural improvement.
 2. **Introduce a shared HTTP builder and unify dry-run logging across clients.** Removes duplication and makes new integrations cheaper.
-3. **Replace `method_missing` trigger predicates and bytecode-based cache keys with explicit implementations.** Eliminates two sources of fragility.
+3. **Replace bytecode-based cache keys with explicit implementations.** Eliminates a remaining source of fragility.
 
 ---
 

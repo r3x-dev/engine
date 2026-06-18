@@ -205,12 +205,8 @@ class Dashboard::RunTest < ActiveSupport::TestCase
 
   test "enqueue_direct! maps framework enqueue errors to dashboard error" do
     output = capture_logged_output do
-    SolidQueue::Job.singleton_class.alias_method :__dashboard_run_test_original_enqueue, :enqueue
-    SolidQueue::Job.singleton_class.define_method(:enqueue) do |_active_job|
-      raise SolidQueue::Job::EnqueueError, "boom"
-    end
+      SolidQueue::Job.stubs(:enqueue).raises(SolidQueue::Job::EnqueueError, "boom")
 
-    begin
       error = assert_raises(Dashboard::Run::EnqueueError) do
         Dashboard::Run.enqueue_direct!(
           class_name: WORKFLOW_JOB_CLASS_NAME,
@@ -219,13 +215,8 @@ class Dashboard::RunTest < ActiveSupport::TestCase
           priority: 7
         )
       end
-    ensure
-      SolidQueue::Job.singleton_class.alias_method :enqueue, :__dashboard_run_test_original_enqueue
-      SolidQueue::Job.singleton_class.remove_method :__dashboard_run_test_original_enqueue
-    end
 
-
-    assert_includes error.message, "Direct workflow enqueue failed"
+      assert_includes error.message, "Direct workflow enqueue failed"
     end
 
     assert_includes output, "Dashboard direct enqueue failed"
