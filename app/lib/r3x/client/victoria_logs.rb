@@ -1,8 +1,8 @@
 module R3x
   module Client
     class VictoriaLogs
-      DEFAULT_URL_ENV = "R3X_VICTORIA_LOGS_URL"
-      DEFAULT_TIMEOUT = "5s"
+      DEFAULT_URL_ENV = "R3X_VICTORIA_LOGS_URL".freeze
+      DEFAULT_TIMEOUT = "5s".freeze
 
       def initialize(url_env: DEFAULT_URL_ENV)
         base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_")
