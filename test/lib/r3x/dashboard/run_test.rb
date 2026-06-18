@@ -75,6 +75,23 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       created_at: 5.minutes.ago
     )
 
+    sleeping_job = DashboardJobRows.create_job!(
+      job_class_name: WORKFLOW_JOB_CLASS_NAME,
+      arguments: [ "schedule:sleeping" ],
+      created_at: 4.minutes.ago,
+      updated_at: 4.minutes.ago,
+      scheduled_at: 30.minutes.from_now
+    )
+    sleeping_job.update!(arguments: sleeping_job.arguments.merge("resumptions" => 1))
+    SolidQueue::ReadyExecution.where(job_id: sleeping_job.id).delete_all
+    sleeping_at = 3.minutes.ago
+    SolidQueue::ScheduledExecution.find_or_initialize_by(job_id: sleeping_job.id).update!(
+      queue_name: sleeping_job.queue_name,
+      priority: sleeping_job.priority,
+      scheduled_at: sleeping_job.scheduled_at,
+      created_at: sleeping_at
+    )
+
     fallback_queued_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [ "schedule:fallback" ],
@@ -90,6 +107,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       queued_job.id,
       blocked_job.id,
       scheduled_job.id,
+      sleeping_job.id,
       fallback_queued_job.id
     ]).with_execution_associations.index_by(&:id)
 
@@ -111,8 +129,14 @@ class Dashboard::RunTest < ActiveSupport::TestCase
     assert_equal "scheduled", runs.fetch(scheduled_job.id).status
     assert_equal scheduled_job.scheduled_at.to_i, runs.fetch(scheduled_job.id).recorded_at.to_i
 
+    assert_equal "sleeping", runs.fetch(sleeping_job.id).status
+    assert_equal sleeping_at.to_i, runs.fetch(sleeping_job.id).recorded_at.to_i
+
     assert_equal "queued", runs.fetch(fallback_queued_job.id).status
     assert_equal fallback_queued_job.created_at.to_i, runs.fetch(fallback_queued_job.id).recorded_at.to_i
+
+    assert_equal [ sleeping_job.id ], Dashboard::Run.for_status("sleeping").pluck(:id)
+    refute_includes Dashboard::Run.for_status("scheduled").pluck(:id), sleeping_job.id
   end
 
   test "workflow payload helpers parse serialized workflow arguments" do
@@ -125,6 +149,24 @@ class Dashboard::RunTest < ActiveSupport::TestCase
     assert_equal [ "schedule:abc123", { trigger_payload: { "id" => "42" } } ], run.workflow_arguments
     assert_equal "schedule:abc123", run.trigger_key
     assert_equal({ "id" => "42" }, run.trigger_payload)
+  end
+
+  test "resumptions SQL follows the active database adapter" do
+    assert_includes Dashboard::Run.resumptions_positive_sql, "json_extract"
+
+    postgresql_connection = Struct.new(:adapter_name) do
+      def quote_column_name(name)
+        %("#{name}")
+      end
+    end.new("PostgreSQL")
+
+    Dashboard::Run.stubs(:connection).returns(postgresql_connection)
+    Dashboard::Run.stubs(:quoted_table_name).returns(%("solid_queue_jobs"))
+
+    assert_equal(
+      %(COALESCE(("solid_queue_jobs"."arguments"::jsonb ->> 'resumptions')::integer, 0) > 0),
+      Dashboard::Run.resumptions_positive_sql
+    )
   end
 
   test "normalize_arguments symbolized marked keyword hashes" do

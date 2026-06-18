@@ -32,6 +32,119 @@ module R3x
         assert_equal job.created_at, run[:started_at]
       end
 
+      test "groups resumed workflow fragments into one logical run" do
+        active_job_id = "aj-resumed-workflow"
+        initial_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          finished_at: 3.minutes.ago,
+          created_at: 5.minutes.ago,
+          updated_at: 3.minutes.ago
+        )
+        resumed_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          created_at: 3.minutes.ago,
+          updated_at: 3.minutes.ago,
+          scheduled_at: 2.minutes.from_now
+        )
+        resumed_job.update!(arguments: resumed_job.arguments.merge("resumptions" => 1))
+        SolidQueue::ReadyExecution.where(job_id: resumed_job.id).delete_all
+        scheduled_execution = SolidQueue::ScheduledExecution.find_or_initialize_by(job_id: resumed_job.id)
+        scheduled_execution.update!(
+          queue_name: resumed_job.queue_name,
+          priority: resumed_job.priority,
+          scheduled_at: resumed_job.scheduled_at,
+          created_at: resumed_job.created_at
+        )
+
+        runs = Workflow::Runs.new.all.select { |entry| entry[:active_job_id] == active_job_id }
+
+        assert_equal 1, runs.size
+        assert_equal resumed_job.id, runs.first[:job_id]
+        assert_equal "sleeping", runs.first[:status]
+        assert_equal 1, runs.first[:resumptions]
+        assert_equal initial_job.created_at.to_i, runs.first[:enqueued_at].to_i
+        assert_nil runs.first[:finished_at]
+      end
+
+      test "sleeping filter includes scheduled resumed workflow fragments" do
+        active_job_id = "aj-scheduled-resume"
+        DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          finished_at: 3.minutes.ago,
+          created_at: 5.minutes.ago,
+          updated_at: 3.minutes.ago
+        )
+        resumed_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          created_at: 3.minutes.ago,
+          updated_at: 3.minutes.ago,
+          scheduled_at: 2.minutes.from_now
+        )
+        resumed_job.update!(arguments: resumed_job.arguments.merge("resumptions" => 1))
+        SolidQueue::ReadyExecution.where(job_id: resumed_job.id).delete_all
+        scheduled_execution = SolidQueue::ScheduledExecution.find_or_initialize_by(job_id: resumed_job.id)
+        scheduled_execution.update!(
+          queue_name: resumed_job.queue_name,
+          priority: resumed_job.priority,
+          scheduled_at: resumed_job.scheduled_at,
+          created_at: resumed_job.created_at
+        )
+
+        runs = Workflow::Runs.new(status: "sleeping").all
+
+        assert_includes runs.map { |run| run[:active_job_id] }, active_job_id
+      end
+
+      test "sleeping filter is not crowded out by newer queued workflow jobs" do
+        active_job_id = "aj-old-sleeping-run"
+        DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          finished_at: 2.hours.ago,
+          created_at: 3.hours.ago,
+          updated_at: 2.hours.ago
+        )
+        sleeping_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          created_at: 2.hours.ago,
+          updated_at: 2.hours.ago,
+          scheduled_at: 1.hour.from_now
+        )
+        sleeping_job.update!(arguments: sleeping_job.arguments.merge("resumptions" => 1))
+        SolidQueue::ReadyExecution.where(job_id: sleeping_job.id).delete_all
+        SolidQueue::ScheduledExecution.find_or_initialize_by(job_id: sleeping_job.id).update!(
+          queue_name: sleeping_job.queue_name,
+          priority: sleeping_job.priority,
+          scheduled_at: sleeping_job.scheduled_at,
+          created_at: sleeping_job.created_at
+        )
+
+        75.times do |index|
+          DashboardJobRows.create_job!(
+            job_class_name: WORKFLOW_JOB_CLASS_NAME,
+            arguments: [ "schedule:abc123" ],
+            created_at: index.seconds.ago,
+            updated_at: index.seconds.ago
+          )
+        end
+
+        runs = Workflow::Runs.new(status: "sleeping", limit: 10).all
+
+        assert_includes runs.map { |run| run[:active_job_id] }, active_job_id
+        assert_equal "sleeping", runs.find { |run| run[:active_job_id] == active_job_id }[:status]
+      end
+
       test "started_at uses claimed_execution time for running jobs" do
         job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,

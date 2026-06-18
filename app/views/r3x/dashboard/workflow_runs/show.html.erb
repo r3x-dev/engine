@@ -28,6 +28,9 @@
       <h2 class="page-title"><%= @run[:workflow_title] %></h2>
 
       <%= dashboard_status_pill(@run[:status], error: @run[:error]) %>
+      <% if @run[:resumptions].to_i.positive? %>
+        <%= dashboard_pill("resumptions: #{@run[:resumptions]}", "info") %>
+      <% end %>
     </div>
     <p>Run <code><%= @run[:job_id] %></code></p>
   </div>
@@ -138,6 +141,12 @@
         <div class="technical-item">
           <dt>Active Job ID</dt>
           <dd><code><%= @run[:active_job_id] %></code></dd>
+        </div>
+      <% end %>
+      <% if @run[:resumptions].to_i.positive? %>
+        <div class="technical-item">
+          <dt>Resumptions</dt>
+          <dd><code><%= @run[:resumptions] %></code></dd>
         </div>
       <% end %>
       <div class="technical-item">

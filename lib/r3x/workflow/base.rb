@@ -22,7 +22,11 @@ module R3x
             trigger_key: trigger_key,
             trigger_payload: trigger_payload
           )
-          logger.info "Running workflow trigger_type=#{ctx.trigger.type}"
+          if initial_execution?
+            logger.info "Running workflow trigger_type=#{ctx.trigger.type}"
+          else
+            logger.info "Resuming workflow trigger_type=#{ctx.trigger.type} #{continuation.description}"
+          end
 
           skip_reason = unmet_workflow_condition_reason
           if skip_reason

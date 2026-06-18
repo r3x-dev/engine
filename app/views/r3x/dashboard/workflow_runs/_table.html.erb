@@ -37,6 +37,9 @@
             <% if columns.include?(:result) %>
               <td>
                 <%= dashboard_status_pill(run[:status], error: run[:error]) %>
+                <% if run[:resumptions].to_i.positive? %>
+                  <%= dashboard_pill("resumptions: #{run[:resumptions]}", "info") %>
+                <% end %>
               </td>
             <% end %>
 

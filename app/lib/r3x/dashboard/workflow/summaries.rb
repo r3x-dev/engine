@@ -51,6 +51,7 @@ module R3x
           recurring_tasks = recurring_tasks_by_workflow_key.fetch(workflow_key, [])
           trigger_entries = trigger_entries_for(workflow_key:, recurring_tasks:)
           last_run = latest_run_for(workflow_key)
+          last_run_summary = last_run && build_run_summary(last_run, workflow_key)
           preferred_recurring_task = recurring_tasks.find { |task| task.direct_workflow_class_name.present? } ||
             recurring_tasks.first
           manual_enqueue_options = ::Dashboard::Run.manual_enqueue_options_for(
@@ -62,9 +63,9 @@ module R3x
 
           {
             class_name: manual_enqueue_options&.fetch(:class_name),
-            health: health_for(last_run: last_run),
-            last_seen_at: last_seen_at_for(last_run: last_run),
-            last_run: last_run && build_run_summary(last_run, workflow_key),
+            health: health_for(last_run: last_run_summary),
+            last_seen_at: last_seen_at_for(last_run: last_run_summary),
+            last_run: last_run_summary,
             mission_control_path: "/ops/jobs",
             next_trigger_at: trigger_entries.filter_map { |entry| entry[:next_trigger_at] }.min,
             run_now_available: manual_enqueue_options.present?,
@@ -76,14 +77,21 @@ module R3x
         end
 
         def build_run_summary(run, workflow_key)
+          sorted_jobs = related_jobs_for(run).sort_by(&:created_at)
+          first_job = sorted_jobs.first
+          last_job = sorted_jobs.last
+          statuses = sorted_jobs.map(&:status)
+          status = ::Dashboard::Run.logical_status(statuses, resumptions: last_job.resumptions)
+
           {
-            class_name: run.class_name,
-            error: run.failed_execution&.error,
-            job_id: run.id,
-            priority: run.priority,
-            queue_name: run.queue_name,
-            recorded_at: run.recorded_at,
-            status: run.status,
+            class_name: first_job.class_name,
+            error: last_job.failed_execution&.error,
+            job_id: last_job.id,
+            priority: last_job.priority,
+            queue_name: last_job.queue_name,
+            recorded_at: last_job.recorded_at,
+            resumptions: last_job.resumptions,
+            status: status,
             workflow_key: workflow_key
           }
         end
@@ -175,7 +183,7 @@ module R3x
         end
 
         def health_for(last_run:)
-          return failed_run_health(last_run) if last_run&.status == "failed"
+          return failed_run_health(last_run) if last_run&.fetch(:status) == "failed"
           return healthy_health if last_run.present?
 
           idle_health
@@ -183,7 +191,7 @@ module R3x
 
         def failed_run_health(last_run)
           {
-            detail: last_run.failed_execution&.error,
+            detail: last_run[:error],
             label: "Last run failed",
             status: "failed"
           }
@@ -235,7 +243,7 @@ module R3x
         end
 
         def last_seen_at_for(last_run:)
-          last_run&.recorded_at
+          last_run&.fetch(:recorded_at)
         end
 
         def latest_queue_name(workflow_key)
@@ -258,6 +266,30 @@ module R3x
 
         def latest_visible_runs
           ::Dashboard::Run.latest_activity_candidates(class_names: catalog.class_names_to_keys.keys)
+        end
+
+        def related_jobs_for(run)
+          return [ run ] if run.active_job_id.blank?
+
+          related_jobs_by_active_job_id.fetch(run.active_job_id, [ run ])
+        end
+
+        def related_jobs_by_active_job_id
+          @related_jobs_by_active_job_id ||= begin
+            active_job_ids = latest_visible_runs.map(&:active_job_id).compact_blank.uniq
+
+            if active_job_ids.empty?
+              {}
+            else
+              ::Dashboard::Run
+                .with_execution_associations
+                .where(active_job_id: active_job_ids)
+                .to_a
+                .group_by(&:active_job_id)
+            end
+          rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
+            {}
+          end
         end
 
         def compare_latest_runs(left, right)
