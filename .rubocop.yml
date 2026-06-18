@@ -171,4 +171,3 @@ Minitest/UnreachableAssertion:
 
 Minitest/LiteralAsActualArgument:
   Enabled: true
-
