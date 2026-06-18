@@ -8,6 +8,7 @@ require:
   - ./.rubocop/cop/r3x/prefer_r3x_env.rb
   - ./.rubocop/cop/r3x/prefer_httpx_response_json.rb
   - ./.rubocop/cop/r3x/prefer_httpx_raise_for_status.rb
+  - ./.rubocop/cop/r3x/no_manual_method_patching_in_tests.rb
 plugins:
   - rubocop-thread_safety
   - rubocop-minitest
@@ -87,6 +88,11 @@ R3x/PreferHttpxRaiseForStatus:
     - "app/**/*.rb"
     - "lib/**/*.rb"
 
+R3x/NoManualMethodPatchingInTests:
+  Enabled: true
+  Include:
+    - "test/**/*_test.rb"
+
 R3x/AvoidHashTap:
   Enabled: true
 
@@ -135,3 +141,34 @@ Minitest/MultipleAssertions:
 
 Style/MutableConstant:
   Enabled: true
+
+Minitest/AssertPredicate:
+  Enabled: true
+
+Minitest/RefutePredicate:
+  Enabled: true
+
+Minitest/AssertRaisesCompoundBody:
+  Enabled: true
+
+Minitest/EmptyLineBeforeAssertionMethods:
+  Enabled: true
+
+Minitest/Focus:
+  Enabled: true
+
+Minitest/SkipWithoutReason:
+  Enabled: true
+
+Minitest/UnspecifiedException:
+  Enabled: true
+
+Minitest/UselessAssertion:
+  Enabled: true
+
+Minitest/UnreachableAssertion:
+  Enabled: true
+
+Minitest/LiteralAsActualArgument:
+  Enabled: true
+

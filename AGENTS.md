@@ -1,566 +1,185 @@
 # Instructions
 
-This Rails app uses a small set of preferred libraries for common integration work. Follow these defaults for new code and agent-authored changes unless an existing subsystem already requires a different interface.
+This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes small, boring, and easy to maintain. Prefer the simplest DHH/Sandi-friendly production code first; tests and tooling should validate that design, not force extra production seams.
 
 ## Agent Workflow
 
-- Do not create git commits on your own. You may stage changes with `git add`, but the user decides when and how to commit.
-- Before finishing work, run `bin/ci` and fix any failures. Only report completion when the suite is green or the user has explicitly accepted known failures.
-- Do not push branches, open pull requests, or merge without explicit user approval.
+- Do not commit, push, open PRs, or merge unless the user explicitly asks.
+- Before finishing implementation work, run `bin/ci` and fix failures unless the user accepts a known failure.
+- Use `git --no-pager` for agent-read Git output such as diff, show, log, and status details.
+- Keep this file and `docs/todo.md` synchronized when code changes alter architecture, workflow loading, trigger discovery, scheduling, validation contracts, env behavior, HTTP policy, or repo layout.
 
-## Project Overview
+## Project Shape
 
-- `r3x` is a Rails API app that acts as a Ruby-native workflow executor and automation engine.
-- The high-level split is: framework/runtime code lives in the app and `lib/r3x/`, while user-defined workflows live under `workflows/`.
-- Workflows are file-based, Git-friendly, and loaded into a database-backed runtime that uses Active Job + Solid Queue for execution and recurring scheduling.
-- Workflow classes are enqueued directly as Active Job classes so workflow code can use `ActiveJob::Continuable` and `step` on the real workflow job instance.
-- `Solid Queue` is the active job backend for app/runtime execution. Treat queueing semantics as database-backed, not Redis-backed.
-- In the current app configuration, `Solid Queue` is not wired through `config.solid_queue.connects_to`, and `Solid Cache` is not pointed at a separate cache database. In development and production, app tables, queue tables, and cache tables all use the primary Active Record database connection.
-- Because queue records use the same Active Record database connection as the app in the configured environments here, queue inserts can participate in the same database transaction as app writes.
-- If `Solid Queue` or `Solid Cache` is ever moved to a separate database, or replaced with a non-database backend/store, revisit any code that relies on transactional integrity between app writes and job enqueueing. In that setup, `enqueue_after_transaction_commit` and related tests become important again.
-- Production database configuration is environment-driven: prefer `R3X_DATABASE_URL`, and fall back to `R3X_DATABASE_PATH` for SQLite-style file paths.
-- Secrets are ENV-only in this repo. Do not rely on Rails encrypted credentials or `RAILS_MASTER_KEY`; provide `SECRET_KEY_BASE` and integration secrets through environment variables.
-- The optional Vault env bootstrap supports either a direct `R3X_VAULT_TOKEN` or in-cluster `auth/kubernetes` login via `R3X_VAULT_AUTH_METHOD=kubernetes` plus `R3X_VAULT_KUBERNETES_ROLE`. The Vault client code is split between the main client, `HashiCorpVault::Config`, and `HashiCorpVault::Auth::*` helpers so auth-specific env parsing and Kubernetes login logic stay out of the endpoint methods. If `R3X_VAULT_SECRETS_PATH` is set and `R3X_VAULT_ADDR` is also set, invalid or incomplete Vault auth configuration should fail fast during boot rather than silently skipping secrets.
-- The default local UI surface is the server-rendered workflow dashboard mounted at `/`, with a debug-first overview hub at the root path and deeper drill-down pages for workflows and runs.
-- Mission Control Jobs remains available at `/ops/jobs` for queue inspection and operational actions.
-- `bin/jobs-worker` and `bin/jobs-scheduler` set `R3X_RUNTIME_PROFILE=jobs` before boot. That internal profile keeps production eager load enabled for jobs pods, but trims boot to the Active Model / Active Job / Active Record runtime, excludes the dashboard web stack and web-only gems, removes the app `config/routes.rb` / `config/routes/**/*` files from Rails path registration, keeps `ActionController::Base.include_all_helpers = false` for headless boot, ignores `lib/r3x/workflow/cli.rb` so worker/scheduler processes do not eager-load the Thor wrapper, and leaves the operator-facing commands unchanged.
-- `bin/workflow` sets `R3X_RUNTIME_PROFILE=workflow_cli` before boot. `workflow_cli` is also headless and skips the web stack, but unlike `jobs` it keeps `lib/r3x/workflow/cli.rb` available so the command can load `R3x::Workflow::Cli`. This profile is command-owned and is not a deployment env knob.
-- The dashboard is DB-first: workflow pages and recent runs are derived from current `Solid Queue` recurring task and job tables, so they only show workflows and runs that have persisted runtime artifacts.
-- Dashboard-side queue rows and recurring-task rows are wrapped by app models `Dashboard::Run` and `Dashboard::RecurringTask`; treat those as the dashboard-facing read/write boundary over `solid_queue_jobs` and `solid_queue_recurring_tasks`.
-- The dashboard can optionally query indexed application logs when `R3X_LOGS_PROVIDER` is configured. The current supported provider is `victorialogs`, which reads from `R3X_VICTORIA_LOGS_URL` via VictoriaLogs native query API.
-- App log output format is controlled independently by `R3X_LOG_FORMAT`. Set it to `json` for structured logs (required by the dashboard log view), or `plain` for standard Rails flat text. Unsupported values raise on boot.
+- Framework/runtime code lives in the app and `lib/r3x/`; user workflow packs live under `workflows/`.
+- Workflows subclass `R3x::Workflow::Base`, declare triggers through the DSL, and implement `#run`.
+- Workflow classes are real `ApplicationJob`s so workflow code can use `ActiveJob::Continuable` and `step` on the actual job instance.
+- Solid Queue is the Active Job backend. App, queue, and cache tables currently share the primary Active Record connection in development and production; queue inserts can participate in app transactions. Revisit transactional assumptions if Solid Queue/Cache moves to another DB or backend.
+- Production DB config is env-driven: prefer `R3X_DATABASE_URL`, fall back to `R3X_DATABASE_PATH`.
+- Secrets are ENV-only. Do not rely on Rails encrypted credentials or `RAILS_MASTER_KEY`; provide `SECRET_KEY_BASE` and integration secrets through env/Vault.
+- Vault env bootstrap supports `R3X_VAULT_TOKEN` or Kubernetes auth via `R3X_VAULT_AUTH_METHOD=kubernetes` and `R3X_VAULT_KUBERNETES_ROLE`. Invalid configured Vault auth should fail fast at boot.
 
-## Codebase Map
+## Runtime Profiles
 
-- `lib/r3x/`: core framework code for the workflow DSL, trigger types, workflow loading, registry, execution context, recurring-task config, and shared DSL helpers.
-- `app/controllers/r3x/`: web controllers used to support HTML surfaces in the `api_only` app, including the shared `R3x::WebController` base for the dashboard and Mission Control.
-- `app/controllers/r3x/dashboard/`: server-rendered dashboard controllers for workflows and recent runs.
-- `app/controllers/r3x/dashboard/overview_controller.rb`: root overview screen that surfaces attention items, recent runs, and workflow shortcuts from persisted runtime data.
-- `app/views/r3x/dashboard/` + `app/views/layouts/r3x/dashboard.html.erb`: dashboard UI templates and layout.
-- `app/models/dashboard/`: dashboard-facing models over persisted queue metadata, especially `Dashboard::Run` (`solid_queue_jobs` + execution-table relations), `Dashboard::RecurringTask` (`solid_queue_recurring_tasks` parsing and workflow-key lookups), and `Dashboard::DirectWorkflowEnqueuer` (the deliberate low-level Solid Queue enqueue boundary used when web pods should not load workflow classes).
-- `app/lib/r3x/dashboard/`: read-only query objects that build workflow summaries, recent runs, and optional indexed log views from dashboard models and configured log providers.
-- `app/lib/r3x/dashboard/workflow/`: dashboard workflow composition/query namespace (`Catalog`, `Runs`, `Summaries`, `RunCounts`, `RunEnqueuer`) used by controllers and overview composition.
-- `app/lib/r3x/dashboard/overview.rb`: assembles the root dashboard overview cards and sections from workflow summaries and persisted runs.
-- `app/lib/r3x/client/hashi_corp_vault/`: Vault client helpers for config parsing and auth mode implementations (`Config`, `Auth::Token`, `Auth::Kubernetes`).
-- `lib/r3x/workflow/executor.rb`: shared workflow execution helper that resolves the trigger and builds `Workflow::Context` for a loaded workflow class.
-- `lib/r3x/workflow/cli.rb`: in-process implementation for `bin/workflow` commands so CLI behavior can be tested without shelling out.
-- `lib/r3x/workflow/entrypoint.rb`: boot-policy layer used by `config/application.rb` and `bin/jobs*` to decide whether to only load workflows or also schedule recurring tasks.
-- `config/runtime_profile.rb`: internal runtime-profile helper used during boot to distinguish the default web profile from the headless `jobs` and `workflow_cli` profiles set by `bin/jobs-worker`, `bin/jobs-scheduler`, and `bin/workflow`.
-- `lib/r3x/dsl/`: shared DSL infrastructure, especially validation concerns and configuration errors used by workflow-declared objects.
-- `lib/r3x/trigger_manager.rb` + `lib/r3x/trigger_manager/`: trigger infrastructure — `R3x::TriggerManager::Collection` (manages workflow triggers as a hash keyed by `unique_key`) and `R3x::TriggerManager::Execution` (wraps a trigger for runtime use).
-- `app/lib/r3x/`: runtime support code such as client wrappers and shared concerns.
-- `app/lib/r3x/client/victoria_logs.rb`: thin VictoriaLogs HTTP client used by the dashboard when log viewing is enabled.
-- `app/lib/r3x/client/google_auth.rb`: resolves Google OAuth2 scope aliases and builds `Signet::OAuth2::Client` instances from per-project environment variables.
-- `lib/r3x/gem_loader.rb`: tiny helper for one-time lazy `require` of heavy optional gems used by integrations and workflow helpers.
-- `app/lib/r3x/client/google/gmail.rb`: Gmail API client used by workflows via `ctx.client.gmail(...)`.
-- `app/lib/r3x/client/google/translate.rb`: Google Translate client used by workflows via `ctx.client.google_translate(...)`.
-- `lib/r3x/workflow/llm_schema.rb`: lazy wrapper around `RubyLLM::Schema` for workflows that need structured LLM output.
-- `R3x::Client::Google` is a project namespace; when referencing the third-party Google gem namespace, use `::Google` to avoid constant collisions.
-- `app/jobs/r3x/`: job entrypoints for workflow runtime support.
-- `app/models/r3x/`: runtime support models under the `R3x` namespace.
-- `workflows/`: user workflow packs. These are not the framework itself; they are loaded by the framework.
-- `workflows/<pack>/test/`: self-contained tests for a specific workflow pack. Keep pack-local tests beside the workflow code, and use `test/fixtures/workflows/` for framework-level fixtures.
-- `lib/r3x/workflow/boot.rb`: explicit workflow boot helper used by process entrypoints.
-- `lib/r3x/workflow/durable_set.rb`: workflow-scoped durable set backed by `Rails.cache`, intended
-  for remembering processed item keys across workflow runs.
-- `test/fixtures/workflows/`: fixture workflows for framework tests. Prefer these over hardcoding real workflows in tests.
+- `bin/jobs-worker` and `bin/jobs-scheduler` set `R3X_RUNTIME_PROFILE=jobs`; this headless profile skips routes/web gems/helpers and ignores `lib/r3x/workflow/cli.rb`.
+- `bin/workflow` sets `R3X_RUNTIME_PROFILE=workflow_cli`; it is headless but keeps `lib/r3x/workflow/cli.rb`.
+- These profiles are command-owned internals, not deployment knobs.
+- Prefer separate web, worker, and scheduler processes in production. If `SOLID_QUEUE_IN_PUMA=true`, the web process also hosts Solid Queue and owns recurring scheduling; separate jobs pods must not also schedule recurring tasks.
 
-## Runtime Flow
+## Dashboard
 
-- Workflows subclass `R3x::Workflow::Base`, declare triggers via the DSL, and implement `#run`.
-- Workflow code can define structured LLM schemas via `R3x::Workflow::LlmSchema.define { ... }`, which lazy-loads `ruby_llm-schema` instead of requiring it for all processes at boot.
-- `R3x::Workflow::Base` is also an `ApplicationJob`; its `#perform` delegates trigger/context setup to `R3x::Workflow::Executor`, stores the context on the job, and then calls `#run` on the current job instance.
-- Workflow code can use `ctx.durable_set(name = :default, ttl: 90.days)` to get a durable,
-  workflow-scoped set for best-effort cross-run dedup of processed items.
-- When the app uses `:solid_cache_store`, keep `durable_set` `ttl:` at or below
-  `config/cache.yml` `store_options.max_age` so cache retention does not silently shorten the
-  dedup window.
-- Workflow-declared DSL objects must validate themselves before being registered; invalid DSL configuration should raise `R3x::ConfigurationError` with collected validation errors.
-- `R3x::Workflow::PackLoader` discovers workflow entrypoints named `workflow.rb` from directories listed in `R3X_WORKFLOW_PATHS`, skips files that declare a top-of-file `# r3x:disable ...` pragma, and registers loaded workflow classes in `R3x::Workflow::Registry`.
-- `R3x::Workflow::PackLoader.load!(rebuild_registry: true)` rebuilds the registry from the current workflow paths, but it still uses Ruby `require`; it is not a same-process source reload for already required workflow files.
-- `R3x::RecurringTasksConfig` turns schedulable workflow triggers into Solid Queue dynamic recurring tasks via `SolidQueue::RecurringTask`. All triggers have a `unique_key` (based on type + options hash) used for identification and duplicate detection. `schedule_all!` persists dynamic tasks and sweeps stale ones.
-- Workflow packs are loaded explicitly by process entrypoints, not globally during Rails boot. `R3x::Workflow::Entrypoint` centralizes those boot decisions for the web server hook and `bin/jobs*`. In the current split-process setup, the generic `bin/jobs` entrypoint keeps the default Solid Queue behavior: it only loads workflow classes when `SOLID_QUEUE_IN_PUMA=true`, and otherwise it also schedules recurring tasks before starting the CLI. `bin/jobs-worker` only loads workflow classes, defaults `config/queue.worker.yml`, defaults `SOLID_QUEUE_SKIP_RECURRING=true`, and boots Rails under the internal `jobs` runtime profile. `bin/jobs-scheduler` defaults `config/queue.scheduler.yml`, schedules recurring tasks, and also boots under the `jobs` runtime profile. `bin/workflow` boots Rails under the internal `workflow_cli` runtime profile. Both `jobs` and `workflow_cli` are headless profiles selected by the command itself, not by deployment env: they remove the app route files from Rails path registration before initialization, keep `ActionController::Base.include_all_helpers = false` to avoid helper scans from framework eager-load, and deliberately exclude web-only gems. Only `jobs` also ignores `lib/r3x/workflow/cli.rb` to keep worker/scheduler boots slimmer. The web process also loads workflows on server boot so Mission Control Jobs can validate and enqueue workflow-backed recurring tasks; it only schedules recurring tasks when it is also hosting Solid Queue in-process, which currently means development or `SOLID_QUEUE_IN_PUMA=true`.
-- Production deployments should prefer separate web and jobs controllers/processes over embedding Solid Queue into the Puma web process. Prefer separate worker and scheduler jobs controllers: worker pods can run `bin/jobs-worker`, while scheduler pods can run `bin/jobs-scheduler`. If `SOLID_QUEUE_IN_PUMA` is enabled, remember that the Puma plugin can fork an additional Solid Queue supervisor plus worker/dispatcher/scheduler processes inside the same pod, the web boot path will also load workflows and schedule recurring tasks, and separate jobs pods should not also try to own recurring scheduling in that mode.
-- The dashboard does not require workflow packs to be loaded on the web pod. It reconstructs workflow pages from `solid_queue_recurring_tasks` and `solid_queue_jobs`, via `Dashboard::RecurringTask` and `Dashboard::Run`, and can enqueue `Run now` actions through `POST /workflows/:workflow_key/runs` without loading workflow classes on the web pod: the workflow-level action deliberately uses `Dashboard::DirectWorkflowEnqueuer` to insert the workflow job directly into `Solid Queue` with no trigger arguments so runtime resolves the implicit manual trigger, while trigger-specific scheduled actions enqueue the persisted workflow job class with the recurring task arguments.
-- Workflow entrypoints can be disabled without deletion by adding `# r3x:disable ...` near the top of `workflow.rb`. Disabled entrypoints are skipped by the pack loader and are not registered/scheduled.
-- `ApplicationJob` and `R3x::Workflow::Base` add stable tagged log context so indexed logs can be correlated back to run pages. The workflow job itself keeps the per-run tags minimal (`r3x.run_active_job_id` and `r3x.trigger_key`).
-- When `R3X_LOG_FORMAT=json`, logs are emitted as structured JSON with explicit `level`, `message`, and tag data so the dashboard can read real log levels directly. When `R3X_LOG_FORMAT=plain` (or unset), logs use standard Rails flat text.
-- Known limitation: because queued workflow runs persist the concrete workflow class name, renaming or removing a workflow class across deploys can strand older queued runs with job deserialization failures. This is currently an accepted tradeoff for preserving `ActiveJob::Continuable` on the workflow job itself.
-- The dashboard's run history is DB-first and parses `Solid Queue` / `Active Job` payloads directly. It still accepts the underlying tradeoff that finished runs are retention-bound and that workflows with no persisted runtime artifacts are invisible to the dashboard.
-- The dashboard log view is also retention-bound, but by the configured log backend rather than `Solid Queue`; it is read-only and fail-soft, so missing log provider config or query failures should not break the main dashboard pages.
-- Dashboard log rendering should consume explicit levels from structured log payloads. Do not reintroduce regex-based level inference from message text.
-- Trigger discovery is filesystem-backed through `lib/r3x/triggers/*.rb`, so trigger file names, constants, and supported types must stay aligned.
+- The default local UI is the server-rendered dashboard at `/`; Mission Control Jobs remains at `/ops/jobs`.
+- Dashboard pages are DB-first and reconstructed from persisted Solid Queue recurring-task/job rows. Workflows with no persisted runtime artifacts are invisible by design.
+- Dashboard queue boundaries are `Dashboard::Run`, `Dashboard::RecurringTask`, and `Dashboard::DirectWorkflowEnqueuer`.
+- Web pods do not need workflow packs loaded for dashboard pages. `POST /workflows/:workflow_key/runs` may enqueue through `Dashboard::DirectWorkflowEnqueuer` without constantizing workflow classes.
+- Logs are optional and read-only. `R3X_LOGS_PROVIDER=victorialogs` reads `R3X_VICTORIA_LOGS_URL`; missing config or query failures must not break main pages.
+- `R3X_LOG_FORMAT=json` emits structured logs with explicit levels for dashboard log views; `plain` is standard Rails text. Unsupported values raise on boot. Do not infer levels from message regexes.
 
-## Working with Workflows
+## Code Map
 
-If you're changing workflows or workflow framework code, read
-`docs/workflows.md` first. It collects the current guidance on steps,
-debugging, logging, LLM output, dry run behavior, and error handling.
+- `lib/r3x/`: workflow DSL, triggers, loading/registry, execution context, recurring tasks, validators, gem loading.
+- `app/lib/r3x/client/`: integration clients used by workflows and runtime.
+- `app/lib/r3x/dashboard/`: dashboard query/composition objects and log provider code.
+- `app/models/dashboard/`: dashboard-facing models over Solid Queue metadata.
+- `app/controllers/r3x/`, `app/views/r3x/dashboard/`, `app/views/layouts/r3x/dashboard.html.erb`: dashboard and HTML surfaces in the API app.
+- `app/jobs/r3x/`, `app/models/r3x/`: runtime support jobs/models.
+- `workflows/`: user workflow packs; pack-local tests live in `workflows/<pack>/test/`.
+- `test/fixtures/workflows/`: fixture workflows for framework tests.
+- Third-party Google constants must be referenced as `::Google`; `R3x::Client::Google` is a project namespace.
 
-Use `bin/workflow` to interact with workflows from the command line. `list` and `info` load all workflow packs via `PackLoader.load!` and query `Registry`; `run` loads only the requested workflow file.
+## Workflow Runtime
 
-### Output safety
+- Workflow packs are loaded explicitly by process entrypoints, not globally during Rails boot.
+- `R3x::Workflow::PackLoader` discovers `workflow.rb` files from `R3X_WORKFLOW_PATHS`, skips top-of-file `# r3x:disable ...`, and registers classes in `R3x::Workflow::Registry`.
+- `PackLoader.load!(rebuild_registry: true)` rebuilds registry state but still uses Ruby `require`; it is not same-process source reload.
+- `R3x::RecurringTasksConfig.schedule_all!` persists schedulable triggers as Solid Queue dynamic recurring tasks and sweeps stale ones. Trigger file names, constants, and supported types must stay aligned with `lib/r3x/triggers/*.rb`.
+- Already queued jobs persist concrete workflow class names. Renaming/removing a workflow can strand old queued jobs; clean up pending jobs/tasks or accept deserialization failures.
+- Workflow code can use `ctx.durable_set(name = :default, ttl: 90.days)` for best-effort dedup. Keep `ttl:` at or below `config/cache.yml` `store_options.max_age` when using `:solid_cache_store`.
 
-- New workflow code that can cause external side effects (email, API writes, webhooks, state changes outside R3x) should default to `dry_run: true` or equivalent safe mode.
-- Only switch to real delivery with an explicit opt-in in the workflow or script, e.g. `dry_run: false`.
-- If a client can be destructive or noisy, prefer a boolean `dry_run` flag over an implicit ENV-based mode switch.
-- When a client is used from app/runtime code, resolve the default through `R3x::Policy.dry_run_for(:key, dry_run)`: development and test should be dry-run by default, production should default to real delivery unless the caller explicitly opts into `dry_run: true`.
-- `R3x::Policy` may also honor per-feature overrides like `R3X_GMAIL_DRY_RUN` and a global `R3X_DRY_RUN` if we need to widen or narrow the policy later.
-- For integration credentials, prefer passing `*_env` references like `api_key_env:` or `project:` instead of raw secrets or parsed credential hashes. Resolve the secret lazily inside the client/output so dry-run paths can avoid loading credentials when they do not need them.
-- Prefer lazy-loading heavy third-party gems from the client or workflow helper that first needs them. Mark the gem `require: false` in `Gemfile`, then call `R3x::GemLoader.require("...")` at the boundary that actually uses it.
-- Treat lazy-loading as a default design tool for optional workflow integrations and LLM helpers, especially in production boot paths.
-- Reasoning: this app boots the workflow engine for web and jobs processes, but not every workflow uses every integration. Avoid making all processes pay the memory and boot-time cost of Gmail, Google Sheets, Google Calendar, Google Translate, RubyLLM, or similar stacks when only a subset of workflows needs them.
-- When adding or reviewing integration code, actively consider whether the gem should stay eager-loaded or move behind `require: false` plus `R3x::GemLoader.require(...)`. Propose lazy-loading when the dependency is optional, heavy, or only used from specific workflows, CLI commands, or client methods.
-- Prefer putting the lazy-load boundary at the smallest practical edge: the client method, workflow helper, or DSL helper that first needs the dependency. Avoid top-level constants or alias maps that force third-party namespaces to load during Rails eager load if the integration is not universally needed.
-- For workflow-defined structured LLM output, prefer `R3x::Workflow::LlmSchema.define` so workflows that do not declare schemas do not pay to load the schema gem at boot.
-- When integrating a third-party API, put the actual API logic in a dedicated client object under `app/lib/r3x/client/<provider>/...` and keep outputs as thin policy/delivery wrappers.
-- When adding a new output/client with a real delivery path, include a dry-run path first and test that it does not call the external service.
-- Scratchpad scripts should also default to dry-run unless the user explicitly asks for real delivery.
+## Workflow Work
 
-### `bin/workflow` — CLI entrypoint
+- If changing workflows or workflow framework code, read `docs/workflows.md` first.
+- Use `bin/workflow list` and `bin/workflow info <key>` to inspect registered workflows.
+- `bin/workflow run <path>` always requires a path to `workflow.rb`; use `-d` for dry run and `--skip-cache` to bypass `with_cache`.
+- New code with external side effects should default to `dry_run: true` or equivalent safe mode. Real delivery must be explicit, e.g. `dry_run: false`.
+- App/runtime clients should resolve dry-run defaults through `R3x::Policy.dry_run_for(:key, dry_run)`: development/test default dry, production default real unless explicitly dry.
+- Scratchpad scripts also default to dry run unless the user explicitly asks for real delivery.
 
-```
-bin/workflow [options] [command] [arguments]
-```
+## Integrations
 
-| Command | Description |
-|---------|-------------|
-| `bin/workflow list` | List all registered workflows with their trigger types. |
-| `bin/workflow info <key>` | Show class name and trigger details for a specific workflow. |
-| `bin/workflow run <path>` | Execute a workflow from file path (always requires path to `workflow.rb`). |
-| `bin/workflow run -d <path>` | Dry run — execute with global dry-run mode enabled for side-effecting clients. |
-| `bin/workflow run --skip-cache <path>` | Execute while bypassing all `with_cache` blocks for that run. |
+- Put third-party API logic in a dedicated client under `app/lib/r3x/client/<provider>/...`; keep outputs thin.
+- Prefer env-name references such as `api_key_env:` or `project:` over raw secrets or parsed credential hashes. Resolve secrets lazily so dry-run paths avoid credential loading.
+- Lazy-load optional/heavy gems at the smallest practical boundary with `R3x::GemLoader.require(...)`; mark the gem `require: false` in `Gemfile`.
+- Prefer `R3x::Workflow::LlmSchema.define` for workflow-defined structured LLM output so workflows without schemas do not load the schema gem.
 
-**Global options:** `-h, --help` — print usage.
+## HTTP & JSON
 
-`bin/workflow` delegates command behavior to `R3x::Workflow::Cli`, so fast tests can cover `run`, `list`, and `info` without spawning a new Ruby process. The command boots through the internal `workflow_cli` runtime profile rather than the default web profile. `workflow_cli` is headless like `jobs`: it skips the app route files before Rails registers them with the routes reloader, excludes web-only gems, and keeps `include_all_helpers` off for framework eager-load. Unlike `jobs`, it still leaves `lib/r3x/workflow/cli.rb` available for the Thor wrapper. The `run` command loads the requested workflow file directly and executes the workflow class it defines. Use `--skip-cache` when you want to ignore `with_cache` during local iteration without editing the workflow file. `list` and `info` load all workflow packs via `PackLoader.load!` and query `Registry`. In the current split-process setup, `bin/jobs` keeps the default Solid Queue boot behavior, while `bin/jobs-worker` and `bin/jobs-scheduler` provide the dedicated split-role entrypoints for worker-only and scheduler-only jobs pods and automatically switch Rails into the internal `jobs` boot profile. The web process also loads workflow packs on server boot so Mission Control Jobs can run recurring tasks manually, but it only schedules recurring tasks when it also runs Solid Queue in-process, which currently means development or `SOLID_QUEUE_IN_PUMA=true`.
-
-**Note:** `bin/workflow run` always requires a file path. Use `bin/workflow list` and `bin/workflow info` to discover workflows loaded from `R3X_WORKFLOW_PATHS`.
-
-### Operational note
-
-- When refactoring workflow class names, remember that already queued scheduled runs may still point at the old concrete class name.
-- If a workflow class is renamed or removed, consider cleaning up pending jobs and recurring tasks created under the old class, or accept that older queued runs may fail deserialization.
-
-## Maintenance Warning
-
-- Keep this file synchronized with the real codebase. If you change workflow loading, trigger discovery, scheduling flow, top-level directory structure, namespaces, or the framework/user-workflow boundary, update the relevant `AGENTS.md` sections in the same change.
-- Future ideas, improvement proposals, and design-debt backlog live in `docs/todo.md`. When a task from that file is picked up, update its status there and keep `AGENTS.md` synchronized with the resulting code changes.
-- In particular, update examples and notes here when changing files such as `lib/r3x/workflow.rb`, `lib/r3x/workflow/pack_loader.rb`, `lib/r3x/workflow/registry.rb`, `lib/r3x/workflow/boot.rb`, `lib/r3x/recurring_tasks_config.rb`, `lib/r3x/triggers.rb`, `bin/workflow`, `bin/jobs`, or `config/application.rb`.
-- Also update this file when changing the shared DSL validation contract in files such as `lib/r3x/dsl/validatable.rb`, `lib/r3x/configuration_error.rb`, or the base classes for workflow-declared objects.
-- Also update this file when changing Active Job backend semantics, `Solid Queue` database wiring, or any logic that depends on enqueueing being inside the same database transaction as app writes.
-- When adding a new subsystem or moving code between `lib/r3x/`, `app/lib/r3x/`, `app/jobs/r3x/`, or `workflows/`, refresh the project overview and codebase map so future agents can still orient themselves quickly.
-
-## Ruby Version Updates
-
-- `.ruby-version` is the primary source of truth for the Ruby version in this repo.
-- `Gemfile` reads the version from `.ruby-version`.
-- `mise` is configured to read idiomatic Ruby version files via `mise.toml`, so local tool selection follows `.ruby-version`.
-- `ruby/setup-ruby` can auto-detect `.ruby-version` when `ruby-version:` is omitted, so keep CI on the convention unless the version file moves out of the repo root.
-- `Dockerfile` must keep `ARG RUBY_VERSION` aligned with `.ruby-version`. The GitHub Actions workflow also reads `.ruby-version` and passes it to Docker build as `RUBY_VERSION`.
-- When bumping Ruby, update these files together:
-  - `.ruby-version`
-  - `Dockerfile`
-  - any workflow or script that hardcodes a Ruby version
-  - `Gemfile.lock`, but only by running Bundler
-- Preferred update flow:
-  - change `.ruby-version`
-  - verify `Gemfile` still reads from `.ruby-version`
-  - update `Dockerfile ARG RUBY_VERSION`
-  - run `bundle update --ruby` to refresh `Gemfile.lock`
-  - rebuild both Docker targets: `production` and `ci`
-- Do not hand-edit `Gemfile.lock` to add or change `RUBY VERSION`. If `Gemfile` and `Gemfile.lock` disagree, fix that by regenerating the lockfile through Bundler, not by manually patching the lockfile.
-
-This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `bin/ci` which includes `bin/lint-r3x` to verify AGENTS.md references.
-
-## Iterative Design Reviews
-
-- When the user is still reviewing the shape of a refactor or API design, keep the first pass focused on production code only unless they explicitly ask for full follow-through.
-- Do not update tests or fixtures for an unaccepted design sketch. Wait until the user accepts the code shape, then synchronize tests in the follow-up pass.
-- It is still fine to run syntax checks on the touched Ruby files during the sketch phase.
-
-## JSON
-
-- Prefer `MultiJSON` for JSON parsing and serialization work (except when using `httpx`, where native `json:` options and `response.json` should be preferred).
-- Reasoning: it gives the app one consistent JSON abstraction instead of scattering direct `JSON` stdlib usage across the codebase, which makes adapter swaps and shared conventions easier later.
-
-## HTTP
-
-- Prefer `httpx` for outbound HTTP and API integrations in `R3x::Client` code.
-- Reasoning: `httpx` provides native multipart uploads, JSON request/response handling, persistent connections, and built-in retries without the middleware boilerplate that Faraday requires. It reduces client code volume and eliminates thread-unsafe runtime middleware mutation.
-- `Faraday` remains in `Gemfile.lock` as a transitive dependency of `googleauth`, `ruby_llm`, and `google-apis-*`. Do not add new direct Faraday dependencies or use Faraday in internal clients.
-- For small integration clients under `R3x::Client`, build the `httpx` client inside the class instead of injecting a `connection` dependency.
-- Reasoning: these clients are thin integration boundaries, so passing a raw HTTP client through the initializer adds indirection without improving the public interface we actually want to use.
-- Do not use empty `HTTPX.with({})`; call `HTTPX.get/post/...` directly when there are no shared options. When multiple code paths need the same timeout/SSL/options payload for `HTTPX.with`, build that payload once in a small helper and pass it with keyword splat. Use Ruby keyword argument shorthand (`verify_ssl:, timeout:`) when the local variable names match the keyword names. In options helpers, set only the timeout by default and conditionally assign the `ssl` key (e.g. `opts[:ssl] = ... unless verify_ssl`) so the `ssl` option is entirely omitted when SSL verification is enabled.
-- For workflow code that needs repeated HTTP requests in one controlled scope, prefer the block-scoped `ctx.client.persistent_http(...) { |http| ... }` helper over exposing raw `HTTPX.plugin(:persistent)` usage in workflows. Keep persistence opt-in for measured batch/hot paths, not as a default for thin clients.
-- **JSON handling**: When making HTTP requests that send/receive JSON, use `httpx`'s native `json:` option instead of manually serializing with `MultiJSON`. This automatically sets the `Content-Type` header and handles serialization. Similarly, use `response.json` to parse JSON response bodies instead of manually calling `MultiJSON.parse(response.body)`.
-  - **Bad**: `request.body = MultiJSON.generate({"key" => "value"})`
-  - **Bad**: `MultiJSON.parse(response.body.to_s)`
-  - **Good**: `client.post(url, json: { key: "value" })`
-  - **Good**: `response.json`
-- **Error handling**: `httpx` does not raise on 4xx/5xx by default. Call `.raise_for_status` on the response when the client should fail fast on HTTP errors, matching the previous `Faraday::Error` behavior. Do not hand-roll ordinary HTTP status checks in thin `R3x::Client` wrappers.
-  - **Bad**: `response = client.get(url)` (silently ignores 404/500)
-  - **Bad**: `raise "Request failed: #{response.status}" unless response.status >= 200 && response.status < 300`
-  - **Good**: `response = client.post(url, json: payload).raise_for_status`
-  - Manual error translation is still fine for provider-specific response bodies after the transport status has succeeded, e.g. an API returns `200` with `{ "IsErroredOnProcessing": true }`.
+- Prefer `httpx` for outbound HTTP in `R3x::Client` code. Do not add direct Faraday usage; existing Faraday is transitive.
+- For small integration clients, build the `httpx` client inside the class. Do not inject raw HTTP connections unless the production design needs that abstraction.
+- Do not use `HTTPX.with({})`; call `HTTPX.get/post/...` directly when there are no shared options.
+- For repeated workflow HTTP calls in one controlled scope, use `ctx.client.persistent_http(...) { |http| ... }`; keep persistence opt-in for measured hot paths.
+- Use `json:` for JSON request bodies and `response.json` for JSON responses. Prefer `MultiJSON` elsewhere.
+- Call `.raise_for_status` when a client should fail fast on transport 4xx/5xx. Do not hand-roll ordinary 2xx checks in thin clients.
+- Manual provider-level error translation is fine after successful transport status, e.g. a `200` response with an error field.
 
 ## Database & SQL
 
-- If writing raw SQL, it must at least support both **SQLite** and **PostgreSQL**.
-- Do not write database-specific SQL strings directly unless they are compatible with both adapters. If database-specific syntax (such as JSON extraction) is necessary, branch on the active connection's adapter name to provide compatible implementations.
-- Example:
+- Raw SQL must support both SQLite and PostgreSQL unless explicitly adapter-branched.
+- Do not write DB-specific SQL strings directly without an adapter branch and a clear unsupported-adapter error.
+- Prefer DB-side filtering, deduplication, ranking, aggregation, and `UNION` over loading many rows and shaping them in Ruby.
 
-  ```ruby
-  def resumptions_positive_sql
-    arguments_column = "#{quoted_table_name}.#{connection.quote_column_name("arguments")}"
+## Env
 
-    case connection.adapter_name
-    when /sqlite/i
-      "COALESCE(json_extract(#{arguments_column}, '$.resumptions'), 0) > 0"
-    when /postgres/i
-      "COALESCE((#{arguments_column}::jsonb ->> 'resumptions')::integer, 0) > 0"
-    else
-      raise NotImplementedError, "Unsupported database adapter for dashboard run resumptions: #{connection.adapter_name}"
-    end
-  end
-  ```
+- Required env: `R3x::Env.fetch!("KEY")`. Optional env: `R3x::Env.fetch("KEY")`.
+- Do not use direct `ENV[...]` patterns that let blank strings through.
+- Keep `docs/environment.md` synchronized when adding, renaming, or removing env vars.
+- Clients with env-name overrides should expose provider-level defaults and validate variants with underscore-suffixed prefixes, e.g. `R3x::Env.secure_fetch(api_key_env, prefix: "#{DEFAULT_API_KEY_ENV}_")`.
 
-## Naming Conventions
+## Naming, Zeitwerk, Autoloading
 
-
-- When a class is namespaced within a descriptive module (e.g., `R3x::Client`, `R3x::Triggers`), do not repeat the module name in the class name.
-- **Good**: `R3x::Client::Http`, `R3x::Triggers::Schedule`, `R3x::Client::Discord::Webhook`
-- **Bad**: `R3x::Client::HttpClient`, `R3x::Triggers::ScheduleTrigger`
-
-### Zeitwerk & File Structure
-
-- Adhere strictly to Zeitwerk's path-to-constant mapping: file names must match their defined constant exactly (snake_case to CamelCase).
-- **Files**: `app/lib/r3x/client/http.rb` must define `R3x::Client::Http`.
-- **Directories**: Directories represent namespaces. If a file is in `app/models/r3x/`, it must be wrapped in `module R3x`.
-- **Acronyms**: Use standard inflection (e.g., `lib/r3x/env.rb` → `R3x::Env`) unless a custom inflection is explicitly defined in `config/initializers/inflections.rb`.
-- **Validation**: Always ensure the filename and the class/module name are perfectly aligned to avoid `NameError` during autoloading.
-
-### Autoloading
-
-- Everything autoloaded by Rails (paths configured in `autoload_paths`, `autoload_lib`, etc.) is handled by Zeitwerk. You should never need to use `require` or `require_relative` for files within autoloaded paths.
-- **Bad**: `require_relative "../validators/cron"` at the top of a file in `lib/r3x/triggers/`
-- **Good**: Just reference `R3x::Validators::Cron` directly - Zeitwerk will find and load it automatically.
-- The only exception is requiring external gems that don't auto-require their components.
-- **Debugging**: If you get a `NameError` when referencing a class that should exist, it's likely a Zeitwerk autoloading issue (wrong file name, wrong constant name, or missing namespace). Check that file names match constants exactly (snake_case ↔ CamelCase).
-
-## Testing
-
-- When writing tests for workflow DSL or infrastructure, use generic workflow names (e.g., `TestWorkflow`, `MyTestWorkflow`), not real workflow names from `workflows/` folder.
-- Real workflows in `workflows/` are "user workflows" and should not be hardcoded in tests for the core framework.
-- Use anonymous classes or fixture workflows in `test/fixtures/workflows/` for testing framework behavior.
-- Pack-specific workflow tests should live under `workflows/<pack>/test/` next to the workflow pack itself.
-- **Good**: `Class.new(R3x::Workflow::Base) { def self.name; "Test"; end }`
-- **Bad**: Testing `MyUserWorkflow` workflow directly in framework tests
-
-### TDD Pattern
-
-- When fixing a bug, write a failing test first that reproduces the issue, then fix the code.
-- **Flow**: Write test → verify it fails → fix code → verify test passes.
-- This ensures the bug is actually fixed and prevents regressions.
-- Apply this red/green flow broadly to bug fixes and behavioral regressions, not just parser or formatter changes. Keep a regression test that proves the user-visible or externally observable behavior that broke.
-
-### Stubbing and Mocking
-
-- **Use Mocha** for method-level stubbing in tests. It removes the need for manual `define_singleton_method` / `alias_method` / `ensure` cleanup boilerplate.
-- **Require order matters**: `require "mocha/minitest"` must come **after** `require "rails/test_help"` in `test_helper.rb`.
-- **Prefer `stubs`, not `expects`**, unless the test is explicitly verifying that a side-effect method is called (e.g., an enqueue, a cache write, or a logging call). `stubs` keeps tests focused on outputs; `expects` makes tests brittle to internal refactoring.
-- **Do not stub what you don't own** via Mocha:
-  - Keep HTTP stubbing in **WebMock** (`stub_request`). Do not replace WebMock with Mocha stubs on Faraday/Net::HTTP internals.
-  - Keep complex stateful fakes (e.g., a fake `GmailService` with multiple interacting methods) as plain Ruby objects (`Object.new`, `Struct`, `Class.new`). Do not spread them across ten Mocha `expects` calls.
-  - Keep `ActiveRecord` queries and `Solid Queue` internal state changes as real database operations when possible. Only stub the boundary method (e.g., `SolidQueue::Job.enqueue`) when testing error paths or direct-enqueue contracts.
-- **Auto-cleanup**: Mocha stubs are automatically reset after each test. Do not write manual `ensure` blocks to restore stubbed methods.
-- **Block-style vs inline-style**:
-  - Use inline stubs when the stub applies to the whole test (`setup` or top of the test method).
-  - Use block-style only when you need a temporary override in the middle of a test (rare; prefer splitting the test).
-- **Regression rule**: If removing the real implementation under the stub does not break the test, the stub covers too much. Roll back the migration for that test.
-
-### Minitest Styling & Best Practices
-
-- **Follow Minitest/RuboCop conventions** for assertions:
-  - Prefer using semantic assertions over generic `assert_equal` on boolean or collection checks.
-  - **Good**: `assert(result)` / `refute(result)` — **Bad**: `assert_equal(true, result)` / `assert_equal(false, result)`.
-  - **Good**: `assert_predicate(object, :empty?)` or `assert_empty(collection)` — **Bad**: `assert(collection.empty?)` or `assert_equal({}, collection)`.
-  - **Good**: `assert_includes(collection, item)` / `refute_includes(collection, item)` — **Bad**: `assert(collection.include?(item))` / `refute(collection.include?(item))`.
-  - **Good**: `assert_nil(value)` — **Bad**: `assert_equal(nil, value)`.
-- **Assertion Line Spacing**: Ensure there is an empty line before assertion methods (like `assert`, `refute`, `assert_equal`, `assert_raises`) if they are preceded by other code or setups.
-- **Assertion Scope**: Wrap only the exact expression expected to raise an error inside `assert_raises` blocks, rather than wrapping mock/setup code or large blocks of test logic inside it.
-
-## Logging
-
-
-- Use Rails tagged logging with `self.class.name` for per-class log prefixes.
-- **Good**: `logger.tagged(self.class.name) { logger.info("message") }`
-- **Bad**: `logger.info("[Hardcoded::Class::Name] message")` or manual string interpolation
-- Reasoning: Using `self.class.name` keeps log tags synchronized with actual class names automatically, supports nested tagging, and works consistently with Rails log formatting.
-- Use `R3x::Concerns::Logger` - provides both instance and class method `logger` tagged with class name. `Rails.logger` is already `TaggedLogging` so just call `.tagged(name)` directly.
-- For class methods: `extend R3x::Concerns::Logger` then call `logger.info(...)`
-- For instance methods: `include R3x::Concerns::Logger` then call `logger.info(...)`
-- Preserve the shared workflow/job correlation tags emitted by `ApplicationJob` and workflow execution paths: `r3x.run_active_job_id` and, where useful for the emitting layer, `r3x.workflow_key` and `r3x.trigger_key`. Add nested tags when needed, but do not replace or rename these tags without updating the dashboard log queries and deployment env/docs in the same change.
-- **Lazy logging for debug level**: Use block form `logger.debug { "..." }` — the block only executes if debug level is enabled, avoiding unnecessary string allocation.
-- **Eager logging for info/warn/error**: Use string form `logger.info "..."` — these levels are always enabled, so block overhead is wasted.
-- **Good**: `logger.debug { "Processing #{items.count} items" }` (block — skipped when debug off)
-- **Good**: `logger.info "Workflow completed"` (string — always evaluated, no block overhead)
-- **Bad**: `logger.debug "Processing #{items.count} items"` (string built even when debug off)
-- **Bad**: `logger.info { "Workflow completed" }` (block overhead for always-enabled level)
-
-## Validators
-
-- Place shared validation logic in `lib/r3x/validators/`.
-- **Good**: `R3x::Validators::Cron`, `R3x::Validators::Url`
-- **Bad**: `R3x::Triggers::Cron`, `R3x::Services::UrlChecker`
-- Reasoning: Validators are reusable across triggers, services, and other components. Keep them in a dedicated namespace.
-- Validators used with `validates_with` should inherit from `ActiveModel::Validator` and implement `validate(record)`. They may also expose a `validate!` class method for direct use (e.g., `R3x::Validators::Url.validate!("https://example.com")`).
-- Trigger concerns that provide capability predicates should also include the relevant validations. For example, `CronSchedulable` auto-includes `validates :cron, presence: true` and `validates_with Validators::Cron` — individual triggers should not repeat these.
-- DSL objects should use `ActiveModel::Validations` via the shared DSL validation layer and call these validators from object-level validations for reusable value checks.
-- Presence and object semantics belong to the DSL object itself; `R3x::Validators::*` should focus on validating the shape or format of a provided value.
-- Every new workflow DSL object must go through the shared DSL validation layer. Do not add triggers, steps, outputs, or other workflow-declared objects that bypass validation or rely only on ad hoc `raise ArgumentError`.
-
-## Control Flow
-
-- `case` statements that dispatch on configuration values (e.g., ENV modes) must either exhaustively list all supported values or raise an exception in the `else` branch for unsupported values.
-- **Good**:
-
-  ```ruby
-  case mode
-  when "real" then # handle real
-  when "test" then # handle test
-  else
-    raise ArgumentError, "Unsupported mode: #{mode}"
-  end
-  ```
-
-- **Bad**:
-
-  ```ruby
-  case mode
-  when "real" then # handle real
-  else
-    # silently assumes test mode, hides typos in configuration
-  end
-  ```
-
-- Reasoning: Failing fast with a clear error prevents silent misconfiguration and makes debugging easier when an invalid mode is accidentally provided.
-
-## Environment Variables
-
-- When reading required environment variables, use `R3x::Env.fetch!("KEY")`; use `R3x::Env.fetch("KEY")` for optional values.
-- **Good**: `R3x::Env.fetch!("VAULT_ADDR")`
-- **Good**: `R3x::Env.fetch("R3X_TIMEZONE")`
-- **Bad**: `ENV["VAULT_ADDR"].presence || raise(ArgumentError, "Missing VAULT_ADDR")` — use the helper instead of inline pattern
-- **Bad**: `ENV["VAULT_ADDR"] || raise(ArgumentError, "Missing VAULT_ADDR")` — allows empty strings to pass through
-- The helper lives in `lib/r3x/env.rb`. In Rails/Dotenv, misconfigured `.env` files often yield empty strings (e.g., `VAULT_ADDR=`), which are truthy but invalid. Failing fast with a clear error prevents confusing downstream failures.
-- Keep `docs/environment.md` synchronized when adding, renaming, or removing environment variables. Document the env name, whether it is required, where it is used, a short description, and a placeholder example that does not reveal real secret values.
-- Clients that accept explicit env-name overrides should expose sensible provider-level defaults such as `DISCORD_WEBHOOK_URL`, `MINIFLUX_URL`, and `MINIFLUX_API_KEY`. Reuse those default constants for variant validation by passing an underscore-suffixed prefix, e.g. `R3x::Env.secure_fetch(api_key_env, prefix: "#{DEFAULT_API_KEY_ENV}_")`. Do not add separate `*_PREFIX` constants just to restate the default. `secure_fetch` treats that convention as "the base env name or a suffixed variant", so `MINIFLUX_API_KEY` and `MINIFLUX_API_KEY_PERSONAL` are both valid while unrelated names are rejected.
+- Do not repeat namespace names in class names: `R3x::Client::Http`, not `R3x::Client::HttpClient`.
+- Follow Zeitwerk path-to-constant mapping exactly. Files, directories, namespaces, and acronyms must align.
+- Do not `require` or `require_relative` files from Rails autoload paths. Just reference the constant. Require only external gems/components that do not auto-require.
+- One class per file. Extract nested classes to files under the parent namespace.
 
 ## Object Design
 
-- Prefer capability-based APIs over branching on symbolic types when behavior can be expressed through an object interface.
-- **Good**: `triggers.select(&:cron_schedulable?)`
-- **Bad**: `triggers.select { |t| t.type == :schedule }`
-- Prefer instance variables only for state the object needs across method calls or as part of its long-lived identity.
-- Do not use instance variables as local variables inside a single method. If a derived value is only needed within one method, use a local variable or extract a small helper. Instance variables are appropriate for memoization when a helper is called from multiple places and the result is stable for the lifetime of the object.
-- When multiple classes share a capability, extract a small concern or module with an explicit predicate and required methods.
-- **Good**: `include R3x::Triggers::Concerns::CronSchedulable`
-- Framework code should avoid hardcoding knowledge of concrete subtypes. Prefer polymorphism, capability predicates, and object-owned methods like `to_h`.
-- Name methods around behavior, not concrete subtype names, unless the code truly depends on that exact subtype.
-- Prefer duck typing: focus on behavior rather than names. Ask what the object can do and which methods it responds to; prefer ability over identity.
-- Reasoning: Duck typing is meritocratic. New classes can participate by exposing the right behavior without forcing central dispatch code to learn every subtype.
+- Prefer capability-based APIs over branching on symbolic types when behavior can live on the object.
+- Framework code should avoid hardcoding concrete subtypes. Prefer polymorphism, explicit capability predicates, and object-owned methods.
+- Name methods around behavior, not subtype names, unless exact subtype identity is the real contract.
+- Use instance variables only for state needed across methods or object lifetime. Use locals or small helpers for one-method derived values.
+- When multiple classes share a capability, extract a small concern with explicit predicates/required methods.
+- Keep production APIs small. Do not add methods, wrappers, adapters, keyword seams, or dependency injection just because they may help a test.
 
-## Scratchpad
+## Testing
 
-- `scratchpad/` is for quick test scripts, one-off experiments, and prototyping — anything outside the main implementation code and test suite.
-- The directory is gitignored. Do not place production code there.
-- Use it when you need to verify something quickly (e.g., hitting an API, testing a query) without writing a proper test.
-- When creating a standalone test script under `scratchpad/`, always add `require_relative "../config/environment"` at the top of the file so that the Rails environment (including models, configurations, and database connections) is loaded and available for use in the script.
+- Framework tests for workflow DSL/runtime must use generic workflow names or fixtures from `test/fixtures/workflows/`; do not hardcode real `workflows/` classes.
+- Pack-specific tests belong next to the pack in `workflows/<pack>/test/`.
+- Bug fixes should follow red/green: write a failing regression test, verify it fails, fix, verify it passes.
+- Use Minitest, fixtures, semantic assertions, and the repo's RuboCop/Minitest conventions.
+- Prefer `assert_predicate`, `assert_empty`, `assert_includes`, `assert_nil`, etc. over generic boolean/equality assertions.
+- Keep `assert_raises` blocks around only the exact expression expected to raise.
+
+### Stubbing and Mocking
+
+- Use Mocha for method-level stubbing. It auto-cleans stubs and avoids manual restore boilerplate.
+- `require "mocha/minitest"` must come after `require "rails/test_help"` in `test_helper.rb`.
+- Prefer `stubs`; use `expects` only when the call itself is the side effect being verified.
+- Do not change production APIs just to make tests easier. Test at the nearest owned boundary with Mocha, WebMock, fixtures, or plain Ruby fakes.
+- `R3x/NoManualMethodPatchingInTests` forbids global method patching in tests: no constant-level `define_singleton_method`, `singleton_class.define_method`, `alias_method`, `remove_method`, or restore-by-hand patterns. Use Mocha for class/global stubs and plain fake classes/objects for stateful collaborators.
+- Do not stub what you do not own via Mocha. Use WebMock for HTTP; keep Active Record queries and Solid Queue state real when practical.
+- Complex stateful fakes should be plain Ruby objects/classes, not chains of Mocha expectations.
+- If removing the real implementation under a stub would not break the test, the stub covers too much.
+
+## Logging
+
+- Use `R3x::Concerns::Logger` for class/instance logging and class-name tags. Do not hardcode class names in log strings.
+- Preserve workflow/job correlation tags: `r3x.run_active_job_id`, and where useful `r3x.workflow_key` / `r3x.trigger_key`. Update dashboard log queries/docs if renaming them.
+- Use block form for debug logs: `logger.debug { "..." }`.
+- Use string form for info/warn/error logs: `logger.info "..."`.
+
+## Validators
+
+- Put shared validation logic in `lib/r3x/validators/`.
+- Validators used with `validates_with` inherit from `ActiveModel::Validator` and implement `validate(record)`; they may expose `validate!` for direct use.
+- Workflow DSL objects must go through the shared DSL validation layer and raise `R3x::ConfigurationError` with collected validation errors.
+- Capability concerns should include their validations so individual triggers do not repeat them.
+
+## Control Flow
+
+- `case` dispatch on config/env/modes must list supported values or raise in `else`.
+- Fail fast for unknown env prefixes, provider names, modes, trigger types, and other closed sets.
 
 ## CLI Scripts
 
-- Use [Thor](https://github.com/rails/thor) for all CLI scripts in `bin/`. Do not use raw OptionParser.
-- Thor is a Rails dependency and auto-generates help from `desc`/`option` declarations — no manual `print_help` methods needed.
-- Each command is a method with `desc` and `option`. Subcommands are separate methods on the same class.
-- **Class setup:**
-  ```ruby
-  class MyCLI < Thor
-    def self.exit_on_failure? = true
-    namespace :"my-tool"
-  end
-  ```
-- Known limitation: `-h`/`--help` does not work on subcommands that have `required: true` options. Thor validates required options before checking for help flags. Use `--help` without required options, or `bin/tool help <command>`. This is a Thor design limitation, not a bug in our scripts.
-- Do not use Thor reserved words as method names: `run`, `invoke`, `shell`, `options`, `behavior`, `root`, `action`, `create_file`, `inside`, `run_ruby_script`. Use `map "run" => :execute` if the CLI command name must be `run`.
+- Use Thor for all `bin/` CLIs; do not use raw OptionParser.
+- Each command is a method with `desc` and `option`.
+- Set `def self.exit_on_failure? = true` and a `namespace`.
+- Avoid Thor reserved method names (`run`, `invoke`, `shell`, `options`, `behavior`, `root`, `action`, `create_file`, `inside`, `run_ruby_script`). Use `map "run" => :execute` if the command must be named `run`.
+- Thor `-h/--help` does not work on subcommands with required options; use `bin/tool help <command>`.
 
-## Code Style
+## Ruby & Rails Style
 
-### Ruby/Rails Implementation Defaults
+- Prefer the smallest Ruby/Rails primitive that expresses the real contract: `Hash`, `Mutex`, constants, `Data.define`, Rails helpers, models, scopes, and concerns before new abstractions/gems.
+- Avoid over-engineering for hypothetical future requirements. Each class/method should have one clear reason to change.
+- Keep registries idempotent and process-wide caches keyed by the real domain key. Protect concurrent writes with `Mutex`; freeze cached values when callers should not mutate them.
+- Do not use `Thread.current`, `thread_mattr`, or `Current` for shared configuration, provider registries, or process caches. Use them only for intentional thread/request scope.
+- Avoid `cattr_accessor`/`mattr_accessor` for mutable global state unless Rails-owned configuration behavior is specifically desired.
+- For immutable value objects, prefer class-form `Data.define` and put constants inside the class body.
+- For singleton-method namespace modules, use `extend self` only when the module is not meant to be included.
+- Prefer expressive stdlib methods (`values_at`, `slice`, `filter_map`, `each_with_object`, `sum`, `tally`) over verbose manual loops when they make intent clearer.
+- For conditional hash keys, build a base hash, assign optional keys, and return it. Avoid `Hash#tap`/`merge` for simple conditional key assignment.
+- Method chaining is fine when it makes data flow clearer; introduce locals when the intermediate value is reused or has important meaning.
+- Do not remove existing code comments without explicit user approval.
 
-- Prefer the smallest Ruby or Rails primitive that expresses the real contract. Do not add a new gem or concurrency abstraction for a tiny cache, registry, or value object when `Hash`, `Mutex`, constants, `Data.define`, or an existing Rails helper are enough.
-- Minimize database query round-trips by performing filtering, deduplication, and aggregation inside the database (using SQL features like window functions, groupings, or `UNION`) instead of pulling raw records and manipulating them in Ruby (e.g., avoiding looping database queries or `flat_map { ... }.uniq` patterns in Ruby). Let the database engine do the heavy lifting.
-- For process-wide memoization, use an explicit process-wide cache keyed by the real lookup key and protect writes with `Mutex` when concurrent access is possible. Freeze cached values when callers should not mutate them.
-- Do not use `Thread.current`, `thread_mattr`, or `Current` for shared configuration, provider registries, or process-level caches. Use them only when the value is intentionally thread/request scoped.
-- Avoid `cattr_accessor`/`mattr_accessor` for mutable global state unless Rails-owned configuration behavior is specifically desired. Prefer constants plus narrow class methods for fixed defaults and small registries.
-- Memoize per domain key, not per boot, unless the product contract is truly "one value for the whole process". For provider/client code, caches should usually be keyed by provider, env name, account, or another explicit identifier.
-- Keep optional integration setup behind the lazy-load boundary that first needs it. If a custom provider or registry requires a heavy optional gem, register it after `R3x::GemLoader.require(...)`, not from a boot-time initializer.
-- Make registries idempotent. Repeated calls from parallel workflow/client setup should be safe, cheap, and should not duplicate provider registrations.
-- Prefer failing fast at the boundary for unknown env prefixes, provider names, modes, and other closed sets. Do not keep a permissive fallback that only fails later in a lower-level client.
-- For small immutable value objects, prefer the class form of `Data.define` and define constants inside the class body:
+## Ruby Version Updates
 
-  ```ruby
-  class ProviderConfiguration < Data.define(:api_key, :config_api_key_attr)
-    API_KEY_SUFFIX = "_API_KEY"
-  end
-  ```
-
-- Keep class-level APIs easy to scan: put constants first, then the public `class << self` methods near the top of the class. If a class-level helper is private, mark it with `private_class_method` close to the helper definition.
-
-### Prefer Expressive, High-Level Methods
-
-Ruby's standard library is designed so that the most readable, expressive methods are often also the most efficient. Prefer them over manually chaining lower-level operations.
-
-- **Good**: `rows.map { |e| e.values_at("name", "location").join("\n") }` — one hash traversal, one array allocation, clear intent.
-- **Bad**: `rows.map { |e| [e["name"], e["location"]].join("\n") }` — two separate lookups, more noise.
-
-Reasoning: expressiveness and performance usually go hand in hand in Ruby. `values_at`, `slice`, `filter_map`, `each_with_object`, `sum`, `tally`, etc. are implemented in C and optimized for their use cases. Don't sacrifice readability for micro-optimizations, and don't write verbose manual loops when a built-in method does the same job faster and cleaner.
-
-### Extracting Multiple Hash Keys
-
-When pulling several values out of a hash to build a list, table row, or tuple, prefer `values_at` (ordered extraction) or `slice` + `values` (explicit subset) over chaining individual `.fetch` or `[]` calls.
-
-**Good:**
-```ruby
-# Ordered positional extraction — use values_at
-rows.map { |e| e.values_at("name", "location", "date_time").join("\n") }
-
-# Named subset you will pass around — use slice
-row.slice("name", "location", "date_time").values.join("\n")
-```
-
-**Bad:**
-```ruby
-rows.map { |e| [e.fetch("name"), e.fetch("location"), e.fetch("date_time")].join("\n") }
-```
-
-**Rationale:**
-- `values_at` communicates "I need these keys in this exact order" more clearly than repeated fetches.
-- `slice` communicates "I want a subset of the hash" and works well when the resulting hash is passed onward.
-- Both are shorter, easier to scan, and less prone to copy-paste errors when adding or reordering keys.
-- They are also more efficient: a single `values_at` or `slice` call performs one internal hash traversal instead of multiple separate lookups, and avoids allocating intermediate arrays or throwaway wrapper objects. Ruby's standard library is designed so that expressive, readable methods often coincide with the faster path — prefer them instead of manually chaining lower-level operations.
-
-### Building Hashes with Conditional Keys
-
-When constructing a configuration hash or payload where certain keys should only be present based on conditions (e.g., settings that should be omitted entirely rather than being passed as `nil` or empty objects), build the base hash first, conditionally assign the optional keys, and return the hash. Avoid using `Hash#tap` or `Hash#merge` for simple conditional key assignments.
-
-**Good:**
-```ruby
-def session_options(verify_ssl:, timeout:)
-  opts = { timeout: { connect_timeout: 5, operation_timeout: timeout } }
-  opts[:ssl] = { verify_mode: OpenSSL::SSL::VERIFY_NONE } unless verify_ssl
-  opts
-end
-```
-
-**Bad:**
-```ruby
-# Avoid tap nesting for simple conditional key additions
-def session_options(verify_ssl:, timeout:)
-  {
-    timeout: { connect_timeout: 5, operation_timeout: timeout }
-  }.tap do |opts|
-    opts[:ssl] = { verify_mode: OpenSSL::SSL::VERIFY_NONE } unless verify_ssl
-  end
-end
-```
-
-**Rationale:**
-- Simple assignment (`opts[:key] = value`) is flat, easy to read, and carries zero block/closure overhead.
-- Keeping the flow linear avoids the cognitive nesting introduced by `tap` blocks.
-
-### Method Chaining
-
-Prefer chaining methods across multiple lines over introducing single-use intermediate variables.
-
-**Good:**
-```ruby
-@llm_context
-  .chat(model: model, provider: :gemini)
-  .ask(prompt, with: [io])
-  .content
-```
-
-**Bad:**
-```ruby
-chat = @llm_context.chat(model: model, provider: :gemini)
-response = chat.ask(prompt, with: [io])
-response.content
-```
-
-**Rationale:**
-- Each intermediate variable adds a name that must be understood and maintained
-- Chaining makes the data flow obvious - input flows through transformations to output
-- Fewer local variables reduce cognitive load and naming fatigue
-- The pattern works well with Ruby's method chaining syntax and fluent interfaces
-
-**Exceptions:**
-- When intermediate results are used multiple times
-- When the intermediate value has semantic meaning that aids comprehension
-- When debugging requires inspecting intermediate state
-
-### Module-Level Singleton API
-
-When a module exists solely as a namespace for a group of related class-level (singleton) methods, use `extend self`. This avoids repeating `self.` on every method definition and signals that the module is intended to be called directly as `ModuleName.method`.
-
-**Good:**
-```ruby
-module R3x::RuntimeProfile
-  extend self
-
-  def current
-    # ...
-  end
-end
-```
-
-**Bad:**
-```ruby
-module R3x::RuntimeProfile
-  def self.current
-    # ...
-  end
-end
-```
-
-Do **not** use `extend self` in modules that are meant to be mixed in (`include`) or that contain both instance and class methods. Reserve it for pure singleton-method namespaces.
-
-## Design Principles
-
-### KISS (Keep It Simple, Stupid)
-
-- Prefer simple solutions over clever ones.
-- Avoid over-engineering for hypothetical future requirements.
-- Each class/method should have one clear responsibility.
-- Don't add methods that "might be useful someday" (like `save_to(path)` for in-memory file objects).
-- When in doubt, choose the smaller API surface.
-
-### SRP (Single Responsibility Principle)
-
-- A class should have one reason to change.
-- Data objects should store data; let calling code decide what to do with it.
-- **Bad**: File wrapper with `save_to` method — mixes data storage with filesystem I/O.
-- **Good**: File wrapper with `to_io` method — provides access to data, caller decides whether to save, upload, or process.
-- Separate concerns: downloading ≠ processing ≠ persisting.
-
-### One Class Per File
-
-- Each class must be defined in its own file following Zeitwerk conventions.
-- Nested classes should be extracted to separate files under the parent namespace.
-- **Bad**: Defining `Http::DownloadedFile` inside `http.rb` alongside `Http` class.
-- **Good**: `Http` in `app/lib/r3x/client/http.rb`, `Http::DownloadedFile` in `app/lib/r3x/client/http/downloaded_file.rb`.
+- `.ruby-version` is the source of truth. `Gemfile` reads it; `mise` follows it; CI should let `ruby/setup-ruby` auto-detect it.
+- Keep `Dockerfile ARG RUBY_VERSION` aligned with `.ruby-version`; GitHub Actions reads `.ruby-version` for Docker builds.
+- When bumping Ruby: update `.ruby-version`, update Docker ARGs/scripts that hardcode Ruby, run `bundle update --ruby`, update `Gemfile.lock` through Bundler only, and rebuild Docker `production` and `ci` targets.
 
 ## Scope
 
-- Apply these as defaults for new work.
-- Do not rewrite existing code only to satisfy these preferences unless the task explicitly calls for that refactor.
-- **Do not remove existing comments from code without explicit user approval.** Comments in the codebase are intentional documentation — preserve them unless the user asks to remove or rewrite them.
+- Apply these defaults to new work and touched code.
+- Do not rewrite existing code only to satisfy preferences unless the task calls for that refactor.
+- Future ideas and design debt live in `docs/todo.md`; when picking up an item, update its status there.
