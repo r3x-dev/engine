@@ -17,7 +17,7 @@ module Seeds
       end
 
       assert_equal "", stdout
-      assert_equal 5, @runs.size
+      assert_equal 6, @runs.size
 
       runs = R3x::Dashboard::Workflow::Runs.new.all.select { |run| run[:workflow_key].start_with?("demo_") }
 
@@ -26,11 +26,13 @@ module Seeds
         "demo_inventory_sync",
         "demo_invoice_dispatch",
         "demo_monitoring",
-        "demo_retention_cleanup"
+        "demo_retention_cleanup",
+        "demo_summerhouse_monitoring"
       ], R3x::Dashboard::Workflow::Catalog.new.workflow_keys
 
-      assert_equal %w[failed finished finished running scheduled], runs.map { |run| run[:status] }.sort
-      assert_equal 5, SolidQueue::RecurringTask.where("key LIKE ?", "workflow:demo_%").count
+      assert_equal %w[failed finished finished running scheduled sleeping], runs.map { |run| run[:status] }.sort
+      assert_equal 1, runs.find { |run| run[:workflow_key] == "demo_summerhouse_monitoring" }[:resumptions]
+      assert_equal 6, SolidQueue::RecurringTask.where("key LIKE ?", "workflow:demo_%").count
     end
 
     test "re-seeding replaces demo records instead of duplicating them" do
@@ -59,6 +61,7 @@ module Seeds
       assert_includes stdout, "Demo Invoice Dispatch"
       assert_includes stdout, "Demo Monitoring"
       assert_includes stdout, "Demo Retention Cleanup"
+      assert_includes stdout, "Demo Summerhouse Monitoring"
     end
 
     private

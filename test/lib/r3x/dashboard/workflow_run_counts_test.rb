@@ -102,6 +102,84 @@ module R3x
         assert_equal 0, counts.recent_activity_count(window: 24.hours)
       end
 
+      test "does not count scheduled resumed fragments as running" do
+        active_job_id = "aj-counted-resume"
+        DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          finished_at: 3.minutes.ago,
+          created_at: 5.minutes.ago,
+          updated_at: 3.minutes.ago
+        )
+        resumed_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          created_at: 3.minutes.ago,
+          updated_at: 3.minutes.ago,
+          scheduled_at: 2.minutes.from_now
+        )
+        resumed_job.update!(arguments: resumed_job.arguments.merge("resumptions" => 1))
+        SolidQueue::ReadyExecution.where(job_id: resumed_job.id).delete_all
+        scheduled_execution = SolidQueue::ScheduledExecution.find_or_initialize_by(job_id: resumed_job.id)
+        scheduled_execution.update!(
+          queue_name: resumed_job.queue_name,
+          priority: resumed_job.priority,
+          scheduled_at: resumed_job.scheduled_at,
+          created_at: resumed_job.created_at
+        )
+
+        assert_equal 0, Workflow::RunCounts.new.running_count
+      end
+
+      test "running count ignores queued backlog" do
+        running_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          created_at: 2.hours.ago,
+          updated_at: 2.hours.ago
+        )
+        claim_job!(running_job, claimed_at: 2.hours.ago)
+
+        active_job_id = "aj-counted-sleeping"
+        DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          finished_at: 2.hours.ago,
+          created_at: 3.hours.ago,
+          updated_at: 2.hours.ago
+        )
+        sleeping_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          created_at: 2.hours.ago,
+          updated_at: 2.hours.ago,
+          scheduled_at: 1.hour.from_now
+        )
+        sleeping_job.update!(arguments: sleeping_job.arguments.merge("resumptions" => 1))
+        SolidQueue::ReadyExecution.where(job_id: sleeping_job.id).delete_all
+        SolidQueue::ScheduledExecution.find_or_initialize_by(job_id: sleeping_job.id).update!(
+          queue_name: sleeping_job.queue_name,
+          priority: sleeping_job.priority,
+          scheduled_at: sleeping_job.scheduled_at,
+          created_at: sleeping_job.created_at
+        )
+
+        75.times do |index|
+          DashboardJobRows.create_job!(
+            job_class_name: WORKFLOW_JOB_CLASS_NAME,
+            arguments: [ "schedule:abc123" ],
+            created_at: index.seconds.ago,
+            updated_at: index.seconds.ago
+          )
+        end
+
+        assert_equal 1, Workflow::RunCounts.new.running_count
+      end
+
       test "recent run ids include long-running jobs that completed most recently" do
         long_running_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,

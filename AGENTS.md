@@ -202,7 +202,29 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
   - **Good**: `response = client.post(url, json: payload).raise_for_status`
   - Manual error translation is still fine for provider-specific response bodies after the transport status has succeeded, e.g. an API returns `200` with `{ "IsErroredOnProcessing": true }`.
 
+## Database & SQL
+
+- If writing raw SQL, it must at least support both **SQLite** and **PostgreSQL**.
+- Do not write database-specific SQL strings directly unless they are compatible with both adapters. If database-specific syntax (such as JSON extraction) is necessary, branch on the active connection's adapter name to provide compatible implementations.
+- Example:
+
+  ```ruby
+  def resumptions_positive_sql
+    arguments_column = "#{quoted_table_name}.#{connection.quote_column_name("arguments")}"
+
+    case connection.adapter_name
+    when /sqlite/i
+      "COALESCE(json_extract(#{arguments_column}, '$.resumptions'), 0) > 0"
+    when /postgres/i
+      "COALESCE((#{arguments_column}::jsonb ->> 'resumptions')::integer, 0) > 0"
+    else
+      raise NotImplementedError, "Unsupported database adapter for dashboard run resumptions: #{connection.adapter_name}"
+    end
+  end
+  ```
+
 ## Naming Conventions
+
 
 - When a class is namespaced within a descriptive module (e.g., `R3x::Client`, `R3x::Triggers`), do not repeat the module name in the class name.
 - **Good**: `R3x::Client::Http`, `R3x::Triggers::Schedule`, `R3x::Client::Discord::Webhook`

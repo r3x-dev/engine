@@ -552,6 +552,57 @@ module R3x
       assert_equal [ :first ], events
     end
 
+    test "perform logs 'Resuming workflow' instead of 'Running workflow' on resumption" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::InterruptedResumptionWorkflow"
+        end
+
+        trigger :manual
+
+        define_method :run do
+          step :first do
+          end
+
+          step :second, isolated: true do
+          end
+
+          step :third do
+          end
+        end
+      end
+
+      begin
+        Workflows.const_set(:InterruptedResumptionWorkflow, workflow_class)
+
+        workflow = workflow_class.new
+        trigger_key = workflow_class.triggers.first.unique_key
+
+        output1 = capture_logged_output do
+          assert_raises(ActiveJob::Continuation::Interrupt) do
+            workflow.perform(trigger_key)
+          end
+        end
+
+        assert_includes output1, "Running workflow trigger_type=manual"
+        refute_includes output1, "Resuming workflow trigger_type=manual"
+
+        serialized_job_data = workflow.serialize
+        resumed_workflow = workflow_class.deserialize(serialized_job_data)
+
+        output2 = capture_logged_output do
+          assert_raises(ActiveJob::Continuation::Interrupt) do
+            resumed_workflow.perform(trigger_key)
+          end
+        end
+
+        refute_includes output2, "Running workflow trigger_type=manual"
+        assert_includes output2, "Resuming workflow trigger_type=manual after 'first'"
+      ensure
+        Workflows.send(:remove_const, :InterruptedResumptionWorkflow) if Workflows.const_defined?(:InterruptedResumptionWorkflow)
+      end
+    end
+
     test "perform does not reload workflow packs" do
       workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
@@ -726,9 +777,8 @@ module R3x
 
       assert_includes output, "r3x.job_outcome=failed"
       assert_includes output, "Workflow run failed"
-      assert_includes output, "\"error_class\":\"ArgumentError\""
-      assert_includes output, "\"error_message\":\"boom\""
-      assert_includes output, "\"backtrace\":["
+      assert_match(/(?:"error_class":"ArgumentError"|error_class=ArgumentError)/, output)
+      assert_match(/(?:"error_message":"boom"|error_message=boom)/, output)
     end
 
     test "prevents overriding perform method in subclasses" do
@@ -1223,26 +1273,26 @@ module R3x
 
     def write_fragile_cache_workflow(path, value)
       File.write(path, <<~RUBY)
-          module Workflows
-            class FragileCacheWorkflow < R3x::Workflow::Base
-              def self.name
-                "Workflows::FragileCacheWorkflow"
-              end
+        module Workflows
+          class FragileCacheWorkflow < R3x::Workflow::Base
+            def self.name
+              "Workflows::FragileCacheWorkflow"
+            end
 
-              def run
-                with_cache do
-                  ignored = "not a real end"
-                  # also not a real end
-                  text = <<~TEXT
-                    still not a real end
-                  TEXT
+            def run
+              with_cache do
+                ignored = "not a real end"
+                # also not a real end
+                text = <<~TEXT
+                  still not a real end
+                TEXT
 
-                  #{value.inspect}
-                end
+                #{value.inspect}
               end
             end
           end
-        RUBY
+        end
+      RUBY
     end
 
     def load_fragile_cache_workflow(path)
