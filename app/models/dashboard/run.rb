@@ -257,6 +257,10 @@ module Dashboard
       fetch_key(normalized_arguments, "resumptions").to_i
     end
 
+    def observed_resumptions
+      resumptions + (resumed_execution_started? ? 1 : 0)
+    end
+
     def status
       return "failed" if failed_execution.present?
       return "finished" if finished_at.present?
@@ -320,6 +324,17 @@ module Dashboard
       normalized_arguments.is_a?(Hash) &&
         fetch_key(normalized_arguments, "job_class").present? &&
         normalized_arguments.key?("arguments")
+    end
+
+    def resumed_execution_started?
+      continuation_started? && (finished_at.present? || failed_execution.present? || claimed_execution.present?)
+    end
+
+    def continuation_started?
+      continuation = fetch_key(normalized_arguments, "continuation")
+      return false unless continuation.is_a?(Hash)
+
+      Array(fetch_key(continuation, "completed")).any? || fetch_key(continuation, "current").present?
     end
 
     def fetch_key(hash, key)

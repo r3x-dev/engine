@@ -90,7 +90,7 @@ module R3x
             priority: last_job.priority,
             queue_name: last_job.queue_name,
             recorded_at: last_job.recorded_at,
-            resumptions: last_job.resumptions,
+            resumptions: last_job.observed_resumptions,
             status: status,
             workflow_key: workflow_key
           }
