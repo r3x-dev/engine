@@ -10,7 +10,7 @@ module R3x
         assert_equal :schedule, execution.type
       end
 
-      test "dynamic schedule? predicate" do
+      test "schedule? predicate" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
         execution = Execution.new(trigger: trigger, workflow_key: "test")
 
@@ -18,12 +18,20 @@ module R3x
         refute_predicate execution, :manual?
       end
 
-      test "dynamic manual? predicate" do
+      test "manual? predicate" do
         trigger = R3x::Triggers::Manual.new
         execution = Execution.new(trigger: trigger, workflow_key: "test")
 
         refute_predicate execution, :schedule?
         assert_predicate execution, :manual?
+      end
+
+      test "does not synthesize unknown trigger predicates" do
+        trigger = R3x::Triggers::Manual.new
+        execution = Execution.new(trigger: trigger, workflow_key: "test")
+
+        refute_respond_to execution, :webhook?
+        assert_raises(NoMethodError) { execution.webhook? }
       end
 
       test "delegates options to trigger" do
