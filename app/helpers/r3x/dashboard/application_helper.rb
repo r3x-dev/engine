@@ -1,32 +1,28 @@
 module R3x
   module Dashboard
     module ApplicationHelper
+      TONE_BY_STATUS = {
+        "blocked"   => "warn",
+        "failed"    => "danger",
+        "finished"  => "ok",
+        "healthy"   => "ok",
+        "idle"      => "muted",
+        "queued"    => "info",
+        "running"   => "info",
+        "scheduled" => "info",
+        "sleeping"  => "info"
+      }.freeze
+
       def dashboard_health_label(health)
         health.fetch(:label)
       end
 
       def dashboard_status_label(status)
-        {
-          "blocked"   => "Blocked",
-          "failed"    => "Failed",
-          "finished"  => "Success",
-          "queued"    => "Queued",
-          "running"   => "Running",
-          "scheduled" => "Scheduled"
-        }.fetch(status, status.to_s.humanize)
+        status.to_s.humanize
       end
 
       def dashboard_tone_for(value)
-        {
-          "blocked"   => "warn",
-          "failed"    => "danger",
-          "finished"  => "ok",
-          "healthy"   => "ok",
-          "idle"      => "muted",
-          "queued"    => "info",
-          "running"   => "info",
-          "scheduled" => "info"
-        }.fetch(value, "muted")
+        TONE_BY_STATUS.fetch(value, "muted")
       end
 
       def dashboard_pill(label, tone, title: nil, class_name: nil)
