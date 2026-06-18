@@ -45,6 +45,13 @@ module R3x
         def self.register!: () -> void
       end
 
+      module ModelRegistry
+        def self.file_path: () -> Pathname
+        def self.configure!: () -> void
+        def self.read: () -> Array[untyped]
+        def self.refresh!: () -> void
+      end
+
       def initialize: (
         api_key: String api_key,
         config_api_key_attr: String config_api_key_attr,

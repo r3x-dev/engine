@@ -37,6 +37,7 @@ module R3x
       )
         R3x::GemLoader.require("ruby_llm")
         ProviderRegistry.register!
+        ModelRegistry.configure!
 
         inferred_provider = config_api_key_attr.delete_suffix("_api_key").to_sym
         raise ArgumentError, "Unsupported LLM provider: #{inferred_provider}" unless RubyLLM::Provider.providers.key?(inferred_provider)

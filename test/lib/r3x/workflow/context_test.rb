@@ -224,7 +224,7 @@ module R3x
           llm = ctx.client.llm(api_key_env: "OPENCODE_GO_API_KEY")
 
           assert_instance_of R3x::Client::Llm, llm
-          assert_equal({ provider: :opencode_go, assume_model_exists: true }, llm.instance_variable_get(:@chat_options))
+          assert_equal({}, llm.instance_variable_get(:@chat_options))
           context = llm.instance_variable_get(:@llm_context)
 
           assert_equal "go-base-key", context.config.opencode_go_api_key
@@ -243,14 +243,12 @@ module R3x
           llm = ctx.client.llm(api_key_env: "OPENCODE_GO_API_KEY_PROJECTA")
 
           assert_instance_of R3x::Client::Llm, llm
-          assert_equal({ provider: :opencode_go, assume_model_exists: true }, llm.instance_variable_get(:@chat_options))
+          assert_equal({}, llm.instance_variable_get(:@chat_options))
           context = llm.instance_variable_get(:@llm_context)
 
           assert_equal "go-test-key", context.config.opencode_go_api_key
         end
       end
-
-
 
       private
 
