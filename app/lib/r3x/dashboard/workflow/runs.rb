@@ -76,7 +76,7 @@ module R3x
             priority: last_job.priority,
             queue_name: last_job.queue_name,
             recorded_at: last_job.recorded_at,
-            resumptions: last_job.resumptions,
+            resumptions: last_job.observed_resumptions,
             scheduled_at: last_job.scheduled_execution&.scheduled_at || last_job.scheduled_at,
             started_at: first_job.claimed_execution&.created_at || first_job.created_at,
             status: status,

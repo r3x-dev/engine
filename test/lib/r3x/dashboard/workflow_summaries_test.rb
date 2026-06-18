@@ -150,6 +150,54 @@ module R3x
         assert_equal "Last run failed", summary.dig(:health, :label)
       end
 
+      test "last run summary counts the final resumed execution" do
+        SolidQueue::RecurringTask.create!(
+          key: "workflow:test_workflow:schedule:abc123",
+          schedule: "0 * * * *",
+          class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          queue_name: "default",
+          static: false
+        )
+
+        active_job_id = "aj-summary-finished-after-two-resumes"
+        DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          finished_at: 5.minutes.ago,
+          created_at: 7.minutes.ago,
+          updated_at: 5.minutes.ago
+        )
+        DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          finished_at: 3.minutes.ago,
+          created_at: 5.minutes.ago,
+          updated_at: 3.minutes.ago
+        )
+        final_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          finished_at: 1.minute.ago,
+          created_at: 3.minutes.ago,
+          updated_at: 1.minute.ago
+        )
+        final_job.update!(
+          arguments: final_job.arguments.merge(
+            "continuation" => { "completed" => [ "check_camera_1", "check_camera_2" ] },
+            "resumptions"  => 1
+          )
+        )
+
+        summary = Workflow::Summaries.new.find!("test_workflow")
+
+        assert_equal final_job.id, summary.dig(:last_run, :job_id)
+        assert_equal 2, summary.dig(:last_run, :resumptions)
+      end
+
       test "builds all summaries without per-workflow run lookups" do
         create_dashboard_workflow(
           workflow_key: "first_workflow",

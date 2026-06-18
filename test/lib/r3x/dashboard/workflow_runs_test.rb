@@ -70,6 +70,47 @@ module R3x
         assert_nil runs.first[:finished_at]
       end
 
+      test "counts the final resumed execution in a finished logical run" do
+        active_job_id = "aj-finished-after-two-resumes"
+        DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          finished_at: 5.minutes.ago,
+          created_at: 7.minutes.ago,
+          updated_at: 5.minutes.ago
+        )
+        DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          finished_at: 3.minutes.ago,
+          created_at: 5.minutes.ago,
+          updated_at: 3.minutes.ago
+        )
+        final_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: [ "schedule:abc123" ],
+          active_job_id: active_job_id,
+          finished_at: 1.minute.ago,
+          created_at: 3.minutes.ago,
+          updated_at: 1.minute.ago
+        )
+        final_job.update!(
+          arguments: final_job.arguments.merge(
+            "continuation" => { "completed" => [ "check_camera_1", "check_camera_2" ] },
+            "resumptions"  => 1
+          )
+        )
+
+        runs = Workflow::Runs.new.all.select { |entry| entry[:active_job_id] == active_job_id }
+
+        assert_equal 1, runs.size
+        assert_equal final_job.id, runs.first[:job_id]
+        assert_equal "finished", runs.first[:status]
+        assert_equal 2, runs.first[:resumptions]
+      end
+
       test "sleeping filter includes scheduled resumed workflow fragments" do
         active_job_id = "aj-scheduled-resume"
         DashboardJobRows.create_job!(
