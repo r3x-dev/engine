@@ -16,7 +16,7 @@ module R3x
               json: { role: config.kubernetes_role, jwt: service_account_token }
             )
 
-            raise_login_error(response) unless response.status >= 200 && response.status < 300
+            raise_login_error(response) { response.raise_for_status }
 
             body = response.json
             auth = body.is_a?(Hash) && body["auth"]
@@ -46,6 +46,8 @@ module R3x
           end
 
           def raise_login_error(response)
+            yield
+          rescue HTTPX::HTTPError
             identity = service_account_identity
             scope = if identity
               " (#{identity.fetch(:namespace)}/#{identity.fetch(:service_account_name)})"

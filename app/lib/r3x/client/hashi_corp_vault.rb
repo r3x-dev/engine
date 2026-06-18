@@ -125,7 +125,7 @@ module R3x
           raise ArgumentError, "Unsupported Vault HTTP method: #{method.inspect}"
         end
 
-        raise_request_error(response) unless response.status >= 200 && response.status < 300
+        raise_request_error(response) { response.raise_for_status }
         parse_json_response(response)
       end
 
@@ -141,6 +141,8 @@ module R3x
       end
 
       def raise_request_error(response)
+        yield
+      rescue HTTPX::HTTPError
         raise "Vault request failed with status #{response.status}: #{request_errors(response)}"
       end
     end
