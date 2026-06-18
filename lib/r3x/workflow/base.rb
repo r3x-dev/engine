@@ -47,7 +47,7 @@ module R3x
         end
       end
 
-      def with_cache(force: false, &block)
+      def with_cache(force: false, key: nil, &block)
         if R3x::Policy.skip_cache?
           logger.info "Skipping cache for #{self.class.name} due to policy"
 
@@ -58,7 +58,12 @@ module R3x
           raise "with_cache is disabled in production, if you need to use it, please set R3X_SKIP_CACHE=true in the environment variables"
         end
 
-        cache_key = R3x::Workflow::CacheKey.generate(workflow_key: self.class.workflow_key, block: block, method_name: __method__)
+        cache_key = R3x::Workflow::CacheKey.generate(
+          workflow_key: self.class.workflow_key,
+          block:,
+          method_name: __method__,
+          key:
+        )
 
         Rails.cache.fetch(cache_key, force: force, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes) { yield }
       end
