@@ -23,9 +23,9 @@ module R3x
           end
 
           with_env("R3X_GMAIL_DRY_RUN" => "false") do
-            R3x::Client::GoogleAuth.stubs(:from_env).with { |**kwargs|
+            R3x::Client::GoogleAuth.stubs(:from_env).with do |**kwargs|
               kwargs[:project] == "TEST_APP" && kwargs[:scope].is_a?(String)
-            }.returns(authorization)
+            end.returns(authorization)
 
             with_stubbed_gmail_service(service) do
               result = Gmail.new(project: "TEST_APP").deliver(
