@@ -16,3 +16,6 @@ vault_check:
 
 test_dockerignore:
   rsync -avn . /dev/shm --exclude-from .dockerignore
+
+refresh-llm-models:
+  bin/llm-models refresh

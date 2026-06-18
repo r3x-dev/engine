@@ -49,6 +49,10 @@ This Rails app uses a small set of preferred libraries for common integration wo
 - `app/lib/r3x/client/google/gmail.rb`: Gmail API client used by workflows via `ctx.client.gmail(...)`.
 - `app/lib/r3x/client/google/translate.rb`: Google Translate client used by workflows via `ctx.client.google_translate(...)`.
 - `lib/r3x/workflow/llm_schema.rb`: lazy wrapper around `RubyLLM::Schema` for workflows that need structured LLM output.
+- `app/lib/r3x/client/llm/provider_registry.rb`: registers custom LLM providers such as `OpenCodeGo` with `ruby_llm`.
+- `app/lib/r3x/client/llm/model_registry.rb`: merged model registry for `ruby_llm`. It points `RubyLLM.config.model_registry_file` at `config/llm_models.json`, merges the gem's bundled registry with the committed custom-provider registry at runtime, and refreshes custom provider models from their public `/models` endpoints.
+- `bin/llm-models`: Thor CLI for refreshing the custom-provider model registry; used locally via `just refresh-llm-models` and weekly by `.github/workflows/refresh-llm-models.yml`.
+- `config/llm_models.json`: committed model registry consumed by `ruby_llm`; refreshed automatically without LLM API keys.
 - `R3x::Client::Google` is a project namespace; when referencing the third-party Google gem namespace, use `::Google` to avoid constant collisions.
 - `app/jobs/r3x/`: job entrypoints for workflow runtime support.
 - `app/models/r3x/`: runtime support models under the `R3x` namespace.
@@ -63,6 +67,7 @@ This Rails app uses a small set of preferred libraries for common integration wo
 
 - Workflows subclass `R3x::Workflow::Base`, declare triggers via the DSL, and implement `#run`.
 - Workflow code can define structured LLM schemas via `R3x::Workflow::LlmSchema.define { ... }`, which lazy-loads `ruby_llm-schema` instead of requiring it for all processes at boot.
+- `R3x::Client::Llm` merges the bundled `ruby_llm` registry with a committed `config/llm_models.json` registry for custom providers. Custom providers such as `OpenCodeGo` are registry-backed, so model names are validated against the refreshed custom list; run `bin/llm-models refresh` or `just refresh-llm-models` to update only the custom-provider registry from public endpoints.
 - `R3x::Workflow::Base` is also an `ApplicationJob`; its `#perform` delegates trigger/context setup to `R3x::Workflow::Executor`, stores the context on the job, and then calls `#run` on the current job instance.
 - Workflow code can use `ctx.durable_set(name = :default, ttl: 90.days)` to get a durable,
   workflow-scoped set for best-effort cross-run dedup of processed items.

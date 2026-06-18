@@ -31,7 +31,7 @@ module R3x
         assert_equal 4, context.config.retry_backoff_factor
       end
 
-      test "infers provider and assume_model_exists when provider is registered but has no statically registered models" do
+      test "leaves provider unset for dynamically registered provider with registry models" do
         llm = Llm.new(
           api_key: "opencode-key",
           config_api_key_attr: "opencode_go_api_key"
@@ -39,13 +39,13 @@ module R3x
         context = llm.instance_variable_get(:@llm_context)
 
         mock_chat = mock("chat")
-        context.expects(:chat).with(model: "deepseek-chat", provider: :opencode_go, assume_model_exists: true).returns(mock_chat)
+        context.expects(:chat).with(model: "deepseek-chat").returns(mock_chat)
         mock_chat.expects(:ask).with("hello", with: nil).returns(stub(content: "response"))
 
         assert_equal "response", llm.message(model: "deepseek-chat", prompt: "hello").content
 
         mock_classify_chat = mock("classify_chat")
-        context.expects(:chat).with(model: "deepseek-chat", provider: :opencode_go, assume_model_exists: true).returns(mock_classify_chat)
+        context.expects(:chat).with(model: "deepseek-chat").returns(mock_classify_chat)
         mock_classify_chat.expects(:with_schema).with(anything).returns(mock_classify_chat)
         mock_classify_chat.expects(:ask).with(anything, with: nil).returns(stub(content: '{"category":"other"}'))
 
@@ -55,6 +55,8 @@ module R3x
       end
 
       test "opencode go provider keeps underscore slug for dynamic model context switching" do
+        stub_opencode_go_model("deepseek-chat")
+
         llm = Llm.new(
           api_key: "opencode-key",
           config_api_key_attr: "opencode_go_api_key"
@@ -118,7 +120,7 @@ module R3x
         opencode_go = Llm.new(api_key: "opencode-key", config_api_key_attr: "opencode_go_api_key")
 
         assert_equal({}, gemini.instance_variable_get(:@chat_options))
-        assert_equal({ provider: :opencode_go, assume_model_exists: true }, opencode_go.instance_variable_get(:@chat_options))
+        assert_equal({}, opencode_go.instance_variable_get(:@chat_options))
       end
 
       test "memoizes chat options per provider" do
@@ -132,6 +134,16 @@ module R3x
         assert_raises(ArgumentError) do
           Llm.new(api_key: "unknown-key", config_api_key_attr: "unknown_service_api_key")
         end
+      end
+
+      private
+
+      def stub_opencode_go_model(model_id)
+        R3x::GemLoader.require("ruby_llm")
+
+        RubyLLM::Models.stubs(:find).with(model_id, :opencode_go).returns(
+          RubyLLM::Model::Info.new(id: model_id, provider: "opencode_go")
+        )
       end
     end
   end

@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+ENV["R3X_RUNTIME_PROFILE"] = "workflow_cli"
+
+require_relative "../config/environment"
+require "thor"
+
+logger = ActiveSupport::Logger.new(STDOUT)
+logger.level = Logger::INFO
+Rails.logger = ActiveSupport::TaggedLogging.new(logger)
+
+class LlmModelsCli < Thor
+  def self.exit_on_failure? = true
+  namespace :"llm-models"
+
+  desc "refresh", "Refresh the LLM model registry from public sources"
+  option :verbose, type: :boolean, aliases: "-v", desc: "Enable verbose logging (debug level)"
+  def refresh
+    Rails.logger.level = Logger::DEBUG if options[:verbose]
+    R3x::Client::Llm::ModelRegistry.refresh!
+    puts "Refreshed #{R3x::Client::Llm::ModelRegistry.file_path}"
+  end
+end
+
+LlmModelsCli.start(ARGV)

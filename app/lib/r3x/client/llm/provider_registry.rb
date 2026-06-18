@@ -7,6 +7,7 @@ module R3x
         extend self
 
         MUTEX = Mutex.new
+        CUSTOM_SLUGS = %i[opencode_go].freeze
 
         def register!
           MUTEX.synchronize { register_opencode_go! }
@@ -31,17 +32,13 @@ module R3x
               { "Authorization" => "Bearer #{@config.opencode_go_api_key}" }.compact
             end
 
-            def list_models
-              []
-            end
-
             class << self
               def slug
                 "opencode_go"
               end
 
               def assume_models_exist?
-                true
+                false
               end
 
               def configuration_options
@@ -49,7 +46,7 @@ module R3x
               end
 
               def configuration_requirements
-                %i[opencode_go_api_key]
+                []
               end
             end
           end
