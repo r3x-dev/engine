@@ -4,8 +4,8 @@ module R3x
       extend self
       extend R3x::Concerns::Logger
 
-      WORKFLOW_ENTRYPOINT_FILENAME = "workflow.rb"
-      DISABLE_PRAGMA_PREFIX = "# r3x:disable"
+      WORKFLOW_ENTRYPOINT_FILENAME = "workflow.rb".freeze
+      DISABLE_PRAGMA_PREFIX = "# r3x:disable".freeze
       PRAGMA_SCAN_LINES = 20
       MUTEX = Mutex.new
       LOADED = Concurrent::AtomicBoolean.new(false)
