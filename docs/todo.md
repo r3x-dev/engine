@@ -146,7 +146,7 @@ Metaprogramming makes static analysis hard and can answer `true` to any `foo?` q
 
 ---
 
-### [ ] J. `R3x::Workflow::CacheKey` relies on `RubyVM::InstructionSequence`
+### [x] J. `R3x::Workflow::CacheKey` relies on `RubyVM::InstructionSequence`
 
 **File:** `lib/r3x/workflow/cache_key.rb:28`
 
@@ -157,6 +157,8 @@ RubyVM::InstructionSequence.of(block).to_a.dig(4, :code_location)
 This is brittle against interpreter changes and hard to understand.
 
 **Suggested fix:** use an explicit, stable cache key source (e.g. caller location + workflow key + explicit discriminator) instead of bytecode introspection.
+
+**Done:** removed `RubyVM::InstructionSequence` from cache-key generation. `with_cache` remains keyless by default, derives the generated cache key from workflow key, source file path, source line, and file digest, and raises with a clear message if multiple cache calls share one source line without explicit `key:`.
 
 ---
 
@@ -201,14 +203,14 @@ These are not actionable todos yet; they are framing notes for larger refactor d
 ### Sandi Metz perspective
 
 - **Classes are too large.** `Dashboard::Run` (254 lines), `Summaries` (274 lines), and `ApplicationHelper` (378 lines) violate SRP. Extract `StatusResolver`, `ArgumentsNormalizer`, and `ErrorParser`.
-- **Don't use bytecode introspection.** `R3x::Workflow::CacheKey` relies on `RubyVM::InstructionSequence.of(block)`. It will break on interpreter changes and is hard to reason about. Use an explicit, stable key.
+- **Don't use bytecode introspection.** `R3x::Workflow::CacheKey` no longer relies on `RubyVM::InstructionSequence.of(block)`. Preserve the simpler file/line/digest default and use explicit `with_cache(key: ...)` for rare same-line disambiguation.
 - **Duplicate HTTP setup signals a missing object.** Every client builds `HTTPX.with(...)` by hand. A shared `R3x::Client::HttpBuilder` (or extension of `R3x::Client::Http`) would remove copy-paste and make SSL/timeout policy consistent.
 
 ### Top 3 rewrites worth considering
 
 1. **Split `Dashboard::Run` and `Summaries` into smaller, single-responsibility classes.** This is the highest-impact structural improvement.
 2. **Introduce a shared HTTP builder and unify dry-run logging across clients.** Removes duplication and makes new integrations cheaper.
-3. **Replace bytecode-based cache keys with explicit implementations.** Eliminates a remaining source of fragility.
+3. **Keep cache boundaries simple.** The bytecode-based cache key is gone; keyless `with_cache` remains the common path, with explicit `key:` only for rare ambiguous lines.
 
 ---
 
