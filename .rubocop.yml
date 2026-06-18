@@ -6,6 +6,7 @@ require:
   - ./.rubocop/cop/r3x/prefer_logger_concern.rb
   - ./.rubocop/cop/r3x/avoid_hash_tap.rb
   - ./.rubocop/cop/r3x/prefer_r3x_env.rb
+  - ./.rubocop/cop/r3x/prefer_httpx_response_json.rb
 plugins:
   - rubocop-thread_safety
   - rubocop-minitest
@@ -68,6 +69,12 @@ R3x/PreferLoggerConcern:
     - "app/lib/r3x/client/**/*"
 
 R3x/PreferR3xEnv:
+  Enabled: true
+  Include:
+    - "app/**/*.rb"
+    - "lib/**/*.rb"
+
+R3x/PreferHttpxResponseJson:
   Enabled: true
   Include:
     - "app/**/*.rb"

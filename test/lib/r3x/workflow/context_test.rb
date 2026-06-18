@@ -196,7 +196,8 @@ module R3x
           stub_request(:post, "https://markdown.new/")
             .to_return(
               status: 200,
-              body: MultiJSON.generate({ "content" => "# Hello from markdown.new" })
+              body: MultiJSON.generate({ "content" => "# Hello from markdown.new" }),
+              headers: { "Content-Type" => "application/json" }
             )
 
           ctx = Context.new(

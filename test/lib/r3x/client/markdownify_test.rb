@@ -39,7 +39,8 @@ module R3x
             end
             .to_return(
               status: 200,
-              body: MultiJSON.generate({ "content" => "# Fallback", "tokens" => 99 })
+              body: MultiJSON.generate({ "content" => "# Fallback", "tokens" => 99 }),
+              headers: { "Content-Type" => "application/json" }
             )
 
           result = Markdownify.new(url: "https://example.com").convert
@@ -57,7 +58,8 @@ module R3x
             end
             .to_return(
               status: 200,
-              body: MultiJSON.generate({ "content" => "# Converted", "tokens" => 10 })
+              body: MultiJSON.generate({ "content" => "# Converted", "tokens" => 10 }),
+              headers: { "Content-Type" => "application/json" }
             )
 
           result = Markdownify.new(
@@ -115,7 +117,8 @@ module R3x
             end
             .to_return(
               status: 200,
-              body: MultiJSON.generate({ "content" => "result", "tokens" => 5 })
+              body: MultiJSON.generate({ "content" => "result", "tokens" => 5 }),
+              headers: { "Content-Type" => "application/json" }
             )
 
           Markdownify.new(url: "https://example.com").convert
@@ -131,7 +134,8 @@ module R3x
           stub_request(:post, "https://markdown.new/")
             .to_return(
               status: 200,
-              body: MultiJSON.generate({})
+              body: MultiJSON.generate({}),
+              headers: { "Content-Type" => "application/json" }
             )
 
           result = Markdownify.new(url: "https://example.com").convert

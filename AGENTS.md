@@ -181,7 +181,7 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 
 ## JSON
 
-- Prefer `MultiJSON` for JSON parsing and serialization work.
+- Prefer `MultiJSON` for JSON parsing and serialization work (except when using `httpx`, where native `json:` options and `response.json` should be preferred).
 - Reasoning: it gives the app one consistent JSON abstraction instead of scattering direct `JSON` stdlib usage across the codebase, which makes adapter swaps and shared conventions easier later.
 
 ## HTTP
@@ -193,9 +193,11 @@ This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `b
 - Reasoning: these clients are thin integration boundaries, so passing a raw HTTP client through the initializer adds indirection without improving the public interface we actually want to use.
 - Do not use empty `HTTPX.with({})`; call `HTTPX.get/post/...` directly when there are no shared options. When multiple code paths need the same timeout/SSL/options payload for `HTTPX.with`, build that payload once in a small helper and pass it with keyword splat. Use Ruby keyword argument shorthand (`verify_ssl:, timeout:`) when the local variable names match the keyword names. In options helpers, set only the timeout by default and conditionally assign the `ssl` key (e.g. `opts[:ssl] = ... unless verify_ssl`) so the `ssl` option is entirely omitted when SSL verification is enabled.
 - For workflow code that needs repeated HTTP requests in one controlled scope, prefer the block-scoped `ctx.client.persistent_http(...) { |http| ... }` helper over exposing raw `HTTPX.plugin(:persistent)` usage in workflows. Keep persistence opt-in for measured batch/hot paths, not as a default for thin clients.
-- **JSON handling**: When making HTTP requests that send/receive JSON, use `httpx`'s native `json:` option instead of manually serializing with `MultiJSON`. This automatically sets the `Content-Type` header and handles serialization.
+- **JSON handling**: When making HTTP requests that send/receive JSON, use `httpx`'s native `json:` option instead of manually serializing with `MultiJSON`. This automatically sets the `Content-Type` header and handles serialization. Similarly, use `response.json` to parse JSON response bodies instead of manually calling `MultiJSON.parse(response.body)`.
   - **Bad**: `request.body = MultiJSON.generate({"key" => "value"})`
+  - **Bad**: `MultiJSON.parse(response.body.to_s)`
   - **Good**: `client.post(url, json: { key: "value" })`
+  - **Good**: `response.json`
 - **Error handling**: `httpx` does not raise on 4xx/5xx by default. Call `.raise_for_status` on the response when the client should fail fast on HTTP errors, matching the previous `Faraday::Error` behavior. Do not hand-roll ordinary HTTP status checks in thin `R3x::Client` wrappers.
   - **Bad**: `response = client.get(url)` (silently ignores 404/500)
   - **Bad**: `raise "Request failed: #{response.status}" unless response.status >= 200 && response.status < 300`
