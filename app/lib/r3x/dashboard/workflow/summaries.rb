@@ -4,7 +4,7 @@ module R3x
   module Dashboard
     module Workflow
       class Summaries
-        DEFAULT_SORT = "health"
+        DEFAULT_SORT = "health".freeze
         DEFAULT_DIRECTIONS = { "workflow" => "asc", "health" => "asc", "next_trigger" => "asc", "last_run" => "desc" }.freeze
         HEALTH_SORT_ORDER = %w[failed healthy idle].freeze
 

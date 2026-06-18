@@ -4,7 +4,7 @@ module R3x
     # before Rails autoloading is available. It therefore cannot depend on
     # R3x::Concerns::Logger, which lives under app/lib/. Vault logging uses
     # Rails.logger directly because it is only called once Rails is booted.
-    INTERNAL_PREFIX = "R3X_"
+    INTERNAL_PREFIX = "R3X_".freeze
 
     def self.fetch(key)
       ENV[key].presence
