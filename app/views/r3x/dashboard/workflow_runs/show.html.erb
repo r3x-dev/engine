@@ -79,7 +79,7 @@
   </section>
 <% end %>
 
-<% if logs_configured? %>
+<% if @logs.present? %>
   <%= render "r3x/dashboard/workflow_runs/logs_panel", run: @run, logs: @logs %>
 <% end %>
 
