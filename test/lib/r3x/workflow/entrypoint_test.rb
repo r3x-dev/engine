@@ -32,7 +32,7 @@ module R3x
         Entrypoint.boot_server!(rails_env: "production", solid_queue_in_puma: nil, boot:)
         Entrypoint.boot_server!(rails_env: "production", solid_queue_in_puma: "true", boot:)
 
-        assert_equal [:load, :load_and_schedule], calls
+        assert_equal %i[load load_and_schedule], calls
       end
 
       test "start_jobs dispatches boot before starting the cli" do
@@ -47,7 +47,7 @@ module R3x
           :load_and_schedule,
           [:cli, ["--skip-daemon"]],
           :load,
-          [:cli, ["--skip-daemon"]]
+          [:cli, ["--skip-daemon"]],
         ], calls
       end
 
@@ -64,7 +64,7 @@ module R3x
 
         override_env = {
           "SOLID_QUEUE_CONFIG"         => "config/custom.yml",
-          "SOLID_QUEUE_SKIP_RECURRING" => "false"
+          "SOLID_QUEUE_SKIP_RECURRING" => "false",
         }
         Entrypoint.start_jobs_worker!(argv: ["--skip-daemon"], env: override_env, boot:, cli:)
 
@@ -74,7 +74,7 @@ module R3x
           :load,
           [:cli, ["--skip-daemon"]],
           :load,
-          [:cli, ["--skip-daemon"]]
+          [:cli, ["--skip-daemon"]],
         ], calls
       end
 
@@ -96,7 +96,7 @@ module R3x
           :load_and_schedule,
           [:cli, ["--skip-daemon"]],
           :load_and_schedule,
-          [:cli, ["--skip-daemon"]]
+          [:cli, ["--skip-daemon"]],
         ], calls
       end
 

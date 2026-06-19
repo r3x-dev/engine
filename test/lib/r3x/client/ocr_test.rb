@@ -165,9 +165,9 @@ module R3x
             body: {
               IsErroredOnProcessing: true,
               ErrorMessage: "Invalid image format",
-              OCRExitCode: "4"
+              OCRExitCode: "4",
             }.to_json,
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
@@ -195,13 +195,13 @@ module R3x
             body: {
               ParsedResults: [
                 { ParsedText: "page 1", FileParseExitCode: "1" },
-                { ParsedText: "page 2", FileParseExitCode: "1" }
+                { ParsedText: "page 2", FileParseExitCode: "1" },
               ],
               OCRExitCode: "2",
               IsErroredOnProcessing: false,
-              ProcessingTimeInMilliseconds: "1500"
+              ProcessingTimeInMilliseconds: "1500",
             }.to_json,
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
@@ -219,12 +219,12 @@ module R3x
             body: {
               ParsedResults: [
                 { ParsedText: "page 1", FileParseExitCode: "1" },
-                { ParsedText: "page 2", FileParseExitCode: "1" }
+                { ParsedText: "page 2", FileParseExitCode: "1" },
               ],
               OCRExitCode: "1",
-              IsErroredOnProcessing: false
+              IsErroredOnProcessing: false,
             }.to_json,
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
@@ -255,13 +255,13 @@ module R3x
                   ParsedText: "",
                   FileParseExitCode: "-10",
                   ErrorMessage: "OCR Engine Error",
-                  ErrorDetails: "Could not process image"
-                }
+                  ErrorDetails: "Could not process image",
+                },
               ],
               OCRExitCode: "3",
-              IsErroredOnProcessing: false
+              IsErroredOnProcessing: false,
             }.to_json,
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
@@ -280,13 +280,13 @@ module R3x
             status: 200,
             body: {
               ParsedResults: [
-                { ParsedText: parsed_text, FileParseExitCode: "1" }
+                { ParsedText: parsed_text, FileParseExitCode: "1" },
               ],
               OCRExitCode: "1",
               IsErroredOnProcessing: false,
-              ProcessingTimeInMilliseconds: "500"
+              ProcessingTimeInMilliseconds: "500",
             }.to_json,
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
       end
     end

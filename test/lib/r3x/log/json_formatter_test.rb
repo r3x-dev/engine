@@ -9,7 +9,7 @@ module R3x
       logger = ActiveSupport::TaggedLogging.new(
         ActiveSupport::Logger.new(io).tap do |base_logger|
           base_logger.formatter = Log::JsonFormatter.new
-        end
+        end,
       )
 
       logger.tagged("MyClass", "r3x.run_active_job_id=123") do
@@ -63,7 +63,7 @@ module R3x
         message: "Workflow run failed",
         error_class: "NameError",
         error_message: "uninitialized constant",
-        backtrace: ["app/lib/a.rb:1", "app/lib/b.rb:2"]
+        backtrace: ["app/lib/a.rb:1", "app/lib/b.rb:2"],
       )
 
       payload = MultiJSON.parse(io.string)

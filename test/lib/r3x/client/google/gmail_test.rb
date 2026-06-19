@@ -32,7 +32,7 @@ module R3x
             result = Gmail.new(project: "TEST_APP").deliver(
               to: "recipient@example.com",
               subject: "Hello",
-              body: "Body"
+              body: "Body",
             )
 
             assert_equal authorization, service.authorization
@@ -48,7 +48,7 @@ module R3x
             result = Gmail.new(project: "TEST_APP").deliver(
               to: "recipient@example.com",
               subject: "Hello",
-              body: "Body"
+              body: "Body",
             )
 
             assert_equal({ "mode" => "dry_run" }, result)

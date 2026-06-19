@@ -23,7 +23,7 @@ module R3x
     HEADLESS_AUTOLOAD_IGNORES = [
       Rails.root.join("app/controllers"),
       Rails.root.join("app/helpers"),
-      Rails.root.join("app/lib/r3x/dashboard")
+      Rails.root.join("app/lib/r3x/dashboard"),
     ].freeze
     JOBS_ONLY_AUTOLOAD_IGNORES = [Rails.root.join("lib/r3x/workflow/cli.rb")].freeze
 

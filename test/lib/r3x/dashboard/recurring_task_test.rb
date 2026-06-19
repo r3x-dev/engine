@@ -18,7 +18,7 @@ class Dashboard::RecurringTaskTest < ActiveSupport::TestCase
       class_name: "Workflows::TestWorkflow",
       arguments: ["schedule:123"],
       queue_name: "default",
-      static: false
+      static: false,
     )
 
     assert_equal "test_workflow", task.workflow_key
@@ -32,28 +32,28 @@ class Dashboard::RecurringTaskTest < ActiveSupport::TestCase
       schedule: "0 * * * *",
       class_name: "Workflows::FooBar",
       arguments: ["schedule:1"],
-      static: false
+      static: false,
     )
     Dashboard::RecurringTask.create!(
       key: "workflow:foo1bar:schedule:1",
       schedule: "0 * * * *",
       class_name: "Workflows::Foo1bar",
       arguments: ["schedule:1"],
-      static: false
+      static: false,
     )
     Dashboard::RecurringTask.create!(
       key: "workflow:foo%bar:schedule:1",
       schedule: "0 * * * *",
       class_name: "Workflows::FooPercentBar",
       arguments: ["schedule:1"],
-      static: false
+      static: false,
     )
     Dashboard::RecurringTask.create!(
       key: "workflow:fooxbar:schedule:1",
       schedule: "0 * * * *",
       class_name: "Workflows::FooXbar",
       arguments: ["schedule:1"],
-      static: false
+      static: false,
     )
 
     assert_equal ["workflow:foo_bar:schedule:1"], Dashboard::RecurringTask.for_workflow_key("foo_bar").pluck(:key)
@@ -67,7 +67,7 @@ class Dashboard::RecurringTaskTest < ActiveSupport::TestCase
       class_name: "Workflows::TestWorkflow",
       arguments: ["schedule:123"],
       queue_name: "default",
-      static: false
+      static: false,
     )
 
     assert_equal task, Dashboard::RecurringTask.preferred_for_workflow("test_workflow")

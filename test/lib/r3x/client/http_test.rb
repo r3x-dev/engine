@@ -55,7 +55,7 @@ module R3x
         response = Http.new.post(
           "https://example.com/upload",
           { foo: "bar" },
-          headers: { "Authorization" => "Bearer token123" }
+          headers: { "Authorization" => "Bearer token123" },
         )
 
         assert_equal 200, response.status
@@ -131,11 +131,11 @@ module R3x
         bodies = Http.with_persistence(timeout: 30) do |http|
           [
             http.get("https://example.com/one").body.to_s,
-            http.get("https://example.com/two").body.to_s
+            http.get("https://example.com/two").body.to_s,
           ]
         end
 
-        assert_equal ["first", "second"], bodies
+        assert_equal %w[first second], bodies
         assert_requested :get, "https://example.com/one"
         assert_requested :get, "https://example.com/two"
       end
@@ -148,8 +148,8 @@ module R3x
             body: binary_data,
             headers: {
               "Content-Type"        => "image/png",
-              "Content-Disposition" => "attachment; filename=\"photo.png\""
-            }
+              "Content-Disposition" => "attachment; filename=\"photo.png\"",
+            },
           )
 
         file = Http.new.download_file("https://example.com/image.png")
@@ -167,8 +167,8 @@ module R3x
             status: 200,
             body: "report",
             headers: {
-              "Content-Disposition" => "attachment; filename*=UTF-8''report%20final.txt"
-            }
+              "Content-Disposition" => "attachment; filename*=UTF-8''report%20final.txt",
+            },
           )
 
         file = Http.new.download_file("https://example.com/report")
@@ -182,8 +182,8 @@ module R3x
             status: 200,
             body: "report",
             headers: {
-              "Content-Disposition" => "attachment; filename*=UTF-8''report+final.txt"
-            }
+              "Content-Disposition" => "attachment; filename*=UTF-8''report+final.txt",
+            },
           )
 
         file = Http.new.download_file("https://example.com/plus-report")
@@ -196,7 +196,7 @@ module R3x
           .to_return(
             status: 200,
             body: "data",
-            headers: { "Content-Type" => "text/html; charset=utf-8" }
+            headers: { "Content-Type" => "text/html; charset=utf-8" },
           )
 
         file = Http.new.download_file("https://example.com/data")
@@ -262,7 +262,7 @@ module R3x
           "https://api.example.com/upload",
           file_data,
           file_field: "image",
-          params: { "foo" => "bar" }
+          params: { "foo" => "bar" },
         )
 
         assert_equal 200, response.status
@@ -280,7 +280,7 @@ module R3x
         Http.new.upload_file(
           "https://api.example.com/upload",
           file,
-          file_field: "image"
+          file_field: "image",
         )
 
         assert_requested :post, "https://api.example.com/upload" do |request|
@@ -298,7 +298,7 @@ module R3x
           "https://api.example.com/upload",
           "data",
           file_field: "file",
-          headers: { "Authorization" => "Bearer token123" }
+          headers: { "Authorization" => "Bearer token123" },
         )
 
         assert_requested :post, "https://api.example.com/upload",

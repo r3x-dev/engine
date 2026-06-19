@@ -15,19 +15,19 @@ module R3x
         job = SolidQueue::Job.create!(
           queue_name: "default",
           class_name: R3x::TestSupport::DashboardWorkflowJob.name,
-          arguments: ["test_memo"]
+          arguments: ["test_memo"],
         )
         SolidQueue::RecurringTask.create!(
           key: "test_memo",
           schedule: "0 * * * *",
           class_name: R3x::TestSupport::DashboardWorkflowJob.name,
           arguments: [],
-          queue_name: "default"
+          queue_name: "default",
         )
         SolidQueue::RecurringExecution.create!(
           task_key: "test_memo",
           run_at: 2.hours.ago,
-          job_id: job.id
+          job_id: job.id,
         )
 
         execution = Execution.new(workflow_key: "test_memo")
@@ -53,19 +53,19 @@ module R3x
         job = SolidQueue::Job.create!(
           queue_name: "default",
           class_name: R3x::TestSupport::DashboardWorkflowJob.name,
-          arguments: ["test_fr"]
+          arguments: ["test_fr"],
         )
         SolidQueue::RecurringTask.create!(
           key: "test_fr",
           schedule: "0 * * * *",
           class_name: R3x::TestSupport::DashboardWorkflowJob.name,
           arguments: [],
-          queue_name: "default"
+          queue_name: "default",
         )
         SolidQueue::RecurringExecution.create!(
           task_key: "test_fr",
           run_at: 2.hours.ago,
-          job_id: job.id
+          job_id: job.id,
         )
 
         execution = Execution.new(workflow_key: "test_fr")
@@ -112,9 +112,9 @@ module R3x
           ctx = Context.new(
             trigger: R3x::TriggerManager::Execution.new(
               trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-              workflow_key: "test"
+              workflow_key: "test",
             ),
-            workflow_key: "test"
+            workflow_key: "test",
           )
           discord = ctx.client.discord(webhook_url_env: "DISCORD_WEBHOOK_URL_TEST")
 
@@ -127,9 +127,9 @@ module R3x
           ctx = Context.new(
             trigger: R3x::TriggerManager::Execution.new(
               trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-              workflow_key: "test"
+              workflow_key: "test",
             ),
-            workflow_key: "test"
+            workflow_key: "test",
           )
           healthchecks = ctx.client.healthchecks_io("test-check")
 
@@ -153,14 +153,14 @@ module R3x
                 </channel>
               </rss>
             XML
-            headers: { "Content-Type" => "application/rss+xml" }
+            headers: { "Content-Type" => "application/rss+xml" },
           )
         ctx = Context.new(
           trigger: R3x::TriggerManager::Execution.new(
             trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-            workflow_key: "test"
+            workflow_key: "test",
           ),
-          workflow_key: "test"
+          workflow_key: "test",
         )
 
         feed = ctx.client.rss("https://news.test/feed.xml")
@@ -176,19 +176,19 @@ module R3x
         ctx = Context.new(
           trigger: R3x::TriggerManager::Execution.new(
             trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-            workflow_key: "test"
+            workflow_key: "test",
           ),
-          workflow_key: "test"
+          workflow_key: "test",
         )
 
         bodies = ctx.client.persistent_http(timeout: 30) do |http|
           [
             http.get("https://api.test/one").body.to_s,
-            http.get("https://api.test/two").body.to_s
+            http.get("https://api.test/two").body.to_s,
           ]
         end
 
-        assert_equal ["first", "second"], bodies
+        assert_equal %w[first second], bodies
         assert_requested :get, "https://api.test/one"
         assert_requested :get, "https://api.test/two"
       end
@@ -199,15 +199,15 @@ module R3x
             .to_return(
               status: 200,
               body: MultiJSON.generate({ "content" => "# Hello from markdown.new" }),
-              headers: { "Content-Type" => "application/json" }
+              headers: { "Content-Type" => "application/json" },
             )
 
           ctx = Context.new(
             trigger: R3x::TriggerManager::Execution.new(
               trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-              workflow_key: "test"
+              workflow_key: "test",
             ),
-            workflow_key: "test"
+            workflow_key: "test",
           )
           result = ctx.client.markdownify(url: "https://example.com")
 
@@ -220,9 +220,9 @@ module R3x
           ctx = Context.new(
             trigger: R3x::TriggerManager::Execution.new(
               trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-              workflow_key: "test"
+              workflow_key: "test",
             ),
-            workflow_key: "test"
+            workflow_key: "test",
           )
           llm = ctx.client.llm(api_key_env: "OPENCODE_GO_API_KEY")
 
@@ -239,9 +239,9 @@ module R3x
           ctx = Context.new(
             trigger: R3x::TriggerManager::Execution.new(
               trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-              workflow_key: "test"
+              workflow_key: "test",
             ),
-            workflow_key: "test"
+            workflow_key: "test",
           )
           llm = ctx.client.llm(api_key_env: "OPENCODE_GO_API_KEY_PROJECTA")
 

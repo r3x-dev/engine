@@ -47,7 +47,7 @@ class WorkflowCliRuntimeProfileBootTest < ActiveSupport::TestCase
       "R3X_RUNTIME_PROFILE"     => "workflow_cli",
       "R3X_SKIP_VAULT_ENV_LOAD" => "true",
       "R3X_WORKFLOW_PATHS"      => Rails.root.join("test/fixtures/workflows").to_s,
-      "SECRET_KEY_BASE"         => "workflow-cli-runtime-profile-test-secret"
+      "SECRET_KEY_BASE"         => "workflow-cli-runtime-profile-test-secret",
     }
 
     env_string = env.map { |key, value| "#{key}=#{Shellwords.escape(value)}" }.join(" ")

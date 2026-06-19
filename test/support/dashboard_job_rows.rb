@@ -8,7 +8,7 @@ module DashboardJobRows
       job_class_name:,
       arguments:,
       queue_name:,
-      priority:
+      priority:,
     ).serialize
   end
 
@@ -22,9 +22,9 @@ module DashboardJobRows
           job_class_name:,
           arguments:,
           queue_name:,
-          priority:
-        )
-      }.merge(attributes)
+          priority:,
+        ),
+      }.merge(attributes),
     )
   end
 

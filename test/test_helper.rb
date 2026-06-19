@@ -28,7 +28,7 @@ module ActiveSupport
       test_logger = ActiveSupport::TaggedLogging.new(
         ActiveSupport::Logger.new(io).tap do |logger|
           logger.formatter = R3x::Log::JsonFormatter.new
-        end
+        end,
       )
 
       Rails.logger = test_logger

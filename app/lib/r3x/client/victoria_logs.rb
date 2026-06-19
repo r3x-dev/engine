@@ -29,7 +29,7 @@ module R3x
           "limit"   => limit,
           "query"   => sort_query(query),
           "start"   => format_time(start_at),
-          "timeout" => timeout
+          "timeout" => timeout,
         }.compact
       end
 

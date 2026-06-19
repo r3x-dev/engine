@@ -69,8 +69,8 @@ module R3x
           token:,
           capabilities:,
           secret: {
-            keys: read(path).keys.sort
-          }
+            keys: read(path).keys.sort,
+          },
         }
       end
 

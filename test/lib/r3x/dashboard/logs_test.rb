@@ -51,14 +51,14 @@ module R3x
         client = FakeLogsClient.new(entries: [
           {
             "_time" => "2026-04-15T12:00:01Z",
-            "_msg"  => MultiJSON.generate("level" => "info", "message" => "hello")
-          }
+            "_msg"  => MultiJSON.generate("level" => "info", "message" => "hello"),
+          },
         ])
 
         run = {
           active_job_id: "aj-123",
           enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
-          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
         result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
@@ -81,14 +81,14 @@ module R3x
             "error_message"             => nil,
             "backtrace"                 => MultiJSON.generate([]),
             "kubernetes.container_name" => "app",
-            "kubernetes.pod_name"       => "r3x-jobs-123"
-          }
+            "kubernetes.pod_name"       => "r3x-jobs-123",
+          },
         ])
 
         run = {
           active_job_id: "aj-123",
           enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
-          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
         result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
@@ -111,14 +111,14 @@ module R3x
             "error_message"             => "uninitialized constant",
             "backtrace"                 => ["app/lib/a.rb:1", "app/lib/b.rb:2"],
             "kubernetes.container_name" => "app",
-            "kubernetes.pod_name"       => "r3x-jobs-123"
-          }
+            "kubernetes.pod_name"       => "r3x-jobs-123",
+          },
         ])
 
         run = {
           active_job_id: "aj-123",
           enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
-          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
         result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
@@ -137,11 +137,11 @@ module R3x
             "_time"                     => "2026-04-15T12:00:01Z",
             "_msg"                      => MultiJSON.generate(
               "level"   => "info",
-              "message" => "[r3x.run_active_job_id=aj-123] [r3x.workflow_key=test_workflow] [r3x.trigger_key=schedule:123] [Workflows::TestWorkflow] Running workflow trigger_type=schedule"
+              "message" => "[r3x.run_active_job_id=aj-123] [r3x.workflow_key=test_workflow] [r3x.trigger_key=schedule:123] [Workflows::TestWorkflow] Running workflow trigger_type=schedule",
             ),
             "kubernetes.container_name" => "app",
-            "kubernetes.pod_name"       => "r3x-jobs-123"
-          }
+            "kubernetes.pod_name"       => "r3x-jobs-123",
+          },
         ])
 
         run = {
@@ -150,7 +150,7 @@ module R3x
           enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
           trigger_key: "schedule:123",
-          workflow_key: "test_workflow"
+          workflow_key: "test_workflow",
         }
 
         result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
@@ -167,15 +167,15 @@ module R3x
             "_time" => "2026-04-15T12:00:01Z",
             "_msg"  => MultiJSON.generate(
               "level"   => "info",
-              "message" => "[DRY-RUN]: Email send skipped"
-            )
-          }
+              "message" => "[DRY-RUN]: Email send skipped",
+            ),
+          },
         ])
 
         run = {
           active_job_id: "aj-123",
           enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
-          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
         result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
@@ -189,13 +189,13 @@ module R3x
           { "_time" => "2026-04-15T12:00:01Z", "_msg" => MultiJSON.generate("level" => "error", "message" => "Camera alert: driveway offline") },
           { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJSON.generate("level" => "warn", "message" => "Retry scheduled after timeout") },
           { "_time" => "2026-04-15T12:00:03Z", "_msg" => MultiJSON.generate("level" => "info", "message" => "Workflow run completed") },
-          { "_time" => "2026-04-15T12:00:04Z", "_msg" => MultiJSON.generate("level" => "debug", "message" => "Still working") }
+          { "_time" => "2026-04-15T12:00:04Z", "_msg" => MultiJSON.generate("level" => "debug", "message" => "Still working") },
         ])
 
         run = {
           active_job_id: "aj-123",
           enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
-          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
         result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
@@ -206,13 +206,13 @@ module R3x
       test "run logs preserve plaintext entries during json rollout" do
         client = FakeLogsClient.new(entries: [
           { "_time" => "2026-04-15T12:00:01Z", "_msg" => "not json at all" },
-          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJSON.generate("level" => "info", "message" => "valid line") }
+          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJSON.generate("level" => "info", "message" => "valid line") },
         ])
 
         run = {
           active_job_id: "aj-123",
           enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
-          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
         result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
@@ -229,13 +229,13 @@ module R3x
         raw_message = MultiJSON.generate("event" => "email_sent", "count" => 2)
         client = FakeLogsClient.new(entries: [
           { "_time" => "2026-04-15T12:00:01Z", "_msg" => raw_message },
-          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJSON.generate("level" => "info", "message" => "valid line") }
+          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJSON.generate("level" => "info", "message" => "valid line") },
         ])
 
         run = {
           active_job_id: "aj-123",
           enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
-          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
         result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
@@ -251,13 +251,13 @@ module R3x
       test "run logs skip entries with invalid level" do
         client = FakeLogsClient.new(entries: [
           { "_time" => "2026-04-15T12:00:01Z", "_msg" => MultiJSON.generate("level" => "trace", "message" => "bad level") },
-          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJSON.generate("level" => "info", "message" => "valid line") }
+          { "_time" => "2026-04-15T12:00:02Z", "_msg" => MultiJSON.generate("level" => "info", "message" => "valid line") },
         ])
 
         run = {
           active_job_id: "aj-123",
           enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
-          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
         result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
@@ -277,17 +277,17 @@ module R3x
               "message"       => "Workflow run failed",
               "error_class"   => "NameError",
               "error_message" => "uninitialized constant",
-              "backtrace"     => ["app/lib/a.rb:1", "app/lib/b.rb:2"]
+              "backtrace"     => ["app/lib/a.rb:1", "app/lib/b.rb:2"],
             ),
             "kubernetes.container_name" => "app",
-            "kubernetes.pod_name"       => "r3x-jobs-123"
-          }
+            "kubernetes.pod_name"       => "r3x-jobs-123",
+          },
         ])
 
         run = {
           active_job_id: "aj-123",
           enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
-          finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
         result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)

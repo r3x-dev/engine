@@ -19,7 +19,7 @@ module R3x
             .to_return(
               status: 200,
               body: MultiJSON.generate({ "content" => "# Hello World\n\nThis is a test.", "tokens" => 42 }),
-              headers: { "x-markdown-tokens" => "42", "content-type" => "application/json" }
+              headers: { "x-markdown-tokens" => "42", "content-type" => "application/json" },
             )
 
           result = Markdownify.new(url: "https://example.com").convert
@@ -42,7 +42,7 @@ module R3x
             .to_return(
               status: 200,
               body: MultiJSON.generate({ "content" => "# Fallback", "tokens" => 99 }),
-              headers: { "Content-Type" => "application/json" }
+              headers: { "Content-Type" => "application/json" },
             )
 
           result = Markdownify.new(url: "https://example.com").convert
@@ -61,13 +61,13 @@ module R3x
             .to_return(
               status: 200,
               body: MultiJSON.generate({ "content" => "# Converted", "tokens" => 10 }),
-              headers: { "Content-Type" => "application/json" }
+              headers: { "Content-Type" => "application/json" },
             )
 
           result = Markdownify.new(
             url: "https://example.com",
             method: "ai",
-            retain_images: true
+            retain_images: true,
           ).convert
 
           assert_equal "ai", result["method"]
@@ -120,7 +120,7 @@ module R3x
             .to_return(
               status: 200,
               body: MultiJSON.generate({ "content" => "result", "tokens" => 5 }),
-              headers: { "Content-Type" => "application/json" }
+              headers: { "Content-Type" => "application/json" },
             )
 
           Markdownify.new(url: "https://example.com").convert
@@ -137,7 +137,7 @@ module R3x
             .to_return(
               status: 200,
               body: MultiJSON.generate({}),
-              headers: { "Content-Type" => "application/json" }
+              headers: { "Content-Type" => "application/json" },
             )
 
           result = Markdownify.new(url: "https://example.com").convert

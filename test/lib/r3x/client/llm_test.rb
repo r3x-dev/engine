@@ -60,7 +60,7 @@ module R3x
           config_api_key_attr: "gemini_api_key",
           max_retries: 5,
           retry_interval: 30.0,
-          retry_backoff_factor: 4
+          retry_backoff_factor: 4,
         )
         context = llm.instance_variable_get(:@llm_context)
 
@@ -77,7 +77,7 @@ module R3x
 
         llm = Llm.new(
           api_key: "opencode-key",
-          config_api_key_attr: "opencode_go_api_key"
+          config_api_key_attr: "opencode_go_api_key",
         )
 
         assert_equal "response", llm.message(model: "deepseek-chat", prompt: "hello").content
@@ -88,9 +88,9 @@ module R3x
         assert_equal(
           [
             { model: "deepseek-chat", provider: :opencode_go, assume_model_exists: true },
-            { model: "deepseek-chat", provider: :opencode_go, assume_model_exists: true }
+            { model: "deepseek-chat", provider: :opencode_go, assume_model_exists: true },
           ],
-          context.chat_calls
+          context.chat_calls,
         )
         assert_equal 1, chat.schema_calls.size
       end
@@ -98,7 +98,7 @@ module R3x
       test "opencode go provider keeps underscore slug for dynamic model context switching" do
         llm = Llm.new(
           api_key: "opencode-key",
-          config_api_key_attr: "opencode_go_api_key"
+          config_api_key_attr: "opencode_go_api_key",
         )
         context = llm.instance_variable_get(:@llm_context)
         chat = context.chat(model: "deepseek-chat", provider: :opencode_go)

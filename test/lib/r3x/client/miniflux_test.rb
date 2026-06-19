@@ -54,7 +54,7 @@ module R3x
           "status"    => "unread",
           "limit"     => "20",
           "order"     => "published_at",
-          "direction" => "desc"
+          "direction" => "desc",
         })
 
         result = with_client_env do
@@ -71,7 +71,7 @@ module R3x
           "status"    => "unread",
           "limit"     => "20",
           "order"     => "published_at",
-          "direction" => "desc"
+          "direction" => "desc",
         })
 
         result = with_client_env do
@@ -88,19 +88,19 @@ module R3x
               "status"    => "unread",
               "limit"     => "20",
               "order"     => "published_at",
-              "direction" => "desc"
+              "direction" => "desc",
             },
-            headers: { "X-Auth-Token" => "custom-api-key" }
+            headers: { "X-Auth-Token" => "custom-api-key" },
           )
           .to_return(
             status: 200,
             body: MultiJSON.generate("total" => 0, "entries" => []),
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         result = with_env(
           "MINIFLUX_URL_CUSTOM"     => "https://custom-miniflux.test",
-          "MINIFLUX_API_KEY_CUSTOM" => "custom-api-key"
+          "MINIFLUX_API_KEY_CUSTOM" => "custom-api-key",
         ) do
           Miniflux.new(url_env: "MINIFLUX_URL_CUSTOM", api_key_env: "MINIFLUX_API_KEY_CUSTOM").entries
         end
@@ -113,7 +113,7 @@ module R3x
           "status"    => "read",
           "limit"     => "5",
           "order"     => "id",
-          "direction" => "asc"
+          "direction" => "asc",
         })
 
         result = with_client_env do
@@ -121,7 +121,7 @@ module R3x
             status: "read",
             limit: 5,
             order: "id",
-            direction: "asc"
+            direction: "asc",
           )
         end
 
@@ -133,13 +133,13 @@ module R3x
           "status"    => "unread",
           "limit"     => "5",
           "order"     => "published_at",
-          "direction" => "desc"
+          "direction" => "desc",
         })
 
         result = with_client_env do
           Miniflux.new(url_env: "MINIFLUX_URL", api_key_env: "MINIFLUX_API_KEY").category_entries(
             category_id: "22",
-            limit: 5
+            limit: 5,
           )
         end
 
@@ -153,13 +153,13 @@ module R3x
           "order"     => "published_at",
           "direction" => "desc",
           "starred"   => "true",
-          "offset"    => "10"
+          "offset"    => "10",
         })
 
         result = with_client_env do
           Miniflux.new(url_env: "MINIFLUX_URL", api_key_env: "MINIFLUX_API_KEY").entries(
             starred: true,
-            offset: 10
+            offset: 10,
           )
         end
 
@@ -173,9 +173,9 @@ module R3x
               "status"    => "unread",
               "limit"     => "20",
               "order"     => "published_at",
-              "direction" => "desc"
+              "direction" => "desc",
             },
-            headers: { "X-Auth-Token" => "api-key" }
+            headers: { "X-Auth-Token" => "api-key" },
           )
           .to_return(status: 500, body: "internal error")
 
@@ -203,7 +203,7 @@ module R3x
         with_client_env do
           client = R3x::Workflow::Context::Client.miniflux(
             url_env: "MINIFLUX_URL",
-            api_key_env: "MINIFLUX_API_KEY"
+            api_key_env: "MINIFLUX_API_KEY",
           )
 
           assert_instance_of Miniflux, client
@@ -215,7 +215,7 @@ module R3x
           "status"    => "unread",
           "limit"     => "20",
           "order"     => "published_at",
-          "direction" => "desc"
+          "direction" => "desc",
         })
 
         result = with_client_env do
@@ -231,7 +231,7 @@ module R3x
         stub_request(:get, "https://miniflux.test#{path}")
           .with(
             query:,
-            headers: { "X-Auth-Token" => "api-key" }
+            headers: { "X-Auth-Token" => "api-key" },
           )
           .to_return(
             status: 200,
@@ -243,12 +243,12 @@ module R3x
                   "status"       => query.fetch("status"),
                   "published_at" => "2026-06-04T08:15:00Z",
                   "title"        => "Hello",
-                  "url"          => "https://example.test/hello"
-                }
+                  "url"          => "https://example.test/hello",
+                },
               ],
-              "upstream_field" => "preserved"
+              "upstream_field" => "preserved",
             ),
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
       end
 

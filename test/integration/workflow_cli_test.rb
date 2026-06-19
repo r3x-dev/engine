@@ -33,8 +33,8 @@ class WorkflowCliTest < ActiveSupport::TestCase
       env: {
         "RAILS_ENV"               => "production",
         "R3X_SKIP_VAULT_ENV_LOAD" => "true",
-        "SECRET_KEY_BASE"         => "workflow-cli-production-smoke-secret"
-      }
+        "SECRET_KEY_BASE"         => "workflow-cli-production-smoke-secret",
+      },
     )
 
     assert_includes output, "Available workflows:"
@@ -45,7 +45,7 @@ class WorkflowCliTest < ActiveSupport::TestCase
 
   def run_cli(args, allow_failure: false, env: {})
     env = {
-      "R3X_WORKFLOW_PATHS" => Rails.root.join("test/fixtures/workflows").to_s
+      "R3X_WORKFLOW_PATHS" => Rails.root.join("test/fixtures/workflows").to_s,
     }.merge(env)
     env_string = env.map { |key, value| "#{key}=#{Shellwords.escape(value)}" }.join(" ")
     cmd = "#{env_string} bundle exec ruby bin/workflow #{args} 2>&1"

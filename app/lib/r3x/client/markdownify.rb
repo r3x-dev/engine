@@ -67,7 +67,7 @@ module R3x
 
         response = connection.post(
           "https://markdown.new/",
-          json: { "url" => @url, "method" => @method, "retain_images" => @retain_images }
+          json: { "url" => @url, "method" => @method, "retain_images" => @retain_images },
         ).raise_for_status
 
         {
@@ -75,7 +75,7 @@ module R3x
           "markdown"      => response.json["content"] || "",
           "tokens"        => response.headers["x-markdown-tokens"]&.to_i || response.json["tokens"],
           "method"        => @method,
-          "retain_images" => @retain_images
+          "retain_images" => @retain_images,
         }
       end
 
@@ -89,7 +89,7 @@ module R3x
           "markdown"      => "",
           "tokens"        => nil,
           "method"        => @method,
-          "retain_images" => @retain_images
+          "retain_images" => @retain_images,
         }
       end
 

@@ -15,7 +15,7 @@ module R3x
           .to_return(
             status: 200,
             body: MultiJSON.generate("data" => { "id" => "run-123" }),
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         result = Apify.new(api_key: "test-api-key").run_actor(
@@ -23,7 +23,7 @@ module R3x
           input: { startUrls: [{ url: "https://example.com" }] },
           memory: 1024,
           timeout: 30,
-          unused: nil
+          unused: nil,
         )
 
         assert_equal({ "id" => "run-123" }, result)
@@ -32,7 +32,7 @@ module R3x
           :post,
           "https://api.apify.com/v2/acts/example-actor/runs",
           query: { "memory" => "1024", "timeout" => "30" },
-          headers: { "Authorization" => "Bearer test-api-key" }
+          headers: { "Authorization" => "Bearer test-api-key" },
         ) do |request|
           assert_equal({ "startUrls" => [{ "url" => "https://example.com" }] }, MultiJSON.parse(request.body))
         end
@@ -44,7 +44,7 @@ module R3x
           .to_return(
             status: 200,
             body: MultiJSON.generate([{ "title" => "Hello" }]),
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         result = Apify.new(api_key: "test-api-key").run_actor_sync_get_items(
@@ -52,7 +52,7 @@ module R3x
           input: { query: "ruby" },
           clean: false,
           limit: 5,
-          fields: "title"
+          fields: "title",
         )
 
         assert_equal([{ "title" => "Hello" }], result)
@@ -61,7 +61,7 @@ module R3x
           :post,
           "https://api.apify.com/v2/acts/example-actor/run-sync-get-dataset-items",
           query: { "format" => "json", "clean" => "false", "limit" => "5", "fields" => "title" },
-          headers: { "Authorization" => "Bearer test-api-key" }
+          headers: { "Authorization" => "Bearer test-api-key" },
         ) do |request|
           assert_equal({ "query" => "ruby" }, MultiJSON.parse(request.body))
         end
