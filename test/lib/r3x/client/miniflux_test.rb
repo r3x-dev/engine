@@ -252,11 +252,11 @@ module R3x
           )
       end
 
-      def with_client_env(&block)
+      def with_client_env(&)
         with_env(
           "MINIFLUX_URL"     => "https://miniflux.test/",
           "MINIFLUX_API_KEY" => "api-key",
-          &block
+          &
         )
       end
 

@@ -179,7 +179,7 @@ Style/HashSyntax:
 
 Naming/BlockForwarding:
   Enabled: true
-  EnforcedStyle: explicit
+  EnforcedStyle: anonymous
 
 Style/ArgumentsForwarding:
   Enabled: true
