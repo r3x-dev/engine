@@ -23,6 +23,7 @@ module R3x
             workflow_class: self.class,
             trigger_key:,
             trigger_payload:,
+            active_job_id: job_id,
           )
           if initial_execution?
             logger.info "Running workflow trigger_type=#{ctx.trigger.type}"

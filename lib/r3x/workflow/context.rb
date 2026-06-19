@@ -7,11 +7,11 @@ module R3x
 
       attr_reader :trigger, :execution, :workflow_class, :workflow_key
 
-      def initialize(trigger:, workflow_key:, workflow_class: nil)
+      def initialize(trigger:, workflow_key:, trigger_key: nil, active_job_id: nil, workflow_class: nil)
         @trigger = trigger
         @workflow_key = workflow_key
         @workflow_class = workflow_class
-        @execution = Execution.new(workflow_key:)
+        @execution = Execution.new(workflow_key:, trigger_key:, active_job_id:)
       end
 
       def client

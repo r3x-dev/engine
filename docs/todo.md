@@ -76,17 +76,19 @@ This violates SRP and makes every Solid Queue / error-format / UI change touch t
 
 ---
 
-### [ ] F. Coupling `lib/r3x/workflow/` to Solid Queue internals
+### [x] F. Keep workflow execution reads behind the Solid Queue boundary
 
-**File:** `lib/r3x/workflow/execution.rb:25`
+**Files:**
 
-```ruby
-@recurring_task = SolidQueue::RecurringTask.find_by(key: @workflow_key)
-```
+- `lib/r3x/workflow/execution.rb`
+- `app/models/dashboard/recurring_task.rb`
+- `lib/r3x/workflow/context.rb`
+- `lib/r3x/workflow/executor.rb`
+- `test/lib/r3x/workflow/context_test.rb`
 
-`AGENTS.md` points to `app/models/dashboard/` as the boundary over `solid_queue_*`. Framework code in `lib/r3x/workflow/` should not query Solid Queue internal tables directly.
+`R3x::Workflow::Execution#previous_run_at` used to look up `SolidQueue::RecurringTask` by bare `workflow_key`, but schedulable workflow tasks are persisted as `workflow:<workflow_key>:<trigger_key>`. The lookup also must exclude the currently running recurring execution because Solid Queue records it before the workflow job performs.
 
-**Suggested fix:** introduce a small adapter/repository, e.g. `Dashboard::RecurringTask.find_by_workflow_key(...)`, or pass `previous_run_at` from a higher layer.
+**Done:** `Executor` passes the resolved trigger key and Active Job id through `Context` into `Execution`, and `Execution#previous_run_at` delegates to `Dashboard::RecurringTask` so the namespaced key format and current-run exclusion live at the Solid Queue boundary.
 
 ---
 
