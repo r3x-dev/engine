@@ -19,11 +19,11 @@ module R3x
         Rails.cache.exist?(cache_key_for(member))
       end
 
-      def add(member, ttl: default_ttl)
+      def add(member, ttl: @ttl)
         write(member, ttl:)
       end
 
-      def add?(member, ttl: default_ttl)
+      def add?(member, ttl: @ttl)
         write(member, ttl:, unless_exist: true)
       end
 
@@ -34,10 +34,6 @@ module R3x
       private
 
       attr_reader :workflow_key, :name, :ttl
-
-      def default_ttl
-        ttl
-      end
 
       def write(member, ttl:, unless_exist: false)
         validate_ttl!(ttl)
@@ -56,9 +52,8 @@ module R3x
         cache_store = Array(Rails.application.config.cache_store).first
         return unless cache_store == :solid_cache_store
 
-        cache_config = Rails.application.config_for(:cache).to_h
-        store_options = cache_config[:store_options] || cache_config["store_options"] || {}
-        max_age = store_options[:max_age] || store_options["max_age"]
+        cache_config = Rails.application.config_for(:cache)
+        max_age = cache_config.dig(:store_options, :max_age) || cache_config.dig("store_options", "max_age")
 
         max_age.to_i if max_age.present?
       end
