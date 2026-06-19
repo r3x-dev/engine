@@ -44,7 +44,7 @@
   <div class="detail-grid">
     <div class="detail-item">
       <span class="label">Started</span>
-      <strong><%= dashboard_absolute_timestamp(@run[:started_at]) %></strong>
+      <strong><%= dashboard_timestamp(@run[:started_at]) %></strong>
     </div>
 
     <div class="detail-item">
@@ -111,18 +111,18 @@
     <dl class="technical-grid">
       <div class="technical-item">
         <dt>Enqueued</dt>
-        <dd><%= dashboard_absolute_timestamp(@run[:enqueued_at]) %></dd>
+        <dd><%= dashboard_timestamp(@run[:enqueued_at]) %></dd>
       </div>
       <% if terminal_time.present? %>
         <div class="technical-item">
           <dt>Finished</dt>
-          <dd><%= dashboard_absolute_timestamp(terminal_time) %></dd>
+          <dd><%= dashboard_timestamp(terminal_time) %></dd>
         </div>
       <% end %>
       <% if @run[:scheduled_at].present? %>
         <div class="technical-item">
           <dt>Scheduled</dt>
-          <dd><%= dashboard_absolute_timestamp(@run[:scheduled_at]) %></dd>
+          <dd><%= dashboard_timestamp(@run[:scheduled_at]) %></dd>
         </div>
       <% end %>
       <div class="technical-item">
