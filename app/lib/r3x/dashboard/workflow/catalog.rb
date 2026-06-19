@@ -108,16 +108,6 @@ module R3x
 
           class_name.demodulize.underscore
         end
-
-        def trigger_keys_to_workflow_keys
-          @trigger_keys_to_workflow_keys ||= begin
-            mapping = Hash.new { |hash, key| hash[key] = [] }
-
-            recurring_tasks.each { |task| mapping[task.trigger_key] << task.workflow_key }
-
-            mapping.transform_values { |values| values.compact.uniq }
-          end
-        end
       end
     end
   end
