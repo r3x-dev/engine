@@ -46,7 +46,10 @@ module Dashboard
 
     def previous_run_at(active_job_id: nil)
       executions = SolidQueue::RecurringExecution.where(task_key: key)
-      executions = executions.joins(:job).where.not(SolidQueue::Job.table_name => { active_job_id: }) if active_job_id.present?
+      if active_job_id.present?
+        current_run_at = executions.joins(:job).where(SolidQueue::Job.table_name => { active_job_id: }).pick(:run_at)
+        executions = executions.where("run_at < ?", current_run_at) if current_run_at
+      end
       executions.maximum(:run_at)
     end
 

@@ -90,6 +90,68 @@ module R3x
         assert_not_predicate execution, :first_run?
       end
 
+      test "previous_run_at ignores later recurring executions when current job is delayed" do
+        task_key = "workflow:test_workflow:schedule:daily"
+        previous_run_at = 3.hours.ago.change(usec: 0)
+        current_run_at = 2.hours.ago.change(usec: 0)
+        later_run_at = 1.hour.ago.change(usec: 0)
+        previous_job = create_workflow_job!(arguments: ["schedule:daily"])
+        current_job = create_workflow_job!(arguments: ["schedule:daily"])
+        later_job = create_workflow_job!(arguments: ["schedule:daily"])
+        create_recurring_task!(task_key:, arguments: ["schedule:daily"])
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: previous_run_at,
+          job_id: previous_job.id,
+        )
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: current_run_at,
+          job_id: current_job.id,
+        )
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: later_run_at,
+          job_id: later_job.id,
+        )
+
+        execution = Execution.new(
+          workflow_key: "test_workflow",
+          trigger_key: "schedule:daily",
+          active_job_id: current_job.active_job_id,
+        )
+
+        assert_equal previous_run_at, execution.previous_run_at
+      end
+
+      test "first_run? ignores later recurring executions when first job is delayed" do
+        task_key = "workflow:test_workflow:schedule:daily"
+        current_run_at = 2.hours.ago.change(usec: 0)
+        later_run_at = 1.hour.ago.change(usec: 0)
+        current_job = create_workflow_job!(arguments: ["schedule:daily"])
+        later_job = create_workflow_job!(arguments: ["schedule:daily"])
+        create_recurring_task!(task_key:, arguments: ["schedule:daily"])
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: current_run_at,
+          job_id: current_job.id,
+        )
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: later_run_at,
+          job_id: later_job.id,
+        )
+
+        execution = Execution.new(
+          workflow_key: "test_workflow",
+          trigger_key: "schedule:daily",
+          active_job_id: current_job.active_job_id,
+        )
+
+        assert_nil execution.previous_run_at
+        assert_predicate execution, :first_run?
+      end
+
       test "previous_run_at is memoized" do
         task_key = "workflow:test_memo:schedule:memo"
         previous_run_at = 2.hours.ago.change(usec: 0)
