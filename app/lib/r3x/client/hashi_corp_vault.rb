@@ -18,7 +18,7 @@ module R3x
       end
 
       def self.diagnose(path: R3x::Env.fetch!("R3X_VAULT_SECRETS_PATH"))
-        instance.diagnose(path: path)
+        instance.diagnose(path:)
       end
 
       def self.configured?
@@ -61,11 +61,11 @@ module R3x
         token = lookup_summary
 
         {
-          auth_method: auth_method,
+          auth_method:,
           vault_addr: config.vault_addr,
           secret_path: path,
-          token: token,
-          capabilities: capabilities,
+          token:,
+          capabilities:,
           secret: {
             keys: read(path).keys.sort
           }
@@ -87,7 +87,7 @@ module R3x
       def build_connection(token: nil)
         headers = {}
         headers["X-Vault-Token"] = token if token.present?
-        HTTPX.with(headers: headers)
+        HTTPX.with(headers:)
       end
 
       def vault_token
@@ -103,7 +103,7 @@ module R3x
       end
 
       def auth
-        @auth ||= Auth.build(config: config, connection_builder: -> { build_connection })
+        @auth ||= Auth.build(config:, connection_builder: -> { build_connection })
       end
 
       def get(path)

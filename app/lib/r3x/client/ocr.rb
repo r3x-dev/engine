@@ -26,7 +26,7 @@ module R3x
 
       def parse(io_or_path, language: nil, engine: nil, filetype: nil, overlay: false)
         mime_type = filetype || detect_mime(io_or_path)
-        params = build_params(io_or_path, mime_type, language: language, engine: engine, overlay: overlay)
+        params = build_params(io_or_path, mime_type, language:, engine:, overlay:)
         response = connection.post("#{BASE_URL}/#{ENDPOINT}", form: params).raise_for_status
         body = response.json
         raise "OCR API error: #{body["ErrorMessage"]}" if body["IsErroredOnProcessing"]

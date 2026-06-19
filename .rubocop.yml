@@ -171,3 +171,6 @@ Minitest/UnreachableAssertion:
 
 Minitest/LiteralAsActualArgument:
   Enabled: true
+
+Style/HashSyntax:
+  EnforcedShorthandSyntax: always

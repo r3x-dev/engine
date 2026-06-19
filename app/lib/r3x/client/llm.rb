@@ -21,7 +21,7 @@ module R3x
           provider_class = RubyLLM::Provider.providers.fetch(provider)
 
           if provider_class.assume_models_exist?
-            { provider: provider, assume_model_exists: true }.freeze
+            { provider:, assume_model_exists: true }.freeze
           else
             DEFAULT_CHAT_OPTIONS
           end
@@ -70,7 +70,7 @@ module R3x
       attr_reader :llm_context, :chat_options
 
       def ask_model(model:, prompt:, schema:, attachments: nil)
-        conversation = llm_context.chat(**chat_options.merge(model: model))
+        conversation = llm_context.chat(**chat_options.merge(model:))
         conversation = conversation.with_schema(schema) if schema
 
         conversation.ask(prompt, with: attachments)

@@ -19,7 +19,7 @@ module R3x
             payload: trigger_payload
           ),
           workflow_key: workflow_class.workflow_key,
-          workflow_class: workflow_class
+          workflow_class:
         )
       end
 

@@ -60,7 +60,7 @@ module R3x
           return if resolved_workflow_key.blank?
 
           trigger_key = first_job.trigger_key
-          recurring_task = recurring_task_for(workflow_key: resolved_workflow_key, trigger_key: trigger_key)
+          recurring_task = recurring_task_for(workflow_key: resolved_workflow_key, trigger_key:)
           statuses = sorted_jobs.map(&:status)
           status = ::Dashboard::Run.logical_status(statuses, resumptions: last_job.resumptions)
 
@@ -79,8 +79,8 @@ module R3x
             resumptions: last_job.observed_resumptions,
             scheduled_at: last_job.scheduled_execution&.scheduled_at || last_job.scheduled_at,
             started_at: first_job.claimed_execution&.created_at || first_job.created_at,
-            status: status,
-            trigger_key: trigger_key,
+            status:,
+            trigger_key:,
             trigger_payload: first_job.trigger_payload,
             trigger_schedule: recurring_task&.schedule,
             workflow_key: resolved_workflow_key,

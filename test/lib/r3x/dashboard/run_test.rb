@@ -25,7 +25,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
     finished_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [ "schedule:finished" ],
-      finished_at: finished_at,
+      finished_at:,
       created_at: 9.minutes.ago,
       updated_at: finished_at
     )
@@ -71,7 +71,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       job_id: scheduled_job.id,
       queue_name: scheduled_job.queue_name,
       priority: scheduled_job.priority,
-      scheduled_at: scheduled_at,
+      scheduled_at:,
       created_at: 5.minutes.ago
     )
 

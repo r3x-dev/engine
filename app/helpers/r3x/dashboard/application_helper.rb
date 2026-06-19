@@ -235,7 +235,7 @@ module R3x
           workflow: [ "queue-list", :outline ]
         }.fetch(name)
 
-        icon_html = Heroicon::Icon.render(name: icon_name, variant: variant, options: { class: "icon" }, path_options: {})
+        icon_html = Heroicon::Icon.render(name: icon_name, variant:, options: { class: "icon" }, path_options: {})
         content_tag(:span, raw(icon_html), class: "icon")
       end
 

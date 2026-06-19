@@ -32,12 +32,12 @@ module R3x
         raise ArgumentError, "Block required" unless block_given?
 
         rid = SecureRandom.uuid
-        send_start(rid: rid)
+        send_start(rid:)
         begin
           yield(self, rid)
-          ping(rid: rid)
+          ping(rid:)
         rescue => e
-          fail(body: e.message, rid: rid)
+          fail(body: e.message, rid:)
           raise
         end
       end
@@ -50,7 +50,7 @@ module R3x
       # @return [HealthchecksIO::Response] The response from Healthchecks.io
       def ping(body: nil, rid: nil)
         method = body ? :post : :head
-        make_request(method, "", body: body, rid: rid)
+        make_request(method, "", body:, rid:)
       end
 
       # Send a failure signal to Healthchecks.io.
@@ -60,7 +60,7 @@ module R3x
       # @param rid [String, nil] Optional run ID for matching with start signal
       # @return [HealthchecksIO::Response] The response from Healthchecks.io
       def fail(body: nil, rid: nil)
-        make_request(:post, "fail", body: body, rid: rid)
+        make_request(:post, "fail", body:, rid:)
       end
 
       # Send a log signal to Healthchecks.io.
@@ -71,7 +71,7 @@ module R3x
       # @return [HealthchecksIO::Response] The response from Healthchecks.io
       def log(lines:, rid: nil)
         body = lines.is_a?(Array) ? lines.join("\n") : lines.to_s
-        make_request(:post, "log", body: body, rid: rid)
+        make_request(:post, "log", body:, rid:)
       end
 
       # Report an exit status to Healthchecks.io.
@@ -83,7 +83,7 @@ module R3x
       # @return [HealthchecksIO::Response] The response from Healthchecks.io
       def exit_status(code:, body: nil, rid: nil)
         method = body ? :post : :head
-        make_request(method, code.to_s, body: body, rid: rid)
+        make_request(method, code.to_s, body:, rid:)
       end
 
       private
@@ -95,7 +95,7 @@ module R3x
       end
 
       def send_start(rid: nil)
-        make_request(:head, "start", rid: rid)
+        make_request(:head, "start", rid:)
       end
 
       def make_request(method, path, body: nil, rid: nil)
@@ -115,7 +115,7 @@ module R3x
         when :head
           connection.head(target_url)
         when :post
-          connection.post(target_url, body: body)
+          connection.post(target_url, body:)
         else
           raise ArgumentError, "Unsupported HTTP method: #{method}"
         end

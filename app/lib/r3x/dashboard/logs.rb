@@ -54,7 +54,7 @@ module R3x
       def configured?
         return true if client.present?
 
-        self.class.configured?(provider_name: provider_name)
+        self.class.configured?(provider_name:)
       end
 
       def build_query(filter)
@@ -66,17 +66,17 @@ module R3x
         {
           configured: true,
           entries: [],
-          error: error,
-          provider: provider
+          error:,
+          provider:
         }
       end
 
       def query_logs(query, start_at:, end_at:, limit:, context: {})
-        raw_entries = logs_client.query(query: query, start_at: start_at, end_at: end_at, limit: limit)
+        raw_entries = logs_client.query(query:, start_at:, end_at:, limit:)
 
         {
           configured: true,
-          entries: raw_entries.filter_map { |entry| normalize_entry(entry, context: context) },
+          entries: raw_entries.filter_map { |entry| normalize_entry(entry, context:) },
           error: nil,
           provider: provider_name
         }
@@ -96,7 +96,7 @@ module R3x
       end
 
       def normalize_entry(entry, context: {})
-        payload = parse_message_payload(entry, context: context)
+        payload = parse_message_payload(entry, context:)
 
         {
           backtrace: payload[:backtrace],
@@ -115,15 +115,15 @@ module R3x
 
       def parse_message_payload(entry, context: {})
         if entry.key?("level")
-          message, tags = extract_message_and_tags(entry["_msg"], tags: normalize_array_field(entry["tags"]), context: context)
+          message, tags = extract_message_and_tags(entry["_msg"], tags: normalize_array_field(entry["tags"]), context:)
 
           return {
             backtrace: normalize_array_field(entry["backtrace"]).presence,
             error_class: entry["error_class"],
             error_message: entry["error_message"],
             level: normalize_level(entry["level"]),
-            message: message,
-            tags: tags
+            message:,
+            tags:
           }
         end
 
@@ -132,32 +132,32 @@ module R3x
         raise ArgumentError, "Expected log payload to decode to a hash, got #{payload.class}" unless payload.is_a?(Hash)
 
         unless payload.key?("level") && payload.key?("message")
-          message, tags = extract_message_and_tags(raw_message, context: context)
+          message, tags = extract_message_and_tags(raw_message, context:)
 
           return {
             level: "unknown",
-            message: message,
-            tags: tags
+            message:,
+            tags:
           }
         end
 
-        message, tags = extract_message_and_tags(payload["message"], tags: payload["tags"], context: context)
+        message, tags = extract_message_and_tags(payload["message"], tags: payload["tags"], context:)
 
         {
           backtrace: normalize_array_field(payload["backtrace"]).presence,
           error_class: payload["error_class"],
           error_message: payload["error_message"],
           level: normalize_level(payload["level"]),
-          message: message,
-          tags: tags
+          message:,
+          tags:
         }
       rescue MultiJSON::ParseError
-        message, tags = extract_message_and_tags(entry["_msg"], context: context)
+        message, tags = extract_message_and_tags(entry["_msg"], context:)
 
         {
           level: "unknown",
-          message: message,
-          tags: tags
+          message:,
+          tags:
         }
       end
 
@@ -169,13 +169,13 @@ module R3x
       end
 
       def extract_message_and_tags(message, tags: nil, context: {})
-        visible_tags = Array(tags).map(&:to_s).reject { |tag| hidden_tag?(tag, context: context) }
+        visible_tags = Array(tags).map(&:to_s).reject { |tag| hidden_tag?(tag, context:) }
         message = message.to_s
         match = message.match(R3x::Log::TAG_PATTERN)
         return [ message, visible_tags ] unless match
 
         raw_tags = match[0].scan(/\[([^\]]+)\]/).flatten
-        visible_tags = (visible_tags + raw_tags.reject { |tag| hidden_tag?(tag, context: context) }).uniq
+        visible_tags = (visible_tags + raw_tags.reject { |tag| hidden_tag?(tag, context:) }).uniq
         stripped_message = message.delete_prefix(match[0]).strip
 
         [ stripped_message.presence || message, visible_tags ]

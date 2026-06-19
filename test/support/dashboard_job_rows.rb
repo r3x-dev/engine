@@ -3,24 +3,24 @@ module DashboardJobRows
 
   def serialized_job_payload(job_class_name:, arguments:, queue_name: "default", priority: nil)
     build_active_job(
-      job_class_name: job_class_name,
-      arguments: arguments,
-      queue_name: queue_name,
-      priority: priority
+      job_class_name:,
+      arguments:,
+      queue_name:,
+      priority:
     ).serialize
   end
 
   def create_job!(job_class_name:, arguments:, queue_name: "default", priority: nil, **attributes)
     SolidQueue::Job.create!(
       {
-        queue_name: queue_name,
+        queue_name:,
         class_name: job_class_name,
         priority: priority || 0,
         arguments: serialized_job_payload(
-          job_class_name: job_class_name,
-          arguments: arguments,
-          queue_name: queue_name,
-          priority: priority
+          job_class_name:,
+          arguments:,
+          queue_name:,
+          priority:
         )
       }.merge(attributes)
     )

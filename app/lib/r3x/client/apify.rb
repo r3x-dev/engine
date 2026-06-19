@@ -22,8 +22,8 @@ module R3x
       def run_actor_sync_get_items(actor_id, input: nil, format: "json", clean: true, limit: nil, **options)
         logger.debug { "Apify run_actor_sync_get_items #{actor_id}" }
 
-        params = { format: format, clean: clean, limit: limit }.merge(options).compact
-        response = connection.post("#{BASE_URL}/acts/#{actor_id}/run-sync-get-dataset-items", json: input, params: params).raise_for_status
+        params = { format:, clean:, limit: }.merge(options).compact
+        response = connection.post("#{BASE_URL}/acts/#{actor_id}/run-sync-get-dataset-items", json: input, params:).raise_for_status
 
         if response.headers["content-type"]&.include?("application/json")
           response.json
