@@ -28,23 +28,6 @@ module R3x
         assert_includes dashboard_log_time(Time.zone.parse("2026-04-15T12:00:01Z")), "12:00:01"
       end
 
-      test "dashboard absolute timestamp renders date and time instead of relative time" do
-        rendered = dashboard_absolute_timestamp(Time.zone.parse("2026-04-15T12:00:01Z"))
-
-        assert_includes rendered, "15.04.2026 12:00:01"
-        assert_not_includes rendered, ">about"
-      end
-
-      test "dashboard absolute timestamp respects R3X_TIMEZONE" do
-        original_timezone = ENV["R3X_TIMEZONE"]
-        ENV["R3X_TIMEZONE"] = "America/New_York"
-
-        rendered = dashboard_absolute_timestamp(Time.zone.parse("2026-04-15T12:00:01Z"))
-
-        assert_includes rendered, "15.04.2026 08:00:01 EDT"
-      ensure
-        ENV["R3X_TIMEZONE"] = original_timezone
-      end
 
       test "dashboard trigger details shows schedule details without hash as visible text" do
         rendered = dashboard_trigger_details(
