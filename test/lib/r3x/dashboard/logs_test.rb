@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -29,7 +31,7 @@ module R3x
 
         result = logs.run_logs(active_job_id: "aj-123")
 
-        refute result[:configured]
+        assert_not result[:configured]
         assert_empty result[:entries]
       end
 
@@ -39,7 +41,7 @@ module R3x
 
         result = Logs.new(provider_name: "victorialogs").run_logs(active_job_id: "aj-123")
 
-        refute result[:configured]
+        assert_not result[:configured]
         assert_empty result[:entries]
       ensure
         ENV["R3X_VICTORIA_LOGS_URL"] = original_url
@@ -65,7 +67,7 @@ module R3x
         assert_nil result[:error]
         assert_equal 1, result[:entries].size
         assert_includes client.calls.first[:query], 'tags:"r3x.run_active_job_id=aj-123"'
-        refute_includes client.calls.first[:query], '_msg:"r3x.run_active_job_id=aj-123"'
+        assert_not_includes client.calls.first[:query], '_msg:"r3x.run_active_job_id=aj-123"'
       end
 
       test "run logs read collector-extracted structured fields" do
@@ -74,7 +76,7 @@ module R3x
             "_time"                     => "2026-04-15T12:00:01Z",
             "_msg"                      => "Workflow run completed",
             "level"                     => "info",
-            "tags"                      => MultiJSON.generate([ "ActiveJob", "r3x.run_active_job_id=aj-123", "r3x.trigger_key=schedule:123" ]),
+            "tags"                      => MultiJSON.generate(["ActiveJob", "r3x.run_active_job_id=aj-123", "r3x.trigger_key=schedule:123"]),
             "error_class"               => nil,
             "error_message"             => nil,
             "backtrace"                 => MultiJSON.generate([]),
@@ -94,7 +96,7 @@ module R3x
 
         assert_equal "info", entry[:level]
         assert_equal "Workflow run completed", entry[:message]
-        assert_equal [ "ActiveJob" ], entry[:tags]
+        assert_equal ["ActiveJob"], entry[:tags]
         assert_nil entry[:backtrace]
       end
 
@@ -104,10 +106,10 @@ module R3x
             "_time"                     => "2026-04-15T12:00:01Z",
             "_msg"                      => "Workflow run failed",
             "level"                     => "error",
-            "tags"                      => [ "ActiveJob", "r3x.run_active_job_id=aj-123" ],
+            "tags"                      => ["ActiveJob", "r3x.run_active_job_id=aj-123"],
             "error_class"               => "NameError",
             "error_message"             => "uninitialized constant",
-            "backtrace"                 => [ "app/lib/a.rb:1", "app/lib/b.rb:2" ],
+            "backtrace"                 => ["app/lib/a.rb:1", "app/lib/b.rb:2"],
             "kubernetes.container_name" => "app",
             "kubernetes.pod_name"       => "r3x-jobs-123"
           }
@@ -126,7 +128,7 @@ module R3x
         assert_equal "Workflow run failed", entry[:message]
         assert_equal "NameError", entry[:error_class]
         assert_equal "uninitialized constant", entry[:error_message]
-        assert_equal [ "app/lib/a.rb:1", "app/lib/b.rb:2" ], entry[:backtrace]
+        assert_equal ["app/lib/a.rb:1", "app/lib/b.rb:2"], entry[:backtrace]
       end
 
       test "run logs strip repeated correlation tags from the message body" do
@@ -275,7 +277,7 @@ module R3x
               "message"       => "Workflow run failed",
               "error_class"   => "NameError",
               "error_message" => "uninitialized constant",
-              "backtrace"     => [ "app/lib/a.rb:1", "app/lib/b.rb:2" ]
+              "backtrace"     => ["app/lib/a.rb:1", "app/lib/b.rb:2"]
             ),
             "kubernetes.container_name" => "app",
             "kubernetes.pod_name"       => "r3x-jobs-123"
@@ -295,7 +297,7 @@ module R3x
         assert_equal "Workflow run failed", entry[:message]
         assert_equal "NameError", entry[:error_class]
         assert_equal "uninitialized constant", entry[:error_message]
-        assert_equal [ "app/lib/a.rb:1", "app/lib/b.rb:2" ], entry[:backtrace]
+        assert_equal ["app/lib/a.rb:1", "app/lib/b.rb:2"], entry[:backtrace]
       end
 
       test "returns provider error when provider is unsupported" do

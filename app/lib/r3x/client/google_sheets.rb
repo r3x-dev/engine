@@ -44,7 +44,7 @@ module R3x
       end
 
       def row_to_hash(headers, row)
-        padded_row = row + Array.new([ 0, headers.length - row.length ].max, nil)
+        padded_row = row + Array.new([0, headers.length - row.length].max, nil)
         headers.zip(padded_row).to_h
       end
     end

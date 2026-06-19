@@ -118,7 +118,7 @@ module R3x
           .with(body: "Line 1\nLine 2\nLine 3")
           .to_return(status: 200, body: "OK")
 
-        response = @client.log(lines: [ "Line 1", "Line 2", "Line 3" ])
+        response = @client.log(lines: ["Line 1", "Line 2", "Line 3"])
 
         assert_predicate response, :success?
         assert_requested request

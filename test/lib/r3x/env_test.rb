@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 require "tempfile"
 
@@ -166,7 +168,7 @@ module R3x
       %w[0 false no off].each do |value|
         ENV["R3X_TEST_ENV_VAR"] = value
 
-        refute Env.fetch_boolean("R3X_TEST_ENV_VAR"), "Expected false for #{value.inspect}"
+        assert_not Env.fetch_boolean("R3X_TEST_ENV_VAR"), "Expected false for #{value.inspect}"
       end
     ensure
       ENV.delete("R3X_TEST_ENV_VAR")
@@ -202,7 +204,7 @@ module R3x
 
       ENV["R3X_TEST_ENV_VAR"] = "FALSE"
 
-      refute Env.fetch_boolean("R3X_TEST_ENV_VAR")
+      assert_not Env.fetch_boolean("R3X_TEST_ENV_VAR")
     ensure
       ENV.delete("R3X_TEST_ENV_VAR")
     end

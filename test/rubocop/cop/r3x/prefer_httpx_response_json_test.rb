@@ -77,7 +77,7 @@ module RuboCop
         def investigate(source)
           processed_source = RuboCop::ProcessedSource.new(source, RUBY_VERSION.to_f)
           cop = PreferHttpxResponseJson.new(@config)
-          commissioner = RuboCop::Cop::Commissioner.new([ cop ])
+          commissioner = RuboCop::Cop::Commissioner.new([cop])
 
           commissioner.investigate(processed_source).offenses
         end
@@ -97,7 +97,7 @@ module RuboCop
         def assert_autocorrect(source, expected)
           processed_source = RuboCop::ProcessedSource.new(source, RUBY_VERSION.to_f)
           cop = PreferHttpxResponseJson.new(@config)
-          commissioner = RuboCop::Cop::Commissioner.new([ cop ])
+          commissioner = RuboCop::Cop::Commissioner.new([cop])
           offenses = commissioner.investigate(processed_source).offenses
 
           flunk "Expected offenses to autocorrect for: #{source}" if offenses.empty?

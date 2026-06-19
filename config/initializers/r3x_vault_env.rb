@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Rails.application.config.after_initialize do
   next if R3x::Env.fetch_boolean("R3X_SKIP_VAULT_ENV_LOAD")
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -16,7 +18,7 @@ module R3x
             body: {
               data: {
                 display_name: "token-r3x-env",
-                policies: [ "r3x-env-read" ],
+                policies: ["r3x-env-read"],
                 ttl: 3600,
                 renewable: true,
                 period: 86_400,
@@ -31,8 +33,8 @@ module R3x
           .to_return(
             status: 200,
             body: {
-              "secret/data/env/r3x"    => [ "read" ],
-              "auth/token/lookup-self" => [ "read" ]
+              "secret/data/env/r3x"    => ["read"],
+              "auth/token/lookup-self" => ["read"]
             }.to_json,
             headers: { "Content-Type" => "application/json" }
           )
@@ -57,12 +59,12 @@ module R3x
         assert_equal "secret/data/env/r3x", result[:secret_path]
         assert_equal "token-r3x-env", result[:token]["display_name"]
         assert result[:token]["renewable"]
-        assert_equal [ "read" ], result[:capabilities]["secret/data/env/r3x"]
-        assert_equal [ "GEMINI_API_KEY", "OPENAI_API_KEY" ], result[:secret][:keys]
+        assert_equal ["read"], result[:capabilities]["secret/data/env/r3x"]
+        assert_equal ["GEMINI_API_KEY", "OPENAI_API_KEY"], result[:secret][:keys]
 
-        refute_includes result.to_s, "secret-gemini-key"
-        refute_includes result.to_s, "secret-openai-key"
-        refute_includes result.to_s, "test-token"
+        assert_not_includes result.to_s, "secret-gemini-key"
+        assert_not_includes result.to_s, "secret-openai-key"
+        assert_not_includes result.to_s, "test-token"
       end
 
       test "diagnose remains read-only for renewable token" do
@@ -76,7 +78,7 @@ module R3x
             body: {
               data: {
                 display_name: "token-r3x-env",
-                policies: [ "r3x-env-read" ],
+                policies: ["r3x-env-read"],
                 ttl: 3600,
                 renewable: true,
                 period: 86_400,
@@ -90,8 +92,8 @@ module R3x
           .to_return(
             status: 200,
             body: {
-              "secret/data/env/r3x"    => [ "read" ],
-              "auth/token/lookup-self" => [ "read" ]
+              "secret/data/env/r3x"    => ["read"],
+              "auth/token/lookup-self" => ["read"]
             }.to_json,
             headers: { "Content-Type" => "application/json" }
           )
@@ -112,7 +114,7 @@ module R3x
         result = HashiCorpVault.diagnose
 
         assert result[:token]["renewable"]
-        assert_equal [ "read" ], result[:capabilities]["auth/token/lookup-self"]
+        assert_equal ["read"], result[:capabilities]["auth/token/lookup-self"]
       end
 
       test "raises when token lookup fails" do
@@ -123,7 +125,7 @@ module R3x
         stub_request(:get, "https://vault.test/v1/auth/token/lookup-self")
           .to_return(
             status: 403,
-            body: { errors: [ "permission denied" ] }.to_json,
+            body: { errors: ["permission denied"] }.to_json,
             headers: { "Content-Type" => "application/json" }
           )
 

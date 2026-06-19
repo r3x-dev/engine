@@ -27,7 +27,7 @@ module R3x
       def env_override(key)
         return if key.blank?
 
-        [ specific_dry_run_env_key(key), "R3X_DRY_RUN" ].each do |env_key|
+        [specific_dry_run_env_key(key), "R3X_DRY_RUN"].each do |env_key|
           value = R3x::Env.fetch_boolean(env_key)
           next if value.nil?
 

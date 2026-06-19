@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -30,7 +32,7 @@ module R3x
         assert_equal "client-id", captured.fetch(:client_id)
         assert_equal "client-secret", captured.fetch(:client_secret)
         assert_equal "refresh-token", captured.fetch(:refresh_token)
-        assert_equal [ ::Google::Apis::GmailV1::AUTH_GMAIL_SEND ], captured.fetch(:scope)
+        assert_equal [::Google::Apis::GmailV1::AUTH_GMAIL_SEND], captured.fetch(:scope)
       end
 
       test "from_env loads googleauth on first use" do
@@ -87,7 +89,7 @@ module R3x
           scope: "gmail.send"
         )
 
-        assert_equal [ ::Google::Apis::GmailV1::AUTH_GMAIL_SEND ], captured_scope
+        assert_equal [::Google::Apis::GmailV1::AUTH_GMAIL_SEND], captured_scope
       end
 
       test "resolve_scope resolves translate alias directly" do

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Env
     # R3x::Env is loaded during early boot (e.g. config/runtime_profile.rb),

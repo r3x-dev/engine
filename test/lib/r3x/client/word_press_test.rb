@@ -30,7 +30,7 @@ module R3x
           .with(query: { "per_page" => "10" })
           .to_return(
             status: 200,
-            body: MultiJSON.generate([ { "id" => 1, "title" => { "rendered" => "Post 1" } } ]),
+            body: MultiJSON.generate([{ "id" => 1, "title" => { "rendered" => "Post 1" } }]),
             headers: { "Content-Type" => "application/json" }
           )
 
@@ -76,7 +76,7 @@ module R3x
           .with(query: { "per_page" => "10" })
           .to_return(
             status: 200,
-            body: MultiJSON.generate([ { "id" => 10, "title" => { "rendered" => "Page 10" } } ]),
+            body: MultiJSON.generate([{ "id" => 10, "title" => { "rendered" => "Page 10" } }]),
             headers: { "Content-Type" => "application/json" }
           )
 

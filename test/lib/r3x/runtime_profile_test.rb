@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -19,10 +21,10 @@ module R3x
 
     test "defaults to web profile" do
       assert_equal "web", RuntimeProfile.current
-      assert_equal [ :web ], RuntimeProfile.bundler_groups
-      refute_predicate RuntimeProfile, :jobs?
-      refute_predicate RuntimeProfile, :workflow_cli?
-      refute_predicate RuntimeProfile, :headless?
+      assert_equal [:web], RuntimeProfile.bundler_groups
+      assert_not_predicate RuntimeProfile, :jobs?
+      assert_not_predicate RuntimeProfile, :workflow_cli?
+      assert_not_predicate RuntimeProfile, :headless?
     end
 
     test "recognizes jobs profile" do
@@ -31,7 +33,7 @@ module R3x
       assert_equal "jobs", RuntimeProfile.current
       assert_equal [], RuntimeProfile.bundler_groups
       assert_predicate RuntimeProfile, :jobs?
-      refute_predicate RuntimeProfile, :workflow_cli?
+      assert_not_predicate RuntimeProfile, :workflow_cli?
       assert_predicate RuntimeProfile, :headless?
     end
 
@@ -40,7 +42,7 @@ module R3x
 
       assert_equal "workflow_cli", RuntimeProfile.current
       assert_equal [], RuntimeProfile.bundler_groups
-      refute_predicate RuntimeProfile, :jobs?
+      assert_not_predicate RuntimeProfile, :jobs?
       assert_predicate RuntimeProfile, :workflow_cli?
       assert_predicate RuntimeProfile, :headless?
     end

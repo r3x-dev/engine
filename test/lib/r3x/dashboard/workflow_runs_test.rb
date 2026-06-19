@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -17,7 +19,7 @@ module R3x
       test "maps workflow jobs to workflow_key and finished status" do
         job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           finished_at: 2.minutes.ago,
           created_at: 5.minutes.ago,
           updated_at: 2.minutes.ago
@@ -36,7 +38,7 @@ module R3x
         active_job_id = "aj-resumed-workflow"
         initial_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           finished_at: 3.minutes.ago,
           created_at: 5.minutes.ago,
@@ -44,7 +46,7 @@ module R3x
         )
         resumed_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           created_at: 3.minutes.ago,
           updated_at: 3.minutes.ago,
@@ -74,7 +76,7 @@ module R3x
         active_job_id = "aj-finished-after-two-resumes"
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           finished_at: 5.minutes.ago,
           created_at: 7.minutes.ago,
@@ -82,7 +84,7 @@ module R3x
         )
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           finished_at: 3.minutes.ago,
           created_at: 5.minutes.ago,
@@ -90,7 +92,7 @@ module R3x
         )
         final_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           finished_at: 1.minute.ago,
           created_at: 3.minutes.ago,
@@ -98,7 +100,7 @@ module R3x
         )
         final_job.update!(
           arguments: final_job.arguments.merge(
-            "continuation" => { "completed" => [ "check_camera_1", "check_camera_2" ] },
+            "continuation" => { "completed" => ["check_camera_1", "check_camera_2"] },
             "resumptions"  => 1
           )
         )
@@ -115,7 +117,7 @@ module R3x
         active_job_id = "aj-scheduled-resume"
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           finished_at: 3.minutes.ago,
           created_at: 5.minutes.ago,
@@ -123,7 +125,7 @@ module R3x
         )
         resumed_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           created_at: 3.minutes.ago,
           updated_at: 3.minutes.ago,
@@ -148,7 +150,7 @@ module R3x
         active_job_id = "aj-old-sleeping-run"
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           finished_at: 2.hours.ago,
           created_at: 3.hours.ago,
@@ -156,7 +158,7 @@ module R3x
         )
         sleeping_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           created_at: 2.hours.ago,
           updated_at: 2.hours.ago,
@@ -174,7 +176,7 @@ module R3x
         75.times do |index|
           DashboardJobRows.create_job!(
             job_class_name: WORKFLOW_JOB_CLASS_NAME,
-            arguments: [ "schedule:abc123" ],
+            arguments: ["schedule:abc123"],
             created_at: index.seconds.ago,
             updated_at: index.seconds.ago
           )
@@ -189,7 +191,7 @@ module R3x
       test "started_at uses claimed_execution time for running jobs" do
         job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           created_at: 5.minutes.ago,
           updated_at: 2.minutes.ago
         )
@@ -211,10 +213,10 @@ module R3x
       end
 
       test "maps trigger payload for workflow jobs" do
-        payload = { "changed_ids" => [ "a1" ] }
+        payload = { "changed_ids" => ["a1"] }
         job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123", { trigger_payload: payload } ],
+          arguments: ["schedule:abc123", { trigger_payload: payload }],
           finished_at: 2.minutes.ago,
           created_at: 5.minutes.ago,
           updated_at: 2.minutes.ago
@@ -228,7 +230,7 @@ module R3x
       test "maps failed jobs from failed execution table" do
         job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           created_at: 5.minutes.ago,
           updated_at: 1.minute.ago
         )
@@ -258,7 +260,7 @@ module R3x
       test "ignores unrelated non-workflow rows entirely" do
         job = DashboardJobRows.create_job!(
           job_class_name: "CleanupJob",
-          arguments: [ "tmp/cache" ],
+          arguments: ["tmp/cache"],
           finished_at: 1.minute.ago,
           created_at: 5.minutes.ago,
           updated_at: 1.minute.ago
@@ -266,20 +268,20 @@ module R3x
 
         runs = Workflow::Runs.new.all
 
-        refute_includes runs.map { |entry| entry[:job_id] }, job.id
+        assert_not_includes runs.map { |entry| entry[:job_id] }, job.id
       end
 
       test "filters by workflow and status" do
         finished_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           finished_at: 2.minutes.ago,
           created_at: 10.minutes.ago,
           updated_at: 2.minutes.ago
         )
         failed_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           created_at: 5.minutes.ago,
           updated_at: 1.minute.ago
         )
@@ -287,14 +289,14 @@ module R3x
 
         runs = Workflow::Runs.new(workflow_key: "test_workflow", status: "failed").all
 
-        assert_equal [ failed_job.id ], runs.map { |run| run[:job_id] }
-        refute_includes runs.map { |run| run[:job_id] }, finished_job.id
+        assert_equal [failed_job.id], runs.map { |run| run[:job_id] }
+        assert_not_includes runs.map { |run| run[:job_id] }, finished_job.id
       end
 
       test "ignores unrelated active jobs" do
         DashboardJobRows.create_job!(
           job_class_name: "CleanupJob",
-          arguments: [ "tmp/cache" ],
+          arguments: ["tmp/cache"],
           finished_at: 1.minute.ago,
           created_at: 2.minutes.ago,
           updated_at: 1.minute.ago
@@ -308,7 +310,7 @@ module R3x
       test "workflow and status filters are not crowded out by newer unrelated jobs" do
         failed_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           created_at: 10.minutes.ago,
           updated_at: 9.minutes.ago
         )
@@ -317,7 +319,7 @@ module R3x
         75.times do |index|
           DashboardJobRows.create_job!(
             job_class_name: "CleanupJob",
-            arguments: [ "tmp/#{index}" ],
+            arguments: ["tmp/#{index}"],
             finished_at: 1.minute.ago,
             created_at: 1.minute.ago + index.seconds,
             updated_at: 1.minute.ago + index.seconds
@@ -326,7 +328,7 @@ module R3x
 
         runs = Workflow::Runs.new(workflow_key: "test_workflow", status: "failed", limit: 10).all
 
-        assert_equal [ failed_job.id ], runs.map { |run| run[:job_id] }
+        assert_equal [failed_job.id], runs.map { |run| run[:job_id] }
       end
 
       private
@@ -336,7 +338,7 @@ module R3x
           key: "workflow:test_workflow:schedule:abc123",
           schedule: "0 * * * *",
           class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           queue_name: "default",
           static: false
         )

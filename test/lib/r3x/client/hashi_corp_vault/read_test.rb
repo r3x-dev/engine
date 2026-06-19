@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -63,7 +65,7 @@ module R3x
                 auth: {
                   client_token: "vault-k8s-token",
                   renewable: true,
-                  policies: [ "r3x-env-read" ]
+                  policies: ["r3x-env-read"]
                 }
               }.to_json,
               headers: { "Content-Type" => "application/json" }
@@ -104,7 +106,7 @@ module R3x
           stub_request(:post, "https://vault.test/v1/auth/kubernetes/login")
             .to_return(
               status: 403,
-              body: { errors: [ "permission denied" ] }.to_json,
+              body: { errors: ["permission denied"] }.to_json,
               headers: { "Content-Type" => "application/json" }
             )
 
@@ -137,7 +139,7 @@ module R3x
           .with(headers: { "X-Vault-Token" => "test-token" })
           .to_return(
             status: 403,
-            body: { errors: [ "permission denied" ] }.to_json,
+            body: { errors: ["permission denied"] }.to_json,
             headers: { "Content-Type" => "application/json" }
           )
 

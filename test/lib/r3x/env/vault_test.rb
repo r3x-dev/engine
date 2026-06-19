@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -59,7 +61,7 @@ module R3x
               auth: {
                 client_token: "vault-k8s-token",
                 renewable: true,
-                policies: [ "r3x-env-read" ]
+                policies: ["r3x-env-read"]
               }
             }.to_json,
             headers: { "Content-Type" => "application/json" }
@@ -130,7 +132,7 @@ module R3x
         .with(headers: { "X-Vault-Token" => "test-token" })
         .to_return(
           status: 500,
-          body: { errors: [ "internal error" ] }.to_json,
+          body: { errors: ["internal error"] }.to_json,
           headers: { "Content-Type" => "application/json" }
         )
 

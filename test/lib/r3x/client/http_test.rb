@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -133,7 +135,7 @@ module R3x
           ]
         end
 
-        assert_equal [ "first", "second" ], bodies
+        assert_equal ["first", "second"], bodies
         assert_requested :get, "https://example.com/one"
         assert_requested :get, "https://example.com/two"
       end

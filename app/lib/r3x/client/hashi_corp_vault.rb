@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "singleton"
 
 module R3x
@@ -56,7 +58,7 @@ module R3x
       end
 
       def diagnose(path:)
-        capabilities_paths = [ path, "auth/token/lookup-self" ]
+        capabilities_paths = [path, "auth/token/lookup-self"]
         capabilities = capabilities_self(capabilities_paths)
         token = lookup_summary
 

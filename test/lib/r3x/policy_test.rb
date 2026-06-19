@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -23,13 +25,13 @@ module R3x
     end
 
     test "dry_run_for prefers explicit value" do
-      refute Policy.dry_run_for(:gmail, false)
+      assert_not Policy.dry_run_for(:gmail, false)
       assert Policy.dry_run_for(:gmail, true)
     end
 
     test "real_delivery_for? inverts dry run" do
       assert Policy.real_delivery_for?(:gmail, false)
-      refute Policy.real_delivery_for?(:gmail, true)
+      assert_not Policy.real_delivery_for?(:gmail, true)
     end
 
     test "defaults to dry run in development environment" do
@@ -43,18 +45,18 @@ module R3x
     test "defaults to real delivery in production" do
       Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("production"))
 
-      refute Policy.default_dry_run_for(:gmail)
+      assert_not Policy.default_dry_run_for(:gmail)
     end
 
     test "specific env override wins" do
       with_env("R3X_GMAIL_DRY_RUN" => "false") do
-        refute Policy.default_dry_run_for(:gmail)
+        assert_not Policy.default_dry_run_for(:gmail)
       end
     end
 
     test "global env override wins when specific is absent" do
       with_env("R3X_GMAIL_DRY_RUN" => nil, "R3X_DRY_RUN" => "false") do
-        refute Policy.default_dry_run_for(:discord)
+        assert_not Policy.default_dry_run_for(:discord)
       end
     end
 
@@ -69,7 +71,7 @@ module R3x
     end
 
     test "skip_cache? defaults to false" do
-      refute_predicate Policy, :skip_cache?
+      assert_not_predicate Policy, :skip_cache?
     end
 
     test "skip_cache? reads env override" do

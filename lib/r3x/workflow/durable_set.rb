@@ -67,7 +67,7 @@ module R3x
         normalized_member = normalize!(member, label: "member")
         digest = Digest::SHA256.hexdigest(normalized_member)
 
-        [ "r3x", "workflow", workflow_key, "durable_set", name, digest ].join(":")
+        ["r3x", "workflow", workflow_key, "durable_set", name, digest].join(":")
       end
 
       def normalize!(value, label:)

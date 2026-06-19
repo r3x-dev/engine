@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -22,7 +24,7 @@ module R3x
           key: "workflow:test_workflow:schedule:123",
           schedule: "0 * * * *",
           class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:123" ],
+          arguments: ["schedule:123"],
           queue_name: "critical",
           priority: 7,
           static: false
@@ -46,14 +48,14 @@ module R3x
           key: "workflow:test_workflow:schedule:123",
           schedule: "0 * * * *",
           class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:123" ],
+          arguments: ["schedule:123"],
           queue_name: "critical",
           priority: 7,
           static: false
         )
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:123" ],
+          arguments: ["schedule:123"],
           queue_name: "old_queue",
           priority: 2,
           finished_at: 30.seconds.ago,
@@ -76,7 +78,7 @@ module R3x
       test "enqueue without trigger key falls back to the last visible direct workflow run metadata" do
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "feed:123", { trigger_payload: { "id" => "42" } } ],
+          arguments: ["feed:123", { trigger_payload: { "id" => "42" } }],
           queue_name: "feeds",
           priority: 3,
           finished_at: 30.seconds.ago,
@@ -105,7 +107,7 @@ module R3x
           key: "workflow:foo_bar:schedule:1",
           schedule: "0 * * * *",
           class_name: "Workflows::FooBar",
-          arguments: [ "schedule:1" ],
+          arguments: ["schedule:1"],
           queue_name: "expected",
           priority: 7,
           static: false
@@ -114,7 +116,7 @@ module R3x
           key: "workflow:foo1bar:schedule:1",
           schedule: "0 * * * *",
           class_name: "Workflows::Foo1bar",
-          arguments: [ "schedule:1" ],
+          arguments: ["schedule:1"],
           queue_name: "wrong",
           priority: 1,
           static: false
@@ -138,7 +140,7 @@ module R3x
           key: "workflow:test_workflow:schedule:123",
           schedule: "0 * * * *",
           class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:123" ],
+          arguments: ["schedule:123"],
           queue_name: "critical",
           priority: 7,
           static: false
@@ -154,7 +156,7 @@ module R3x
 
         assert_equal "critical", job.queue_name
         assert_equal 7, job.priority
-        assert_equal [ "schedule:123" ], ::Dashboard::Run.find(job.id).workflow_arguments
+        assert_equal ["schedule:123"], ::Dashboard::Run.find(job.id).workflow_arguments
       end
 
       test "enqueue without direct target raises a key error" do

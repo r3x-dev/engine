@@ -6,10 +6,10 @@ module R3x
       extend self
 
       def build(workflow_key:, value: nil, candidates: nil)
-        candidate = first_present(candidates || [ value ])
+        candidate = first_present(candidates || [value])
         raise ArgumentError, "dedup key value can't be blank" if candidate.blank?
 
-        [ "wf", normalize(workflow_key, label: "workflow_key"), candidate ].join(":")
+        ["wf", normalize(workflow_key, label: "workflow_key"), candidate].join(":")
       end
 
       private
