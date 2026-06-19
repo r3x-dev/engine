@@ -174,3 +174,13 @@ Minitest/LiteralAsActualArgument:
 
 Style/HashSyntax:
   EnforcedShorthandSyntax: always
+
+Naming/BlockForwarding:
+  Enabled: true
+  EnforcedStyle: explicit
+
+Style/ArgumentsForwarding:
+  Enabled: true
+
+Style/ExplicitBlockArgument:
+  Enabled: true
