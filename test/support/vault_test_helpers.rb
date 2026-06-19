@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "base64"
 require "tempfile"
 
@@ -64,7 +66,7 @@ module VaultTestHelpers
   end
 
   def encode_jwt_payload(payload)
-    [ "header", urlsafe_base64(payload.to_json), "signature" ].join(".")
+    ["header", urlsafe_base64(payload.to_json), "signature"].join(".")
   end
 
   def urlsafe_base64(value)

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -40,7 +42,7 @@ module R3x
 
       tasks = RecurringTasksConfig.to_h
 
-      refute tasks.key?("no_schedule")
+      assert_not tasks.key?("no_schedule")
 
       Workflow::Registry.reset!
     end
@@ -134,7 +136,7 @@ module R3x
       SolidQueue.schedule_recurring_task(
         "workflow:test_workflow:stale_trigger",
         class: R3x::TestSupport::DashboardWorkflowJob.name,
-        args: [ "stale" ],
+        args: ["stale"],
         schedule: "0 * * * *"
       )
 
@@ -142,7 +144,7 @@ module R3x
 
       RecurringTasksConfig.schedule_all!
 
-      refute SolidQueue::RecurringTask.dynamic.find_by(key: "workflow:test_workflow:stale_trigger")
+      assert_not SolidQueue::RecurringTask.dynamic.find_by(key: "workflow:test_workflow:stale_trigger")
     end
 
     test "schedule_all! is idempotent" do
@@ -159,7 +161,7 @@ module R3x
       SolidQueue.schedule_recurring_task(
         "foreign_system:task",
         class: R3x::TestSupport::DashboardWorkflowJob.name,
-        args: [ "foreign" ],
+        args: ["foreign"],
         schedule: "0 * * * *"
       )
 

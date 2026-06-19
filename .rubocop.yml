@@ -10,11 +10,13 @@ require:
   - ./.rubocop/cop/r3x/prefer_httpx_raise_for_status.rb
   - ./.rubocop/cop/r3x/no_manual_method_patching_in_tests.rb
 plugins:
+  - rubocop-rails
   - rubocop-thread_safety
   - rubocop-minitest
 
 AllCops:
   NewCops: enable
+  SuggestExtensions: true
   Exclude:
     - docs/**/*
     - workflows/**/*
@@ -183,4 +185,13 @@ Style/ArgumentsForwarding:
   Enabled: true
 
 Style/ExplicitBlockArgument:
+  Enabled: true
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+Layout/SpaceInsideArrayLiteralBrackets:
+  EnforcedStyle: no_space
+
+Rails/RefuteMethods:
   Enabled: true

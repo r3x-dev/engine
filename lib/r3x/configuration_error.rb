@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   class ConfigurationError < ArgumentError
     attr_reader :subject, :errors, :message_prefix

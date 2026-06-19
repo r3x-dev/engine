@@ -1,17 +1,19 @@
+# frozen_string_literal: true
+
 module Dashboard
   class Run < ApplicationRecord
     include R3x::Concerns::Logger
 
     STATUSES = %w[blocked failed finished queued running sleeping scheduled].freeze
     LATEST_ACTIVITY_BUCKETS = [
-      [ "failed", :solid_queue_failed_executions, :created_at ],
-      [ "finished", :solid_queue_jobs, :finished_at ],
-      [ "running", :solid_queue_claimed_executions, :created_at ],
-      [ "sleeping", :solid_queue_jobs, :created_at ],
-      [ "blocked", :solid_queue_blocked_executions, :created_at ],
-      [ "queued_ready", :solid_queue_ready_executions, :created_at ],
-      [ "queued_waiting", :solid_queue_jobs, :created_at ],
-      [ "scheduled", :solid_queue_scheduled_executions, :scheduled_at ]
+      ["failed", :solid_queue_failed_executions, :created_at],
+      ["finished", :solid_queue_jobs, :finished_at],
+      ["running", :solid_queue_claimed_executions, :created_at],
+      ["sleeping", :solid_queue_jobs, :created_at],
+      ["blocked", :solid_queue_blocked_executions, :created_at],
+      ["queued_ready", :solid_queue_ready_executions, :created_at],
+      ["queued_waiting", :solid_queue_jobs, :created_at],
+      ["scheduled", :solid_queue_scheduled_executions, :scheduled_at]
     ].freeze
 
     self.table_name = "solid_queue_jobs"

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -15,14 +17,14 @@ module R3x
         execution = Execution.new(trigger:, workflow_key: "test")
 
         assert_predicate execution, :schedule?
-        refute_predicate execution, :manual?
+        assert_not_predicate execution, :manual?
       end
 
       test "manual? predicate" do
         trigger = R3x::Triggers::Manual.new
         execution = Execution.new(trigger:, workflow_key: "test")
 
-        refute_predicate execution, :schedule?
+        assert_not_predicate execution, :schedule?
         assert_predicate execution, :manual?
       end
 
@@ -30,7 +32,7 @@ module R3x
         trigger = R3x::Triggers::Manual.new
         execution = Execution.new(trigger:, workflow_key: "test")
 
-        refute_respond_to execution, :webhook?
+        assert_not_respond_to execution, :webhook?
         assert_raises(NoMethodError) { execution.webhook? }
       end
 
@@ -46,10 +48,10 @@ module R3x
         execution = Execution.new(
           trigger:,
           workflow_key: "test",
-          payload: { "entries" => [ { "title" => "Hello" } ] }
+          payload: { "entries" => [{ "title" => "Hello" }] }
         )
 
-        assert_equal({ "entries" => [ { "title" => "Hello" } ] }, execution.payload)
+        assert_equal({ "entries" => [{ "title" => "Hello" }] }, execution.payload)
       end
     end
   end

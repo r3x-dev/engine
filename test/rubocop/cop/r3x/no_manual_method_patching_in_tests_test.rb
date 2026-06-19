@@ -66,7 +66,7 @@ module RuboCop
         def investigate(source)
           processed_source = RuboCop::ProcessedSource.new(source, RUBY_VERSION.to_f)
           cop = NoManualMethodPatchingInTests.new(@config)
-          commissioner = RuboCop::Cop::Commissioner.new([ cop ])
+          commissioner = RuboCop::Cop::Commissioner.new([cop])
 
           commissioner.investigate(processed_source).offenses
         end

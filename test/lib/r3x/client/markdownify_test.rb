@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -26,7 +28,7 @@ module R3x
           assert_equal "# Hello World\n\nThis is a test.", result["markdown"]
           assert_equal 42, result["tokens"]
           assert_equal "auto", result["method"]
-          refute result["retain_images"]
+          assert_not result["retain_images"]
         end
       end
 
@@ -125,7 +127,7 @@ module R3x
 
           assert_equal "https://example.com", captured_payload["url"]
           assert_equal "auto", captured_payload["method"]
-          refute captured_payload["retain_images"]
+          assert_not captured_payload["retain_images"]
         end
       end
 

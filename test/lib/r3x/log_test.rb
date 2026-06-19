@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -10,7 +12,7 @@ module R3x
       with_env("R3X_LOG_FORMAT" => nil) do
         assert_equal "plain", Log.format
         assert_predicate Log, :plain?
-        refute_predicate Log, :json?
+        assert_not_predicate Log, :json?
       end
     end
 
@@ -24,7 +26,7 @@ module R3x
       with_env("R3X_LOG_FORMAT" => "json") do
         assert_equal "json", Log.format
         assert_predicate Log, :json?
-        refute_predicate Log, :plain?
+        assert_not_predicate Log, :plain?
       end
     end
 

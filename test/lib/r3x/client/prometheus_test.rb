@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -78,7 +80,7 @@ module R3x
               data: {
                 resultType: "vector",
                 result: [
-                  { metric: { "__name__" => "up", "job" => "test" }, value: [ 1700000000, "1" ] }
+                  { metric: { "__name__" => "up", "job" => "test" }, value: [1700000000, "1"] }
                 ]
               }
             }.to_json,

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "logger"
 require "multi_json"
 require "time"
@@ -41,12 +43,12 @@ module R3x
 
       def extract_message_and_tags(message)
         match = message.match(R3x::Log::TAG_PATTERN)
-        return [ message, [] ] unless match
+        return [message, []] unless match
 
         tags = match[0].scan(/\[([^\]]+)\]/).flatten
         stripped_message = message.delete_prefix(match[0]).strip
 
-        [ stripped_message.empty? ? message : stripped_message, tags ]
+        [stripped_message.empty? ? message : stripped_message, tags]
       end
     end
   end

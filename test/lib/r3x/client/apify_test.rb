@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -18,7 +20,7 @@ module R3x
 
         result = Apify.new(api_key: "test-api-key").run_actor(
           "example-actor",
-          input: { startUrls: [ { url: "https://example.com" } ] },
+          input: { startUrls: [{ url: "https://example.com" }] },
           memory: 1024,
           timeout: 30,
           unused: nil
@@ -32,7 +34,7 @@ module R3x
           query: { "memory" => "1024", "timeout" => "30" },
           headers: { "Authorization" => "Bearer test-api-key" }
         ) do |request|
-          assert_equal({ "startUrls" => [ { "url" => "https://example.com" } ] }, MultiJSON.parse(request.body))
+          assert_equal({ "startUrls" => [{ "url" => "https://example.com" }] }, MultiJSON.parse(request.body))
         end
       end
 
@@ -41,7 +43,7 @@ module R3x
           .with(query: { "format" => "json", "clean" => "false", "limit" => "5", "fields" => "title" })
           .to_return(
             status: 200,
-            body: MultiJSON.generate([ { "title" => "Hello" } ]),
+            body: MultiJSON.generate([{ "title" => "Hello" }]),
             headers: { "Content-Type" => "application/json" }
           )
 
@@ -53,7 +55,7 @@ module R3x
           fields: "title"
         )
 
-        assert_equal([ { "title" => "Hello" } ], result)
+        assert_equal([{ "title" => "Hello" }], result)
 
         assert_requested(
           :post,

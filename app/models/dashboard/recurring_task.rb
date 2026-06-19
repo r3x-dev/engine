@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dashboard
   class RecurringTask < ApplicationRecord
     self.table_name = "solid_queue_recurring_tasks"

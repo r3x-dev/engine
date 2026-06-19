@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "fugit"
 
 module R3x
@@ -269,9 +271,9 @@ module R3x
         end
 
         def related_jobs_for(run)
-          return [ run ] if run.active_job_id.blank?
+          return [run] if run.active_job_id.blank?
 
-          related_jobs_by_active_job_id.fetch(run.active_job_id, [ run ])
+          related_jobs_by_active_job_id.fetch(run.active_job_id, [run])
         end
 
         def related_jobs_by_active_job_id

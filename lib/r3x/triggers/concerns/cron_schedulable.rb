@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Triggers
     module Concerns
@@ -23,7 +25,7 @@ module R3x
         end
 
         def schedule
-          [ cron, timezone ].compact.join(" ")
+          [cron, timezone].compact.join(" ")
         end
       end
     end

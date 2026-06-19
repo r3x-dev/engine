@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "boot"
 require_relative "runtime_profile"
 
@@ -23,7 +25,7 @@ module R3x
       Rails.root.join("app/helpers"),
       Rails.root.join("app/lib/r3x/dashboard")
     ].freeze
-    JOBS_ONLY_AUTOLOAD_IGNORES = [ Rails.root.join("lib/r3x/workflow/cli.rb") ].freeze
+    JOBS_ONLY_AUTOLOAD_IGNORES = [Rails.root.join("lib/r3x/workflow/cli.rb")].freeze
 
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
