@@ -13,8 +13,8 @@ module R3x
           @series = data.fetch("result", []).map { |s| Series.new(s) }
         end
 
-        def each(&block)
-          series.each(&block)
+        def each(&)
+          series.each(&)
         end
 
         private
