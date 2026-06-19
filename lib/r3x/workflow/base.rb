@@ -65,7 +65,7 @@ module R3x
           key:
         )
 
-        Rails.cache.fetch(cache_key, force:, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes) { yield }
+        Rails.cache.fetch(cache_key, force:, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes, &block)
       end
 
       def run
