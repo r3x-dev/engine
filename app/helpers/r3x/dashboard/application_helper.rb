@@ -55,12 +55,6 @@ module R3x
         time.present? ? dashboard_timestamp(time) : fallback
       end
 
-      def dashboard_relative_time(time)
-        return "Never" if time.blank?
-
-        dashboard_timestamp_text(time)
-      end
-
       def dashboard_timestamp(time)
         return content_tag(:span, "Never", class: "muted") if time.blank?
 
@@ -112,9 +106,8 @@ module R3x
         finish_time = end_time || Time.current
         total_seconds = [(finish_time - start_time).to_i, 0].max
 
-        hours = total_seconds / 3600
-        minutes = (total_seconds % 3600) / 60
-        seconds = total_seconds % 60
+        hours, remainder = total_seconds.divmod(3600)
+        minutes, seconds = remainder.divmod(60)
 
         format("%02d:%02d:%02d", hours, minutes, seconds)
       end
@@ -189,10 +182,6 @@ module R3x
         else
           text.to_s
         end
-      end
-
-      def dashboard_error_multiline?(text)
-        dashboard_error_body(text).each_line.first(2).size > 1
       end
 
       def dashboard_error_details_visible?(text)
