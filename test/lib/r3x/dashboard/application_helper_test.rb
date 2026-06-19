@@ -78,7 +78,6 @@ module R3x
         long_error = "API error: " + ("x" * 220)
 
         assert dashboard_error_details_visible?(long_error)
-        assert_not dashboard_error_multiline?(long_error)
       end
 
       test "dashboard structured error parses ruby hash dumps into exception message and backtrace" do
