@@ -5,7 +5,7 @@ module R3x
         payload = {
           level: "error",
           time: Time.current.utc.iso8601(6),
-          message: message,
+          message:,
           error_class: error.class.name,
           error_message: error.message,
           backtrace: error.backtrace&.first(20),

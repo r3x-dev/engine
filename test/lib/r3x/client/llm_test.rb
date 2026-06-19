@@ -34,7 +34,7 @@ module R3x
         end
 
         def ask(prompt, with: nil)
-          ask_calls << { prompt: prompt, with: with }
+          ask_calls << { prompt:, with: }
           Response.new(@contents.shift)
         end
       end

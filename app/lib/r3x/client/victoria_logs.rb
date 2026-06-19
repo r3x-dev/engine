@@ -11,7 +11,7 @@ module R3x
       end
 
       def query(query:, start_at: nil, end_at: nil, limit: 100, timeout: DEFAULT_TIMEOUT)
-        params = query_params(query: query, start_at: start_at, end_at: end_at, limit: limit, timeout: timeout)
+        params = query_params(query:, start_at:, end_at:, limit:, timeout:)
         response = @client.post("#{@base_url}/select/logsql/query", form: params).raise_for_status
 
         parse_json_lines(response.body)

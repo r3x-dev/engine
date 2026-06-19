@@ -69,8 +69,8 @@ module R3x
             return if namespace.blank? || service_account_name.blank?
 
             {
-              namespace: namespace,
-              service_account_name: service_account_name
+              namespace:,
+              service_account_name:
             }
           rescue ArgumentError, MultiJSON::ParseError
             nil

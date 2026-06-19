@@ -28,24 +28,24 @@ module R3x
       end
 
       def get(url, params: {}, headers: {})
-        @client.get(url, params: params, headers: headers).raise_for_status
+        @client.get(url, params:, headers:).raise_for_status
       end
 
       def head(url, params: {}, headers: {})
-        @client.head(url, params: params, headers: headers).raise_for_status
+        @client.head(url, params:, headers:).raise_for_status
       end
 
       def post(url, payload, headers: {})
-        @client.post(url, json: payload, headers: headers).raise_for_status
+        @client.post(url, json: payload, headers:).raise_for_status
       end
 
       def download_file(url, headers: {})
-        response = @client.get(url, headers: headers).raise_for_status
+        response = @client.get(url, headers:).raise_for_status
 
         content_type = response.headers["content-type"]&.split(";")&.first
-        filename = response.body.filename || filename_from_url(url, content_type: content_type)
+        filename = response.body.filename || filename_from_url(url, content_type:)
 
-        DownloadedFile.new(body: response.body.to_s, content_type: content_type, filename: filename, url: url)
+        DownloadedFile.new(body: response.body.to_s, content_type:, filename:, url:)
       end
 
       def upload_file(url, file, file_field: "file", filename: nil, content_type: nil, params: {}, headers: {})
@@ -72,7 +72,7 @@ module R3x
 
         payload = params.merge(file_field => file_value)
 
-        @client.post(url, form: payload, headers: headers).raise_for_status
+        @client.post(url, form: payload, headers:).raise_for_status
       ensure
         if defined?(temp) && temp
           temp.close

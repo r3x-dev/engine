@@ -275,7 +275,7 @@ module R3x
             def self.name
               "Test"
             end
-            trigger :schedule, cron: cron
+            trigger(:schedule, cron:)
           end
         end
 
@@ -945,7 +945,7 @@ module R3x
         def cached(force: false)
           @calls ||= 0
 
-          with_cache(force: force) do
+          with_cache(force:) do
             @calls += 1
             { "calls" => @calls }
           end
@@ -1101,11 +1101,11 @@ module R3x
     test "ctx durable_set scopes keys by workflow" do
       trigger = R3x::Triggers::Manual.new
       first_context = R3x::Workflow::Context.new(
-        trigger: R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "workflow_one", payload: nil),
+        trigger: R3x::TriggerManager::Execution.new(trigger:, workflow_key: "workflow_one", payload: nil),
         workflow_key: "workflow_one"
       )
       second_context = R3x::Workflow::Context.new(
-        trigger: R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "workflow_two", payload: nil),
+        trigger: R3x::TriggerManager::Execution.new(trigger:, workflow_key: "workflow_two", payload: nil),
         workflow_key: "workflow_two"
       )
       cache = ActiveSupport::Cache::MemoryStore.new
@@ -1139,7 +1139,7 @@ module R3x
         end
 
         def write(key, value, expires_in:, unless_exist: false)
-          writes << { key: key, value: value, expires_in: expires_in, unless_exist: unless_exist }
+          writes << { key:, value:, expires_in:, unless_exist: }
           true
         end
       end.new
@@ -1246,7 +1246,7 @@ module R3x
         end
 
         def write(key, value, expires_in:, unless_exist: false)
-          writes << { key: key, value: value, expires_in: expires_in, unless_exist: unless_exist }
+          writes << { key:, value:, expires_in:, unless_exist: }
           return false if unless_exist && @written
 
           @written = true

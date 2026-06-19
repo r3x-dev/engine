@@ -74,7 +74,7 @@ module Dashboard
 
     class << self
       def enqueue_direct!(class_name:, arguments:, queue_name:, priority:)
-        Dashboard::DirectWorkflowEnqueuer.enqueue!(class_name: class_name, arguments: arguments, queue_name: queue_name, priority: priority)
+        Dashboard::DirectWorkflowEnqueuer.enqueue!(class_name:, arguments:, queue_name:, priority:)
       end
 
       def trigger_enqueue_options_for(task)

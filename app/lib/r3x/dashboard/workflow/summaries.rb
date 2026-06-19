@@ -55,10 +55,10 @@ module R3x
           preferred_recurring_task = recurring_tasks.find { |task| task.direct_workflow_class_name.present? } ||
             recurring_tasks.first
           manual_enqueue_options = ::Dashboard::Run.manual_enqueue_options_for(
-            workflow_key: workflow_key,
+            workflow_key:,
             class_name: preferred_recurring_task&.direct_workflow_class_name,
             recurring_task: preferred_recurring_task,
-            last_run: last_run
+            last_run:
           )
 
           {
@@ -71,8 +71,8 @@ module R3x
             run_now_available: manual_enqueue_options.present?,
             title: workflow_key.titleize,
             trigger_count: trigger_entries.size,
-            trigger_entries: trigger_entries,
-            workflow_key: workflow_key
+            trigger_entries:,
+            workflow_key:
           }
         end
 
@@ -91,8 +91,8 @@ module R3x
             queue_name: last_job.queue_name,
             recorded_at: last_job.recorded_at,
             resumptions: last_job.observed_resumptions,
-            status: status,
-            workflow_key: workflow_key
+            status:,
+            workflow_key:
           }
         end
 
@@ -162,8 +162,8 @@ module R3x
 
           trigger_keys.sort.map do |trigger_key|
             build_trigger_entry(
-              workflow_key: workflow_key,
-              trigger_key: trigger_key,
+              workflow_key:,
+              trigger_key:,
               recurring_task: recurring_tasks_by_trigger_key[trigger_key]
             )
           end
@@ -175,10 +175,10 @@ module R3x
             mode: trigger_mode_for(recurring_task),
             next_trigger_at: next_trigger_at_for(recurring_task),
             queue_name: recurring_task&.queue_name || latest_queue_name(workflow_key),
-            recurring_task: recurring_task,
+            recurring_task:,
             run_now_available: recurring_task.present?,
             unique_key: trigger_key,
-            workflow_key: workflow_key
+            workflow_key:
           }
         end
 

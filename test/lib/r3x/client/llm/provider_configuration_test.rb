@@ -17,7 +17,7 @@ module R3x
         test "requires a present api key env name" do
           [ nil, "" ].each do |api_key_env|
             error = assert_raises(ArgumentError) do
-              ProviderConfiguration.resolve(api_key_env: api_key_env)
+              ProviderConfiguration.resolve(api_key_env:)
             end
             assert_equal "api_key_env is required", error.message
           end

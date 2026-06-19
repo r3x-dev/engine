@@ -228,7 +228,7 @@ module R3x
       def stub_entries_request(path, query:)
         stub_request(:get, "https://miniflux.test#{path}")
           .with(
-            query: query,
+            query:,
             headers: { "X-Auth-Token" => "api-key" }
           )
           .to_return(

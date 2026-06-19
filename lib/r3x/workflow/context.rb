@@ -11,7 +11,7 @@ module R3x
         @trigger = trigger
         @workflow_key = workflow_key
         @workflow_class = workflow_class
-        @execution = Execution.new(workflow_key: workflow_key)
+        @execution = Execution.new(workflow_key:)
       end
 
       def client
@@ -19,7 +19,7 @@ module R3x
       end
 
       def durable_set(name = :default, ttl: DurableSet::DEFAULT_TTL)
-        DurableSet.new(workflow_key: workflow_key, name: name, ttl: ttl)
+        DurableSet.new(workflow_key:, name:, ttl:)
       end
     end
   end

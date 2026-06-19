@@ -19,8 +19,8 @@ module R3x
         with_log_tags(*workflow_log_tags(trigger_key)) do
           @ctx = R3x::Workflow::Executor.build_context(
             workflow_class: self.class,
-            trigger_key: trigger_key,
-            trigger_payload: trigger_payload
+            trigger_key:,
+            trigger_payload:
           )
           if initial_execution?
             logger.info "Running workflow trigger_type=#{ctx.trigger.type}"
@@ -65,7 +65,7 @@ module R3x
           key:
         )
 
-        Rails.cache.fetch(cache_key, force: force, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes) { yield }
+        Rails.cache.fetch(cache_key, force:, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes) { yield }
       end
 
       def run
@@ -77,7 +77,7 @@ module R3x
       attr_reader :ctx
 
       def workflow_dedup_key(value = nil, candidates: nil)
-        R3x::Workflow::DedupKey.build(workflow_key: self.class.workflow_key, value: value, candidates: candidates)
+        R3x::Workflow::DedupKey.build(workflow_key: self.class.workflow_key, value:, candidates:)
       end
 
       def workflow_log_tags(trigger_key)

@@ -128,7 +128,7 @@ module R3x
         )
 
         long_running_job = DashboardJobRows.create_job!(
-          job_class_name: job_class_name,
+          job_class_name:,
           arguments: [ "schedule:abc123" ],
           created_at: 10.minutes.ago,
           updated_at: 30.seconds.ago
@@ -136,7 +136,7 @@ module R3x
         SolidQueue::FailedExecution.create!(job_id: long_running_job.id, error: "boom", created_at: 30.seconds.ago)
 
         DashboardJobRows.create_job!(
-          job_class_name: job_class_name,
+          job_class_name:,
           arguments: [ "schedule:abc123" ],
           finished_at: 2.minutes.ago,
           created_at: 5.minutes.ago,
@@ -164,7 +164,7 @@ module R3x
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: [ "schedule:abc123" ],
-          active_job_id: active_job_id,
+          active_job_id:,
           finished_at: 5.minutes.ago,
           created_at: 7.minutes.ago,
           updated_at: 5.minutes.ago
@@ -172,7 +172,7 @@ module R3x
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: [ "schedule:abc123" ],
-          active_job_id: active_job_id,
+          active_job_id:,
           finished_at: 3.minutes.ago,
           created_at: 5.minutes.ago,
           updated_at: 3.minutes.ago
@@ -180,7 +180,7 @@ module R3x
         final_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: [ "schedule:abc123" ],
-          active_job_id: active_job_id,
+          active_job_id:,
           finished_at: 1.minute.ago,
           created_at: 3.minutes.ago,
           updated_at: 1.minute.ago
@@ -241,7 +241,7 @@ module R3x
         return if run_status.blank?
 
         job = DashboardJobRows.create_job!(
-          job_class_name: job_class_name,
+          job_class_name:,
           arguments: [ trigger_key ],
           finished_at: run_status == "finished" ? recorded_at : nil,
           created_at: recorded_at - 1.minute,
