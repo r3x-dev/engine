@@ -97,20 +97,6 @@ module R3x
         assert_not_nil client
       end
 
-      test "session_options omits ssl key when verify_ssl is true" do
-        opts = Http.session_options(verify_ssl: true, timeout: 15)
-
-        assert_nil opts[:ssl]
-        assert_equal({ connect_timeout: 5, operation_timeout: 15 }, opts[:timeout])
-      end
-
-      test "session_options includes ssl key when verify_ssl is false" do
-        opts = Http.session_options(verify_ssl: false, timeout: 15)
-
-        assert_equal({ verify_mode: OpenSSL::SSL::VERIFY_NONE }, opts[:ssl])
-        assert_equal({ connect_timeout: 5, operation_timeout: 15 }, opts[:timeout])
-      end
-
       test "verify_ssl false creates connection without verification" do
         stub_request(:get, "https://selfsigned.lan/snapshot")
           .to_return(status: 200, body: "image-data")

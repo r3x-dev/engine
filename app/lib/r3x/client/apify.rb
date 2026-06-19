@@ -42,7 +42,6 @@ module R3x
 
       def connection
         @connection ||= HTTPX.with(
-          timeout: { connect_timeout: 10, operation_timeout: 360 },
           headers: { "Authorization" => "Bearer #{api_key}" },
         )
       end
