@@ -13,15 +13,13 @@ module R3x
 
       def show
         @run = Workflow::Runs.new.find!(params[:id])
-        @logs = Logs.new.run_logs(@run) if logs_configured?
+        @logs = Logs.run_logs(@run) if Logs.enabled?
       end
 
       def create
         run = Workflow::RunEnqueuer.new(workflow_key: params[:workflow_key], trigger_key: params[:trigger_key]).enqueue!
 
         redirect_to workflow_run_path(run), notice: "Queued a new run for #{params[:workflow_key].titleize}."
-      rescue ActiveRecord::RecordNotFound, KeyError
-        head :not_found
       end
     end
   end

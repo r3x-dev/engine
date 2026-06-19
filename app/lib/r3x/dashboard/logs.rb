@@ -2,41 +2,27 @@
 
 module R3x
   module Dashboard
-    class Logs
+    module Logs
+      extend self
+
       RUN_LOG_LIMIT = 150
       HIDDEN_TAG_PREFIXES = %w[r3x.].freeze
+      PROVIDERS = {
+        "victorialogs" => R3x::Client::VictoriaLogs,
+      }.freeze
 
-      class << self
-        def configured?(provider_name: current_provider_name)
-          case normalize_provider_name(provider_name)
-          when nil
-            false
-          when "victorialogs"
-            R3x::Env.fetch("R3X_VICTORIA_LOGS_URL").present?
-          else
-            true
-          end
-        end
-
-        def current_provider_name
-          normalize_provider_name(R3x::Env.fetch("R3X_LOGS_PROVIDER"))
-        end
-
-        private
-
-        def normalize_provider_name(provider_name)
-          provider_name.presence
-        end
+      def enabled?
+        provider_name.present?
       end
 
-      def initialize(provider_name: self.class.current_provider_name, client: nil)
-        @provider_name = provider_name.presence
-        @client = client
+      def configured?
+        provider_class&.configured? || false
       end
 
       def run_logs(run)
         active_job_id = run[:active_job_id].presence
-        return unavailable_logs unless configured?
+        return unavailable_logs unless enabled?
+        return unavailable_logs if provider_class.present? && !configured?
         return error_logs(provider_name, "This run does not have an Active Job id yet.") if active_job_id.blank?
 
         tag = R3x::Log.tag(R3x::Log::RUN_ACTIVE_JOB_ID_TAG, active_job_id)
@@ -51,12 +37,8 @@ module R3x
 
       private
 
-      attr_reader :client, :provider_name
-
-      def configured?
-        return true if client.present?
-
-        self.class.configured?(provider_name:)
+      def provider_name
+        R3x::Env.fetch("R3X_LOGS_PROVIDER")
       end
 
       def build_query(filter)
@@ -87,14 +69,11 @@ module R3x
       end
 
       def logs_client
-        return client if client.present?
+        provider_class&.new || raise(ArgumentError, "Unsupported logs provider: #{provider_name}")
+      end
 
-        @logs_client ||= case provider_name
-        when "victorialogs"
-          R3x::Client::VictoriaLogs.new
-        else
-          raise ArgumentError, "Unsupported logs provider: #{provider_name}"
-        end
+      def provider_class
+        PROVIDERS[provider_name]
       end
 
       def normalize_entry(entry, context: {})

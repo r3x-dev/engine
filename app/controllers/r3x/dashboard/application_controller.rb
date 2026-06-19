@@ -7,7 +7,7 @@ module R3x
 
       helper_method :finished_runs_retention_label, :logs_configured?, :mission_control_path
 
-      rescue_from KeyError, with: :render_not_found
+      rescue_from KeyError, ActiveRecord::RecordNotFound, with: :render_not_found
 
       private
 
