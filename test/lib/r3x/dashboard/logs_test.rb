@@ -26,8 +26,19 @@ module R3x
         attr_reader :entries, :error
       end
 
+      setup do
+        @original_url = ENV["R3X_VICTORIA_LOGS_URL"]
+        ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+        Logs.stubs(provider_name: "victorialogs")
+      end
+
+      teardown do
+        ENV["R3X_VICTORIA_LOGS_URL"] = @original_url
+      end
+
       test "returns unavailable state when provider is missing" do
-        logs = Logs.new(provider_name: nil)
+        Logs.stubs(provider_name: nil)
+        logs = Logs
 
         result = logs.run_logs(active_job_id: "aj-123")
 
@@ -36,15 +47,19 @@ module R3x
       end
 
       test "returns unavailable state when provider-specific config is missing" do
-        original_url = ENV["R3X_VICTORIA_LOGS_URL"]
         ENV.delete("R3X_VICTORIA_LOGS_URL")
 
-        result = Logs.new(provider_name: "victorialogs").run_logs(active_job_id: "aj-123")
+        result = Logs.run_logs(active_job_id: "aj-123")
 
         assert_not result[:configured]
         assert_empty result[:entries]
-      ensure
-        ENV["R3X_VICTORIA_LOGS_URL"] = original_url
+      end
+
+      test "unsupported provider is enabled but not configured" do
+        Logs.stubs(provider_name: "unknown")
+
+        assert_predicate Logs, :enabled?
+        assert_not_predicate Logs, :configured?
       end
 
       test "queries run logs by run active job id" do
@@ -61,7 +76,8 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
-        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
+        Logs.stubs(logs_client: client)
+        result = Logs.run_logs(run)
 
         assert result[:configured]
         assert_nil result[:error]
@@ -91,7 +107,8 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
-        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
+        Logs.stubs(logs_client: client)
+        result = Logs.run_logs(run)
         entry = result[:entries].first
 
         assert_equal "info", entry[:level]
@@ -121,7 +138,8 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
-        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
+        Logs.stubs(logs_client: client)
+        result = Logs.run_logs(run)
         entry = result[:entries].first
 
         assert_equal "error", entry[:level]
@@ -153,7 +171,8 @@ module R3x
           workflow_key: "test_workflow",
         }
 
-        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
+        Logs.stubs(logs_client: client)
+        result = Logs.run_logs(run)
         entry = result[:entries].first
 
         assert_equal "Running workflow trigger_type=schedule", entry[:message]
@@ -178,7 +197,8 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
-        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
+        Logs.stubs(logs_client: client)
+        result = Logs.run_logs(run)
 
         assert_equal "[DRY-RUN]: Email send skipped", result[:entries].first[:message]
         assert_equal [], result[:entries].first[:tags]
@@ -198,7 +218,8 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
-        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
+        Logs.stubs(logs_client: client)
+        result = Logs.run_logs(run)
 
         assert_equal %w[error warn info debug], result[:entries].map { |entry| entry[:level] }
       end
@@ -215,7 +236,8 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
-        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
+        Logs.stubs(logs_client: client)
+        result = Logs.run_logs(run)
 
         assert result[:configured]
         assert_nil result[:error]
@@ -238,7 +260,8 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
-        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
+        Logs.stubs(logs_client: client)
+        result = Logs.run_logs(run)
 
         assert result[:configured]
         assert_nil result[:error]
@@ -260,7 +283,8 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
-        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
+        Logs.stubs(logs_client: client)
+        result = Logs.run_logs(run)
 
         assert result[:configured]
         assert_nil result[:error]
@@ -290,7 +314,8 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
         }
 
-        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
+        Logs.stubs(logs_client: client)
+        result = Logs.run_logs(run)
         entry = result[:entries].first
 
         assert_equal "error", entry[:level]
@@ -301,7 +326,8 @@ module R3x
       end
 
       test "returns provider error when provider is unsupported" do
-        result = Logs.new(provider_name: "unknown").run_logs(active_job_id: "aj-123")
+        Logs.stubs(provider_name: "unknown")
+        result = Logs.run_logs(active_job_id: "aj-123")
 
         assert result[:configured]
         assert_equal "Unsupported logs provider: unknown", result[:error]
@@ -309,8 +335,9 @@ module R3x
 
       test "returns provider error when query fails" do
         client = FakeLogsClient.new(error: HTTPX::ConnectionError.new("boom"))
+        Logs.stubs(logs_client: client)
 
-        result = Logs.new(provider_name: "victorialogs", client:).run_logs(active_job_id: "aj-123")
+        result = Logs.run_logs(active_job_id: "aj-123")
 
         assert result[:configured]
         assert_equal "boom", result[:error]

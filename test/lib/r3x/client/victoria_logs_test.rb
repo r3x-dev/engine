@@ -24,6 +24,16 @@ module R3x
         assert_equal "Missing R3X_VICTORIA_LOGS_URL", error.message
       end
 
+      test "configured reflects default url env presence" do
+        ENV.delete("R3X_VICTORIA_LOGS_URL")
+
+        assert_not_predicate VictoriaLogs, :configured?
+
+        ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+        assert_predicate VictoriaLogs, :configured?
+      end
+
       test "supports custom url_env with matching prefix" do
         ENV["R3X_VICTORIA_LOGS_URL_CUSTOM"] = "http://custom-victoria-logs.test:9428"
 
