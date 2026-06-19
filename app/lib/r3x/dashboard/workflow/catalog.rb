@@ -46,7 +46,7 @@ module R3x
         end
 
         def trigger_keys_for(workflow_key)
-          recurring_tasks_for(workflow_key).map(&:trigger_key).compact.uniq.sort
+          recurring_tasks_for(workflow_key).filter_map(&:trigger_key).uniq.sort
         end
 
         def workflow_keys_from_recurring_tasks

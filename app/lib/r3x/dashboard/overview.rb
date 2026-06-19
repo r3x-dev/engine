@@ -37,8 +37,7 @@ module R3x
       def needs_attention
         @needs_attention ||= workflows
           .select { |w| w.dig(:health, :status) == "failed" }
-          .map { |w| w.merge(attention_at: attention_time_for(w), attention_label: attention_label_for(w)) }
-          .sort_by { |w| w[:attention_at] || Time.zone.at(0) }
+          .sort_by { |w| w.dig(:last_run, :recorded_at) || Time.zone.at(0) }
           .reverse
       end
 
@@ -58,14 +57,6 @@ module R3x
 
       def workflows
         @workflows ||= Workflow::Summaries.new.all
-      end
-
-      def attention_time_for(workflow)
-        workflow.dig(:last_run, :recorded_at)
-      end
-
-      def attention_label_for(workflow)
-        "Failed"
       end
     end
   end
