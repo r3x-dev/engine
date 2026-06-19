@@ -15,10 +15,11 @@ module R3x
       private
 
       def first_present(values)
-        Array(values).filter_map do |value|
+        Array(values).each do |value|
           normalized = value.to_s.strip
-          normalized if normalized.present?
-        end.first
+          return normalized if normalized.present?
+        end
+        nil
       end
 
       def normalize(value, label:)
