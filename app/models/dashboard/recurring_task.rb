@@ -47,7 +47,7 @@ module Dashboard
           raise ArgumentError, "Unsupported recurring task key: #{key.inspect}"
         end
 
-        { workflow_key: workflow_key, trigger_key: trigger_key }
+        { workflow_key:, trigger_key: }
       end
     end
   end

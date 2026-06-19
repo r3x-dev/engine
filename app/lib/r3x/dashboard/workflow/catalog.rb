@@ -38,7 +38,7 @@ module R3x
           {
             class_name: class_names_for(workflow_key).first,
             trigger_count: trigger_keys_for(workflow_key).size,
-            workflow_key: workflow_key,
+            workflow_key:,
             title: workflow_key.titleize
           }
         end

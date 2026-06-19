@@ -9,11 +9,11 @@ module R3x
         end
 
         def classify(text:, model:, categories:, include_reason: false, allow_other: true)
-          all_categories = build_categories(categories, allow_other: allow_other)
-          schema = build_schema(all_categories.keys, include_reason: include_reason)
-          prompt = build_prompt(text, all_categories, include_reason: include_reason)
+          all_categories = build_categories(categories, allow_other:)
+          schema = build_schema(all_categories.keys, include_reason:)
+          prompt = build_prompt(text, all_categories, include_reason:)
 
-          message_method.call(model: model, prompt: prompt, schema: schema).content
+          message_method.call(model:, prompt:, schema:).content
         end
 
         private

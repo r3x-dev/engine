@@ -107,7 +107,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       DashboardJobRows.create_job!(
         job_class_name: "CleanupJob",
         arguments: [ "tmp/#{index}" ],
-        finished_at: finished_at,
+        finished_at:,
         created_at: finished_at - 30.seconds,
         updated_at: finished_at
       )
@@ -317,7 +317,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       DashboardJobRows.create_job!(
         job_class_name: WORKFLOW_JOB_CLASS_NAME,
         arguments: [ @trigger ],
-        finished_at: finished_at,
+        finished_at:,
         created_at: finished_at - 30.seconds,
         updated_at: finished_at
       )
@@ -793,7 +793,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     return if run_status.blank?
 
     job = DashboardJobRows.create_job!(
-      job_class_name: job_class_name,
+      job_class_name:,
       arguments: [ trigger_key ],
       finished_at: (run_status == "finished") ? recorded_at : nil,
       created_at: recorded_at - 1.minute,

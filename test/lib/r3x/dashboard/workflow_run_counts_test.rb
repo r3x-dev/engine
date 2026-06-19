@@ -107,7 +107,7 @@ module R3x
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: [ "schedule:abc123" ],
-          active_job_id: active_job_id,
+          active_job_id:,
           finished_at: 3.minutes.ago,
           created_at: 5.minutes.ago,
           updated_at: 3.minutes.ago
@@ -115,7 +115,7 @@ module R3x
         resumed_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: [ "schedule:abc123" ],
-          active_job_id: active_job_id,
+          active_job_id:,
           created_at: 3.minutes.ago,
           updated_at: 3.minutes.ago,
           scheduled_at: 2.minutes.from_now
@@ -146,7 +146,7 @@ module R3x
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: [ "schedule:abc123" ],
-          active_job_id: active_job_id,
+          active_job_id:,
           finished_at: 2.hours.ago,
           created_at: 3.hours.ago,
           updated_at: 2.hours.ago
@@ -154,7 +154,7 @@ module R3x
         sleeping_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: [ "schedule:abc123" ],
-          active_job_id: active_job_id,
+          active_job_id:,
           created_at: 2.hours.ago,
           updated_at: 2.hours.ago,
           scheduled_at: 1.hour.from_now
@@ -195,7 +195,7 @@ module R3x
           DashboardJobRows.create_job!(
             job_class_name: WORKFLOW_JOB_CLASS_NAME,
             arguments: [ "schedule:abc123" ],
-            finished_at: finished_at,
+            finished_at:,
             created_at: finished_at - 30.seconds,
             updated_at: finished_at
           )
@@ -213,7 +213,7 @@ module R3x
           DashboardJobRows.create_job!(
             job_class_name: "CleanupJob",
             arguments: [ "tmp/#{index}" ],
-            finished_at: finished_at,
+            finished_at:,
             created_at: finished_at - 30.seconds,
             updated_at: finished_at
           )
@@ -225,7 +225,7 @@ module R3x
           DashboardJobRows.create_job!(
             job_class_name: WORKFLOW_JOB_CLASS_NAME,
             arguments: [ "schedule:abc123" ],
-            finished_at: finished_at,
+            finished_at:,
             created_at: finished_at - 30.seconds,
             updated_at: finished_at
           )

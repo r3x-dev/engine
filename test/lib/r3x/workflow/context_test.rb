@@ -79,7 +79,7 @@ module R3x
     class ContextTest < ActiveSupport::TestCase
       test "has trigger and execution" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
-        trigger_execution = R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "test")
+        trigger_execution = R3x::TriggerManager::Execution.new(trigger:, workflow_key: "test")
         ctx = Context.new(trigger: trigger_execution, workflow_key: "test")
 
         assert_equal :schedule, ctx.trigger.type
@@ -89,7 +89,7 @@ module R3x
 
       test "client proxy builds gmail client from project" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
-        trigger_execution = R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "test")
+        trigger_execution = R3x::TriggerManager::Execution.new(trigger:, workflow_key: "test")
         ctx = Context.new(trigger: trigger_execution, workflow_key: "test")
         gmail = ctx.client.gmail(project: "MISSING")
 
@@ -98,7 +98,7 @@ module R3x
 
       test "client proxy builds google translate client from project" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
-        trigger_execution = R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "test")
+        trigger_execution = R3x::TriggerManager::Execution.new(trigger:, workflow_key: "test")
         ctx = Context.new(trigger: trigger_execution, workflow_key: "test")
         translate = ctx.client.google_translate(project: "MISSING")
 

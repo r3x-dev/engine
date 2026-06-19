@@ -59,7 +59,7 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
         }
 
-        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
 
         assert result[:configured]
         assert_nil result[:error]
@@ -89,7 +89,7 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
         }
 
-        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
         entry = result[:entries].first
 
         assert_equal "info", entry[:level]
@@ -119,7 +119,7 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
         }
 
-        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
         entry = result[:entries].first
 
         assert_equal "error", entry[:level]
@@ -151,7 +151,7 @@ module R3x
           workflow_key: "test_workflow"
         }
 
-        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
         entry = result[:entries].first
 
         assert_equal "Running workflow trigger_type=schedule", entry[:message]
@@ -176,7 +176,7 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
         }
 
-        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
 
         assert_equal "[DRY-RUN]: Email send skipped", result[:entries].first[:message]
         assert_equal [], result[:entries].first[:tags]
@@ -196,7 +196,7 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
         }
 
-        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
 
         assert_equal %w[error warn info debug], result[:entries].map { |entry| entry[:level] }
       end
@@ -213,7 +213,7 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
         }
 
-        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
 
         assert result[:configured]
         assert_nil result[:error]
@@ -236,7 +236,7 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
         }
 
-        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
 
         assert result[:configured]
         assert_nil result[:error]
@@ -258,7 +258,7 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
         }
 
-        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
 
         assert result[:configured]
         assert_nil result[:error]
@@ -288,7 +288,7 @@ module R3x
           finished_at: Time.zone.parse("2026-04-15T12:00:30Z")
         }
 
-        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(run)
+        result = Logs.new(provider_name: "victorialogs", client:).run_logs(run)
         entry = result[:entries].first
 
         assert_equal "error", entry[:level]
@@ -308,7 +308,7 @@ module R3x
       test "returns provider error when query fails" do
         client = FakeLogsClient.new(error: HTTPX::ConnectionError.new("boom"))
 
-        result = Logs.new(provider_name: "victorialogs", client: client).run_logs(active_job_id: "aj-123")
+        result = Logs.new(provider_name: "victorialogs", client:).run_logs(active_job_id: "aj-123")
 
         assert result[:configured]
         assert_equal "boom", result[:error]

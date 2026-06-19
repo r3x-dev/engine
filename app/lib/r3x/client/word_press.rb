@@ -36,7 +36,7 @@ module R3x
       attr_reader :base_url
 
       def get(path, **params)
-        HTTPX.get("#{base_url}#{API_PATH}#{path}", params: params)
+        HTTPX.get("#{base_url}#{API_PATH}#{path}", params:)
              .raise_for_status
              .json
       end

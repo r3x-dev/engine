@@ -18,7 +18,7 @@ module R3x
           triggers.each do |trigger|
             key = namespaced_key(workflow_key, trigger)
             current_keys << key
-            task_options << [ key, task_options_for(workflow_class: workflow_class, trigger: trigger) ]
+            task_options << [ key, task_options_for(workflow_class:, trigger:) ]
           end
         end
 
@@ -27,7 +27,7 @@ module R3x
           stale_count = stale_scope.delete_all
 
           task_options.each do |key, options|
-            task = SolidQueue::RecurringTask.dynamic.find_or_initialize_by(key: key)
+            task = SolidQueue::RecurringTask.dynamic.find_or_initialize_by(key:)
             task.class_name = options[:class]
             task.arguments = options[:args]
             task.schedule = options[:schedule]
@@ -64,7 +64,7 @@ module R3x
 
           triggers.each do |trigger|
             result_key = namespaced_key(workflow_key, trigger)
-            result[result_key] = task_options_for(workflow_class: workflow_class, trigger: trigger).stringify_keys
+            result[result_key] = task_options_for(workflow_class:, trigger:).stringify_keys
           end
         end
 

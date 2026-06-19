@@ -95,7 +95,7 @@ module R3x
           ))
           .to_return(status: 200, body: "")
 
-        VictoriaLogs.new.query(query: "_msg:test", start_at: start_at, end_at: end_at)
+        VictoriaLogs.new.query(query: "_msg:test", start_at:, end_at:)
 
         assert_requested :post, "http://victoria-logs.test:9428/select/logsql/query"
       end

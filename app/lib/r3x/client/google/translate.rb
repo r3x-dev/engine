@@ -16,7 +16,7 @@ module R3x
 
           response = HTTPX.post(
             API_URL,
-            json: request_body(input, to: to, from: from, format: format),
+            json: request_body(input, to:, from:, format:),
             headers: authorization_header
           ).raise_for_status
           translations = response.json.dig("data", "translations")
@@ -30,7 +30,7 @@ module R3x
         attr_reader :project
 
         def authorization
-          @authorization ||= R3x::Client::GoogleAuth.from_env(project: project, scope: R3x::Client::GoogleAuth.resolve_scope("translate"))
+          @authorization ||= R3x::Client::GoogleAuth.from_env(project:, scope: R3x::Client::GoogleAuth.resolve_scope("translate"))
         end
 
         def authorization_header
@@ -45,7 +45,7 @@ module R3x
         end
 
         def request_body(text, to:, from:, format:)
-          { q: text, target: to, source: from, format: format }.compact
+          { q: text, target: to, source: from, format: }.compact
         end
       end
     end

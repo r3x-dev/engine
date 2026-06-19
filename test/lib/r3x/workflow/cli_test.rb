@@ -39,7 +39,7 @@ module R3x
           def self.all = []
         end
 
-        Cli.new(stdout: output, pack_loader: pack_loader, registry: registry).list
+        Cli.new(stdout: output, pack_loader:, registry:).list
 
         assert_equal "No workflows found.\n", output.string
       end
