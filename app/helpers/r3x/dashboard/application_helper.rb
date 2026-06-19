@@ -70,15 +70,6 @@ module R3x
         time_tag(displayed_time, formatted_time, datetime: displayed_time.iso8601, title: formatted_time)
       end
 
-      def dashboard_absolute_timestamp(time)
-        return content_tag(:span, "Never", class: "muted") if time.blank?
-
-        displayed_time = dashboard_display_time(time)
-        formatted_time = dashboard_timestamp_text(displayed_time)
-
-        time_tag(displayed_time, formatted_time, datetime: displayed_time.iso8601, title: formatted_time)
-      end
-
       def dashboard_log_time(time)
         return content_tag(:span, "--:--:--", class: "muted") if time.blank?
 
