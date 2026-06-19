@@ -19,12 +19,12 @@ module R3x
 
           result = build_service.send_user_message(
             "me", # The user's email address. The special value `me` can be used to indicate the
-            ::Google::Apis::GmailV1::Message.new(raw: raw_message(to:, subject:, body:, attachments:))
+            ::Google::Apis::GmailV1::Message.new(raw: raw_message(to:, subject:, body:, attachments:)),
           )
 
           {
             "mode"       => "real",
-            "message_id" => result.id
+            "message_id" => result.id,
           }
         end
 

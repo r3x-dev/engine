@@ -34,7 +34,7 @@ module R3x
             config_api_key_attr: configuration.config_api_key_attr,
             max_retries:,
             retry_interval:,
-            retry_backoff_factor:
+            retry_backoff_factor:,
           )
         end
 

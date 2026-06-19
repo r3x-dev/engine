@@ -41,7 +41,7 @@ module Seeds
           created_at: now - 18.hours,
           updated_at: now - 17.hours,
           finished_at: now - 17.hours,
-          active_job_id: "demo-dashboard-finished"
+          active_job_id: "demo-dashboard-finished",
         },
         {
           workflow_key: "demo_feed_watch",
@@ -60,7 +60,7 @@ module Seeds
             app/lib/r3x/client/http.rb:41:in `get'
             workflows/external/feed_watch/workflow.rb:18:in `run'
           ERROR
-          active_job_id: "demo-dashboard-failed"
+          active_job_id: "demo-dashboard-failed",
         },
         {
           workflow_key: "demo_invoice_dispatch",
@@ -74,7 +74,7 @@ module Seeds
           created_at: now - 12.minutes,
           updated_at: now - 11.minutes,
           claimed_at: now - 11.minutes,
-          active_job_id: "demo-dashboard-running"
+          active_job_id: "demo-dashboard-running",
         },
         {
           workflow_key: "demo_inventory_sync",
@@ -88,7 +88,7 @@ module Seeds
           created_at: now - 24.minutes,
           updated_at: now - 23.minutes,
           finished_at: now - 23.minutes,
-          active_job_id: "demo-dashboard-finished-2"
+          active_job_id: "demo-dashboard-finished-2",
         },
         {
           workflow_key: "demo_retention_cleanup",
@@ -101,7 +101,7 @@ module Seeds
           created_at: now - 5.minutes,
           updated_at: now - 5.minutes,
           scheduled_at: now + 35.minutes,
-          active_job_id: "demo-dashboard-scheduled"
+          active_job_id: "demo-dashboard-scheduled",
         },
         {
           workflow_key: "demo_summerhouse_monitoring",
@@ -117,7 +117,7 @@ module Seeds
               status: "finished",
               created_at: now - 4.minutes,
               updated_at: now - 3.minutes,
-              finished_at: now - 3.minutes
+              finished_at: now - 3.minutes,
             },
             {
               status: "scheduled",
@@ -125,10 +125,10 @@ module Seeds
               updated_at: now - 3.minutes,
               scheduled_at: now + 2.minutes,
               resumptions: 1,
-              continuation: { "completed" => %w[check_camera_1 check_camera_2] }
-            }
-          ]
-        }
+              continuation: { "completed" => %w[check_camera_1 check_camera_2] },
+            },
+          ],
+        },
       ]
     end
 
@@ -158,7 +158,7 @@ module Seeds
         arguments: [definition.fetch(:trigger_key)],
         queue_name: definition.fetch(:queue_name),
         priority: definition.fetch(:priority),
-        static: false
+        static: false,
       )
     end
 
@@ -197,7 +197,7 @@ module Seeds
 
       fragments.last.merge(
         active_job_id: definition.fetch(:active_job_id),
-        workflow_key: definition.fetch(:workflow_key)
+        workflow_key: definition.fetch(:workflow_key),
       )
     end
 
@@ -215,7 +215,7 @@ module Seeds
         SolidQueue::ClaimedExecution.create!(
           job_id: job.id,
           process_id: create_process!(definition).id,
-          created_at: definition.fetch(:claimed_at)
+          created_at: definition.fetch(:claimed_at),
         )
       when "scheduled"
         SolidQueue::ScheduledExecution.where(job_id: job.id).update_all(created_at: definition.fetch(:created_at))
@@ -236,12 +236,12 @@ module Seeds
           queue_name: definition.fetch(:queue_name),
           priority: definition.fetch(:priority),
           continuation: definition[:continuation],
-          resumptions: definition[:resumptions].to_i
+          resumptions: definition[:resumptions].to_i,
         ),
         created_at: definition.fetch(:created_at),
         updated_at: definition.fetch(:updated_at),
         scheduled_at: definition[:seed_scheduled_at] || definition[:scheduled_at],
-        finished_at: nil
+        finished_at: nil,
       )
     end
 
@@ -258,7 +258,7 @@ module Seeds
         hostname: "localhost",
         metadata: "{}",
         name: "#{DEMO_PROCESS_PREFIX}#{definition.fetch(:workflow_key)}",
-        created_at: definition.fetch(:claimed_at)
+        created_at: definition.fetch(:claimed_at),
       )
     end
 

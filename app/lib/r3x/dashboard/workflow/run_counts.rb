@@ -29,7 +29,7 @@ module R3x
             direct_runs.for_status("queued").joins(:ready_execution).where(solid_queue_ready_executions: { created_at: time_range }),
             direct_runs.for_status("queued").where.missing(:ready_execution).where(created_at: time_range),
             direct_runs.for_status("blocked").where(solid_queue_blocked_executions: { created_at: time_range }),
-            direct_runs.for_status("scheduled").where(solid_queue_scheduled_executions: { scheduled_at: time_range })
+            direct_runs.for_status("scheduled").where(solid_queue_scheduled_executions: { scheduled_at: time_range }),
           ]
         end
 

@@ -4,15 +4,15 @@ require "base64"
 require "tempfile"
 
 module VaultTestHelpers
-  ENV_KEYS = [
-    "R3X_VAULT_ADDR",
-    "R3X_VAULT_TOKEN",
-    "R3X_VAULT_SECRETS_PATH",
-    "R3X_VAULT_AUTH_METHOD",
-    "R3X_VAULT_KUBERNETES_ROLE",
-    "R3X_VAULT_KUBERNETES_AUTH_PATH",
-    "R3X_VAULT_KUBERNETES_TOKEN_PATH",
-    "GEMINI_API_KEY_TEST"
+  ENV_KEYS = %w[
+    R3X_VAULT_ADDR
+    R3X_VAULT_TOKEN
+    R3X_VAULT_SECRETS_PATH
+    R3X_VAULT_AUTH_METHOD
+    R3X_VAULT_KUBERNETES_ROLE
+    R3X_VAULT_KUBERNETES_AUTH_PATH
+    R3X_VAULT_KUBERNETES_TOKEN_PATH
+    GEMINI_API_KEY_TEST
   ].freeze
 
   def self.included(base)
@@ -59,9 +59,9 @@ module VaultTestHelpers
       "kubernetes.io" => {
         "namespace"      => namespace,
         "serviceaccount" => {
-          "name" => service_account_name
-        }
-      }
+          "name" => service_account_name,
+        },
+      },
     })
   end
 

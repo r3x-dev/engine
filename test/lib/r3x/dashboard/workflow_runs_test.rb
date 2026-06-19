@@ -22,7 +22,7 @@ module R3x
           arguments: ["schedule:abc123"],
           finished_at: 2.minutes.ago,
           created_at: 5.minutes.ago,
-          updated_at: 2.minutes.ago
+          updated_at: 2.minutes.ago,
         )
 
         run = Workflow::Runs.new.all.find { |entry| entry[:job_id] == job.id }
@@ -42,7 +42,7 @@ module R3x
           active_job_id:,
           finished_at: 3.minutes.ago,
           created_at: 5.minutes.ago,
-          updated_at: 3.minutes.ago
+          updated_at: 3.minutes.ago,
         )
         resumed_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
@@ -50,7 +50,7 @@ module R3x
           active_job_id:,
           created_at: 3.minutes.ago,
           updated_at: 3.minutes.ago,
-          scheduled_at: 2.minutes.from_now
+          scheduled_at: 2.minutes.from_now,
         )
         resumed_job.update!(arguments: resumed_job.arguments.merge("resumptions" => 1))
         SolidQueue::ReadyExecution.where(job_id: resumed_job.id).delete_all
@@ -59,7 +59,7 @@ module R3x
           queue_name: resumed_job.queue_name,
           priority: resumed_job.priority,
           scheduled_at: resumed_job.scheduled_at,
-          created_at: resumed_job.created_at
+          created_at: resumed_job.created_at,
         )
 
         runs = Workflow::Runs.new.all.select { |entry| entry[:active_job_id] == active_job_id }
@@ -80,7 +80,7 @@ module R3x
           active_job_id:,
           finished_at: 5.minutes.ago,
           created_at: 7.minutes.ago,
-          updated_at: 5.minutes.ago
+          updated_at: 5.minutes.ago,
         )
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
@@ -88,7 +88,7 @@ module R3x
           active_job_id:,
           finished_at: 3.minutes.ago,
           created_at: 5.minutes.ago,
-          updated_at: 3.minutes.ago
+          updated_at: 3.minutes.ago,
         )
         final_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
@@ -96,13 +96,13 @@ module R3x
           active_job_id:,
           finished_at: 1.minute.ago,
           created_at: 3.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
         final_job.update!(
           arguments: final_job.arguments.merge(
-            "continuation" => { "completed" => ["check_camera_1", "check_camera_2"] },
-            "resumptions"  => 1
-          )
+            "continuation" => { "completed" => %w[check_camera_1 check_camera_2] },
+            "resumptions"  => 1,
+          ),
         )
 
         runs = Workflow::Runs.new.all.select { |entry| entry[:active_job_id] == active_job_id }
@@ -121,7 +121,7 @@ module R3x
           active_job_id:,
           finished_at: 3.minutes.ago,
           created_at: 5.minutes.ago,
-          updated_at: 3.minutes.ago
+          updated_at: 3.minutes.ago,
         )
         resumed_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
@@ -129,7 +129,7 @@ module R3x
           active_job_id:,
           created_at: 3.minutes.ago,
           updated_at: 3.minutes.ago,
-          scheduled_at: 2.minutes.from_now
+          scheduled_at: 2.minutes.from_now,
         )
         resumed_job.update!(arguments: resumed_job.arguments.merge("resumptions" => 1))
         SolidQueue::ReadyExecution.where(job_id: resumed_job.id).delete_all
@@ -138,7 +138,7 @@ module R3x
           queue_name: resumed_job.queue_name,
           priority: resumed_job.priority,
           scheduled_at: resumed_job.scheduled_at,
-          created_at: resumed_job.created_at
+          created_at: resumed_job.created_at,
         )
 
         runs = Workflow::Runs.new(status: "sleeping").all
@@ -154,7 +154,7 @@ module R3x
           active_job_id:,
           finished_at: 2.hours.ago,
           created_at: 3.hours.ago,
-          updated_at: 2.hours.ago
+          updated_at: 2.hours.ago,
         )
         sleeping_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
@@ -162,7 +162,7 @@ module R3x
           active_job_id:,
           created_at: 2.hours.ago,
           updated_at: 2.hours.ago,
-          scheduled_at: 1.hour.from_now
+          scheduled_at: 1.hour.from_now,
         )
         sleeping_job.update!(arguments: sleeping_job.arguments.merge("resumptions" => 1))
         SolidQueue::ReadyExecution.where(job_id: sleeping_job.id).delete_all
@@ -170,7 +170,7 @@ module R3x
           queue_name: sleeping_job.queue_name,
           priority: sleeping_job.priority,
           scheduled_at: sleeping_job.scheduled_at,
-          created_at: sleeping_job.created_at
+          created_at: sleeping_job.created_at,
         )
 
         75.times do |index|
@@ -178,7 +178,7 @@ module R3x
             job_class_name: WORKFLOW_JOB_CLASS_NAME,
             arguments: ["schedule:abc123"],
             created_at: index.seconds.ago,
-            updated_at: index.seconds.ago
+            updated_at: index.seconds.ago,
           )
         end
 
@@ -193,7 +193,7 @@ module R3x
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: ["schedule:abc123"],
           created_at: 5.minutes.ago,
-          updated_at: 2.minutes.ago
+          updated_at: 2.minutes.ago,
         )
         process = SolidQueue::Process.create!(
           name: "test-worker-1",
@@ -201,7 +201,7 @@ module R3x
           pid: $$,
           hostname: "localhost",
           last_heartbeat_at: Time.current,
-          created_at: Time.current
+          created_at: Time.current,
         )
         claimed_at = 2.minutes.ago
         SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: claimed_at)
@@ -219,7 +219,7 @@ module R3x
           arguments: ["schedule:abc123", { trigger_payload: payload }],
           finished_at: 2.minutes.ago,
           created_at: 5.minutes.ago,
-          updated_at: 2.minutes.ago
+          updated_at: 2.minutes.ago,
         )
 
         run = Workflow::Runs.new.all.find { |entry| entry[:job_id] == job.id }
@@ -232,7 +232,7 @@ module R3x
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: ["schedule:abc123"],
           created_at: 5.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
         SolidQueue::FailedExecution.create!(job_id: job.id, error: "boom", created_at: 1.minute.ago)
 
@@ -248,7 +248,7 @@ module R3x
           arguments: [],
           finished_at: 1.minute.ago,
           created_at: 5.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
 
         run = Workflow::Runs.new(workflow_key: "manual_only_workflow").all.find { |entry| entry[:job_id] == job.id }
@@ -263,7 +263,7 @@ module R3x
           arguments: ["tmp/cache"],
           finished_at: 1.minute.ago,
           created_at: 5.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
 
         runs = Workflow::Runs.new.all
@@ -277,13 +277,13 @@ module R3x
           arguments: ["schedule:abc123"],
           finished_at: 2.minutes.ago,
           created_at: 10.minutes.ago,
-          updated_at: 2.minutes.ago
+          updated_at: 2.minutes.ago,
         )
         failed_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: ["schedule:abc123"],
           created_at: 5.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
         SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "bad", created_at: 1.minute.ago)
 
@@ -299,7 +299,7 @@ module R3x
           arguments: ["tmp/cache"],
           finished_at: 1.minute.ago,
           created_at: 2.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
 
         runs = Workflow::Runs.new.all
@@ -312,7 +312,7 @@ module R3x
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: ["schedule:abc123"],
           created_at: 10.minutes.ago,
-          updated_at: 9.minutes.ago
+          updated_at: 9.minutes.ago,
         )
         SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "bad", created_at: 9.minutes.ago)
 
@@ -322,7 +322,7 @@ module R3x
             arguments: ["tmp/#{index}"],
             finished_at: 1.minute.ago,
             created_at: 1.minute.ago + index.seconds,
-            updated_at: 1.minute.ago + index.seconds
+            updated_at: 1.minute.ago + index.seconds,
           )
         end
 
@@ -340,7 +340,7 @@ module R3x
           class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: ["schedule:abc123"],
           queue_name: "default",
-          static: false
+          static: false,
         )
       end
     end

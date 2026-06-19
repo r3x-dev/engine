@@ -26,7 +26,7 @@ class DatabaseConfigTest < ActiveSupport::TestCase
   def database_config
     YAML.safe_load(
       ERB.new(Rails.root.join("config/database.yml").read).result,
-      aliases: true
+      aliases: true,
     )
   end
 

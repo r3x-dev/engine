@@ -22,7 +22,7 @@ module R3x
           @ctx = R3x::Workflow::Executor.build_context(
             workflow_class: self.class,
             trigger_key:,
-            trigger_payload:
+            trigger_payload:,
           )
           if initial_execution?
             logger.info "Running workflow trigger_type=#{ctx.trigger.type}"
@@ -64,7 +64,7 @@ module R3x
           workflow_key: self.class.workflow_key,
           block:,
           method_name: __method__,
-          key:
+          key:,
         )
 
         Rails.cache.fetch(cache_key, force:, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes, &block)
@@ -84,7 +84,7 @@ module R3x
 
       def workflow_log_tags(trigger_key)
         [
-          R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key)
+          R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key),
         ]
       end
 

@@ -17,7 +17,7 @@ class ApplicationJob < ActiveJob::Base
 
   def log_tags
     [
-      R3x::Log.tag(R3x::Log::RUN_ACTIVE_JOB_ID_TAG, job_id)
+      R3x::Log.tag(R3x::Log::RUN_ACTIVE_JOB_ID_TAG, job_id),
     ]
   end
 end

@@ -19,7 +19,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [@trigger],
       queue_name: "default",
-      static: false
+      static: false,
     )
     @job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
@@ -27,7 +27,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       active_job_id: "aj-123",
       finished_at: 1.minute.ago,
       created_at: 10.minutes.ago,
-      updated_at: 1.minute.ago
+      updated_at: 1.minute.ago,
     )
   end
 
@@ -58,7 +58,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
         workflow_key: "workflow_#{index}",
         trigger_key: "schedule:#{index}",
         run_status: "finished",
-        recorded_at: created_at + 30.seconds
+        recorded_at: created_at + 30.seconds,
       )
     end
 
@@ -76,7 +76,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       workflow_key: "slow_workflow",
       trigger_key: "schedule:slow",
       run_status: "finished",
-      recorded_at: 5.seconds.ago
+      recorded_at: 5.seconds.ago,
     )
 
     12.times do |index|
@@ -86,7 +86,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
         workflow_key: "workflow_#{index}",
         trigger_key: "schedule:#{index}",
         run_status: "finished",
-        recorded_at: finished_at
+        recorded_at: finished_at,
       )
     end
 
@@ -111,7 +111,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
         arguments: ["tmp/#{index}"],
         finished_at:,
         created_at: finished_at - 30.seconds,
-        updated_at: finished_at
+        updated_at: finished_at,
       )
     end
 
@@ -122,7 +122,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
         workflow_key: "visible_workflow#{index}",
         trigger_key: "schedule:visible:#{index}",
         run_status: "finished",
-        recorded_at: finished_at
+        recorded_at: finished_at,
       )
     end
 
@@ -139,7 +139,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom", created_at: 30.seconds.ago)
 
@@ -157,12 +157,12 @@ class DashboardTest < ActionDispatch::IntegrationTest
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(
       job_id: failed_job.id,
       error: '{"exception_class" => "HTTPX::HTTPError", "message" => "the server responded with status 403", "backtrace" => ["line one", "line two"]}',
-      created_at: 30.seconds.ago
+      created_at: 30.seconds.ago,
     )
 
     get "/"
@@ -181,13 +181,13 @@ class DashboardTest < ActionDispatch::IntegrationTest
       workflow_key: "stale_failure_workflow",
       trigger_key: "schedule:stale",
       run_status: "failed",
-      recorded_at: 2.days.ago
+      recorded_at: 2.days.ago,
     )
     create_dashboard_workflow(
       workflow_key: "recent_failure_workflow",
       trigger_key: "schedule:recent",
       run_status: "failed",
-      recorded_at: 10.minutes.ago
+      recorded_at: 10.minutes.ago,
     )
 
     get "/"
@@ -220,7 +220,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom", created_at: 30.seconds.ago)
 
@@ -236,7 +236,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom", created_at: 30.seconds.ago)
 
@@ -282,20 +282,20 @@ class DashboardTest < ActionDispatch::IntegrationTest
       workflow_key: "healthy_workflow",
       trigger_key: "schedule:healthy",
       run_status: "finished",
-      recorded_at: 3.minutes.ago
+      recorded_at: 3.minutes.ago,
     )
     create_dashboard_workflow(
       workflow_key: "failed_workflow",
       trigger_key: "schedule:failed",
       run_status: "failed",
-      recorded_at: 2.minutes.ago
+      recorded_at: 2.minutes.ago,
     )
     get "/workflows", params: { sort: "health", direction: "desc" }
 
     assert_response :success
     assert_equal(
       ["Idle Workflow", "Healthy Workflow", "Failed Workflow"],
-      css_select("#workflows-catalog tbody tr .title-link").map { |link| link.text.strip }
+      css_select("#workflows-catalog tbody tr .title-link").map { |link| link.text.strip },
     )
     assert_includes response.body, 'href="/workflows?direction=asc&amp;sort=health#workflows-catalog"'
     assert_includes response.body, 'aria-sort="descending"'
@@ -308,7 +308,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
         arguments: [@trigger],
         active_job_id: "aj-running-#{index}",
         created_at: (index + 1).hours.ago,
-        updated_at: (index + 1).hours.ago
+        updated_at: (index + 1).hours.ago,
       )
       claim_job!(running_job)
     end
@@ -321,7 +321,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
         arguments: [@trigger],
         finished_at:,
         created_at: finished_at - 30.seconds,
-        updated_at: finished_at
+        updated_at: finished_at,
       )
     end
 
@@ -342,7 +342,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom", created_at: 30.seconds.ago)
 
@@ -367,7 +367,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom\nstack line 1\nstack line 2", created_at: 30.seconds.ago)
 
@@ -393,7 +393,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: long_error, created_at: 30.seconds.ago)
 
@@ -432,7 +432,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: [@trigger],
       created_at: 30.seconds.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
 
     get "/workflow-runs/#{queued_job.id}"
@@ -448,7 +448,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       created_at: Time.zone.parse("2026-04-23 10:00:00 UTC"),
       updated_at: Time.zone.parse("2026-04-23 10:05:15 UTC"),
       finished_at: Time.zone.parse("2026-04-23 10:05:15 UTC"),
-      scheduled_at: Time.zone.parse("2026-04-23 10:00:00 UTC")
+      scheduled_at: Time.zone.parse("2026-04-23 10:00:00 UTC"),
     )
 
     get "/workflow-runs/#{scheduled_job.id}"
@@ -483,11 +483,11 @@ class DashboardTest < ActionDispatch::IntegrationTest
           "_time"                     => "2026-04-15T12:00:01Z",
           "_msg"                      => MultiJSON.generate(
             "level"   => "info",
-            "message" => "[r3x.run_active_job_id=#{@job.active_job_id}] [r3x.workflow_key=test_workflow] [r3x.trigger_key=#{@trigger}] [#{WORKFLOW_JOB_CLASS_NAME}] Running workflow trigger_type=schedule"
+            "message" => "[r3x.run_active_job_id=#{@job.active_job_id}] [r3x.workflow_key=test_workflow] [r3x.trigger_key=#{@trigger}] [#{WORKFLOW_JOB_CLASS_NAME}] Running workflow trigger_type=schedule",
           ),
           "kubernetes.container_name" => "app",
-          "kubernetes.pod_name"       => "r3x-jobs-123"
-        }.to_json + "\n"
+          "kubernetes.pod_name"       => "r3x-jobs-123",
+        }.to_json + "\n",
       )
 
     get "/workflow-runs/#{@job.id}"
@@ -532,7 +532,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       arguments: [@trigger],
       active_job_id: "aj-running-empty",
       created_at: 1.minute.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     claim_job!(running_job)
 
@@ -555,7 +555,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       arguments: [@trigger],
       active_job_id: "aj-queued",
       created_at: 1.minute.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
 
     stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
@@ -583,7 +583,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       arguments: [@trigger],
       active_job_id: "aj-running",
       created_at: 1.minute.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     claim_job!(running_job)
 
@@ -592,8 +592,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
         status: 200,
         body: {
           "_time" => "2026-04-15T12:00:01Z",
-          "_msg"  => MultiJSON.generate("level" => "info", "message" => "[r3x.run_active_job_id=aj-running] Still working")
-        }.to_json + "\n"
+          "_msg"  => MultiJSON.generate("level" => "info", "message" => "[r3x.run_active_job_id=aj-running] Still working"),
+        }.to_json + "\n",
       )
 
     get "/workflow-runs/#{running_job.id}"
@@ -634,7 +634,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       arguments: [@trigger],
       active_job_id: "aj-running-panel",
       created_at: 1.minute.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     claim_job!(running_job)
 
@@ -643,8 +643,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
         status: 200,
         body: {
           "_time" => "2026-04-15T12:00:02Z",
-          "_msg"  => MultiJSON.generate("level" => "info", "message" => "[r3x.run_active_job_id=aj-running-panel] Fresh line")
-        }.to_json + "\n"
+          "_msg"  => MultiJSON.generate("level" => "info", "message" => "[r3x.run_active_job_id=aj-running-panel] Fresh line"),
+        }.to_json + "\n",
       )
 
     get "/workflow-runs/#{running_job.id}/logs"
@@ -703,7 +703,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     get "/workflows/test_workflow"
 
     assert_response :success
-    assert_equal ["Result", "Observed", "Trigger", "Open"], css_select("table").last.css("thead th").map(&:text)
+    assert_equal %w[Result Observed Trigger Open], css_select("table").last.css("thead th").map(&:text)
     assert_not_includes response.body, "<th>Workflow</th>"
     assert_not_includes response.body, "<th>Queue</th>"
   end
@@ -712,7 +712,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     get "/workflow-runs"
 
     assert_response :success
-    assert_equal ["Workflow", "Result", "Observed", "Trigger", "Open"], css_select("table").last.css("thead th").map(&:text)
+    assert_equal %w[Workflow Result Observed Trigger Open], css_select("table").last.css("thead th").map(&:text)
     assert_not_includes response.body, "<th>Queue</th>"
     assert_not_includes response.body, WORKFLOW_JOB_CLASS_NAME
   end
@@ -741,7 +741,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       arguments: [],
       finished_at: 1.minute.ago,
       created_at: 2.minutes.ago,
-      updated_at: 1.minute.ago
+      updated_at: 1.minute.ago,
     )
 
     get "/workflows"
@@ -774,7 +774,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       hostname: "test",
       metadata: "{}",
       name: "test-worker-#{job.id}",
-      created_at: Time.current
+      created_at: Time.current,
     )
 
     SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: 30.seconds.ago)
@@ -789,7 +789,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       class_name: job_class_name,
       arguments: [trigger_key],
       queue_name: "default",
-      static: false
+      static: false,
     )
 
     return if run_status.blank?
@@ -799,7 +799,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       arguments: [trigger_key],
       finished_at: (run_status == "finished") ? recorded_at : nil,
       created_at: recorded_at - 1.minute,
-      updated_at: recorded_at
+      updated_at: recorded_at,
     )
 
     return job unless run_status == "failed"

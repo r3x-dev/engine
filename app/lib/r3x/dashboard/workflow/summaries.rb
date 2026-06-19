@@ -60,7 +60,7 @@ module R3x
             workflow_key:,
             class_name: preferred_recurring_task&.direct_workflow_class_name,
             recurring_task: preferred_recurring_task,
-            last_run:
+            last_run:,
           )
 
           {
@@ -74,7 +74,7 @@ module R3x
             title: workflow_key.titleize,
             trigger_count: trigger_entries.size,
             trigger_entries:,
-            workflow_key:
+            workflow_key:,
           }
         end
 
@@ -94,7 +94,7 @@ module R3x
             recorded_at: last_job.recorded_at,
             resumptions: last_job.observed_resumptions,
             status:,
-            workflow_key:
+            workflow_key:,
           }
         end
 
@@ -121,7 +121,7 @@ module R3x
           comparison = compare_numbers(
             health_rank(left.dig(:health, :status)),
             health_rank(right.dig(:health, :status)),
-            direction:
+            direction:,
           )
           return comparison unless comparison.zero?
 
@@ -166,7 +166,7 @@ module R3x
             build_trigger_entry(
               workflow_key:,
               trigger_key:,
-              recurring_task: recurring_tasks_by_trigger_key[trigger_key]
+              recurring_task: recurring_tasks_by_trigger_key[trigger_key],
             )
           end
         end
@@ -180,7 +180,7 @@ module R3x
             recurring_task:,
             run_now_available: recurring_task.present?,
             unique_key: trigger_key,
-            workflow_key:
+            workflow_key:,
           }
         end
 
@@ -195,7 +195,7 @@ module R3x
           {
             detail: last_run[:error],
             label: "Last run failed",
-            status: "failed"
+            status: "failed",
           }
         end
 
@@ -203,7 +203,7 @@ module R3x
           {
             detail: nil,
             label: "Healthy",
-            status: "healthy"
+            status: "healthy",
           }
         end
 
@@ -211,7 +211,7 @@ module R3x
           {
             detail: nil,
             label: "No runs yet",
-            status: "idle"
+            status: "idle",
           }
         end
 

@@ -45,7 +45,7 @@ module R3x
           start_at: run[:enqueued_at] || 1.hour.ago,
           end_at: run[:finished_at] || Time.current,
           limit: RUN_LOG_LIMIT,
-          context: { class_name: run[:class_name] }
+          context: { class_name: run[:class_name] },
         )
       end
 
@@ -69,7 +69,7 @@ module R3x
           configured: true,
           entries: [],
           error:,
-          provider:
+          provider:,
         }
       end
 
@@ -80,7 +80,7 @@ module R3x
           configured: true,
           entries: raw_entries.filter_map { |entry| normalize_entry(entry, context:) },
           error: nil,
-          provider: provider_name
+          provider: provider_name,
         }
       rescue => e
         error_logs(provider_name, e.message)
@@ -109,7 +109,7 @@ module R3x
           message: payload.fetch(:message),
           pod_name: entry["kubernetes.pod_name"],
           tags: payload.fetch(:tags),
-          time: parse_time(entry["_time"])
+          time: parse_time(entry["_time"]),
         }
       rescue
         nil
@@ -125,7 +125,7 @@ module R3x
             error_message: entry["error_message"],
             level: normalize_level(entry["level"]),
             message:,
-            tags:
+            tags:,
           }
         end
 
@@ -139,7 +139,7 @@ module R3x
           return {
             level: "unknown",
             message:,
-            tags:
+            tags:,
           }
         end
 
@@ -151,7 +151,7 @@ module R3x
           error_message: payload["error_message"],
           level: normalize_level(payload["level"]),
           message:,
-          tags:
+          tags:,
         }
       rescue MultiJSON::ParseError
         message, tags = extract_message_and_tags(entry["_msg"], context:)
@@ -159,7 +159,7 @@ module R3x
         {
           level: "unknown",
           message:,
-          tags:
+          tags:,
         }
       end
 
@@ -219,7 +219,7 @@ module R3x
           configured: false,
           entries: [],
           error: nil,
-          provider: nil
+          provider: nil,
         }
       end
     end

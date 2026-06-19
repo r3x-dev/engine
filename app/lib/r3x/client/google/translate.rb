@@ -17,7 +17,7 @@ module R3x
           response = HTTPX.post(
             API_URL,
             json: request_body(input, to:, from:, format:),
-            headers: authorization_header
+            headers: authorization_header,
           ).raise_for_status
           translations = response.json.dig("data", "translations")
           raise ArgumentError, "Missing translations in Google Translate response" unless translations.is_a?(Array) && translations.any?
@@ -35,7 +35,7 @@ module R3x
 
         def authorization_header
           {
-            "Authorization" => "Bearer #{access_token}"
+            "Authorization" => "Bearer #{access_token}",
           }
         end
 

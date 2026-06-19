@@ -16,7 +16,7 @@ class NamespaceRefactoringTest < ActiveSupport::TestCase
     "lib/r3x/workflow_context.rb"     => "R3x::WorkflowContext",
     "lib/r3x/workflow_execution.rb"   => "R3x::WorkflowExecution",
     "lib/r3x/workflow_pack_loader.rb" => "R3x::WorkflowPackLoader",
-    "lib/r3x/workflow_registry.rb"    => "R3x::WorkflowRegistry"
+    "lib/r3x/workflow_registry.rb"    => "R3x::WorkflowRegistry",
   }.freeze
 
   SCAN_EXTENSIONS = %w[.rb .rake .yml .yaml .erb .md].freeze

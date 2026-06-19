@@ -8,7 +8,7 @@ class DockerEntrypointTest < ActiveSupport::TestCase
     command_output = run_command(
       "bin/docker-entrypoint ./bin/jobs-worker 2>&1",
       env: { "RAILS_ENV" => "production" },
-      inject_production_secret: false
+      inject_production_secret: false,
     )
 
     assert_not_predicate $?, :success?, "docker entrypoint unexpectedly succeeded: #{command_output}"
@@ -19,7 +19,7 @@ class DockerEntrypointTest < ActiveSupport::TestCase
     command_output = run_command(
       "bin/docker-entrypoint ruby -e 'exit 0' 2>&1",
       env: { "RAILS_ENV" => "production" },
-      inject_production_secret: false
+      inject_production_secret: false,
     )
 
     assert_predicate $?, :success?, "docker entrypoint command failed: #{command_output}"

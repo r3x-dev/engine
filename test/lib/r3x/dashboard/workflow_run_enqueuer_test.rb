@@ -27,7 +27,7 @@ module R3x
           arguments: ["schedule:123"],
           queue_name: "critical",
           priority: 7,
-          static: false
+          static: false,
         )
 
         result = nil
@@ -51,7 +51,7 @@ module R3x
           arguments: ["schedule:123"],
           queue_name: "critical",
           priority: 7,
-          static: false
+          static: false,
         )
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
@@ -60,7 +60,7 @@ module R3x
           priority: 2,
           finished_at: 30.seconds.ago,
           created_at: 2.minutes.ago,
-          updated_at: 30.seconds.ago
+          updated_at: 30.seconds.ago,
         )
 
         result = nil
@@ -83,7 +83,7 @@ module R3x
           priority: 3,
           finished_at: 30.seconds.ago,
           created_at: 2.minutes.ago,
-          updated_at: 30.seconds.ago
+          updated_at: 30.seconds.ago,
         )
 
         result = nil
@@ -110,7 +110,7 @@ module R3x
           arguments: ["schedule:1"],
           queue_name: "expected",
           priority: 7,
-          static: false
+          static: false,
         )
         SolidQueue::RecurringTask.create!(
           key: "workflow:foo1bar:schedule:1",
@@ -119,7 +119,7 @@ module R3x
           arguments: ["schedule:1"],
           queue_name: "wrong",
           priority: 1,
-          static: false
+          static: false,
         )
 
         result = nil
@@ -143,7 +143,7 @@ module R3x
           arguments: ["schedule:123"],
           queue_name: "critical",
           priority: 7,
-          static: false
+          static: false,
         )
 
         result = nil

@@ -270,7 +270,7 @@ module R3x
     test "trigger :schedule rejects blank cron (empty string and whitespace)" do
       [
         "",
-        "   "
+        "   ",
       ].each do |cron|
         error = assert_raises(ConfigurationError) do
           Class.new(R3x::Workflow::Base) do
@@ -427,7 +427,7 @@ module R3x
       result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
 
       assert_equal({ "status" => "ran" }, result)
-      assert_equal [:run, :complete], events
+      assert_equal %i[run complete], events
     end
 
     test "on_complete runs multiple blocks in declaration order" do
@@ -448,7 +448,7 @@ module R3x
 
       workflow_class.perform_now(workflow_class.triggers.first.unique_key)
 
-      assert_equal [:run, :first, :second], events
+      assert_equal %i[run first second], events
     end
 
     test "on_complete can access ctx" do
@@ -903,7 +903,7 @@ module R3x
 
       assert_match(
         /with_cache cannot infer a unique cache key when multiple with_cache calls share line \d+; move them to separate lines or pass key:/,
-        error.message
+        error.message,
       )
     end
 
@@ -916,11 +916,11 @@ module R3x
       workflow = workflow_class.new
 
       assert_equal(
-        ["one", "two"],
+        %w[one two],
         [
           workflow.with_cache(key: "one") { "one" },
-          workflow.with_cache(key: "two") { "two" }
-        ]
+          workflow.with_cache(key: "two") { "two" },
+        ],
       )
     end
 
@@ -1054,9 +1054,9 @@ module R3x
         trigger: R3x::TriggerManager::Execution.new(
           trigger: R3x::Triggers::Manual.new,
           workflow_key: "durable_set_workflow",
-          payload: nil
+          payload: nil,
         ),
-        workflow_key: "durable_set_workflow"
+        workflow_key: "durable_set_workflow",
       )
       cache = ActiveSupport::Cache::MemoryStore.new
       original_cache = Rails.cache
@@ -1079,9 +1079,9 @@ module R3x
         trigger: R3x::TriggerManager::Execution.new(
           trigger: R3x::Triggers::Manual.new,
           workflow_key: "named_durable_set_workflow",
-          payload: nil
+          payload: nil,
         ),
-        workflow_key: "named_durable_set_workflow"
+        workflow_key: "named_durable_set_workflow",
       )
       cache = ActiveSupport::Cache::MemoryStore.new
       original_cache = Rails.cache
@@ -1104,11 +1104,11 @@ module R3x
       trigger = R3x::Triggers::Manual.new
       first_context = R3x::Workflow::Context.new(
         trigger: R3x::TriggerManager::Execution.new(trigger:, workflow_key: "workflow_one", payload: nil),
-        workflow_key: "workflow_one"
+        workflow_key: "workflow_one",
       )
       second_context = R3x::Workflow::Context.new(
         trigger: R3x::TriggerManager::Execution.new(trigger:, workflow_key: "workflow_two", payload: nil),
-        workflow_key: "workflow_two"
+        workflow_key: "workflow_two",
       )
       cache = ActiveSupport::Cache::MemoryStore.new
       original_cache = Rails.cache
@@ -1129,9 +1129,9 @@ module R3x
         trigger: R3x::TriggerManager::Execution.new(
           trigger: R3x::Triggers::Manual.new,
           workflow_key: "default_ttl_workflow",
-          payload: nil
+          payload: nil,
         ),
-        workflow_key: "default_ttl_workflow"
+        workflow_key: "default_ttl_workflow",
       )
       cache = Class.new do
         attr_reader :writes
@@ -1162,9 +1162,9 @@ module R3x
         trigger: R3x::TriggerManager::Execution.new(
           trigger: R3x::Triggers::Manual.new,
           workflow_key: "ttl_validation_workflow",
-          payload: nil
+          payload: nil,
         ),
-        workflow_key: "ttl_validation_workflow"
+        workflow_key: "ttl_validation_workflow",
       )
       Rails.application.config.stubs(:cache_store).returns(:solid_cache_store)
       Rails.application.stubs(:config_for).with(:cache).returns({ store_options: { max_age: 90.days.to_i } })
@@ -1181,9 +1181,9 @@ module R3x
         trigger: R3x::TriggerManager::Execution.new(
           trigger: R3x::Triggers::Manual.new,
           workflow_key: "per_call_ttl_validation_workflow",
-          payload: nil
+          payload: nil,
         ),
-        workflow_key: "per_call_ttl_validation_workflow"
+        workflow_key: "per_call_ttl_validation_workflow",
       )
 
       Rails.application.config.stubs(:cache_store).returns(:solid_cache_store)
@@ -1203,9 +1203,9 @@ module R3x
         trigger: R3x::TriggerManager::Execution.new(
           trigger: R3x::Triggers::Manual.new,
           workflow_key: "add_predicate_workflow",
-          payload: nil
+          payload: nil,
         ),
-        workflow_key: "add_predicate_workflow"
+        workflow_key: "add_predicate_workflow",
       )
       cache = ActiveSupport::Cache::MemoryStore.new
       original_cache = Rails.cache
@@ -1231,9 +1231,9 @@ module R3x
         trigger: R3x::TriggerManager::Execution.new(
           trigger: R3x::Triggers::Manual.new,
           workflow_key: "atomic_add_predicate_workflow",
-          payload: nil
+          payload: nil,
         ),
-        workflow_key: "atomic_add_predicate_workflow"
+        workflow_key: "atomic_add_predicate_workflow",
       )
       cache = Class.new do
         attr_reader :writes
@@ -1273,9 +1273,9 @@ module R3x
         trigger: R3x::TriggerManager::Execution.new(
           trigger: R3x::Triggers::Manual.new,
           workflow_key: "delete_durable_set_workflow",
-          payload: nil
+          payload: nil,
         ),
-        workflow_key: "delete_durable_set_workflow"
+        workflow_key: "delete_durable_set_workflow",
       )
       cache = ActiveSupport::Cache::MemoryStore.new
       original_cache = Rails.cache

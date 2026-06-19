@@ -17,7 +17,7 @@ module R3x
         ".tif"  => "image/tiff",
         ".tiff" => "image/tiff",
         ".bmp"  => "image/bmp",
-        ".pdf"  => "application/pdf"
+        ".pdf"  => "application/pdf",
       }.freeze
 
       def initialize(api_key_env: DEFAULT_API_KEY_ENV)

@@ -11,7 +11,7 @@ module R3x
           error_class: error.class.name,
           error_message: error.message,
           backtrace: error.backtrace&.first(20),
-          tags: current_log_tags
+          tags: current_log_tags,
         }
         formatted = R3x::Log::JsonFormatter.new.call("error", Time.current, nil, payload)
         Rails.logger << formatted

@@ -17,20 +17,20 @@ module R3x
             count: attention_count,
             href: "#needs-attention",
             label: "Needs attention",
-            note: (attention_count == 1) ? "workflow needs a closer look" : "workflows need a closer look"
+            note: (attention_count == 1) ? "workflow needs a closer look" : "workflows need a closer look",
           },
           {
             count: running_count,
             href: workflow_runs_path(status: "running"),
             label: "Running now",
-            note: (running_count == 1) ? "run is active right now" : "runs are active right now"
+            note: (running_count == 1) ? "run is active right now" : "runs are active right now",
           },
           {
             count: recent_activity_count,
             href: workflow_runs_path,
             label: "Recent activity (24h)",
-            note: (recent_activity_count == 1) ? "visible run in the last day" : "visible runs in the last day"
-          }
+            note: (recent_activity_count == 1) ? "visible run in the last day" : "visible runs in the last day",
+          },
         ]
       end
 

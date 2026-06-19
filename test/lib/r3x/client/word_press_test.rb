@@ -31,7 +31,7 @@ module R3x
           .to_return(
             status: 200,
             body: MultiJSON.generate([{ "id" => 1, "title" => { "rendered" => "Post 1" } }]),
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         client = WordPress.new(url: "https://wordpress.test")
@@ -47,7 +47,7 @@ module R3x
           .to_return(
             status: 200,
             body: MultiJSON.generate([]),
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         client = WordPress.new(url: "https://wordpress.test")
@@ -61,7 +61,7 @@ module R3x
           .to_return(
             status: 200,
             body: MultiJSON.generate({ "id" => 42, "title" => { "rendered" => "Single Post" } }),
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         client = WordPress.new(url: "https://wordpress.test")
@@ -77,7 +77,7 @@ module R3x
           .to_return(
             status: 200,
             body: MultiJSON.generate([{ "id" => 10, "title" => { "rendered" => "Page 10" } }]),
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         client = WordPress.new(url: "https://wordpress.test")
@@ -92,7 +92,7 @@ module R3x
           .to_return(
             status: 200,
             body: MultiJSON.generate({ "id" => 99, "title" => { "rendered" => "Single Page" } }),
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         client = WordPress.new(url: "https://wordpress.test")
