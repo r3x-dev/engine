@@ -17,8 +17,8 @@ module R3x
           name.demodulize.underscore
         end
 
-        def trigger(type, **options)
-          trigger_instance = Triggers.resolve(type).new(**options)
+        def trigger(type, **)
+          trigger_instance = Triggers.resolve(type).new(**)
           trigger_instance.validate!(message_prefix: "Invalid trigger :#{type} for #{name}")
           _triggers.add(trigger_instance)
         end

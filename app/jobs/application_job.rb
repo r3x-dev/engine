@@ -9,8 +9,8 @@ class ApplicationJob < ActiveJob::Base
     Rails.logger.tagged(*tags.compact, &block)
   end
 
-  def tag_log_context
-    with_log_tags(*log_tags) { yield }
+  def tag_log_context(&block)
+    with_log_tags(*log_tags, &block)
   end
 
   def log_tags
