@@ -213,3 +213,18 @@ Style/SymbolArray:
 
 Style/WordArray:
   Enabled: true
+
+Performance/SelectMap:
+  Enabled: true
+
+Performance/MapCompact:
+  Enabled: true
+
+Style/HashEachMethods:
+  Enabled: true
+
+Style/RedundantDoubleSplatHashBraces:
+  Enabled: true
+
+Style/InverseMethods:
+  Enabled: true

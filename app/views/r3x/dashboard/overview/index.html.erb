@@ -65,7 +65,7 @@
             <% end %>
 
             <div class="pill-row">
-              <%= dashboard_pill(safe_join([ workflow[:attention_label], dashboard_timestamp(workflow[:attention_at]) ], " "), "muted") %>
+              <%= dashboard_pill(safe_join([ "Failed", dashboard_timestamp(workflow.dig(:last_run, :recorded_at)) ], " "), "muted") %>
               <% if workflow[:next_trigger_at].present? %>
                 <%= dashboard_pill(safe_join([ "Next", dashboard_timestamp(workflow[:next_trigger_at]) ], " "), "muted") %>
               <% end %>
