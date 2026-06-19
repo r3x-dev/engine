@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -7,8 +9,8 @@ module R3x
         rendered = dashboard_timestamp(Time.zone.parse("2026-04-15T12:00:01Z"))
 
         assert_includes rendered, "15.04.2026 12:00:01"
-        refute_includes rendered, "ago"
-        refute_includes rendered, "from now"
+        assert_not_includes rendered, "ago"
+        assert_not_includes rendered, "from now"
       end
 
       test "dashboard timestamp respects R3X_TIMEZONE" do
@@ -30,7 +32,7 @@ module R3x
         rendered = dashboard_absolute_timestamp(Time.zone.parse("2026-04-15T12:00:01Z"))
 
         assert_includes rendered, "15.04.2026 12:00:01"
-        refute_includes rendered, ">about"
+        assert_not_includes rendered, ">about"
       end
 
       test "dashboard absolute timestamp respects R3X_TIMEZONE" do
@@ -53,7 +55,7 @@ module R3x
 
         assert_includes rendered, "schedule:&quot;0 12 * * * Europe/Warsaw&quot;"
         assert_includes rendered, "schedule:abc123"
-        refute_includes rendered, ">schedule:abc123<"
+        assert_not_includes rendered, ">schedule:abc123<"
       end
 
       test "dashboard trigger details formats one-part trigger keys" do
@@ -93,7 +95,7 @@ module R3x
         long_error = "API error: " + ("x" * 220)
 
         assert dashboard_error_details_visible?(long_error)
-        refute dashboard_error_multiline?(long_error)
+        assert_not dashboard_error_multiline?(long_error)
       end
 
       test "dashboard structured error parses ruby hash dumps into exception message and backtrace" do
@@ -103,7 +105,7 @@ module R3x
 
         assert_equal "HTTPX::HTTPError", error[:exception_class]
         assert_equal "the server responded with status 403", error[:message]
-        assert_equal [ "line one", "line two" ], error[:backtrace]
+        assert_equal ["line one", "line two"], error[:backtrace]
       end
 
       test "dashboard duration renders hh:mm:ss" do

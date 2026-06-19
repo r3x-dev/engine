@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ENV["RAILS_ENV"] ||= "test"
 ENV["R3X_LOG_FORMAT"] = "json"
 require_relative "../config/environment"

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -13,7 +15,7 @@ module R3x
         job = SolidQueue::Job.create!(
           queue_name: "default",
           class_name: R3x::TestSupport::DashboardWorkflowJob.name,
-          arguments: [ "test_memo" ]
+          arguments: ["test_memo"]
         )
         SolidQueue::RecurringTask.create!(
           key: "test_memo",
@@ -51,7 +53,7 @@ module R3x
         job = SolidQueue::Job.create!(
           queue_name: "default",
           class_name: R3x::TestSupport::DashboardWorkflowJob.name,
-          arguments: [ "test_fr" ]
+          arguments: ["test_fr"]
         )
         SolidQueue::RecurringTask.create!(
           key: "test_fr",
@@ -68,7 +70,7 @@ module R3x
 
         execution = Execution.new(workflow_key: "test_fr")
 
-        refute_predicate execution, :first_run?
+        assert_not_predicate execution, :first_run?
       ensure
         SolidQueue::RecurringExecution.where(task_key: "test_fr").delete_all
         SolidQueue::RecurringTask.where(key: "test_fr").delete_all
@@ -186,7 +188,7 @@ module R3x
           ]
         end
 
-        assert_equal [ "first", "second" ], bodies
+        assert_equal ["first", "second"], bodies
         assert_requested :get, "https://api.test/one"
         assert_requested :get, "https://api.test/two"
       end

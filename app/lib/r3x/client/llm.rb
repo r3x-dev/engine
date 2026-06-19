@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Client
     class Llm
@@ -54,7 +56,7 @@ module R3x
       def analyze_image(image_bytes, prompt:, model:, schema: nil)
         image = StringIO.new(image_bytes).tap { it.set_encoding(Encoding::BINARY) }
 
-        ask_model(model:, prompt:, schema:, attachments: [ image ]).content
+        ask_model(model:, prompt:, schema:, attachments: [image]).content
       end
 
       def message(model:, prompt:, schema: nil)

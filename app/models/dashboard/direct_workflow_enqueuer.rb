@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dashboard
   class DirectWorkflowEnqueuer
     include R3x::Concerns::Logger
@@ -58,7 +60,7 @@ module Dashboard
       positional_arguments = Array(Dashboard::Run.normalize_arguments(raw_arguments)).dup
       keyword_arguments = positional_arguments.last.is_a?(Hash) ? positional_arguments.pop.transform_keys(&:to_sym) : {}
 
-      [ positional_arguments, keyword_arguments ]
+      [positional_arguments, keyword_arguments]
     end
   end
 end

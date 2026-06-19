@@ -61,7 +61,7 @@ module R3x
         upload_io = if file_io.respond_to?(:path)
           file_io
         else
-          temp = Tempfile.new([ actual_filename || "upload", nil ])
+          temp = Tempfile.new([actual_filename || "upload", nil])
           temp.binmode
           temp.write(file_io.read)
           temp.rewind

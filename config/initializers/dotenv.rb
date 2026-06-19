@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Auto-load environment variables from .env file in development/test
 # Skip silently if dotenv is not installed (production uses explicit env vars)
 begin

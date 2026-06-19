@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 require "fileutils"
 require "shellwords"
@@ -137,7 +139,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
     end
 
     env_string = env.map { |key, value| "#{key}=#{Shellwords.escape(value)}" }.join(" ")
-    full_command = [ env_string, command ].reject(&:blank?).join(" ")
+    full_command = [env_string, command].reject(&:blank?).join(" ")
 
     `#{full_command}`
   end

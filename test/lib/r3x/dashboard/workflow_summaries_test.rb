@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -14,13 +16,13 @@ module R3x
           key: "workflow:test_workflow:schedule:abc123",
           schedule: "0 * * * *",
           class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           queue_name: "default",
           static: false
         )
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           finished_at: 1.minute.ago,
           created_at: 10.minutes.ago,
           updated_at: 1.minute.ago
@@ -122,14 +124,14 @@ module R3x
           key: "workflow:overlap_workflow:schedule:abc123",
           schedule: "0 * * * *",
           class_name: job_class_name,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           queue_name: "default",
           static: false
         )
 
         long_running_job = DashboardJobRows.create_job!(
           job_class_name:,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           created_at: 10.minutes.ago,
           updated_at: 30.seconds.ago
         )
@@ -137,7 +139,7 @@ module R3x
 
         DashboardJobRows.create_job!(
           job_class_name:,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           finished_at: 2.minutes.ago,
           created_at: 5.minutes.ago,
           updated_at: 2.minutes.ago
@@ -155,7 +157,7 @@ module R3x
           key: "workflow:test_workflow:schedule:abc123",
           schedule: "0 * * * *",
           class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           queue_name: "default",
           static: false
         )
@@ -163,7 +165,7 @@ module R3x
         active_job_id = "aj-summary-finished-after-two-resumes"
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           finished_at: 5.minutes.ago,
           created_at: 7.minutes.ago,
@@ -171,7 +173,7 @@ module R3x
         )
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           finished_at: 3.minutes.ago,
           created_at: 5.minutes.ago,
@@ -179,7 +181,7 @@ module R3x
         )
         final_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           finished_at: 1.minute.ago,
           created_at: 3.minutes.ago,
@@ -187,7 +189,7 @@ module R3x
         )
         final_job.update!(
           arguments: final_job.arguments.merge(
-            "continuation" => { "completed" => [ "check_camera_1", "check_camera_2" ] },
+            "continuation" => { "completed" => ["check_camera_1", "check_camera_2"] },
             "resumptions"  => 1
           )
         )
@@ -233,7 +235,7 @@ module R3x
           key: "workflow:#{workflow_key}:#{trigger_key}",
           schedule: "0 * * * *",
           class_name: job_class_name,
-          arguments: [ trigger_key ],
+          arguments: [trigger_key],
           queue_name: "default",
           static: false
         )
@@ -242,7 +244,7 @@ module R3x
 
         job = DashboardJobRows.create_job!(
           job_class_name:,
-          arguments: [ trigger_key ],
+          arguments: [trigger_key],
           finished_at: run_status == "finished" ? recorded_at : nil,
           created_at: recorded_at - 1.minute,
           updated_at: recorded_at

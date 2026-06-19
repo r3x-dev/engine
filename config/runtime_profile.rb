@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 module R3x
   module RuntimeProfile
     extend self
 
     DEFAULT_PROFILE = "web".freeze
     HEADLESS_PROFILES = %w[jobs workflow_cli].freeze
-    SUPPORTED_PROFILES = [ DEFAULT_PROFILE, *HEADLESS_PROFILES ].freeze
+    SUPPORTED_PROFILES = [DEFAULT_PROFILE, *HEADLESS_PROFILES].freeze
 
     def current
       @current ||= begin
@@ -35,7 +37,7 @@ module R3x
     end
 
     def bundler_groups
-      headless? ? [] : [ :web ]
+      headless? ? [] : [:web]
     end
   end
 end

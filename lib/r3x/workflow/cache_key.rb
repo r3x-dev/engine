@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "digest"
 require "ripper"
 
@@ -33,7 +35,7 @@ module R3x
         location_digest = Digest::SHA256.hexdigest(line.to_s)
         key_digest = Digest::SHA256.hexdigest(key.to_s) unless key.nil?
         file_digest = Digest::SHA256.file(file).hexdigest
-        fingerprint = [ path_digest, location_digest, key_digest, file_digest ].compact.join(":")
+        fingerprint = [path_digest, location_digest, key_digest, file_digest].compact.join(":")
 
         "r3x:workflow:#{workflow_key}:#{Digest::SHA256.hexdigest(fingerprint)}"
       end

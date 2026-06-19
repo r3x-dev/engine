@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 require "fileutils"
 
@@ -104,7 +106,7 @@ module R3x
             end
           RUBY
 
-          ENV["R3X_WORKFLOW_PATHS"] = [ broken_dir, @fixture_dir.to_s ].join(File::PATH_SEPARATOR)
+          ENV["R3X_WORKFLOW_PATHS"] = [broken_dir, @fixture_dir.to_s].join(File::PATH_SEPARATOR)
           output = StringIO.new
 
           Cli.new(stdout: output).run(@fixture_path.to_s)

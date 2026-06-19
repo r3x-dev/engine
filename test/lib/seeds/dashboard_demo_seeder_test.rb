@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 require_relative "../../../db/seeds/support/dashboard_demo_seeder"
 

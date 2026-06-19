@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   class Log
     TAG_PATTERN = /\A(?:\[(?<tag>[^\]]+)\]\s+)+/

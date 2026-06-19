@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 require "tmpdir"
 
@@ -7,7 +9,7 @@ module R3x
       trigger :schedule, cron: "0 * * * *"
 
       def run
-        workflow_dedup_key(candidates: [ nil, "post-123" ])
+        workflow_dedup_key(candidates: [nil, "post-123"])
       end
     end
 
@@ -262,7 +264,7 @@ module R3x
       triggers = klass.triggers
 
       assert_equal 1, triggers.size
-      assert_equal [ :schedule ], triggers.map(&:type)
+      assert_equal [:schedule], triggers.map(&:type)
     end
 
     test "trigger :schedule rejects blank cron (empty string and whitespace)" do
@@ -287,7 +289,7 @@ module R3x
       types = R3x::Triggers.supported_types
 
       assert_includes types, :schedule
-      refute_includes types, :base
+      assert_not_includes types, :base
     end
 
     test "unknown trigger type raises error with dynamic supported types list" do
@@ -425,7 +427,7 @@ module R3x
       result = workflow_class.perform_now(workflow_class.triggers.first.unique_key)
 
       assert_equal({ "status" => "ran" }, result)
-      assert_equal [ :run, :complete ], events
+      assert_equal [:run, :complete], events
     end
 
     test "on_complete runs multiple blocks in declaration order" do
@@ -446,7 +448,7 @@ module R3x
 
       workflow_class.perform_now(workflow_class.triggers.first.unique_key)
 
-      assert_equal [ :run, :first, :second ], events
+      assert_equal [:run, :first, :second], events
     end
 
     test "on_complete can access ctx" do
@@ -466,7 +468,7 @@ module R3x
 
       workflow_class.perform_now(workflow_class.triggers.first.unique_key)
 
-      assert_equal [ :manual ], events
+      assert_equal [:manual], events
     end
 
     test "on_complete does not run when condition skips workflow" do
@@ -520,7 +522,7 @@ module R3x
 
       assert_includes output, "r3x.job_outcome=failed"
       assert_includes output, "Workflow run failed"
-      refute_includes output, "Workflow run completed"
+      assert_not_includes output, "Workflow run completed"
     end
 
     test "on_complete does not run when workflow is interrupted before completion" do
@@ -549,7 +551,7 @@ module R3x
         workflow.perform(workflow_class.triggers.first.unique_key)
       end
 
-      assert_equal [ :first ], events
+      assert_equal [:first], events
     end
 
     test "perform logs 'Resuming workflow' instead of 'Running workflow' on resumption" do
@@ -585,7 +587,7 @@ module R3x
         end
 
         assert_includes output1, "Running workflow trigger_type=manual"
-        refute_includes output1, "Resuming workflow trigger_type=manual"
+        assert_not_includes output1, "Resuming workflow trigger_type=manual"
 
         serialized_job_data = workflow.serialize
         resumed_workflow = workflow_class.deserialize(serialized_job_data)
@@ -596,7 +598,7 @@ module R3x
           end
         end
 
-        refute_includes output2, "Running workflow trigger_type=manual"
+        assert_not_includes output2, "Running workflow trigger_type=manual"
         assert_includes output2, "Resuming workflow trigger_type=manual after 'first'"
       ensure
         Workflows.send(:remove_const, :InterruptedResumptionWorkflow) if Workflows.const_defined?(:InterruptedResumptionWorkflow)
@@ -724,7 +726,7 @@ module R3x
       end
 
       workflow = workflow_class.new
-      workflow.continuation = ActiveJob::Continuation.new(workflow, "completed" => [ "previous_step" ])
+      workflow.continuation = ActiveJob::Continuation.new(workflow, "completed" => ["previous_step"])
 
       result = workflow.perform(workflow_class.triggers.first.unique_key)
 
@@ -751,7 +753,7 @@ module R3x
       assert_includes output, "Running workflow trigger_type=manual"
       assert_includes output, "r3x.run_active_job_id="
       assert_includes output, "r3x.trigger_key="
-      refute_includes output, "r3x.workflow_key=logged_workflow"
+      assert_not_includes output, "r3x.workflow_key=logged_workflow"
       assert_includes output, "r3x.job_outcome=success"
       assert_includes output, "Workflow run completed"
     end
@@ -878,7 +880,7 @@ module R3x
 
     test "with_cache raises when block source file cannot be fingerprinted" do
       block = proc { "cached" }
-      block.stubs(:source_location).returns([ nil, nil ])
+      block.stubs(:source_location).returns([nil, nil])
 
       error = assert_raises(RuntimeError) do
         R3x::Workflow::CacheKey.generate(workflow_key: "missing_cache_source_test", block:, method_name: :with_cache, key: "missing")
@@ -896,7 +898,7 @@ module R3x
       workflow = workflow_class.new
 
       error = assert_raises(RuntimeError) do
-        [ workflow.with_cache { "one" }, workflow.with_cache { "two" } ]
+        [workflow.with_cache { "one" }, workflow.with_cache { "two" }]
       end
 
       assert_match(
@@ -914,7 +916,7 @@ module R3x
       workflow = workflow_class.new
 
       assert_equal(
-        [ "one", "two" ],
+        ["one", "two"],
         [
           workflow.with_cache(key: "one") { "one" },
           workflow.with_cache(key: "two") { "two" }
@@ -1063,7 +1065,7 @@ module R3x
       begin
         durable_set = context.durable_set
 
-        refute_includes durable_set, "item-1"
+        assert_not_includes durable_set, "item-1"
         durable_set.add("item-1")
 
         assert_includes durable_set, "item-1"
@@ -1092,7 +1094,7 @@ module R3x
         default_set.add("item-1")
 
         assert_includes default_set, "item-1"
-        refute_includes sent_set, "item-1"
+        assert_not_includes sent_set, "item-1"
       ensure
         Rails.cache = original_cache
       end
@@ -1116,7 +1118,7 @@ module R3x
         first_context.durable_set.add("item-1")
 
         assert_includes first_context.durable_set, "item-1"
-        refute_includes second_context.durable_set, "item-1"
+        assert_not_includes second_context.durable_set, "item-1"
       ensure
         Rails.cache = original_cache
       end
@@ -1213,11 +1215,11 @@ module R3x
         durable_set = context.durable_set
 
         assert durable_set.add?("item-1")
-        refute durable_set.add?("item-1")
+        assert_not durable_set.add?("item-1")
         assert_includes durable_set, "item-1"
 
         assert durable_set.add?("item-2")
-        refute durable_set.add?("item-2")
+        assert_not durable_set.add?("item-2")
         assert_includes durable_set, "item-2"
       ensure
         Rails.cache = original_cache
@@ -1259,8 +1261,8 @@ module R3x
         durable_set = context.durable_set
 
         assert durable_set.add?("item-1")
-        refute durable_set.add?("item-1")
-        assert_equal [ true, true ], cache.writes.map { |write| write[:unless_exist] }
+        assert_not durable_set.add?("item-1")
+        assert_equal [true, true], cache.writes.map { |write| write[:unless_exist] }
       ensure
         Rails.cache = original_cache
       end
@@ -1287,7 +1289,7 @@ module R3x
 
         durable_set.delete("item-1")
 
-        refute_includes durable_set, "item-1"
+        assert_not_includes durable_set, "item-1"
       ensure
         Rails.cache = original_cache
       end

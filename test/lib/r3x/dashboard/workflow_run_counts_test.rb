@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -17,7 +19,7 @@ module R3x
       test "counts running jobs and recent activity with dashboard visibility semantics" do
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           finished_at: 2.hours.ago,
           created_at: 3.hours.ago,
           updated_at: 2.hours.ago
@@ -25,7 +27,7 @@ module R3x
 
         failed_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           created_at: 4.hours.ago,
           updated_at: 3.hours.ago
         )
@@ -33,7 +35,7 @@ module R3x
 
         running_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           created_at: 6.hours.ago,
           updated_at: 5.hours.ago
         )
@@ -41,7 +43,7 @@ module R3x
 
         queued_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           created_at: 12.hours.ago,
           updated_at: 12.hours.ago
         )
@@ -49,7 +51,7 @@ module R3x
 
         scheduled_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           created_at: 2.days.ago,
           updated_at: 2.days.ago,
           scheduled_at: 45.minutes.ago
@@ -64,7 +66,7 @@ module R3x
 
         DashboardJobRows.create_job!(
           job_class_name: "CleanupJob",
-          arguments: [ "tmp/cache" ],
+          arguments: ["tmp/cache"],
           finished_at: 30.minutes.ago,
           created_at: 45.minutes.ago,
           updated_at: 30.minutes.ago
@@ -72,7 +74,7 @@ module R3x
 
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           finished_at: 2.days.ago,
           created_at: 2.days.ago - 5.minutes,
           updated_at: 2.days.ago
@@ -87,7 +89,7 @@ module R3x
       test "does not count future scheduled runs as recent activity" do
         scheduled_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           created_at: Time.current,
           updated_at: Time.current,
           scheduled_at: 2.hours.from_now
@@ -106,7 +108,7 @@ module R3x
         active_job_id = "aj-counted-resume"
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           finished_at: 3.minutes.ago,
           created_at: 5.minutes.ago,
@@ -114,7 +116,7 @@ module R3x
         )
         resumed_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           created_at: 3.minutes.ago,
           updated_at: 3.minutes.ago,
@@ -136,7 +138,7 @@ module R3x
       test "running count ignores queued backlog" do
         running_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           created_at: 2.hours.ago,
           updated_at: 2.hours.ago
         )
@@ -145,7 +147,7 @@ module R3x
         active_job_id = "aj-counted-sleeping"
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           finished_at: 2.hours.ago,
           created_at: 3.hours.ago,
@@ -153,7 +155,7 @@ module R3x
         )
         sleeping_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           active_job_id:,
           created_at: 2.hours.ago,
           updated_at: 2.hours.ago,
@@ -171,7 +173,7 @@ module R3x
         75.times do |index|
           DashboardJobRows.create_job!(
             job_class_name: WORKFLOW_JOB_CLASS_NAME,
-            arguments: [ "schedule:abc123" ],
+            arguments: ["schedule:abc123"],
             created_at: index.seconds.ago,
             updated_at: index.seconds.ago
           )
@@ -183,7 +185,7 @@ module R3x
       test "recent run ids include long-running jobs that completed most recently" do
         long_running_job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           finished_at: 5.seconds.ago,
           created_at: 2.days.ago,
           updated_at: 5.seconds.ago
@@ -194,7 +196,7 @@ module R3x
 
           DashboardJobRows.create_job!(
             job_class_name: WORKFLOW_JOB_CLASS_NAME,
-            arguments: [ "schedule:abc123" ],
+            arguments: ["schedule:abc123"],
             finished_at:,
             created_at: finished_at - 30.seconds,
             updated_at: finished_at
@@ -212,7 +214,7 @@ module R3x
 
           DashboardJobRows.create_job!(
             job_class_name: "CleanupJob",
-            arguments: [ "tmp/#{index}" ],
+            arguments: ["tmp/#{index}"],
             finished_at:,
             created_at: finished_at - 30.seconds,
             updated_at: finished_at
@@ -224,7 +226,7 @@ module R3x
 
           DashboardJobRows.create_job!(
             job_class_name: WORKFLOW_JOB_CLASS_NAME,
-            arguments: [ "schedule:abc123" ],
+            arguments: ["schedule:abc123"],
             finished_at:,
             created_at: finished_at - 30.seconds,
             updated_at: finished_at
@@ -244,7 +246,7 @@ module R3x
           key: "workflow:test_workflow:schedule:abc123",
           schedule: "0 * * * *",
           class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           queue_name: "default",
           static: false
         )

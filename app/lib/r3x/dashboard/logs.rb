@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Dashboard
     class Logs
@@ -172,13 +174,13 @@ module R3x
         visible_tags = Array(tags).map(&:to_s).reject { |tag| hidden_tag?(tag, context:) }
         message = message.to_s
         match = message.match(R3x::Log::TAG_PATTERN)
-        return [ message, visible_tags ] unless match
+        return [message, visible_tags] unless match
 
         raw_tags = match[0].scan(/\[([^\]]+)\]/).flatten
         visible_tags = (visible_tags + raw_tags.reject { |tag| hidden_tag?(tag, context:) }).uniq
         stripped_message = message.delete_prefix(match[0]).strip
 
-        [ stripped_message.presence || message, visible_tags ]
+        [stripped_message.presence || message, visible_tags]
       end
 
       def hidden_tag?(tag, context: {})
@@ -204,12 +206,12 @@ module R3x
           value.compact_blank
         when String
           parsed = MultiJSON.parse(value)
-          parsed.is_a?(Array) ? parsed.compact_blank : [ value ]
+          parsed.is_a?(Array) ? parsed.compact_blank : [value]
         else
           Array(value).compact_blank
         end
       rescue MultiJSON::ParseError
-        [ value ]
+        [value]
       end
 
       def unavailable_logs

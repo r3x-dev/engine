@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -130,8 +132,8 @@ module R3x
         llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key")
 
         assert_equal "response", llm.message(model: "gemini-1.5-flash", prompt: "hello").content
-        assert_equal [ { model: "gemini-1.5-flash" } ], context.chat_calls
-        assert_equal [ { prompt: "hello", with: nil } ], chat.ask_calls
+        assert_equal [{ model: "gemini-1.5-flash" }], context.chat_calls
+        assert_equal [{ prompt: "hello", with: nil }], chat.ask_calls
       end
 
       test "analyze_image asks with binary image attachment and returns response content" do
@@ -146,8 +148,8 @@ module R3x
 
         image = chat.ask_calls.sole.fetch(:with).sole
 
-        assert_equal [ { model: "gemini-1.5-flash" } ], context.chat_calls
-        assert_equal [ :schema ], chat.schema_calls
+        assert_equal [{ model: "gemini-1.5-flash" }], context.chat_calls
+        assert_equal [:schema], chat.schema_calls
         assert_equal "describe", chat.ask_calls.sole.fetch(:prompt)
         assert_instance_of StringIO, image
         assert_equal Encoding::BINARY, image.external_encoding

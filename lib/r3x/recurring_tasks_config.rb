@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   class RecurringTasksConfig
     extend R3x::Concerns::Logger
@@ -18,7 +20,7 @@ module R3x
           triggers.each do |trigger|
             key = namespaced_key(workflow_key, trigger)
             current_keys << key
-            task_options << [ key, task_options_for(workflow_class:, trigger:) ]
+            task_options << [key, task_options_for(workflow_class:, trigger:)]
           end
         end
 
@@ -35,12 +37,12 @@ module R3x
             task.save!
 
             workflow_key, trigger_key = workflow_and_trigger_for(key)
-            scheduled_logs << [ workflow_key, trigger_key, options ]
+            scheduled_logs << [workflow_key, trigger_key, options]
           end
         end
 
         scheduled_logs.each do |workflow_key, trigger_key, options|
-          tags = [ R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_key), R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key) ]
+          tags = [R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_key), R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key)]
 
           Rails.logger.tagged(*tags) do
             logger.info "Scheduled recurring task class=#{options[:class]} schedule=#{options[:schedule]} queue=#{options[:queue]}"
@@ -83,7 +85,7 @@ module R3x
 
         {
           class: workflow_class.name,
-          args: [ trigger.unique_key ],
+          args: [trigger.unique_key],
           schedule: trigger.schedule,
           queue: queue_name
         }
@@ -91,7 +93,7 @@ module R3x
 
       def workflow_and_trigger_for(key)
         _, workflow_key, *trigger_key_parts = key.split(":")
-        [ workflow_key, trigger_key_parts.join(":") ]
+        [workflow_key, trigger_key_parts.join(":")]
       end
     end
   end

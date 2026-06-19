@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Dashboard
     module ApplicationHelper
@@ -26,7 +28,7 @@ module R3x
       end
 
       def dashboard_pill(label, tone, title: nil, class_name: nil)
-        classes = [ "pill", tone, class_name ].compact.join(" ")
+        classes = ["pill", tone, class_name].compact.join(" ")
         options = { class: classes }
         options[:title] = title if title.present?
 
@@ -117,7 +119,7 @@ module R3x
         return content_tag(:span, "Unknown", class: "muted") if start_time.blank?
 
         finish_time = end_time || Time.current
-        total_seconds = [ (finish_time - start_time).to_i, 0 ].max
+        total_seconds = [(finish_time - start_time).to_i, 0].max
 
         hours = total_seconds / 3600
         minutes = (total_seconds % 3600) / 60
@@ -227,12 +229,12 @@ module R3x
 
       def dashboard_icon(name)
         icon_name, variant = {
-          alert: [ "exclamation-triangle", :outline ],
-          history: [ "clock", :outline ],
-          launch: [ "play", :solid ],
-          logs: [ "document-text", :outline ],
-          tune: [ "cog-6-tooth", :outline ],
-          workflow: [ "queue-list", :outline ]
+          alert: ["exclamation-triangle", :outline],
+          history: ["clock", :outline],
+          launch: ["play", :solid],
+          logs: ["document-text", :outline],
+          tune: ["cog-6-tooth", :outline],
+          workflow: ["queue-list", :outline]
         }.fetch(name)
 
         icon_html = Heroicon::Icon.render(name: icon_name, variant:, options: { class: "icon" }, path_options: {})
@@ -240,7 +242,7 @@ module R3x
       end
 
       def dashboard_icon_label(name, text)
-        safe_join([ dashboard_icon(name), content_tag(:span, text) ], " ")
+        safe_join([dashboard_icon(name), content_tag(:span, text)], " ")
       end
 
       def dashboard_run_filter_path(status:, workflow_key: nil)

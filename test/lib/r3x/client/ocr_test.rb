@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -86,7 +88,7 @@ module R3x
       test "parse with file path auto-detects MIME type" do
         stub_success("File text")
 
-        tempfile = Tempfile.new([ "test", ".png" ])
+        tempfile = Tempfile.new(["test", ".png"])
         tempfile.write("fake png data")
         tempfile.rewind
 
@@ -265,7 +267,7 @@ module R3x
         client = Ocr.new(api_key_env: "OCRSPACE_API_KEY")
         result = client.parse(StringIO.new("data"), filetype: "image/jpeg")
 
-        refute_predicate result.first, :success?
+        assert_not_predicate result.first, :success?
         assert_equal "OCR Engine Error", result.first.error_message
         assert_equal "Could not process image", result.first.error_details
       end

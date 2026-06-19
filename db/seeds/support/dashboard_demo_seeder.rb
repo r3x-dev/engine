@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Seeds
   class DashboardDemoSeeder
     DEMO_CLASS_PREFIX = "Demo::Dashboard::".freeze
@@ -153,7 +155,7 @@ module Seeds
         key: recurring_task_key(definition),
         schedule: definition.fetch(:schedule),
         class_name: definition.fetch(:class_name),
-        arguments: [ definition.fetch(:trigger_key) ],
+        arguments: [definition.fetch(:trigger_key)],
         queue_name: definition.fetch(:queue_name),
         priority: definition.fetch(:priority),
         static: false
@@ -230,7 +232,7 @@ module Seeds
         active_job_id: definition.fetch(:active_job_id),
         arguments: serialized_job_payload(
           job_class_name: definition.fetch(:class_name),
-          arguments: [ definition.fetch(:trigger_key) ],
+          arguments: [definition.fetch(:trigger_key)],
           queue_name: definition.fetch(:queue_name),
           priority: definition.fetch(:priority),
           continuation: definition[:continuation],
