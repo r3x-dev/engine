@@ -42,7 +42,7 @@ live at the Solid Queue boundary.
 
 ## Phase 2 - Client Consistency
 
-### [ ] B. Consolidate repeated `HTTPX.with(...)` option setup
+### [x] B. Consolidate repeated `HTTPX.with(...)` option setup
 
 **Files:**
 
@@ -54,17 +54,13 @@ live at the Solid Queue boundary.
 - `app/lib/r3x/client/markdownify.rb`
 - `app/lib/r3x/client/victoria_logs.rb`
 
-Several clients build `HTTPX.with(...)` timeout and header options by hand. The
-project already has `R3x::Client::Http.session_options(verify_ssl:, timeout:)`,
-so prefer extending that small existing primitive over adding a new builder class.
+Several clients built `HTTPX.with(...)` timeout options by hand even when the
+provider did not need custom timeout policy.
 
-**Suggested fix:**
-
-- Let `R3x::Client::Http.session_options` accept optional `headers:`.
-- Migrate clients that only need timeout/header setup to reuse it.
-- Preserve client-specific timeouts where they are meaningful.
-- Keep direct `HTTPX.get/post/...` for genuinely one-off calls with no shared
-  options.
+**Done:** speculative timeout overrides were removed from thin clients that can
+use HTTPX defaults. `R3x::Client::Http` now keeps its own option builder private
+and only applies options when callers request custom SSL or timeout behavior.
+Client-specific headers stay near the request code.
 
 ---
 

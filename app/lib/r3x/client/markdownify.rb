@@ -65,7 +65,7 @@ module R3x
           return dry_run_result
         end
 
-        response = connection.post(
+        response = HTTPX.post(
           "https://markdown.new/",
           json: { "url" => @url, "method" => @method, "retain_images" => @retain_images },
         ).raise_for_status
@@ -91,10 +91,6 @@ module R3x
           "method"        => @method,
           "retain_images" => @retain_images,
         }
-      end
-
-      def connection
-        HTTPX.with(timeout: { connect_timeout: 5, operation_timeout: 30 })
       end
     end
   end

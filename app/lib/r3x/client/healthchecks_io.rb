@@ -90,10 +90,6 @@ module R3x
 
       attr_reader :ping_url
 
-      def connection
-        @connection ||= HTTPX.with(timeout: { connect_timeout: 5, operation_timeout: 10 })
-      end
-
       def send_start(rid: nil)
         make_request(:head, "start", rid:)
       end
@@ -113,9 +109,9 @@ module R3x
         end
         response = case method
         when :head
-          connection.head(target_url)
+          HTTPX.head(target_url)
         when :post
-          connection.post(target_url, body:)
+          HTTPX.post(target_url, body:)
         else
           raise ArgumentError, "Unsupported HTTP method: #{method}"
         end
