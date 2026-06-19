@@ -39,7 +39,7 @@ module R3x
       attr_reader :api_key
 
       def connection
-        @connection ||= HTTPX.with(timeout: { connect_timeout: 5, operation_timeout: 30 }, headers: { "apikey" => api_key })
+        @connection ||= HTTPX.with(headers: { "apikey" => api_key })
       end
 
       def detect_mime(io_or_path)
