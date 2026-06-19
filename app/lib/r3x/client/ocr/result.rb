@@ -31,8 +31,8 @@ module R3x
           body["ProcessingTimeInMilliseconds"]&.to_i
         end
 
-        def each(&block)
-          pages.each(&block)
+        def each(&)
+          pages.each(&)
         end
 
         private

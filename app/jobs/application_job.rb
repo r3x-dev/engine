@@ -7,12 +7,12 @@ class ApplicationJob < ActiveJob::Base
 
   private
 
-  def with_log_tags(*tags, &block)
-    Rails.logger.tagged(*tags.compact, &block)
+  def with_log_tags(*tags, &)
+    Rails.logger.tagged(*tags.compact, &)
   end
 
-  def tag_log_context(&block)
-    with_log_tags(*log_tags, &block)
+  def tag_log_context(&)
+    with_log_tags(*log_tags, &)
   end
 
   def log_tags

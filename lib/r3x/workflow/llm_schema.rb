@@ -5,10 +5,10 @@ module R3x
     module LlmSchema
       extend self
 
-      def define(&block)
+      def define(&)
         R3x::GemLoader.require("ruby_llm/schema")
 
-        Class.new(RubyLLM::Schema, &block)
+        Class.new(RubyLLM::Schema, &)
       end
     end
   end
