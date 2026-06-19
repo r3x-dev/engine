@@ -5,42 +5,109 @@ require "test_helper"
 module R3x
   module Workflow
     class ExecutionTest < ActiveSupport::TestCase
+      setup do
+        TestDbCleanup.clear_runtime_tables!
+      end
+
+      teardown do
+        TestDbCleanup.clear_runtime_tables!
+      end
+
       test "previous_run_at returns nil when no execution in solid_queue" do
         execution = Execution.new(workflow_key: "nonexistent_workflow")
 
         assert_nil execution.previous_run_at
       end
 
-      test "previous_run_at is memoized" do
-        job = SolidQueue::Job.create!(
-          queue_name: "default",
-          class_name: R3x::TestSupport::DashboardWorkflowJob.name,
-          arguments: ["test_memo"],
-        )
+      test "previous_run_at finds production workflow recurring task key" do
+        task_key = "workflow:test_workflow:schedule:daily"
+        previous_run_at = 2.hours.ago.change(usec: 0)
+        job = create_workflow_job!(arguments: ["schedule:daily"])
         SolidQueue::RecurringTask.create!(
-          key: "test_memo",
+          key: task_key,
           schedule: "0 * * * *",
           class_name: R3x::TestSupport::DashboardWorkflowJob.name,
-          arguments: [],
+          arguments: ["schedule:daily"],
           queue_name: "default",
         )
         SolidQueue::RecurringExecution.create!(
-          task_key: "test_memo",
-          run_at: 2.hours.ago,
+          task_key:,
+          run_at: previous_run_at,
           job_id: job.id,
         )
 
-        execution = Execution.new(workflow_key: "test_memo")
+        execution = Execution.new(workflow_key: "test_workflow", trigger_key: "schedule:daily")
+
+        assert_equal previous_run_at, execution.previous_run_at
+      end
+
+      test "previous_run_at ignores the current recurring execution" do
+        task_key = "workflow:test_workflow:schedule:daily"
+        current_run_at = 1.hour.ago.change(usec: 0)
+        current_job = create_workflow_job!(arguments: ["schedule:daily"])
+        create_recurring_task!(task_key:, arguments: ["schedule:daily"])
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: current_run_at,
+          job_id: current_job.id,
+        )
+
+        execution = Execution.new(
+          workflow_key: "test_workflow",
+          trigger_key: "schedule:daily",
+          active_job_id: current_job.active_job_id,
+        )
+
+        assert_nil execution.previous_run_at
+        assert_predicate execution, :first_run?
+      end
+
+      test "previous_run_at returns the previous recurring execution before the current job" do
+        task_key = "workflow:test_workflow:schedule:daily"
+        previous_run_at = 2.hours.ago.change(usec: 0)
+        current_run_at = 1.hour.ago.change(usec: 0)
+        previous_job = create_workflow_job!(arguments: ["schedule:daily"])
+        current_job = create_workflow_job!(arguments: ["schedule:daily"])
+        create_recurring_task!(task_key:, arguments: ["schedule:daily"])
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: previous_run_at,
+          job_id: previous_job.id,
+        )
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: current_run_at,
+          job_id: current_job.id,
+        )
+
+        execution = Execution.new(
+          workflow_key: "test_workflow",
+          trigger_key: "schedule:daily",
+          active_job_id: current_job.active_job_id,
+        )
+
+        assert_equal previous_run_at, execution.previous_run_at
+        assert_not_predicate execution, :first_run?
+      end
+
+      test "previous_run_at is memoized" do
+        task_key = "workflow:test_memo:schedule:memo"
+        previous_run_at = 2.hours.ago.change(usec: 0)
+        job = create_workflow_job!(arguments: ["schedule:memo"])
+        create_recurring_task!(task_key:, arguments: ["schedule:memo"])
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: previous_run_at,
+          job_id: job.id,
+        )
+
+        execution = Execution.new(workflow_key: "test_memo", trigger_key: "schedule:memo")
 
         t1 = execution.previous_run_at
         t2 = execution.previous_run_at
 
         assert_equal t1, t2
-        assert_predicate t1, :present?
-      ensure
-        SolidQueue::RecurringExecution.where(task_key: "test_memo").delete_all
-        SolidQueue::RecurringTask.where(key: "test_memo").delete_all
-        SolidQueue::Job.where(class_name: R3x::TestSupport::DashboardWorkflowJob.name).delete_all
+        assert_equal previous_run_at, t1
       end
 
       test "first_run? returns true when no previous_run_at" do
@@ -50,31 +117,34 @@ module R3x
       end
 
       test "first_run? returns false when previous_run_at exists" do
-        job = SolidQueue::Job.create!(
-          queue_name: "default",
-          class_name: R3x::TestSupport::DashboardWorkflowJob.name,
-          arguments: ["test_fr"],
-        )
-        SolidQueue::RecurringTask.create!(
-          key: "test_fr",
-          schedule: "0 * * * *",
-          class_name: R3x::TestSupport::DashboardWorkflowJob.name,
-          arguments: [],
-          queue_name: "default",
-        )
+        task_key = "workflow:test_fr:schedule:first_run"
+        job = create_workflow_job!(arguments: ["schedule:first_run"])
+        create_recurring_task!(task_key:, arguments: ["schedule:first_run"])
         SolidQueue::RecurringExecution.create!(
-          task_key: "test_fr",
-          run_at: 2.hours.ago,
+          task_key:,
+          run_at: 2.hours.ago.change(usec: 0),
           job_id: job.id,
         )
 
-        execution = Execution.new(workflow_key: "test_fr")
+        execution = Execution.new(workflow_key: "test_fr", trigger_key: "schedule:first_run")
 
         assert_not_predicate execution, :first_run?
-      ensure
-        SolidQueue::RecurringExecution.where(task_key: "test_fr").delete_all
-        SolidQueue::RecurringTask.where(key: "test_fr").delete_all
-        SolidQueue::Job.where(class_name: R3x::TestSupport::DashboardWorkflowJob.name).delete_all
+      end
+
+      private
+
+      def create_workflow_job!(arguments:)
+        SolidQueue::Job.enqueue(R3x::TestSupport::DashboardWorkflowJob.new(*arguments))
+      end
+
+      def create_recurring_task!(task_key:, arguments:)
+        SolidQueue::RecurringTask.create!(
+          key: task_key,
+          schedule: "0 * * * *",
+          class_name: R3x::TestSupport::DashboardWorkflowJob.name,
+          arguments:,
+          queue_name: "default",
+        )
       end
     end
 
@@ -252,8 +322,6 @@ module R3x
           assert_equal "go-test-key", context.config.opencode_go_api_key
         end
       end
-
-
 
       private
 
