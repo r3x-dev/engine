@@ -86,7 +86,7 @@ module R3x
             trigger_payload: first_job.trigger_payload,
             trigger_schedule: recurring_task&.schedule,
             workflow_key: resolved_workflow_key,
-            workflow_title: resolved_workflow_key.titleize
+            workflow_title: resolved_workflow_key.titleize,
           }
         end
 

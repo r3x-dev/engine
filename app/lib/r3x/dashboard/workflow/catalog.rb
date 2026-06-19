@@ -41,7 +41,7 @@ module R3x
             class_name: class_names_for(workflow_key).first,
             trigger_count: trigger_keys_for(workflow_key).size,
             workflow_key:,
-            title: workflow_key.titleize
+            title: workflow_key.titleize,
           }
         end
 
@@ -76,7 +76,7 @@ module R3x
 
         def class_names_by_workflow_key
           @class_names_by_workflow_key ||= class_names_to_keys.each_with_object(
-            Hash.new { |hash, key| hash[key] = [] }
+            Hash.new { |hash, key| hash[key] = [] },
           ) do |(class_name, workflow_key), mapping|
             mapping[workflow_key] << class_name
           end

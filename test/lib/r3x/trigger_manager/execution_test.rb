@@ -48,7 +48,7 @@ module R3x
         execution = Execution.new(
           trigger:,
           workflow_key: "test",
-          payload: { "entries" => [{ "title" => "Hello" }] }
+          payload: { "entries" => [{ "title" => "Hello" }] },
         )
 
         assert_equal({ "entries" => [{ "title" => "Hello" }] }, execution.payload)

@@ -24,7 +24,7 @@ module R3x
         with_env(
           "GOOGLE_CLIENT_ID_TESTPROJ"     => "client-id",
           "GOOGLE_CLIENT_SECRET_TESTPROJ" => "client-secret",
-          "GOOGLE_REFRESH_TOKEN_TESTPROJ" => "refresh-token"
+          "GOOGLE_REFRESH_TOKEN_TESTPROJ" => "refresh-token",
         ) do
           GoogleAuth.from_env(project: "TESTPROJ", scope: "gmail.send")
         end
@@ -44,7 +44,7 @@ module R3x
         with_env(
           "GOOGLE_CLIENT_ID_TESTPROJ"     => "client-id",
           "GOOGLE_CLIENT_SECRET_TESTPROJ" => "client-secret",
-          "GOOGLE_REFRESH_TOKEN_TESTPROJ" => "refresh-token"
+          "GOOGLE_REFRESH_TOKEN_TESTPROJ" => "refresh-token",
         ) do
           GoogleAuth.from_env(project: "TESTPROJ", scope: "gmail.send")
         end
@@ -61,9 +61,9 @@ module R3x
           {
             "client_id"     => "client-id",
             "client_secret" => "client-secret",
-            "refresh_token" => "refresh-token"
+            "refresh_token" => "refresh-token",
           },
-          scope: "gmail.send"
+          scope: "gmail.send",
         )
       end
 
@@ -84,9 +84,9 @@ module R3x
           {
             "client_id"     => "client-id",
             "client_secret" => "client-secret",
-            "refresh_token" => "refresh-token"
+            "refresh_token" => "refresh-token",
           },
-          scope: "gmail.send"
+          scope: "gmail.send",
         )
 
         assert_equal [::Google::Apis::GmailV1::AUTH_GMAIL_SEND], captured_scope

@@ -22,17 +22,17 @@ module R3x
           class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: ["schedule:123"],
           queue_name: "default",
-          static: false
+          static: false,
         )
         DashboardJobRows.create_job!(
           job_class_name: "Workflows::ObservedWorkflow",
           arguments: [],
           finished_at: 1.minute.ago,
           created_at: 2.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
 
-        assert_equal ["observed_workflow", "scheduled_workflow"], Workflow::Catalog.new.workflow_keys
+        assert_equal %w[observed_workflow scheduled_workflow], Workflow::Catalog.new.workflow_keys
       end
 
       test "derives workflow keys from observed direct workflow class names without trigger metadata" do
@@ -41,7 +41,7 @@ module R3x
           arguments: [],
           finished_at: 1.minute.ago,
           created_at: 2.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
 
         catalog = Workflow::Catalog.new
@@ -56,7 +56,7 @@ module R3x
           arguments: [],
           finished_at: 20.minutes.ago,
           created_at: 20.minutes.ago,
-          updated_at: 20.minutes.ago
+          updated_at: 20.minutes.ago,
         )
 
         300.times do |index|
@@ -65,7 +65,7 @@ module R3x
             arguments: ["tmp/#{index}"],
             finished_at: 1.minute.ago,
             created_at: 1.minute.ago + index.seconds,
-            updated_at: 1.minute.ago + index.seconds
+            updated_at: 1.minute.ago + index.seconds,
           )
         end
 
@@ -82,14 +82,14 @@ module R3x
           class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: ["schedule:123"],
           queue_name: "default",
-          static: false
+          static: false,
         )
         DashboardJobRows.create_job!(
           job_class_name: "CleanupJob",
           arguments: ["tmp/cache"],
           finished_at: 1.minute.ago,
           created_at: 2.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
 
         catalog = Workflow::Catalog.new
@@ -107,14 +107,14 @@ module R3x
           class_name: legacy_class_name,
           arguments: ["schedule:legacy"],
           queue_name: "default",
-          static: false
+          static: false,
         )
         DashboardJobRows.create_job!(
           job_class_name: "Workflows::TestWorkflow",
           arguments: [],
           finished_at: 1.minute.ago,
           created_at: 2.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
 
         assert_equal [legacy_class_name, "Workflows::TestWorkflow"], Workflow::Catalog.new.class_names_for("test_workflow")
@@ -127,14 +127,14 @@ module R3x
           class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: ["schedule:123"],
           queue_name: "default",
-          static: false
+          static: false,
         )
         DashboardJobRows.create_job!(
           job_class_name: "CleanupJob",
           arguments: ["schedule:123"],
           finished_at: 1.minute.ago,
           created_at: 2.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
 
         catalog = Workflow::Catalog.new

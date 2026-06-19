@@ -87,7 +87,7 @@ module R3x
           class: workflow_class.name,
           args: [trigger.unique_key],
           schedule: trigger.schedule,
-          queue: queue_name
+          queue: queue_name,
         }
       end
 

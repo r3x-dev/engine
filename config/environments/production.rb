@@ -37,7 +37,7 @@ Rails.application.configure do
   if R3x::Log.json?
     config.log_formatter = R3x::Log::JsonFormatter.new
     config.logger = ActiveSupport::TaggedLogging.new(
-      ActiveSupport::Logger.new(STDOUT).tap { |logger| logger.formatter = config.log_formatter }
+      ActiveSupport::Logger.new(STDOUT).tap { |logger| logger.formatter = config.log_formatter },
     )
   else
     config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT))

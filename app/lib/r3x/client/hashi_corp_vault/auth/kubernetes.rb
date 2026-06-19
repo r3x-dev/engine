@@ -15,7 +15,7 @@ module R3x
           def client_token
             response = unauthenticated_connection.post(
               "#{config.vault_addr}/v1/#{config.kubernetes_auth_path}/login",
-              json: { role: config.kubernetes_role, jwt: service_account_token }
+              json: { role: config.kubernetes_role, jwt: service_account_token },
             )
 
             raise_login_error(response) { response.raise_for_status }
@@ -72,7 +72,7 @@ module R3x
 
             {
               namespace:,
-              service_account_name:
+              service_account_name:,
             }
           rescue ArgumentError, MultiJSON::ParseError
             nil

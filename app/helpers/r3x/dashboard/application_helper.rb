@@ -12,7 +12,7 @@ module R3x
         "queued"    => "info",
         "running"   => "info",
         "scheduled" => "info",
-        "sleeping"  => "info"
+        "sleeping"  => "info",
       }.freeze
 
       def dashboard_health_label(health)
@@ -39,7 +39,7 @@ module R3x
         dashboard_pill(
           dashboard_status_label(status),
           dashboard_tone_for(status),
-          title: error.present? ? dashboard_error_summary(error) : nil
+          title: error.present? ? dashboard_error_summary(error) : nil,
         )
       end
 
@@ -47,7 +47,7 @@ module R3x
         dashboard_pill(
           dashboard_health_label(health),
           dashboard_tone_for(health[:status]),
-          title: health[:detail].present? ? dashboard_error_summary(health[:detail]) : nil
+          title: health[:detail].present? ? dashboard_error_summary(health[:detail]) : nil,
         )
       end
 
@@ -88,7 +88,7 @@ module R3x
           displayed_time,
           displayed_time.strftime("%H:%M:%S"),
           datetime: displayed_time.iso8601,
-          title: displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z")
+          title: displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z"),
         )
       end
 
@@ -142,7 +142,7 @@ module R3x
           "manual"    => "Manual",
           "observed"  => "Observed",
           "schedule"  => "Schedule",
-          "scheduled" => "Schedule"
+          "scheduled" => "Schedule",
         }.fetch(trigger_entry.fetch(:mode).to_s, trigger_entry.fetch(:mode).to_s.humanize)
       end
 
@@ -223,7 +223,7 @@ module R3x
         {
           exception_class: parsed_error["exception_class"].presence || parsed_error["error_class"].presence,
           message: parsed_error["message"].presence || parsed_error["error"].presence,
-          backtrace: Array(parsed_error["backtrace"] || parsed_error["trace"] || parsed_error["stack"]).compact_blank
+          backtrace: Array(parsed_error["backtrace"] || parsed_error["trace"] || parsed_error["stack"]).compact_blank,
         }.compact_blank
       end
 
@@ -234,7 +234,7 @@ module R3x
           launch: ["play", :solid],
           logs: ["document-text", :outline],
           tune: ["cog-6-tooth", :outline],
-          workflow: ["queue-list", :outline]
+          workflow: ["queue-list", :outline],
         }.fetch(name)
 
         icon_html = Heroicon::Icon.render(name: icon_name, variant:, options: { class: "icon" }, path_options: {})
@@ -278,11 +278,11 @@ module R3x
                 safe_join(
                   [
                     content_tag(:span, "", class: "sort-caret sort-caret-up#{" active" if active && active_direction == "asc"}"),
-                    content_tag(:span, "", class: "sort-caret sort-caret-down#{" active" if active && active_direction == "desc"}")
-                  ]
+                    content_tag(:span, "", class: "sort-caret sort-caret-down#{" active" if active && active_direction == "desc"}"),
+                  ],
                 )
-              end
-            ]
+              end,
+            ],
           )
         end
       end

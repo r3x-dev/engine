@@ -18,7 +18,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: ["schedule:failed"],
       created_at: 10.minutes.ago,
-      updated_at: 9.minutes.ago
+      updated_at: 9.minutes.ago,
     )
     failed_at = 8.minutes.ago
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom", created_at: failed_at)
@@ -29,14 +29,14 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       arguments: ["schedule:finished"],
       finished_at:,
       created_at: 9.minutes.ago,
-      updated_at: finished_at
+      updated_at: finished_at,
     )
 
     running_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: ["schedule:running"],
       created_at: 8.minutes.ago,
-      updated_at: 7.minutes.ago
+      updated_at: 7.minutes.ago,
     )
     running_at = 6.minutes.ago
     claim_job!(running_job, claimed_at: running_at)
@@ -45,7 +45,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: ["schedule:queued"],
       created_at: 7.minutes.ago,
-      updated_at: 7.minutes.ago
+      updated_at: 7.minutes.ago,
     )
     queued_at = 5.minutes.ago
     SolidQueue::ReadyExecution.find_by!(job_id: queued_job.id).update!(created_at: queued_at)
@@ -55,7 +55,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       arguments: ["schedule:blocked"],
       concurrency_key: "demo-key",
       created_at: 6.minutes.ago,
-      updated_at: 6.minutes.ago
+      updated_at: 6.minutes.ago,
     )
     SolidQueue::ReadyExecution.find_by!(job_id: blocked_job.id).destroy!
     blocked_at = 4.minutes.ago
@@ -66,7 +66,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       arguments: ["schedule:scheduled"],
       created_at: 5.minutes.ago,
       updated_at: 5.minutes.ago,
-      scheduled_at: 3.minutes.ago
+      scheduled_at: 3.minutes.ago,
     )
     scheduled_at = 2.minutes.ago
     SolidQueue::ScheduledExecution.create!(
@@ -74,7 +74,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       queue_name: scheduled_job.queue_name,
       priority: scheduled_job.priority,
       scheduled_at:,
-      created_at: 5.minutes.ago
+      created_at: 5.minutes.ago,
     )
 
     sleeping_job = DashboardJobRows.create_job!(
@@ -82,7 +82,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       arguments: ["schedule:sleeping"],
       created_at: 4.minutes.ago,
       updated_at: 4.minutes.ago,
-      scheduled_at: 30.minutes.from_now
+      scheduled_at: 30.minutes.from_now,
     )
     sleeping_job.update!(arguments: sleeping_job.arguments.merge("resumptions" => 1))
     SolidQueue::ReadyExecution.where(job_id: sleeping_job.id).delete_all
@@ -91,14 +91,14 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       queue_name: sleeping_job.queue_name,
       priority: sleeping_job.priority,
       scheduled_at: sleeping_job.scheduled_at,
-      created_at: sleeping_at
+      created_at: sleeping_at,
     )
 
     fallback_queued_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: ["schedule:fallback"],
       created_at: 4.minutes.ago,
-      updated_at: 4.minutes.ago
+      updated_at: 4.minutes.ago,
     )
     SolidQueue::ReadyExecution.find_by!(job_id: fallback_queued_job.id).destroy!
 
@@ -110,7 +110,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       blocked_job.id,
       scheduled_job.id,
       sleeping_job.id,
-      fallback_queued_job.id
+      fallback_queued_job.id,
     ]).with_execution_associations.index_by(&:id)
 
     assert_equal "failed", runs.fetch(failed_job.id).status
@@ -144,7 +144,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
   test "workflow payload helpers parse serialized workflow arguments" do
     raw_arguments = DashboardJobRows.serialized_job_payload(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: ["schedule:abc123", { trigger_payload: { "id" => "42" } }]
+      arguments: ["schedule:abc123", { trigger_payload: { "id" => "42" } }],
     )
     run = Dashboard::Run.new(arguments: raw_arguments)
 
@@ -167,7 +167,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
 
     assert_equal(
       %(COALESCE(("solid_queue_jobs"."arguments"::jsonb ->> 'resumptions')::integer, 0) > 0),
-      Dashboard::Run.resumptions_positive_sql
+      Dashboard::Run.resumptions_positive_sql,
     )
   end
 
@@ -177,16 +177,16 @@ class Dashboard::RunTest < ActiveSupport::TestCase
         "schedule:abc123",
         {
           "trigger_payload"    => { "id" => "99", "_aj_symbol_keys" => [] },
-          "_aj_ruby2_keywords" => ["trigger_payload"]
-        }
-      ]
+          "_aj_ruby2_keywords" => ["trigger_payload"],
+        },
+      ],
     )
 
     assert_equal(
       {
-        "arguments" => ["schedule:abc123", { trigger_payload: { "id" => "99" } }]
+        "arguments" => ["schedule:abc123", { trigger_payload: { "id" => "99" } }],
       },
-      normalized
+      normalized,
     )
   end
 
@@ -195,7 +195,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: ["schedule:abc123", { trigger_payload: { "id" => "42" } }],
       queue_name: "critical",
-      priority: 7
+      priority: 7,
     )
 
     assert_equal WORKFLOW_JOB_CLASS_NAME, job.class_name
@@ -214,7 +214,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
           class_name: WORKFLOW_JOB_CLASS_NAME,
           arguments: ["schedule:abc123"],
           queue_name: "critical",
-          priority: 7
+          priority: 7,
         )
       end
 
@@ -232,7 +232,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: ["schedule:old_failed"],
       created_at: 20.minutes.ago,
-      updated_at: 20.minutes.ago
+      updated_at: 20.minutes.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: old_failed_job.id, error: "old", created_at: 20.minutes.ago)
 
@@ -240,7 +240,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: ["schedule:latest_failed"],
       created_at: 10.minutes.ago,
-      updated_at: 10.minutes.ago
+      updated_at: 10.minutes.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: latest_failed_job.id, error: "latest", created_at: 1.minute.ago)
 
@@ -249,14 +249,14 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       arguments: ["schedule:finished"],
       finished_at: 2.minutes.ago,
       created_at: 12.minutes.ago,
-      updated_at: 2.minutes.ago
+      updated_at: 2.minutes.ago,
     )
 
     other_failed_job = DashboardJobRows.create_job!(
       job_class_name: other_workflow_class_name,
       arguments: ["schedule:other"],
       created_at: 5.minutes.ago,
-      updated_at: 5.minutes.ago
+      updated_at: 5.minutes.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: other_failed_job.id, error: "other", created_at: 3.minutes.ago)
 
@@ -264,7 +264,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       job_class_name: "CleanupJob",
       arguments: ["tmp/cache"],
       created_at: 30.seconds.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: unrelated_job.id, error: "cleanup", created_at: 30.seconds.ago)
 
@@ -289,7 +289,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       hostname: "test",
       metadata: "{}",
       name: "test-worker-#{job.id}",
-      created_at: Time.current
+      created_at: Time.current,
     )
 
     SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: claimed_at)

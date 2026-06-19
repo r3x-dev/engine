@@ -18,10 +18,10 @@ module R3x
           trigger: TriggerManager::Execution.new(
             trigger: resolve_trigger,
             workflow_key: workflow_class.workflow_key,
-            payload: trigger_payload
+            payload: trigger_payload,
           ),
           workflow_key: workflow_class.workflow_key,
-          workflow_class:
+          workflow_class:,
         )
       end
 

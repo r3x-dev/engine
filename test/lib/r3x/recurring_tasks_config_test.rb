@@ -137,7 +137,7 @@ module R3x
         "workflow:test_workflow:stale_trigger",
         class: R3x::TestSupport::DashboardWorkflowJob.name,
         args: ["stale"],
-        schedule: "0 * * * *"
+        schedule: "0 * * * *",
       )
 
       assert SolidQueue::RecurringTask.dynamic.find_by(key: "workflow:test_workflow:stale_trigger")
@@ -162,7 +162,7 @@ module R3x
         "foreign_system:task",
         class: R3x::TestSupport::DashboardWorkflowJob.name,
         args: ["foreign"],
-        schedule: "0 * * * *"
+        schedule: "0 * * * *",
       )
 
       RecurringTasksConfig.schedule_all!

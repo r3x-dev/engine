@@ -50,7 +50,7 @@ module R3x
         rendered = dashboard_trigger_details(
           cron: "0 12 * * * Europe/Warsaw",
           mode: "scheduled",
-          unique_key: "schedule:abc123"
+          unique_key: "schedule:abc123",
         )
 
         assert_includes rendered, "schedule:&quot;0 12 * * * Europe/Warsaw&quot;"
@@ -74,7 +74,7 @@ module R3x
       test "dashboard run trigger label prefers schedule from persisted recurring task" do
         assert_equal(
           'schedule:"15 * * * *"',
-          dashboard_run_trigger_label(trigger_key: "schedule:inventory", trigger_schedule: "15 * * * *")
+          dashboard_run_trigger_label(trigger_key: "schedule:inventory", trigger_schedule: "15 * * * *"),
         )
         assert_equal "inventory", dashboard_run_trigger_label(trigger_key: "schedule:inventory")
       end
@@ -100,7 +100,7 @@ module R3x
 
       test "dashboard structured error parses ruby hash dumps into exception message and backtrace" do
         error = dashboard_structured_error(
-          '{"exception_class" => "HTTPX::HTTPError", "message" => "the server responded with status 403", "backtrace" => ["line one", "line two"]}'
+          '{"exception_class" => "HTTPX::HTTPError", "message" => "the server responded with status 403", "backtrace" => ["line one", "line two"]}',
         )
 
         assert_equal "HTTPX::HTTPError", error[:exception_class]

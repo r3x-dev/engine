@@ -7,7 +7,7 @@ module R3x
         "gmail.readonly" => "AUTH_GMAIL_READONLY",
         "gmail.send"     => "AUTH_GMAIL_SEND",
         "gmail.compose"  => "AUTH_GMAIL_COMPOSE",
-        "gmail.modify"   => "AUTH_GMAIL_MODIFY"
+        "gmail.modify"   => "AUTH_GMAIL_MODIFY",
       }.freeze
 
       SHEETS_SCOPE_ALIASES = { "sheets.readonly" => "AUTH_SPREADSHEETS_READONLY", "sheets" => "AUTH_SPREADSHEETS" }.freeze
@@ -28,7 +28,7 @@ module R3x
           client_secret: R3x::Env.fetch!("GOOGLE_CLIENT_SECRET_#{project}"),
           refresh_token: R3x::Env.fetch!("GOOGLE_REFRESH_TOKEN_#{project}"),
           token_credential_uri: "https://oauth2.googleapis.com/token",
-          scope: Array(scope).map { |value| resolve_scope(value) }
+          scope: Array(scope).map { |value| resolve_scope(value) },
         ).tap(&:fetch_access_token!)
       end
 
@@ -40,7 +40,7 @@ module R3x
           client_secret: parsed_json.fetch("client_secret"),
           refresh_token: parsed_json.fetch("refresh_token"),
           token_credential_uri: "https://oauth2.googleapis.com/token",
-          scope: Array(scope).map { |value| resolve_scope(value) }
+          scope: Array(scope).map { |value| resolve_scope(value) },
         ).tap(&:fetch_access_token!)
       end
 

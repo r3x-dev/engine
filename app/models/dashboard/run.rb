@@ -13,7 +13,7 @@ module Dashboard
       ["blocked", :solid_queue_blocked_executions, :created_at],
       ["queued_ready", :solid_queue_ready_executions, :created_at],
       ["queued_waiting", :solid_queue_jobs, :created_at],
-      ["scheduled", :solid_queue_scheduled_executions, :scheduled_at]
+      ["scheduled", :solid_queue_scheduled_executions, :scheduled_at],
     ].freeze
 
     self.table_name = "solid_queue_jobs"
@@ -45,7 +45,7 @@ module Dashboard
         .left_joins(:claimed_execution, :blocked_execution)
         .where(
           "solid_queue_claimed_executions.job_id IS NULL AND " \
-            "solid_queue_blocked_executions.job_id IS NULL"
+            "solid_queue_blocked_executions.job_id IS NULL",
         )
         .resumed
     }
@@ -86,7 +86,7 @@ module Dashboard
           class_name: task.direct_workflow_class_name,
           arguments: task.arguments,
           queue_name: task.queue_name,
-          priority: task.priority
+          priority: task.priority,
         }
       end
 
@@ -102,7 +102,7 @@ module Dashboard
           class_name: resolved_class_name,
           arguments: [],
           queue_name: recurring_task&.queue_name || last_run&.queue_name,
-          priority: recurring_task&.priority || last_run&.priority
+          priority: recurring_task&.priority || last_run&.priority,
         }
       end
 
@@ -120,7 +120,7 @@ module Dashboard
             "WHEN #{quoted_table_name}.active_job_id IS NULL OR #{quoted_table_name}.active_job_id = '' " \
             "THEN 'job:' || #{quoted_table_name}.id " \
             "ELSE 'aj:' || #{quoted_table_name}.active_job_id " \
-            "END"
+            "END",
         )
       end
 

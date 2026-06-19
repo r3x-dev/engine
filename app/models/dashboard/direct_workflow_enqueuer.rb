@@ -23,7 +23,7 @@ module Dashboard
       logger.error(
         "Dashboard direct enqueue failed class_name=#{class_name} " \
         "queue=#{queue_name.presence || 'default'} priority=#{priority.inspect} " \
-        "error_class=#{e.class} error_message=#{e.message}"
+        "error_class=#{e.class} error_message=#{e.message}",
       )
 
       raise Dashboard::Run::EnqueueError, "Direct workflow enqueue failed for #{class_name}: #{e.message}"

@@ -33,7 +33,7 @@ module R3x
             workflow_key:,
             class_name: catalog_entry[:class_name],
             recurring_task: preferred_recurring_task,
-            last_run:
+            last_run:,
           ) || raise(KeyError, "No direct workflow enqueue target for '#{workflow_key}'")
         end
 
@@ -41,7 +41,7 @@ module R3x
           @recurring_task ||= ::Dashboard::RecurringTask
             .find_by_workflow_and_trigger_key!(
               workflow_key:,
-              trigger_key:
+              trigger_key:,
             )
         end
 

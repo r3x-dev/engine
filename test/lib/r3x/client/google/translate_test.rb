@@ -19,11 +19,11 @@ module R3x
               body: MultiJSON.generate(
                 "data" => {
                   "translations" => [
-                    { "translatedText" => "<p>Hello <strong>world</strong></p>" }
-                  ]
-                }
+                    { "translatedText" => "<p>Hello <strong>world</strong></p>" },
+                  ],
+                },
               ),
-              headers: { "Content-Type" => "application/json" }
+              headers: { "Content-Type" => "application/json" },
             )
 
           R3x::Client::GoogleAuth.stubs(:from_env).with do |**kwargs|
@@ -38,9 +38,9 @@ module R3x
               "q"      => " Ola mundo ",
               "target" => "en",
               "source" => "pt",
-              "format" => "text"
+              "format" => "text",
             },
-            delivered
+            delivered,
           )
           assert_equal "<p>Hello <strong>world</strong></p>", result
         end
