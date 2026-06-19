@@ -162,22 +162,6 @@ This is brittle against interpreter changes and hard to understand.
 
 ---
 
-## Phase 4 — long-term / optional
-
-### [x] K. Remove RBS + Steep static type checks
-
-**Files:** `sig/`, `Steepfile`, `bin/typecheck`, `Gemfile`, `config/ci.rb`
-
-**Done:**
-
-- Removed the `sig/` directory, `Steepfile`, and `bin/typecheck` script.
-- Removed `rbs` and `steep` gems from `Gemfile` and regenerated `Gemfile.lock`.
-- Removed the "Types: Static Types" step from `config/ci.rb`.
-- Removed the Static Typing section from `AGENTS.md` and updated references in `docs/todo.md`.
-
-**Reason:** Steep does not yet support Ruby 3.4's `it` block parameter (see https://github.com/soutaro/steep/pull/2238). Keeping RBS signatures in sync was also adding friction without enough payoff at the current project size. Static typing can be reintroduced once the upstream blocker is resolved.
-
----
 
 ### [ ] L. Pre-commit hook runs the full CI suite
 
