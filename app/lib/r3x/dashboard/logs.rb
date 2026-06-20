@@ -197,12 +197,13 @@ module R3x
 
       def normalize_error_fields(fields)
         raw_error = {
-          "error_class"   => fields["error_class"] || fields["exception_class"],
-          "error_message" => fields["error_message"],
-          "error"         => fields["error"],
-          "backtrace"     => normalize_array_field(fields["backtrace"]).presence,
-          "trace"         => normalize_array_field(fields["trace"]).presence,
-          "stack"         => normalize_array_field(fields["stack"]).presence,
+          "error_class"     => fields["error_class"],
+          "exception_class" => fields["exception_class"],
+          "error_message"   => fields["error_message"],
+          "error"           => fields["error"],
+          "backtrace"       => normalize_array_field(fields["backtrace"]).presence,
+          "trace"           => normalize_array_field(fields["trace"]).presence,
+          "stack"           => normalize_array_field(fields["stack"]).presence,
         }.compact_blank
 
         return if raw_error.blank?
