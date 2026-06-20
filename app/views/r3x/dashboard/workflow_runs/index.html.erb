@@ -17,6 +17,9 @@
   <%= link_to "Running",
               dashboard_run_filter_path(status: "running", workflow_key: @workflow_filter),
               class: [ "chip-link", (@status_filter == "running" ? "current" : nil) ].compact.join(" ") %>
+  <%= link_to "Sleeping",
+              dashboard_run_filter_path(status: "sleeping", workflow_key: @workflow_filter),
+              class: [ "chip-link", (@status_filter == "sleeping" ? "current" : nil) ].compact.join(" ") %>
 </nav>
 
 <section class="panel filters-panel">

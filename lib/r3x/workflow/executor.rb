@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Workflow
     class Executor
@@ -5,27 +7,32 @@ module R3x
         new(...).build_context
       end
 
-      def initialize(workflow_class:, trigger_key:, trigger_payload: nil)
+      def initialize(workflow_class:, trigger_key:, trigger_payload: nil, active_job_id: nil)
         @workflow_class = workflow_class
         @trigger_key = trigger_key
         @trigger_payload = trigger_payload
+        @active_job_id = active_job_id
       end
 
       def build_context
+        trigger = resolve_trigger
+
         Context.new(
           trigger: TriggerManager::Execution.new(
-            trigger: resolve_trigger,
+            trigger:,
             workflow_key: workflow_class.workflow_key,
-            payload: trigger_payload
+            payload: trigger_payload,
           ),
           workflow_key: workflow_class.workflow_key,
-          workflow_class: workflow_class
+          trigger_key: trigger.unique_key,
+          active_job_id:,
+          workflow_class:,
         )
       end
 
       private
 
-      attr_reader :workflow_class, :trigger_key, :trigger_payload
+      attr_reader :workflow_class, :trigger_key, :trigger_payload, :active_job_id
 
       def resolve_trigger
         return manual_trigger if trigger_key.nil?

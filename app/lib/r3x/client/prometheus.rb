@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 module R3x
   module Client
     class Prometheus
-      DEFAULT_URL_ENV = "PROMETHEUS_URL"
+      DEFAULT_URL_ENV = "PROMETHEUS_URL".freeze
 
       def initialize(url_env: DEFAULT_URL_ENV)
         @base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_")

@@ -4,6 +4,8 @@ module R3x
       DEFAULT_URL_ENV: String
       DEFAULT_TIMEOUT: String
 
+      def self.configured?: () -> bool
+
       def initialize: (?url_env: String url_env) -> void
       def query: (query: String query, ?start_at: untyped start_at, ?end_at: untyped end_at, ?limit: Integer limit, ?timeout: String timeout) -> Array[Hash[String, untyped]]
 

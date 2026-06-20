@@ -1,16 +1,19 @@
+# frozen_string_literal: true
+
 module Dashboard
   class Run < ApplicationRecord
     include R3x::Concerns::Logger
 
-    STATUSES = %w[blocked failed finished queued running scheduled].freeze
+    STATUSES = %w[blocked failed finished queued running sleeping scheduled].freeze
     LATEST_ACTIVITY_BUCKETS = [
-      [ "failed", :solid_queue_failed_executions, :created_at ],
-      [ "finished", :solid_queue_jobs, :finished_at ],
-      [ "running", :solid_queue_claimed_executions, :created_at ],
-      [ "queued_ready", :solid_queue_ready_executions, :created_at ],
-      [ "queued_waiting", :solid_queue_jobs, :created_at ],
-      [ "blocked", :solid_queue_blocked_executions, :created_at ],
-      [ "scheduled", :solid_queue_scheduled_executions, :scheduled_at ]
+      ["failed", :solid_queue_failed_executions, :created_at],
+      ["finished", :solid_queue_jobs, :finished_at],
+      ["running", :solid_queue_claimed_executions, :created_at],
+      ["sleeping", :solid_queue_jobs, :created_at],
+      ["blocked", :solid_queue_blocked_executions, :created_at],
+      ["queued_ready", :solid_queue_ready_executions, :created_at],
+      ["queued_waiting", :solid_queue_jobs, :created_at],
+      ["scheduled", :solid_queue_scheduled_executions, :scheduled_at],
     ].freeze
 
     self.table_name = "solid_queue_jobs"
@@ -33,6 +36,19 @@ module Dashboard
     end
     scope :direct_workflows, -> { where("class_name LIKE ?", "Workflows::%") }
     scope :unfinished, -> { where(finished_at: nil).where.missing(:failed_execution) }
+    scope :resumed, -> { where(resumptions_positive_sql) }
+    # Keep this as a SQL subquery. Using `.ids` would materialize every resumed
+    # job id in Ruby before applying the negation.
+    scope :not_resumed, -> { where.not(id: unscoped.resumed.select(:id)) }
+    scope :sleeping, -> {
+      unfinished
+        .left_joins(:claimed_execution, :blocked_execution)
+        .where(
+          "solid_queue_claimed_executions.job_id IS NULL AND " \
+            "solid_queue_blocked_executions.job_id IS NULL",
+        )
+        .resumed
+    }
     scope :for_status, ->(status) do
       case status.to_s
       when ""
@@ -44,11 +60,13 @@ module Dashboard
       when "finished"
         where.not(finished_at: nil).where.missing(:failed_execution)
       when "queued"
-        unfinished.where.missing(:claimed_execution).where.missing(:blocked_execution).where.missing(:scheduled_execution)
+        unfinished.where.missing(:claimed_execution).where.missing(:blocked_execution).where.missing(:scheduled_execution).not_resumed
       when "running"
         unfinished.joins(:claimed_execution)
       when "scheduled"
-        unfinished.where.missing(:claimed_execution).where.missing(:blocked_execution).joins(:scheduled_execution)
+        unfinished.where.missing(:claimed_execution).where.missing(:blocked_execution).joins(:scheduled_execution).not_resumed
+      when "sleeping"
+        sleeping
       else
         raise ArgumentError, "Unsupported status: #{status}"
       end
@@ -58,7 +76,7 @@ module Dashboard
 
     class << self
       def enqueue_direct!(class_name:, arguments:, queue_name:, priority:)
-        Dashboard::DirectWorkflowEnqueuer.enqueue!(class_name: class_name, arguments: arguments, queue_name: queue_name, priority: priority)
+        Dashboard::DirectWorkflowEnqueuer.enqueue!(class_name:, arguments:, queue_name:, priority:)
       end
 
       def trigger_enqueue_options_for(task)
@@ -68,7 +86,7 @@ module Dashboard
           class_name: task.direct_workflow_class_name,
           arguments: task.arguments,
           queue_name: task.queue_name,
-          priority: task.priority
+          priority: task.priority,
         }
       end
 
@@ -84,7 +102,7 @@ module Dashboard
           class_name: resolved_class_name,
           arguments: [],
           queue_name: recurring_task&.queue_name || last_run&.queue_name,
-          priority: recurring_task&.priority || last_run&.priority
+          priority: recurring_task&.priority || last_run&.priority,
         }
       end
 
@@ -94,6 +112,29 @@ module Dashboard
         LATEST_ACTIVITY_BUCKETS.flat_map do |status, table_name, column_name|
           latest_activity_status_scope(base_scope, status).order(Arel::Table.new(table_name)[column_name].desc).limit(limit).pluck(:id)
         end.uniq
+      end
+
+      def logical_count
+        count(
+          "DISTINCT CASE " \
+            "WHEN #{quoted_table_name}.active_job_id IS NULL OR #{quoted_table_name}.active_job_id = '' " \
+            "THEN 'job:' || #{quoted_table_name}.id " \
+            "ELSE 'aj:' || #{quoted_table_name}.active_job_id " \
+            "END",
+        )
+      end
+
+      def resumptions_positive_sql
+        arguments_column = "#{quoted_table_name}.#{connection.quote_column_name("arguments")}"
+
+        case connection.adapter_name
+        when /sqlite/i
+          "COALESCE(json_extract(#{arguments_column}, '$.resumptions'), 0) > 0"
+        when /postgres/i
+          "COALESCE((#{arguments_column}::jsonb ->> 'resumptions')::integer, 0) > 0"
+        else
+          raise NotImplementedError, "Unsupported database adapter for dashboard run resumptions: #{connection.adapter_name}"
+        end
       end
 
       def latest_activity_candidates(class_names:)
@@ -120,6 +161,34 @@ module Dashboard
         "Workflows::#{workflow_key.to_s.camelize}"
       end
 
+      def logical_status(statuses, resumptions: 0)
+        if statuses.include?("running")
+          "running"
+        elsif sleeping?(statuses, resumptions:)
+          "sleeping"
+        elsif statuses.include?("failed")
+          "failed"
+        elsif statuses.include?("blocked")
+          "blocked"
+        elsif statuses.include?("queued")
+          "queued"
+        elsif statuses.include?("scheduled")
+          "scheduled"
+        elsif statuses.include?("finished")
+          "finished"
+        else
+          "queued"
+        end
+      end
+
+      def sleeping?(statuses, resumptions: 0)
+        return true if statuses.include?("sleeping")
+
+        resumptions.positive? &&
+          !statuses.include?("running") &&
+          (statuses.include?("scheduled") || statuses.include?("queued"))
+      end
+
       private
 
       def normalize_hash(argument)
@@ -141,7 +210,7 @@ module Dashboard
 
       # Returns the latest activity run candidate IDs for the specified workflow class names.
       # To avoid N+1 database round-trips when fetching the latest run for each execution status,
-      # we generate ranked subqueries for each of the 7 statuses and combine them using a UNION.
+      # we generate ranked subqueries for each status bucket and combine them using a UNION.
       #
       # Note: This UNION is highly performant and safe from query planner bloating because the number
       # of buckets (7) is static and we only project the indexed job ID fields.
@@ -184,11 +253,22 @@ module Dashboard
       end
     end
 
+    def resumptions
+      return 0 unless serialized_active_job_payload?
+
+      fetch_key(normalized_arguments, "resumptions").to_i
+    end
+
+    def observed_resumptions
+      resumptions + (resumed_execution_started? ? 1 : 0)
+    end
+
     def status
       return "failed" if failed_execution.present?
       return "finished" if finished_at.present?
       return "running" if claimed_execution.present?
       return "blocked" if blocked_execution.present?
+      return "sleeping" if resumptions.positive?
       return "scheduled" if scheduled_execution.present?
       return "queued" if ready_execution.present?
 
@@ -201,6 +281,8 @@ module Dashboard
         failed_execution&.created_at || updated_at
       when "running"
         claimed_execution&.created_at || updated_at
+      when "sleeping"
+        ready_execution&.created_at || scheduled_execution&.created_at || updated_at
       when "queued"
         ready_execution&.created_at || created_at
       when "blocked"
@@ -244,6 +326,17 @@ module Dashboard
       normalized_arguments.is_a?(Hash) &&
         fetch_key(normalized_arguments, "job_class").present? &&
         normalized_arguments.key?("arguments")
+    end
+
+    def resumed_execution_started?
+      continuation_started? && (finished_at.present? || failed_execution.present? || claimed_execution.present?)
+    end
+
+    def continuation_started?
+      continuation = fetch_key(normalized_arguments, "continuation")
+      return false unless continuation.is_a?(Hash)
+
+      Array(fetch_key(continuation, "completed")).any? || fetch_key(continuation, "current").present?
     end
 
     def fetch_key(hash, key)

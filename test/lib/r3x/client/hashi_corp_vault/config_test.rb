@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -27,21 +29,21 @@ module R3x
         ENV.delete("R3X_VAULT_ADDR")
         ENV["R3X_VAULT_TOKEN"] = "test-token"
 
-        refute_predicate HashiCorpVault, :configured?
+        assert_not_predicate HashiCorpVault, :configured?
       end
 
       test "configured? returns false when VAULT_TOKEN is missing" do
         ENV["R3X_VAULT_ADDR"] = "https://vault.test"
         ENV.delete("R3X_VAULT_TOKEN")
 
-        refute_predicate HashiCorpVault, :configured?
+        assert_not_predicate HashiCorpVault, :configured?
       end
 
       test "configured? returns false when env vars are blank" do
         ENV["R3X_VAULT_ADDR"] = ""
         ENV["R3X_VAULT_TOKEN"] = ""
 
-        refute_predicate HashiCorpVault, :configured?
+        assert_not_predicate HashiCorpVault, :configured?
       end
 
       test "configured? raises for unsupported auth method" do

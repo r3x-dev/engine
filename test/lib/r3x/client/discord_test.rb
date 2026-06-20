@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -83,7 +85,7 @@ module R3x
           .to_return(status: 204)
 
         with_env("R3X_DISCORD_DRY_RUN" => "false") do
-          result = Discord.new(webhook_url: webhook_url).deliver(content: "Hello Discord")
+          result = Discord.new(webhook_url:).deliver(content: "Hello Discord")
 
           assert_equal({ "content" => "Hello Discord" }, delivered)
           assert_equal({ "mode" => "real", "content" => "Hello Discord" }, result)

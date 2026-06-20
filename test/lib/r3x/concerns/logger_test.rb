@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -17,7 +19,7 @@ module R3x
         end
 
         assert_includes output, "R3x::TestLogger"
-        refute_includes output, "[Class]"
+        assert_not_includes output, "[Class]"
       end
     end
   end

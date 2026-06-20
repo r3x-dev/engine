@@ -1,14 +1,18 @@
+# frozen_string_literal: true
+
 module R3x
   module RuntimeProfile
     extend self
 
-    DEFAULT_PROFILE = "web"
+    DEFAULT_PROFILE = "web".freeze
     HEADLESS_PROFILES = %w[jobs workflow_cli].freeze
-    SUPPORTED_PROFILES = [ DEFAULT_PROFILE, *HEADLESS_PROFILES ].freeze
+    SUPPORTED_PROFILES = [DEFAULT_PROFILE, *HEADLESS_PROFILES].freeze
 
     def current
       @current ||= begin
-        profile = ENV.fetch("R3X_RUNTIME_PROFILE", "").to_s
+        # NOTE: do not use `.presence` here — this file is loaded before
+        # Active Support is required in config/application.rb.
+        profile = ENV.fetch("R3X_RUNTIME_PROFILE", "").to_s.strip
         profile = DEFAULT_PROFILE if profile.empty?
 
         case profile
@@ -33,7 +37,7 @@ module R3x
     end
 
     def bundler_groups
-      headless? ? [] : [ :web ]
+      headless? ? [] : [:web]
     end
   end
 end

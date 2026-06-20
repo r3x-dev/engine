@@ -19,12 +19,12 @@ module R3x
 
           result = build_service.send_user_message(
             "me", # The user's email address. The special value `me` can be used to indicate the
-            ::Google::Apis::GmailV1::Message.new(raw: raw_message(to: to, subject: subject, body: body, attachments: attachments))
+            ::Google::Apis::GmailV1::Message.new(raw: raw_message(to:, subject:, body:, attachments:)),
           )
 
           {
             "mode"       => "real",
-            "message_id" => result.id
+            "message_id" => result.id,
           }
         end
 
@@ -35,7 +35,7 @@ module R3x
         def build_service
           R3x::Client::GoogleAuth.require_gmail!
 
-          ::Google::Apis::GmailV1::GmailService.new.tap { |service| service.authorization = R3x::Client::GoogleAuth.from_env(project: project, scope: "gmail.send") }
+          ::Google::Apis::GmailV1::GmailService.new.tap { |service| service.authorization = R3x::Client::GoogleAuth.from_env(project:, scope: "gmail.send") }
         end
 
         def raw_message(to:, subject:, body:, attachments: [])

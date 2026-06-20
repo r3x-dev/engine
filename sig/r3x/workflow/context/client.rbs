@@ -26,6 +26,8 @@ module R3x
 
         def miniflux: (?url_env: String url_env, ?api_key_env: String api_key_env) -> R3x::Client::Miniflux
 
+        def wordpress: (url: String url) -> R3x::Client::WordPress
+
         def discord: (?webhook_url_env: String webhook_url_env) -> R3x::Client::Discord
 
         def markdownify: (url: String url, ?method: String method, ?retain_images: bool retain_images) -> String
@@ -53,6 +55,8 @@ module R3x
         def self.google_translate: (project: String project) -> R3x::Client::Google::Translate
 
         def self.miniflux: (?url_env: String url_env, ?api_key_env: String api_key_env) -> R3x::Client::Miniflux
+
+        def self.wordpress: (url: String url) -> R3x::Client::WordPress
 
         def self.discord: (?webhook_url_env: String webhook_url_env) -> R3x::Client::Discord
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "singleton"
 
 module R3x
@@ -18,7 +20,7 @@ module R3x
       end
 
       def self.diagnose(path: R3x::Env.fetch!("R3X_VAULT_SECRETS_PATH"))
-        instance.diagnose(path: path)
+        instance.diagnose(path:)
       end
 
       def self.configured?
@@ -38,7 +40,7 @@ module R3x
         end
 
         secrets.transform_keys(&:to_s)
-      rescue MultiJSON::ParseError => e
+      rescue HTTPX::Error, JSON::ParserError => e
         raise "Vault response missing KV v2 data at data.data (#{e.message})"
       end
 
@@ -56,19 +58,19 @@ module R3x
       end
 
       def diagnose(path:)
-        capabilities_paths = [ path, "auth/token/lookup-self" ]
+        capabilities_paths = [path, "auth/token/lookup-self"]
         capabilities = capabilities_self(capabilities_paths)
         token = lookup_summary
 
         {
-          auth_method: auth_method,
+          auth_method:,
           vault_addr: config.vault_addr,
           secret_path: path,
-          token: token,
-          capabilities: capabilities,
+          token:,
+          capabilities:,
           secret: {
-            keys: read(path).keys.sort
-          }
+            keys: read(path).keys.sort,
+          },
         }
       end
 
@@ -87,7 +89,7 @@ module R3x
       def build_connection(token: nil)
         headers = {}
         headers["X-Vault-Token"] = token if token.present?
-        HTTPX.with(headers: headers)
+        HTTPX.with(headers:)
       end
 
       def vault_token
@@ -103,7 +105,7 @@ module R3x
       end
 
       def auth
-        @auth ||= Auth.build(config: config, connection_builder: -> { build_connection })
+        @auth ||= Auth.build(config:, connection_builder: -> { build_connection })
       end
 
       def get(path)
@@ -125,22 +127,24 @@ module R3x
           raise ArgumentError, "Unsupported Vault HTTP method: #{method.inspect}"
         end
 
-        raise_request_error(response) unless response.status >= 200 && response.status < 300
+        raise_request_error(response) { response.raise_for_status }
         parse_json_response(response)
       end
 
       def parse_json_response(response)
-        MultiJSON.parse(response.body.to_s)
+        response.json
       end
 
       def request_errors(response)
         body = parse_json_response(response)
         body.is_a?(Hash) ? body["errors"] : body
-      rescue MultiJSON::ParseError
+      rescue StandardError
         response.body.to_s
       end
 
       def raise_request_error(response)
+        yield
+      rescue HTTPX::HTTPError
         raise "Vault request failed with status #{response.status}: #{request_errors(response)}"
       end
     end

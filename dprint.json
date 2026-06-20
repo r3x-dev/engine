@@ -2,6 +2,9 @@
   "yaml": {
     "indentWidth": 2
   },
+  "includes": [
+    "**/*.{yaml,yml}"
+  ],
   "excludes": [
     "**/node_modules",
     "**/*-lock.json",
@@ -10,7 +13,7 @@
     "vendor",
     "tmp",
     "storage",
-    "workflows",
+    "/workflows",
     "config/database.yml",
     "config/cache.yml",
     "config/queue.yml",

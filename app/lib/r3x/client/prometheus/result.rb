@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Client
     class Prometheus
@@ -11,8 +13,8 @@ module R3x
           @series = data.fetch("result", []).map { |s| Series.new(s) }
         end
 
-        def each(&block)
-          series.each(&block)
+        def each(&)
+          series.each(&)
         end
 
         private

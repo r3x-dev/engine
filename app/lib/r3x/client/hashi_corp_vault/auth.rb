@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Client
     class HashiCorpVault
@@ -5,9 +7,9 @@ module R3x
         def self.build(config:, connection_builder:)
           case config.auth_method
           when :token
-            Token.new(config: config)
+            Token.new(config:)
           when :kubernetes
-            Kubernetes.new(config: config, connection_builder: connection_builder)
+            Kubernetes.new(config:, connection_builder:)
           else
             raise ArgumentError, "Unsupported Vault auth method: #{config.auth_method.inspect}"
           end

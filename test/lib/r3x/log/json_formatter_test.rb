@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -7,7 +9,7 @@ module R3x
       logger = ActiveSupport::TaggedLogging.new(
         ActiveSupport::Logger.new(io).tap do |base_logger|
           base_logger.formatter = Log::JsonFormatter.new
-        end
+        end,
       )
 
       logger.tagged("MyClass", "r3x.run_active_job_id=123") do
@@ -18,7 +20,7 @@ module R3x
 
       assert_equal "warn", payload.fetch("level")
       assert_equal "tagged warn", payload.fetch("message")
-      assert_equal [ "MyClass", "r3x.run_active_job_id=123" ], payload.fetch("tags")
+      assert_equal ["MyClass", "r3x.run_active_job_id=123"], payload.fetch("tags")
       assert_match(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z\z/, payload.fetch("time"))
     end
 
@@ -34,7 +36,7 @@ module R3x
 
       assert_equal "info", payload.fetch("level")
       assert_equal "plain message", payload.fetch("message")
-      refute payload.key?("tags")
+      assert_not payload.key?("tags")
     end
 
     test "preserves bracketed literal prefixes in plain messages" do
@@ -48,7 +50,7 @@ module R3x
       payload = MultiJSON.parse(io.string)
 
       assert_equal "[DRY-RUN]: email not sent", payload.fetch("message")
-      refute payload.key?("tags")
+      assert_not payload.key?("tags")
     end
 
     test "merges hash payload as top-level fields" do
@@ -61,7 +63,7 @@ module R3x
         message: "Workflow run failed",
         error_class: "NameError",
         error_message: "uninitialized constant",
-        backtrace: [ "app/lib/a.rb:1", "app/lib/b.rb:2" ]
+        backtrace: ["app/lib/a.rb:1", "app/lib/b.rb:2"],
       )
 
       payload = MultiJSON.parse(io.string)
@@ -70,7 +72,7 @@ module R3x
       assert_equal "Workflow run failed", payload.fetch("message")
       assert_equal "NameError", payload.fetch("error_class")
       assert_equal "uninitialized constant", payload.fetch("error_message")
-      assert_equal [ "app/lib/a.rb:1", "app/lib/b.rb:2" ], payload.fetch("backtrace")
+      assert_equal ["app/lib/a.rb:1", "app/lib/b.rb:2"], payload.fetch("backtrace")
       assert_match(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z\z/, payload.fetch("time"))
     end
 

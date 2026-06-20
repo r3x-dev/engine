@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 require "shellwords"
 
@@ -6,10 +8,10 @@ class DockerEntrypointTest < ActiveSupport::TestCase
     command_output = run_command(
       "bin/docker-entrypoint ./bin/jobs-worker 2>&1",
       env: { "RAILS_ENV" => "production" },
-      inject_production_secret: false
+      inject_production_secret: false,
     )
 
-    refute_predicate $?, :success?, "docker entrypoint unexpectedly succeeded: #{command_output}"
+    assert_not_predicate $?, :success?, "docker entrypoint unexpectedly succeeded: #{command_output}"
     assert_includes command_output, "Missing SECRET_KEY_BASE for production runtime"
   end
 
@@ -17,7 +19,7 @@ class DockerEntrypointTest < ActiveSupport::TestCase
     command_output = run_command(
       "bin/docker-entrypoint ruby -e 'exit 0' 2>&1",
       env: { "RAILS_ENV" => "production" },
-      inject_production_secret: false
+      inject_production_secret: false,
     )
 
     assert_predicate $?, :success?, "docker entrypoint command failed: #{command_output}"
@@ -33,7 +35,7 @@ class DockerEntrypointTest < ActiveSupport::TestCase
     end
 
     env_string = env.map { |key, value| "#{key}=#{Shellwords.escape(value)}" }.join(" ")
-    full_command = [ env_string, command ].reject(&:blank?).join(" ")
+    full_command = [env_string, command].reject(&:blank?).join(" ")
 
     `#{full_command}`
   end

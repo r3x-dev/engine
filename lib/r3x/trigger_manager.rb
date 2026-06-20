@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module TriggerManager
     class Collection
@@ -13,16 +15,16 @@ module R3x
         @by_key[key] = trigger
       end
 
-      def each(&block)
-        @by_key.values.each(&block)
+      def each(&)
+        @by_key.values.each(&)
       end
 
       def by_key
         @by_key.dup
       end
 
-      def select(&block)
-        @by_key.values.select(&block)
+      def select(&)
+        @by_key.values.select(&)
       end
 
       def to_a

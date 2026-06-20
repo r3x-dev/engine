@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Dashboard
     class ApplicationController < R3x::WebController
@@ -5,7 +7,7 @@ module R3x
 
       helper_method :finished_runs_retention_label, :logs_configured?, :mission_control_path
 
-      rescue_from KeyError, with: :render_not_found
+      rescue_from KeyError, ActiveRecord::RecordNotFound, with: :render_not_found
 
       private
 

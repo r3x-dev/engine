@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -17,16 +19,16 @@ module R3x
               body: MultiJSON.generate(
                 "data" => {
                   "translations" => [
-                    { "translatedText" => "<p>Hello <strong>world</strong></p>" }
-                  ]
-                }
+                    { "translatedText" => "<p>Hello <strong>world</strong></p>" },
+                  ],
+                },
               ),
-              headers: { "Content-Type" => "application/json" }
+              headers: { "Content-Type" => "application/json" },
             )
 
-          R3x::Client::GoogleAuth.stubs(:from_env).with { |**kwargs|
+          R3x::Client::GoogleAuth.stubs(:from_env).with do |**kwargs|
             kwargs[:project] == "TEST_APP" && kwargs[:scope] == "https://www.googleapis.com/auth/cloud-translation"
-          }.returns(authorization)
+          end.returns(authorization)
 
           result = Translate.new(project: "TEST_APP")
             .translate(" Ola mundo ", to: "en", from: "pt")
@@ -36,9 +38,9 @@ module R3x
               "q"      => " Ola mundo ",
               "target" => "en",
               "source" => "pt",
-              "format" => "text"
+              "format" => "text",
             },
-            delivered
+            delivered,
           )
           assert_equal "<p>Hello <strong>world</strong></p>", result
         end

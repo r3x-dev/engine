@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Client
     class Llm
@@ -21,7 +23,7 @@ module R3x
           provider_class = RubyLLM::Provider.providers.fetch(provider)
 
           if provider_class.assume_models_exist?
-            { provider: provider, assume_model_exists: true }.freeze
+            { provider:, assume_model_exists: true }.freeze
           else
             DEFAULT_CHAT_OPTIONS
           end
@@ -52,9 +54,9 @@ module R3x
       end
 
       def analyze_image(image_bytes, prompt:, model:, schema: nil)
-        image = StringIO.new(image_bytes).tap { |io| io.set_encoding(Encoding::BINARY) }
+        image = StringIO.new(image_bytes).tap { it.set_encoding(Encoding::BINARY) }
 
-        ask_model(model:, prompt:, schema:, attachments: [ image ]).content
+        ask_model(model:, prompt:, schema:, attachments: [image]).content
       end
 
       def message(model:, prompt:, schema: nil)
@@ -70,7 +72,7 @@ module R3x
       attr_reader :llm_context, :chat_options
 
       def ask_model(model:, prompt:, schema:, attachments: nil)
-        conversation = llm_context.chat(**chat_options.merge(model: model))
+        conversation = llm_context.chat(**chat_options.merge(model:))
         conversation = conversation.with_schema(schema) if schema
 
         conversation.ask(prompt, with: attachments)

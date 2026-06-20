@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   class RecurringTasksConfig
     extend R3x::Concerns::Logger
@@ -18,7 +20,7 @@ module R3x
           triggers.each do |trigger|
             key = namespaced_key(workflow_key, trigger)
             current_keys << key
-            task_options << [ key, task_options_for(workflow_class: workflow_class, trigger: trigger) ]
+            task_options << [key, task_options_for(workflow_class:, trigger:)]
           end
         end
 
@@ -27,7 +29,7 @@ module R3x
           stale_count = stale_scope.delete_all
 
           task_options.each do |key, options|
-            task = SolidQueue::RecurringTask.dynamic.find_or_initialize_by(key: key)
+            task = SolidQueue::RecurringTask.dynamic.find_or_initialize_by(key:)
             task.class_name = options[:class]
             task.arguments = options[:args]
             task.schedule = options[:schedule]
@@ -35,12 +37,12 @@ module R3x
             task.save!
 
             workflow_key, trigger_key = workflow_and_trigger_for(key)
-            scheduled_logs << [ workflow_key, trigger_key, options ]
+            scheduled_logs << [workflow_key, trigger_key, options]
           end
         end
 
         scheduled_logs.each do |workflow_key, trigger_key, options|
-          tags = [ R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_key), R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key) ]
+          tags = [R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_key), R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key)]
 
           Rails.logger.tagged(*tags) do
             logger.info "Scheduled recurring task class=#{options[:class]} schedule=#{options[:schedule]} queue=#{options[:queue]}"
@@ -64,7 +66,7 @@ module R3x
 
           triggers.each do |trigger|
             result_key = namespaced_key(workflow_key, trigger)
-            result[result_key] = task_options_for(workflow_class: workflow_class, trigger: trigger).stringify_keys
+            result[result_key] = task_options_for(workflow_class:, trigger:).stringify_keys
           end
         end
 
@@ -83,15 +85,15 @@ module R3x
 
         {
           class: workflow_class.name,
-          args: [ trigger.unique_key ],
+          args: [trigger.unique_key],
           schedule: trigger.schedule,
-          queue: queue_name
+          queue: queue_name,
         }
       end
 
       def workflow_and_trigger_for(key)
         _, workflow_key, *trigger_key_parts = key.split(":")
-        [ workflow_key, trigger_key_parts.join(":") ]
+        [workflow_key, trigger_key_parts.join(":")]
       end
     end
   end

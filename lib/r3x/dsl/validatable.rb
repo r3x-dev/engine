@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Dsl
     module Validatable
@@ -9,7 +11,7 @@ module R3x
         define_method(:validate!) do |message_prefix: nil|
           return true if valid?
 
-          raise ConfigurationError.new(nil, subject: self, errors: errors, message_prefix: message_prefix)
+          raise ConfigurationError.new(nil, subject: self, errors:, message_prefix:)
         end
       end
 

@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 require "active_support/core_ext/integer/time"
 require "r3x/log"
 require "r3x/log/json_formatter"
 
-shutdown_timeout_seconds = Integer(ENV.fetch("R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS", 900))
+shutdown_timeout_seconds = Integer(ENV.fetch("SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS", 900))
 
 unless shutdown_timeout_seconds.positive?
-  raise ArgumentError, "R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS must be positive"
+  raise ArgumentError, "SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS must be positive"
 end
 
 Rails.application.configure do
@@ -30,12 +32,12 @@ Rails.application.configure do
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
   # Log to STDOUT with the current request id as a default log tag.
-  config.log_tags = [ :request_id ]
+  config.log_tags = [:request_id]
 
   if R3x::Log.json?
     config.log_formatter = R3x::Log::JsonFormatter.new
     config.logger = ActiveSupport::TaggedLogging.new(
-      ActiveSupport::Logger.new(STDOUT).tap { |logger| logger.formatter = config.log_formatter }
+      ActiveSupport::Logger.new(STDOUT).tap { |logger| logger.formatter = config.log_formatter },
     )
   else
     config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT))
@@ -60,7 +62,7 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
 
   # Only use :id for inspections in production.
-  config.active_record.attributes_for_inspect = [ :id ]
+  config.active_record.attributes_for_inspect = [:id]
 
   # Enable DNS rebinding protection and other `Host` header attacks.
   # config.hosts = [

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Keep seeds as a no-op in production.
 #
 # Why: production startup uses `db:prepare` (see bin/docker-entrypoint), and on a

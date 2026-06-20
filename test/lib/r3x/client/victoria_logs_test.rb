@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -20,6 +22,16 @@ module R3x
         end
 
         assert_equal "Missing R3X_VICTORIA_LOGS_URL", error.message
+      end
+
+      test "configured reflects default url env presence" do
+        ENV.delete("R3X_VICTORIA_LOGS_URL")
+
+        assert_not_predicate VictoriaLogs, :configured?
+
+        ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+
+        assert_predicate VictoriaLogs, :configured?
       end
 
       test "supports custom url_env with matching prefix" do
@@ -57,8 +69,8 @@ module R3x
             status: 200,
             body: [
               { "_time" => "2026-04-15T12:00:00Z", "_msg" => "first" }.to_json,
-              { "_time" => "2026-04-15T12:00:01Z", "_msg" => "second" }.to_json
-            ].join("\n")
+              { "_time" => "2026-04-15T12:00:01Z", "_msg" => "second" }.to_json,
+            ].join("\n"),
           )
 
         result = VictoriaLogs.new.query(query: "_time:5m error", limit: 2)
@@ -91,11 +103,11 @@ module R3x
         stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
           .with(body: hash_including(
             "start" => "2026-04-17T14:02:10.658368Z",
-            "end"   => "2026-04-17T14:09:42.734160Z"
+            "end"   => "2026-04-17T14:09:42.734160Z",
           ))
           .to_return(status: 200, body: "")
 
-        VictoriaLogs.new.query(query: "_msg:test", start_at: start_at, end_at: end_at)
+        VictoriaLogs.new.query(query: "_msg:test", start_at:, end_at:)
 
         assert_requested :post, "http://victoria-logs.test:9428/select/logsql/query"
       end

@@ -16,8 +16,8 @@ module R3x
 
           response = HTTPX.post(
             API_URL,
-            json: request_body(input, to: to, from: from, format: format),
-            headers: authorization_header
+            json: request_body(input, to:, from:, format:),
+            headers: authorization_header,
           ).raise_for_status
           translations = response.json.dig("data", "translations")
           raise ArgumentError, "Missing translations in Google Translate response" unless translations.is_a?(Array) && translations.any?
@@ -30,12 +30,12 @@ module R3x
         attr_reader :project
 
         def authorization
-          @authorization ||= R3x::Client::GoogleAuth.from_env(project: project, scope: R3x::Client::GoogleAuth.resolve_scope("translate"))
+          @authorization ||= R3x::Client::GoogleAuth.from_env(project:, scope: R3x::Client::GoogleAuth.resolve_scope("translate"))
         end
 
         def authorization_header
           {
-            "Authorization" => "Bearer #{access_token}"
+            "Authorization" => "Bearer #{access_token}",
           }
         end
 
@@ -45,7 +45,7 @@ module R3x
         end
 
         def request_body(text, to:, from:, format:)
-          { q: text, target: to, source: from, format: format }.compact
+          { q: text, target: to, source: from, format: }.compact
         end
       end
     end

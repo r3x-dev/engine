@@ -13,75 +13,53 @@ class GoogleOAuthCLITest < ActiveSupport::TestCase
   test "interactive_scope_selection returns all aliases when 'all' is chosen" do
     all_aliases = R3x::Client::GoogleAuth.scope_aliases.keys
 
-    mock_highline = Object.new
+    mock_highline = Class.new do
+      def choose
+        menu = Struct.new(:prompt) do
+          def choice(*)
+          end
+        end.new
+        yield menu
+        :all
+      end
 
-    mock_highline.define_singleton_method(:choose) do |&block|
-      menu = Object.new
-      menu.define_singleton_method(:prompt=) { |*| }
-      menu.define_singleton_method(:choice) { |*_args| }
-      block.call(menu)
-      :all
-    end
+      def ask(*, **)
+        question = Struct.new(:default).new
+        yield question if block_given?
+        "y"
+      end
+    end.new
 
-    mock_highline.define_singleton_method(:ask) do |*_args, **_kwargs, &block|
-      q = Object.new
-      q.define_singleton_method(:default=) { |*| }
-      block.call(q) if block
-      "y"
-    end
-
-    original_new = HighLine.method(:new)
-    HighLine.define_singleton_method(:new) { mock_highline }
+    HighLine.stubs(:new).returns(mock_highline)
 
     _, _ = capture_io do
       result = @cli.send(:interactive_scope_selection)
 
       assert_equal all_aliases.sort, result.split(",").sort
     end
-  ensure
-    HighLine.define_singleton_method(:new, original_new)
   end
 
   test "authorize fails fast before scope selection when GOOGLE_CLIENT_ID is missing" do
-    @cli.define_singleton_method(:options) { { "project" => "MISSING" } }
+    @cli.stubs(:options).returns({ "project" => "MISSING" })
 
-    scope_selection_called = false
-    @cli.define_singleton_method(:interactive_scope_selection) do
-      scope_selection_called = true
-      ""
-    end
+    @cli.expects(:interactive_scope_selection).never
 
     assert_raises(SystemExit) do
       capture_io { @cli.authorize }
     end
-
-    refute scope_selection_called, "interactive_scope_selection should not be called when credentials are missing"
   end
 
   test "authorize fails fast before scope selection when GOOGLE_CLIENT_SECRET is missing" do
-    @cli.define_singleton_method(:options) { { "project" => "MISSING" } }
+    @cli.stubs(:options).returns({ "project" => "MISSING" })
 
-    original_fetch = R3x::Env.method(:fetch)
-    call_count = 0
-    R3x::Env.define_singleton_method(:fetch) do |key|
-      call_count += 1
-      return "fake-client-id" if key == "GOOGLE_CLIENT_ID_MISSING"
-      original_fetch.call(key)
-    end
+    R3x::Env.stubs(:fetch!).with("GOOGLE_CLIENT_ID_MISSING").returns("fake-client-id")
+    R3x::Env.stubs(:fetch!).with("GOOGLE_CLIENT_SECRET_MISSING").raises(ArgumentError, "Missing env key: GOOGLE_CLIENT_SECRET_MISSING")
 
-    scope_selection_called = false
-    @cli.define_singleton_method(:interactive_scope_selection) do
-      scope_selection_called = true
-      ""
-    end
+    @cli.expects(:interactive_scope_selection).never
 
     assert_raises(SystemExit) do
       capture_io { @cli.authorize }
     end
-
-    refute scope_selection_called, "interactive_scope_selection should not be called when client_secret is missing"
-  ensure
-    R3x::Env.define_singleton_method(:fetch, original_fetch)
   end
 
   test "extract_code_from_url extracts code from redirect URL" do

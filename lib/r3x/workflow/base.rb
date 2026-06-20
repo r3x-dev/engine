@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Workflow
     class Base < ApplicationJob
@@ -19,10 +21,15 @@ module R3x
         with_log_tags(*workflow_log_tags(trigger_key)) do
           @ctx = R3x::Workflow::Executor.build_context(
             workflow_class: self.class,
-            trigger_key: trigger_key,
-            trigger_payload: trigger_payload
+            trigger_key:,
+            trigger_payload:,
+            active_job_id: job_id,
           )
-          logger.info "Running workflow trigger_type=#{ctx.trigger.type}"
+          if initial_execution?
+            logger.info "Running workflow trigger_type=#{ctx.trigger.type}"
+          else
+            logger.info "Resuming workflow trigger_type=#{ctx.trigger.type} #{continuation.description}"
+          end
 
           skip_reason = unmet_workflow_condition_reason
           if skip_reason
@@ -43,7 +50,7 @@ module R3x
         end
       end
 
-      def with_cache(force: false, &block)
+      def with_cache(force: false, key: nil, &block)
         if R3x::Policy.skip_cache?
           logger.info "Skipping cache for #{self.class.name} due to policy"
 
@@ -54,9 +61,14 @@ module R3x
           raise "with_cache is disabled in production, if you need to use it, please set R3X_SKIP_CACHE=true in the environment variables"
         end
 
-        cache_key = R3x::Workflow::CacheKey.generate(workflow_key: self.class.workflow_key, block: block, method_name: __method__)
+        cache_key = R3x::Workflow::CacheKey.generate(
+          workflow_key: self.class.workflow_key,
+          block:,
+          method_name: __method__,
+          key:,
+        )
 
-        Rails.cache.fetch(cache_key, force: force, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes) { yield }
+        Rails.cache.fetch(cache_key, force:, expires_in: CACHE_TTL, race_condition_ttl: 5.minutes, &block)
       end
 
       def run
@@ -68,12 +80,12 @@ module R3x
       attr_reader :ctx
 
       def workflow_dedup_key(value = nil, candidates: nil)
-        R3x::Workflow::DedupKey.build(workflow_key: self.class.workflow_key, value: value, candidates: candidates)
+        R3x::Workflow::DedupKey.build(workflow_key: self.class.workflow_key, value:, candidates:)
       end
 
       def workflow_log_tags(trigger_key)
         [
-          R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key)
+          R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key),
         ]
       end
 

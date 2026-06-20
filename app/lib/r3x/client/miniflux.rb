@@ -47,9 +47,7 @@ module R3x
       attr_reader :base_url, :api_key
 
       def get(path, **params)
-        response = connection.get("#{base_url}#{path}", params:).raise_for_status
-
-        MultiJSON.parse(response.body.to_s)
+        connection.get("#{base_url}#{path}", params:).raise_for_status.json
       end
 
       def put(path)

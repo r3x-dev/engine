@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Seeds
   class DashboardDemoSeeder
     DEMO_CLASS_PREFIX = "Demo::Dashboard::".freeze
@@ -39,7 +41,7 @@ module Seeds
           created_at: now - 18.hours,
           updated_at: now - 17.hours,
           finished_at: now - 17.hours,
-          active_job_id: "demo-dashboard-finished"
+          active_job_id: "demo-dashboard-finished",
         },
         {
           workflow_key: "demo_feed_watch",
@@ -58,7 +60,7 @@ module Seeds
             app/lib/r3x/client/http.rb:41:in `get'
             workflows/external/feed_watch/workflow.rb:18:in `run'
           ERROR
-          active_job_id: "demo-dashboard-failed"
+          active_job_id: "demo-dashboard-failed",
         },
         {
           workflow_key: "demo_invoice_dispatch",
@@ -72,7 +74,7 @@ module Seeds
           created_at: now - 12.minutes,
           updated_at: now - 11.minutes,
           claimed_at: now - 11.minutes,
-          active_job_id: "demo-dashboard-running"
+          active_job_id: "demo-dashboard-running",
         },
         {
           workflow_key: "demo_inventory_sync",
@@ -86,7 +88,7 @@ module Seeds
           created_at: now - 24.minutes,
           updated_at: now - 23.minutes,
           finished_at: now - 23.minutes,
-          active_job_id: "demo-dashboard-finished-2"
+          active_job_id: "demo-dashboard-finished-2",
         },
         {
           workflow_key: "demo_retention_cleanup",
@@ -99,8 +101,34 @@ module Seeds
           created_at: now - 5.minutes,
           updated_at: now - 5.minutes,
           scheduled_at: now + 35.minutes,
-          active_job_id: "demo-dashboard-scheduled"
-        }
+          active_job_id: "demo-dashboard-scheduled",
+        },
+        {
+          workflow_key: "demo_summerhouse_monitoring",
+          class_name: "#{DEMO_CLASS_PREFIX}SummerhouseMonitoringJob",
+          queue_name: "default",
+          priority: 0,
+          schedule: "0 12 * * *",
+          trigger_key: "schedule:summerhouse",
+          seed_scheduled_at: now + 2.days,
+          active_job_id: "demo-dashboard-resumed-summerhouse",
+          fragments: [
+            {
+              status: "finished",
+              created_at: now - 4.minutes,
+              updated_at: now - 3.minutes,
+              finished_at: now - 3.minutes,
+            },
+            {
+              status: "scheduled",
+              created_at: now - 3.minutes,
+              updated_at: now - 3.minutes,
+              scheduled_at: now + 2.minutes,
+              resumptions: 1,
+              continuation: { "completed" => %w[check_camera_1 check_camera_2] },
+            },
+          ],
+        },
       ]
     end
 
@@ -121,20 +149,59 @@ module Seeds
     end
 
     def create_recurring_task!(definition)
+      ensure_demo_job_class!(definition.fetch(:class_name))
+
       SolidQueue::RecurringTask.create!(
         key: recurring_task_key(definition),
         schedule: definition.fetch(:schedule),
         class_name: definition.fetch(:class_name),
-        arguments: [ definition.fetch(:trigger_key) ],
+        arguments: [definition.fetch(:trigger_key)],
         queue_name: definition.fetch(:queue_name),
         priority: definition.fetch(:priority),
-        static: false
+        static: false,
       )
     end
 
+    def ensure_demo_job_class!(class_name)
+      class_name.constantize
+    rescue NameError
+      namespace_name, _, constant_name = class_name.rpartition("::")
+      namespace = namespace_name.split("::").reduce(Object) do |parent, name|
+        parent.const_defined?(name, false) ? parent.const_get(name, false) : parent.const_set(name, Module.new)
+      end
+
+      namespace.const_set(constant_name, Class.new(ActiveJob::Base) do
+        def perform(*)
+        end
+      end)
+    end
+
     def create_run!(definition)
+      return create_fragmented_run!(definition) if definition[:fragments].present?
+
       job = create_job!(definition)
 
+      apply_status!(job, definition)
+
+      definition.merge(job_id: job.id)
+    end
+
+    def create_fragmented_run!(definition)
+      fragments = definition.fetch(:fragments).map do |fragment|
+        fragment_definition = definition.except(:fragments).merge(fragment)
+        job = create_job!(fragment_definition)
+        apply_status!(job, fragment_definition)
+
+        fragment_definition.merge(job_id: job.id)
+      end
+
+      fragments.last.merge(
+        active_job_id: definition.fetch(:active_job_id),
+        workflow_key: definition.fetch(:workflow_key),
+      )
+    end
+
+    def apply_status!(job, definition)
       case definition.fetch(:status)
       when "failed"
         clear_scheduled_state!(job)
@@ -148,15 +215,13 @@ module Seeds
         SolidQueue::ClaimedExecution.create!(
           job_id: job.id,
           process_id: create_process!(definition).id,
-          created_at: definition.fetch(:claimed_at)
+          created_at: definition.fetch(:claimed_at),
         )
       when "scheduled"
         SolidQueue::ScheduledExecution.where(job_id: job.id).update_all(created_at: definition.fetch(:created_at))
       else
         raise ArgumentError, "Unsupported demo status: #{definition.fetch(:status)}"
       end
-
-      definition.merge(job_id: job.id)
     end
 
     def create_job!(definition)
@@ -167,14 +232,16 @@ module Seeds
         active_job_id: definition.fetch(:active_job_id),
         arguments: serialized_job_payload(
           job_class_name: definition.fetch(:class_name),
-          arguments: [ definition.fetch(:trigger_key) ],
+          arguments: [definition.fetch(:trigger_key)],
           queue_name: definition.fetch(:queue_name),
-          priority: definition.fetch(:priority)
+          priority: definition.fetch(:priority),
+          continuation: definition[:continuation],
+          resumptions: definition[:resumptions].to_i,
         ),
         created_at: definition.fetch(:created_at),
         updated_at: definition.fetch(:updated_at),
         scheduled_at: definition[:seed_scheduled_at] || definition[:scheduled_at],
-        finished_at: nil
+        finished_at: nil,
       )
     end
 
@@ -191,7 +258,7 @@ module Seeds
         hostname: "localhost",
         metadata: "{}",
         name: "#{DEMO_PROCESS_PREFIX}#{definition.fetch(:workflow_key)}",
-        created_at: definition.fetch(:claimed_at)
+        created_at: definition.fetch(:claimed_at),
       )
     end
 
@@ -199,8 +266,8 @@ module Seeds
       "workflow:#{definition.fetch(:workflow_key)}:#{definition.fetch(:trigger_key)}"
     end
 
-    def serialized_job_payload(job_class_name:, arguments:, queue_name:, priority:)
-      Class.new(ActiveJob::Base) do
+    def serialized_job_payload(job_class_name:, arguments:, queue_name:, priority:, continuation: nil, resumptions: 0)
+      payload = Class.new(ActiveJob::Base) do
         self.queue_name = queue_name
         self.priority = priority unless priority.nil?
 
@@ -209,6 +276,10 @@ module Seeds
         def perform(*)
         end
       end.new(*arguments).serialize
+
+      payload["continuation"] = continuation if continuation.present?
+      payload["resumptions"] = resumptions if resumptions.positive?
+      payload
     end
   end
 end

@@ -1,36 +1,34 @@
+# frozen_string_literal: true
+
 module R3x
   module Dashboard
     module ApplicationHelper
+      TONE_BY_STATUS = {
+        "blocked"   => "warn",
+        "failed"    => "danger",
+        "finished"  => "ok",
+        "healthy"   => "ok",
+        "idle"      => "muted",
+        "queued"    => "info",
+        "running"   => "info",
+        "scheduled" => "info",
+        "sleeping"  => "info",
+      }.freeze
+
       def dashboard_health_label(health)
         health.fetch(:label)
       end
 
       def dashboard_status_label(status)
-        {
-          "blocked"   => "Blocked",
-          "failed"    => "Failed",
-          "finished"  => "Success",
-          "queued"    => "Queued",
-          "running"   => "Running",
-          "scheduled" => "Scheduled"
-        }.fetch(status, status.to_s.humanize)
+        status.to_s.humanize
       end
 
       def dashboard_tone_for(value)
-        {
-          "blocked"   => "warn",
-          "failed"    => "danger",
-          "finished"  => "ok",
-          "healthy"   => "ok",
-          "idle"      => "muted",
-          "queued"    => "info",
-          "running"   => "info",
-          "scheduled" => "info"
-        }.fetch(value, "muted")
+        TONE_BY_STATUS.fetch(value, "muted")
       end
 
       def dashboard_pill(label, tone, title: nil, class_name: nil)
-        classes = [ "pill", tone, class_name ].compact.join(" ")
+        classes = ["pill", tone, class_name].compact.join(" ")
         options = { class: classes }
         options[:title] = title if title.present?
 
@@ -41,7 +39,7 @@ module R3x
         dashboard_pill(
           dashboard_status_label(status),
           dashboard_tone_for(status),
-          title: error.present? ? dashboard_error_summary(error) : nil
+          title: error.present? ? dashboard_error_summary(error) : nil,
         )
       end
 
@@ -49,7 +47,7 @@ module R3x
         dashboard_pill(
           dashboard_health_label(health),
           dashboard_tone_for(health[:status]),
-          title: health[:detail].present? ? dashboard_error_summary(health[:detail]) : nil
+          title: health[:detail].present? ? dashboard_error_summary(health[:detail]) : nil,
         )
       end
 
@@ -57,22 +55,7 @@ module R3x
         time.present? ? dashboard_timestamp(time) : fallback
       end
 
-      def dashboard_relative_time(time)
-        return "Never" if time.blank?
-
-        dashboard_timestamp_text(time)
-      end
-
       def dashboard_timestamp(time)
-        return content_tag(:span, "Never", class: "muted") if time.blank?
-
-        displayed_time = dashboard_display_time(time)
-        formatted_time = dashboard_timestamp_text(displayed_time)
-
-        time_tag(displayed_time, formatted_time, datetime: displayed_time.iso8601, title: formatted_time)
-      end
-
-      def dashboard_absolute_timestamp(time)
         return content_tag(:span, "Never", class: "muted") if time.blank?
 
         displayed_time = dashboard_display_time(time)
@@ -90,7 +73,7 @@ module R3x
           displayed_time,
           displayed_time.strftime("%H:%M:%S"),
           datetime: displayed_time.iso8601,
-          title: displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z")
+          title: displayed_time.strftime("%Y-%m-%d %H:%M:%S %Z"),
         )
       end
 
@@ -121,11 +104,10 @@ module R3x
         return content_tag(:span, "Unknown", class: "muted") if start_time.blank?
 
         finish_time = end_time || Time.current
-        total_seconds = [ (finish_time - start_time).to_i, 0 ].max
+        total_seconds = [(finish_time - start_time).to_i, 0].max
 
-        hours = total_seconds / 3600
-        minutes = (total_seconds % 3600) / 60
-        seconds = total_seconds % 60
+        hours, remainder = total_seconds.divmod(3600)
+        minutes, seconds = remainder.divmod(60)
 
         format("%02d:%02d:%02d", hours, minutes, seconds)
       end
@@ -144,7 +126,7 @@ module R3x
           "manual"    => "Manual",
           "observed"  => "Observed",
           "schedule"  => "Schedule",
-          "scheduled" => "Schedule"
+          "scheduled" => "Schedule",
         }.fetch(trigger_entry.fetch(:mode).to_s, trigger_entry.fetch(:mode).to_s.humanize)
       end
 
@@ -183,27 +165,11 @@ module R3x
       end
 
       def dashboard_error_summary(text)
-        summary = if text.is_a?(Hash)
-          text["message"] || text[:message] || text["error"] || text[:error] || text.inspect
-        else
-          extract_error_message(text.to_s)
-        end
-
-        truncate(summary.presence || "Unknown error", length: 160, separator: " ")
+        truncate(dashboard_error_details(text).summary, length: 160, separator: " ")
       end
 
       def dashboard_error_body(text)
-        return "No error details recorded." if text.blank?
-
-        if text.is_a?(Hash)
-          text.inspect
-        else
-          text.to_s
-        end
-      end
-
-      def dashboard_error_multiline?(text)
-        dashboard_error_body(text).each_line.first(2).size > 1
+        dashboard_error_details(text).body
       end
 
       def dashboard_error_details_visible?(text)
@@ -212,39 +178,25 @@ module R3x
       end
 
       def dashboard_structured_error(text)
-        parsed_error =
-          case text
-          when Hash
-            text.stringify_keys
-          else
-            parse_dashboard_error_text(text.to_s)
-          end
-
-        return if parsed_error.blank?
-
-        {
-          exception_class: parsed_error["exception_class"].presence || parsed_error["error_class"].presence,
-          message: parsed_error["message"].presence || parsed_error["error"].presence,
-          backtrace: Array(parsed_error["backtrace"] || parsed_error["trace"] || parsed_error["stack"]).compact_blank
-        }.compact_blank
+        dashboard_error_details(text).structured
       end
 
       def dashboard_icon(name)
         icon_name, variant = {
-          alert: [ "exclamation-triangle", :outline ],
-          history: [ "clock", :outline ],
-          launch: [ "play", :solid ],
-          logs: [ "document-text", :outline ],
-          tune: [ "cog-6-tooth", :outline ],
-          workflow: [ "queue-list", :outline ]
+          alert: ["exclamation-triangle", :outline],
+          history: ["clock", :outline],
+          launch: ["play", :solid],
+          logs: ["document-text", :outline],
+          tune: ["cog-6-tooth", :outline],
+          workflow: ["queue-list", :outline],
         }.fetch(name)
 
-        icon_html = Heroicon::Icon.render(name: icon_name, variant: variant, options: { class: "icon" }, path_options: {})
+        icon_html = Heroicon::Icon.render(name: icon_name, variant:, options: { class: "icon" }, path_options: {})
         content_tag(:span, raw(icon_html), class: "icon")
       end
 
       def dashboard_icon_label(name, text)
-        safe_join([ dashboard_icon(name), content_tag(:span, text) ], " ")
+        safe_join([dashboard_icon(name), content_tag(:span, text)], " ")
       end
 
       def dashboard_run_filter_path(status:, workflow_key: nil)
@@ -280,11 +232,11 @@ module R3x
                 safe_join(
                   [
                     content_tag(:span, "", class: "sort-caret sort-caret-up#{" active" if active && active_direction == "asc"}"),
-                    content_tag(:span, "", class: "sort-caret sort-caret-down#{" active" if active && active_direction == "desc"}")
-                  ]
+                    content_tag(:span, "", class: "sort-caret sort-caret-down#{" active" if active && active_direction == "desc"}"),
+                  ],
                 )
-              end
-            ]
+              end,
+            ],
           )
         end
       end
@@ -310,68 +262,8 @@ module R3x
         end
       end
 
-      def extract_error_message(text)
-        first_line = text.lines.first.to_s.strip
-        return Regexp.last_match(1) if first_line =~ /"message"\s*=>\s*"([^"]+)"/
-        return Regexp.last_match(1) if first_line =~ /"message"\s*:\s*"([^"]+)"/
-
-        first_line
-      end
-
-      def parse_dashboard_error_text(text)
-        return if text.blank?
-
-        parse_json_error_text(text) || parse_ruby_hash_error_text(text)
-      end
-
-      def parse_json_error_text(text)
-        return unless text.lstrip.start_with?("{", "[")
-
-        parsed = MultiJSON.parse(text)
-        parsed.is_a?(Hash) ? parsed.stringify_keys : nil
-      rescue MultiJSON::ParseError
-        nil
-      end
-
-      def parse_ruby_hash_error_text(text)
-        return unless text.include?("=>")
-
-        exception_class = extract_ruby_hash_error_value(text, "exception_class")
-        message = extract_ruby_hash_error_value(text, "message")
-        backtrace = extract_ruby_hash_error_array(text, "backtrace")
-
-        { "exception_class" => exception_class, "message" => message, "backtrace" => backtrace }.compact_blank
-      end
-
-      def extract_ruby_hash_error_value(text, key)
-        pattern = /
-          "#{Regexp.escape(key)}"\s*(?:=>|:)\s*"(?<value>.*?)"\s*
-          (?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)
-        /mx
-        match = text.match(pattern)
-        return unless match
-
-        unescape_dashboard_error_string(match[:value])
-      end
-
-      def extract_ruby_hash_error_array(text, key)
-        pattern = /
-          "#{Regexp.escape(key)}"\s*(?:=>|:)\s*\[(?<value>.*?)\]\s*
-          (?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)
-        /mx
-        match = text.match(pattern)
-        return [] unless match
-
-        match[:value]
-          .scan(/"((?:[^"\\]|\\.)*)"/)
-          .flatten
-          .map { |value| unescape_dashboard_error_string(value) }
-      end
-
-      def unescape_dashboard_error_string(value)
-        MultiJSON.parse(%("#{value}"))
-      rescue MultiJSON::ParseError
-        value.to_s.gsub('\"', '"').gsub("\\\\", "\\")
+      def dashboard_error_details(text)
+        ErrorDetails.new(text)
       end
     end
   end

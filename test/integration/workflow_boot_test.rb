@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 require "fileutils"
 require "shellwords"
@@ -35,7 +37,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
 
     command_output = run_command(
       "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
-      env: { "RAILS_ENV" => "production", "SOLID_QUEUE_IN_PUMA" => nil }
+      env: { "RAILS_ENV" => "production", "SOLID_QUEUE_IN_PUMA" => nil },
     )
 
     assert_predicate $?, :success?, "server hook command failed: #{command_output}"
@@ -86,7 +88,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
 
     command_output = run_command(
       "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
-      env: { "RAILS_ENV" => "production", "SOLID_QUEUE_IN_PUMA" => nil }
+      env: { "RAILS_ENV" => "production", "SOLID_QUEUE_IN_PUMA" => nil },
     )
 
     assert_predicate $?, :success?, "jobs command failed: #{command_output}"
@@ -116,8 +118,8 @@ class WorkflowBootTest < ActiveSupport::TestCase
       env: {
         "RAILS_ENV"               => "production",
         "R3X_SKIP_VAULT_ENV_LOAD" => "true",
-        "SOLID_QUEUE_IN_PUMA"     => nil
-      }
+        "SOLID_QUEUE_IN_PUMA"     => nil,
+      },
     )
 
     assert_predicate $?, :success?, "boot command failed: #{command_output}"
@@ -137,7 +139,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
     end
 
     env_string = env.map { |key, value| "#{key}=#{Shellwords.escape(value)}" }.join(" ")
-    full_command = [ env_string, command ].reject(&:blank?).join(" ")
+    full_command = [env_string, command].reject(&:blank?).join(" ")
 
     `#{full_command}`
   end

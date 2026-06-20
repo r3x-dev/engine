@@ -65,19 +65,17 @@ module R3x
           return dry_run_result
         end
 
-        response = connection.post(
+        response = HTTPX.post(
           "https://markdown.new/",
-          json: { "url" => @url, "method" => @method, "retain_images" => @retain_images }
+          json: { "url" => @url, "method" => @method, "retain_images" => @retain_images },
         ).raise_for_status
-
-        parsed = MultiJSON.parse(response.body.to_s)
 
         {
           "url"           => @url,
-          "markdown"      => parsed["content"] || "",
-          "tokens"        => response.headers["x-markdown-tokens"]&.to_i || parsed["tokens"],
+          "markdown"      => response.json["content"] || "",
+          "tokens"        => response.headers["x-markdown-tokens"]&.to_i || response.json["tokens"],
           "method"        => @method,
-          "retain_images" => @retain_images
+          "retain_images" => @retain_images,
         }
       end
 
@@ -91,12 +89,8 @@ module R3x
           "markdown"      => "",
           "tokens"        => nil,
           "method"        => @method,
-          "retain_images" => @retain_images
+          "retain_images" => @retain_images,
         }
-      end
-
-      def connection
-        HTTPX.with(timeout: { connect_timeout: 5, operation_timeout: 30 })
       end
     end
   end

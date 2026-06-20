@@ -4,9 +4,10 @@ module R3x
   module Client
     class Http
       class << self
-        def with_persistence(verify_ssl: true, timeout: 10)
+        def with_persistence(verify_ssl: true, timeout: nil)
           session = HTTPX.plugin(:persistent, close_on_fork: true)
-            .with(**session_options(verify_ssl:, timeout:))
+          opts = httpx_options(verify_ssl:, timeout:)
+          session = session.with(**opts) if opts.any?
 
           session.wrap do |client|
             http = allocate
@@ -16,36 +17,41 @@ module R3x
           end
         end
 
-        def session_options(verify_ssl:, timeout:)
-          opts = { timeout: { connect_timeout: 5, operation_timeout: timeout } }
+        private
+
+        def httpx_options(verify_ssl:, timeout:)
+          opts = Hash.new
+          opts[:timeout] = { operation_timeout: timeout } if timeout
           opts[:ssl] = { verify_mode: OpenSSL::SSL::VERIFY_NONE } unless verify_ssl
           opts
         end
       end
 
-      def initialize(verify_ssl: true, timeout: 10)
-        @client = HTTPX.with(**self.class.session_options(verify_ssl:, timeout:))
+      def initialize(verify_ssl: true, timeout: nil)
+        # Keep option building private to this class while sharing it with the class-level persistence path.
+        opts = self.class.send(:httpx_options, verify_ssl:, timeout:)
+        @client = opts.any? ? HTTPX.with(**opts) : HTTPX
       end
 
       def get(url, params: {}, headers: {})
-        @client.get(url, params: params, headers: headers).raise_for_status
+        @client.get(url, params:, headers:).raise_for_status
       end
 
       def head(url, params: {}, headers: {})
-        @client.head(url, params: params, headers: headers).raise_for_status
+        @client.head(url, params:, headers:).raise_for_status
       end
 
       def post(url, payload, headers: {})
-        @client.post(url, json: payload, headers: headers).raise_for_status
+        @client.post(url, json: payload, headers:).raise_for_status
       end
 
       def download_file(url, headers: {})
-        response = @client.get(url, headers: headers).raise_for_status
+        response = @client.get(url, headers:).raise_for_status
 
         content_type = response.headers["content-type"]&.split(";")&.first
-        filename = response.body.filename || filename_from_url(url, content_type: content_type)
+        filename = response.body.filename || filename_from_url(url, content_type:)
 
-        DownloadedFile.new(body: response.body.to_s, content_type: content_type, filename: filename, url: url)
+        DownloadedFile.new(body: response.body.to_s, content_type:, filename:, url:)
       end
 
       def upload_file(url, file, file_field: "file", filename: nil, content_type: nil, params: {}, headers: {})
@@ -61,7 +67,7 @@ module R3x
         upload_io = if file_io.respond_to?(:path)
           file_io
         else
-          temp = Tempfile.new([ actual_filename || "upload", nil ])
+          temp = Tempfile.new([actual_filename || "upload", nil])
           temp.binmode
           temp.write(file_io.read)
           temp.rewind
@@ -72,7 +78,7 @@ module R3x
 
         payload = params.merge(file_field => file_value)
 
-        @client.post(url, form: payload, headers: headers).raise_for_status
+        @client.post(url, form: payload, headers:).raise_for_status
       ensure
         if defined?(temp) && temp
           temp.close

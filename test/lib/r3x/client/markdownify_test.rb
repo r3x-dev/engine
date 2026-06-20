@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -17,7 +19,7 @@ module R3x
             .to_return(
               status: 200,
               body: MultiJSON.generate({ "content" => "# Hello World\n\nThis is a test.", "tokens" => 42 }),
-              headers: { "x-markdown-tokens" => "42", "content-type" => "application/json" }
+              headers: { "x-markdown-tokens" => "42", "content-type" => "application/json" },
             )
 
           result = Markdownify.new(url: "https://example.com").convert
@@ -26,7 +28,7 @@ module R3x
           assert_equal "# Hello World\n\nThis is a test.", result["markdown"]
           assert_equal 42, result["tokens"]
           assert_equal "auto", result["method"]
-          refute result["retain_images"]
+          assert_not result["retain_images"]
         end
       end
 
@@ -39,7 +41,8 @@ module R3x
             end
             .to_return(
               status: 200,
-              body: MultiJSON.generate({ "content" => "# Fallback", "tokens" => 99 })
+              body: MultiJSON.generate({ "content" => "# Fallback", "tokens" => 99 }),
+              headers: { "Content-Type" => "application/json" },
             )
 
           result = Markdownify.new(url: "https://example.com").convert
@@ -57,13 +60,14 @@ module R3x
             end
             .to_return(
               status: 200,
-              body: MultiJSON.generate({ "content" => "# Converted", "tokens" => 10 })
+              body: MultiJSON.generate({ "content" => "# Converted", "tokens" => 10 }),
+              headers: { "Content-Type" => "application/json" },
             )
 
           result = Markdownify.new(
             url: "https://example.com",
             method: "ai",
-            retain_images: true
+            retain_images: true,
           ).convert
 
           assert_equal "ai", result["method"]
@@ -115,14 +119,15 @@ module R3x
             end
             .to_return(
               status: 200,
-              body: MultiJSON.generate({ "content" => "result", "tokens" => 5 })
+              body: MultiJSON.generate({ "content" => "result", "tokens" => 5 }),
+              headers: { "Content-Type" => "application/json" },
             )
 
           Markdownify.new(url: "https://example.com").convert
 
           assert_equal "https://example.com", captured_payload["url"]
           assert_equal "auto", captured_payload["method"]
-          refute captured_payload["retain_images"]
+          assert_not captured_payload["retain_images"]
         end
       end
 
@@ -131,7 +136,8 @@ module R3x
           stub_request(:post, "https://markdown.new/")
             .to_return(
               status: 200,
-              body: MultiJSON.generate({})
+              body: MultiJSON.generate({}),
+              headers: { "Content-Type" => "application/json" },
             )
 
           result = Markdownify.new(url: "https://example.com").convert
