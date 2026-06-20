@@ -8,6 +8,10 @@ module R3x
       Log.instance_variable_set(:@format, nil)
     end
 
+    def teardown
+      Log.instance_variable_set(:@format, nil)
+    end
+
     test "defaults to plain when env is unset" do
       with_env("R3X_LOG_FORMAT" => nil) do
         assert_equal "plain", Log.format
