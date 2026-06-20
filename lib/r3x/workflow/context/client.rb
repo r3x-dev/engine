@@ -26,17 +26,13 @@ module R3x
           R3x::Client::Apify.new(api_key: R3x::Env.secure_fetch(api_key_env, prefix: "#{R3x::Client::Apify::DEFAULT_API_KEY_ENV}_"))
         end
 
-        def llm(api_key_env:, max_retries: nil, retry_interval: nil, retry_backoff_factor: nil)
+        def llm(api_key_env:, **)
           configuration = R3x::Client::Llm::ProviderConfiguration.resolve(api_key_env:)
 
           R3x::Client::Llm.new(
             api_key: configuration.api_key,
             config_api_key_attr: configuration.config_api_key_attr,
-            **{
-              max_retries:,
-              retry_interval:,
-              retry_backoff_factor:,
-            }.compact,
+            **,
           )
         end
 
