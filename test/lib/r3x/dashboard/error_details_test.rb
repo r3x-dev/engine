@@ -4,28 +4,28 @@ require "test_helper"
 
 module R3x
   module Dashboard
-    class ErrorParserTest < ActiveSupport::TestCase
+    class ErrorDetailsTest < ActiveSupport::TestCase
       test "summarizes hash errors from message or error keys" do
-        assert_equal "boom", ErrorParser.new({ "message" => "boom" }).summary
-        assert_equal "bad", ErrorParser.new({ error: "bad" }).summary
+        assert_equal "boom", ErrorDetails.new({ "message" => "boom" }).summary
+        assert_equal "bad", ErrorDetails.new({ error: "bad" }).summary
       end
 
       test "summarizes plain text errors from the first line" do
-        parser = ErrorParser.new("boom\nfull details")
+        details = ErrorDetails.new("boom\nfull details")
 
-        assert_equal "boom", parser.summary
-        assert_equal "boom\nfull details", parser.body
-        assert_predicate parser, :details_visible?
+        assert_equal "boom", details.summary
+        assert_equal "boom\nfull details", details.body
+        assert_predicate details, :details_visible?
       end
 
       test "summarizes inline JSON message values" do
-        parser = ErrorParser.new('{"message":"the server responded with status 403"}')
+        details = ErrorDetails.new('{"message":"the server responded with status 403"}')
 
-        assert_equal "the server responded with status 403", parser.summary
+        assert_equal "the server responded with status 403", details.summary
       end
 
       test "parses JSON error text into structured error data" do
-        error = ErrorParser.new(
+        error = ErrorDetails.new(
           MultiJSON.generate(
             exception_class: "HTTPX::HTTPError",
             message: "the server responded with status 403",
@@ -39,7 +39,7 @@ module R3x
       end
 
       test "parses ruby hash dumps into structured error data" do
-        error = ErrorParser.new(
+        error = ErrorDetails.new(
           '{"exception_class" => "HTTPX::HTTPError", "message" => "the server responded with status 403", "backtrace" => ["line one", "line two"]}',
         ).structured
 
@@ -49,11 +49,11 @@ module R3x
       end
 
       test "falls back for blank errors" do
-        parser = ErrorParser.new(nil)
+        details = ErrorDetails.new(nil)
 
-        assert_equal "Unknown error", parser.summary
-        assert_equal "No error details recorded.", parser.body
-        assert_nil parser.structured
+        assert_equal "Unknown error", details.summary
+        assert_equal "No error details recorded.", details.body
+        assert_nil details.structured
       end
     end
   end

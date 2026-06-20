@@ -105,11 +105,11 @@ view helper setup.
 
 **Suggested fix:**
 
-- Extract a small `R3x::Dashboard::ErrorParser`.
+- Extract a small `R3x::Dashboard::ErrorDetails`.
 - Keep helper methods focused on formatting parsed data for views.
-- Move existing structured-error assertions to parser-level tests where possible.
+- Move existing structured-error assertions to detail-level tests where possible.
 
-**Done:** Regex-heavy error parsing now lives in `R3x::Dashboard::ErrorParser`.
+**Done:** Regex-heavy error details now live in `R3x::Dashboard::ErrorDetails`.
 Dashboard helpers delegate to it and keep only view formatting concerns such as
 truncation.
 
