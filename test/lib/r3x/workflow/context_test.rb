@@ -323,6 +323,24 @@ module R3x
         end
       end
 
+      test "client proxy uses default retry settings when not overridden" do
+        with_env("OPENCODE_GO_API_KEY" => "go-base-key") do
+          ctx = Context.new(
+            trigger: R3x::TriggerManager::Execution.new(
+              trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
+              workflow_key: "test",
+            ),
+            workflow_key: "test",
+          )
+          llm = ctx.client.llm(api_key_env: "OPENCODE_GO_API_KEY")
+          context = llm.instance_variable_get(:@llm_context)
+
+          assert_equal R3x::Client::Llm::MAX_RETRIES, context.config.max_retries
+          assert_in_delta R3x::Client::Llm::RETRY_INTERVAL, context.config.retry_interval
+          assert_equal R3x::Client::Llm::RETRY_BACKOFF_FACTOR, context.config.retry_backoff_factor
+        end
+      end
+
       private
 
       def with_env(hash)

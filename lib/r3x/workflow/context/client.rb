@@ -32,9 +32,11 @@ module R3x
           R3x::Client::Llm.new(
             api_key: configuration.api_key,
             config_api_key_attr: configuration.config_api_key_attr,
-            max_retries:,
-            retry_interval:,
-            retry_backoff_factor:,
+            **{
+              max_retries:,
+              retry_interval:,
+              retry_backoff_factor:,
+            }.compact,
           )
         end
 
