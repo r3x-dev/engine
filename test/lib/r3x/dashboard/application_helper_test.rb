@@ -80,16 +80,6 @@ module R3x
         assert dashboard_error_details_visible?(long_error)
       end
 
-      test "dashboard structured error parses ruby hash dumps into exception message and backtrace" do
-        error = dashboard_structured_error(
-          '{"exception_class" => "HTTPX::HTTPError", "message" => "the server responded with status 403", "backtrace" => ["line one", "line two"]}',
-        )
-
-        assert_equal "HTTPX::HTTPError", error[:exception_class]
-        assert_equal "the server responded with status 403", error[:message]
-        assert_equal ["line one", "line two"], error[:backtrace]
-      end
-
       test "dashboard duration renders hh:mm:ss" do
         start_time = Time.zone.parse("2026-04-23 10:00:00 UTC")
         end_time = Time.zone.parse("2026-04-23 11:02:03 UTC")

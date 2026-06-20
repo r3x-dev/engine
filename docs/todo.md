@@ -91,7 +91,7 @@ expose more content than needed.
 
 ## Phase 3 - Dashboard Shape
 
-### [ ] D. Split dashboard error parsing out of `ApplicationHelper`
+### [x] D. Split dashboard error parsing out of `ApplicationHelper`
 
 **Files:**
 
@@ -109,9 +109,13 @@ view helper setup.
 - Keep helper methods focused on formatting parsed data for views.
 - Move existing structured-error assertions to parser-level tests where possible.
 
+**Done:** Regex-heavy error parsing now lives in `R3x::Dashboard::ErrorParser`.
+Dashboard helpers delegate to it and keep only view formatting concerns such as
+truncation.
+
 ---
 
-### [ ] E. Revisit dashboard run and summary responsibilities
+### [x] E. Revisit dashboard run and summary responsibilities
 
 **Files:**
 
@@ -132,6 +136,11 @@ same broad files.
   normalization.
 - Avoid moving code just to make files smaller; each extraction should remove a
   real reason for unrelated changes to collide.
+
+**Done:** `R3x::Dashboard::Workflow::LogicalRun` now owns the shared logical run
+hash construction used by run listings and workflow summaries. Solid Queue
+scopes, status filtering, argument normalization, and count SQL remain on
+`Dashboard::Run` where they belong.
 
 ---
 

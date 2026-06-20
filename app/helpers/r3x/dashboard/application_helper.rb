@@ -165,23 +165,11 @@ module R3x
       end
 
       def dashboard_error_summary(text)
-        summary = if text.is_a?(Hash)
-          text["message"] || text[:message] || text["error"] || text[:error] || text.inspect
-        else
-          extract_error_message(text.to_s)
-        end
-
-        truncate(summary.presence || "Unknown error", length: 160, separator: " ")
+        truncate(dashboard_error_parser(text).summary, length: 160, separator: " ")
       end
 
       def dashboard_error_body(text)
-        return "No error details recorded." if text.blank?
-
-        if text.is_a?(Hash)
-          text.inspect
-        else
-          text.to_s
-        end
+        dashboard_error_parser(text).body
       end
 
       def dashboard_error_details_visible?(text)
@@ -190,21 +178,7 @@ module R3x
       end
 
       def dashboard_structured_error(text)
-        parsed_error =
-          case text
-          when Hash
-            text.stringify_keys
-          else
-            parse_dashboard_error_text(text.to_s)
-          end
-
-        return if parsed_error.blank?
-
-        {
-          exception_class: parsed_error["exception_class"].presence || parsed_error["error_class"].presence,
-          message: parsed_error["message"].presence || parsed_error["error"].presence,
-          backtrace: Array(parsed_error["backtrace"] || parsed_error["trace"] || parsed_error["stack"]).compact_blank,
-        }.compact_blank
+        dashboard_error_parser(text).structured
       end
 
       def dashboard_icon(name)
@@ -288,68 +262,8 @@ module R3x
         end
       end
 
-      def extract_error_message(text)
-        first_line = text.lines.first.to_s.strip
-        return Regexp.last_match(1) if first_line =~ /"message"\s*=>\s*"([^"]+)"/
-        return Regexp.last_match(1) if first_line =~ /"message"\s*:\s*"([^"]+)"/
-
-        first_line
-      end
-
-      def parse_dashboard_error_text(text)
-        return if text.blank?
-
-        parse_json_error_text(text) || parse_ruby_hash_error_text(text)
-      end
-
-      def parse_json_error_text(text)
-        return unless text.lstrip.start_with?("{", "[")
-
-        parsed = MultiJSON.parse(text)
-        parsed.is_a?(Hash) ? parsed.stringify_keys : nil
-      rescue MultiJSON::ParseError
-        nil
-      end
-
-      def parse_ruby_hash_error_text(text)
-        return unless text.include?("=>")
-
-        exception_class = extract_ruby_hash_error_value(text, "exception_class")
-        message = extract_ruby_hash_error_value(text, "message")
-        backtrace = extract_ruby_hash_error_array(text, "backtrace")
-
-        { "exception_class" => exception_class, "message" => message, "backtrace" => backtrace }.compact_blank
-      end
-
-      def extract_ruby_hash_error_value(text, key)
-        pattern = /
-          "#{Regexp.escape(key)}"\s*(?:=>|:)\s*"(?<value>.*?)"\s*
-          (?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)
-        /mx
-        match = text.match(pattern)
-        return unless match
-
-        unescape_dashboard_error_string(match[:value])
-      end
-
-      def extract_ruby_hash_error_array(text, key)
-        pattern = /
-          "#{Regexp.escape(key)}"\s*(?:=>|:)\s*\[(?<value>.*?)\]\s*
-          (?=,\s*"(?:exception_class|error_class|message|error|backtrace|trace|stack)"\s*(?:=>|:)|\s*}\z)
-        /mx
-        match = text.match(pattern)
-        return [] unless match
-
-        match[:value]
-          .scan(/"((?:[^"\\]|\\.)*)"/)
-          .flatten
-          .map { |value| unescape_dashboard_error_string(value) }
-      end
-
-      def unescape_dashboard_error_string(value)
-        MultiJSON.parse(%("#{value}"))
-      rescue MultiJSON::ParseError
-        value.to_s.gsub('\"', '"').gsub("\\\\", "\\")
+      def dashboard_error_parser(text)
+        ErrorParser.new(text)
       end
     end
   end
