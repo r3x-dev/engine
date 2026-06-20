@@ -43,7 +43,7 @@ module R3x
 
       def build_query(filter)
         "(#{filter}) | fields _time, kubernetes.pod_name, kubernetes.container_name, " \
-          "_msg, level, tags, error_class, error_message, backtrace"
+          "_msg, level, tags, error_class, error_message, backtrace, exception_class, error, trace, stack"
       end
 
       def error_logs(provider, error)
@@ -97,11 +97,12 @@ module R3x
       def parse_message_payload(entry, context: {})
         if entry.key?("level")
           message, tags = extract_message_and_tags(entry["_msg"], tags: normalize_array_field(entry["tags"]), context:)
+          error = normalize_error_fields(entry)
 
           return {
-            backtrace: normalize_array_field(entry["backtrace"]).presence,
-            error_class: entry["error_class"],
-            error_message: entry["error_message"],
+            backtrace: error&.fetch(:backtrace, nil),
+            error_class: error&.fetch(:error_class, nil),
+            error_message: error&.fetch(:message, nil),
             level: normalize_level(entry["level"]),
             message:,
             tags:,
@@ -123,11 +124,12 @@ module R3x
         end
 
         message, tags = extract_message_and_tags(payload["message"], tags: payload["tags"], context:)
+        error = normalize_error_fields(payload)
 
         {
-          backtrace: normalize_array_field(payload["backtrace"]).presence,
-          error_class: payload["error_class"],
-          error_message: payload["error_message"],
+          backtrace: error&.fetch(:backtrace, nil),
+          error_class: error&.fetch(:error_class, nil),
+          error_message: error&.fetch(:message, nil),
           level: normalize_level(payload["level"]),
           message:,
           tags:,
@@ -191,6 +193,21 @@ module R3x
         end
       rescue MultiJSON::ParseError
         [value]
+      end
+
+      def normalize_error_fields(fields)
+        raw_error = {
+          "error_class"   => fields["error_class"] || fields["exception_class"],
+          "error_message" => fields["error_message"],
+          "error"         => fields["error"],
+          "backtrace"     => normalize_array_field(fields["backtrace"]).presence,
+          "trace"         => normalize_array_field(fields["trace"]).presence,
+          "stack"         => normalize_array_field(fields["stack"]).presence,
+        }.compact_blank
+
+        return if raw_error.blank?
+
+        R3x::ErrorDetails.new(raw_error).structured
       end
 
       def unavailable_logs

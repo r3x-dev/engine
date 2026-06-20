@@ -109,9 +109,10 @@ view helper setup.
 - Keep helper methods focused on formatting parsed data for views.
 - Move existing structured-error assertions to detail-level tests where possible.
 
-**Done:** Regex-heavy error details now live in `R3x::Dashboard::ErrorDetails`.
-Dashboard helpers delegate to it and keep only view formatting concerns such as
-truncation.
+**Done:** Regex-heavy error details now live in shared `R3x::ErrorDetails`.
+Structured logging, dashboard log normalization, and dashboard helpers use it so
+`error_class`, `message`, and `backtrace` stay aligned. `R3x::Dashboard::ErrorDetails`
+remains a small dashboard-facing wrapper for display behavior.
 
 ---
 
