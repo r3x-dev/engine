@@ -79,23 +79,7 @@ module R3x
         end
 
         def build_run_summary(run, workflow_key)
-          sorted_jobs = related_jobs_for(run).sort_by(&:created_at)
-          first_job = sorted_jobs.first
-          last_job = sorted_jobs.last
-          statuses = sorted_jobs.map(&:status)
-          status = ::Dashboard::Run.logical_status(statuses, resumptions: last_job.resumptions)
-
-          {
-            class_name: first_job.class_name,
-            error: last_job.failed_execution&.error,
-            job_id: last_job.id,
-            priority: last_job.priority,
-            queue_name: last_job.queue_name,
-            recorded_at: last_job.recorded_at,
-            resumptions: last_job.observed_resumptions,
-            status:,
-            workflow_key:,
-          }
+          Workflow::LogicalRun.new(jobs: related_jobs_for(run), workflow_key:).summary
         end
 
         def compare_workflows(left, right)

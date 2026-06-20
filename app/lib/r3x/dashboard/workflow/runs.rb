@@ -57,37 +57,17 @@ module R3x
         def build_logical_run(job_group)
           sorted_jobs = job_group.sort_by(&:created_at)
           first_job = sorted_jobs.first
-          last_job = sorted_jobs.last
           resolved_workflow_key = class_names_to_keys[first_job.class_name]
           return if resolved_workflow_key.blank?
 
           trigger_key = first_job.trigger_key
           recurring_task = recurring_task_for(workflow_key: resolved_workflow_key, trigger_key:)
-          statuses = sorted_jobs.map(&:status)
-          status = ::Dashboard::Run.logical_status(statuses, resumptions: last_job.resumptions)
-
-          {
-            active_job_id: first_job.active_job_id,
-            class_name: first_job.class_name,
-            enqueued_at: first_job.created_at,
-            error: last_job.failed_execution&.error,
-            finished_at: (status == "finished") ? last_job.finished_at : nil,
-            job_id: last_job.id,
-            known_workflow: class_names_to_keys.key?(first_job.class_name),
-            mission_control_path: "/ops/jobs",
-            priority: last_job.priority,
-            queue_name: last_job.queue_name,
-            recorded_at: last_job.recorded_at,
-            resumptions: last_job.observed_resumptions,
-            scheduled_at: last_job.scheduled_execution&.scheduled_at || last_job.scheduled_at,
-            started_at: first_job.claimed_execution&.created_at || first_job.created_at,
-            status:,
-            trigger_key:,
-            trigger_payload: first_job.trigger_payload,
-            trigger_schedule: recurring_task&.schedule,
+          Workflow::LogicalRun.new(
+            jobs: sorted_jobs,
             workflow_key: resolved_workflow_key,
-            workflow_title: resolved_workflow_key.titleize,
-          }
+            recurring_task:,
+            known_workflow: true,
+          ).to_h
         end
 
         def find_job!(job_id)
