@@ -781,6 +781,15 @@ module R3x
       assert_includes output, "Workflow run failed"
       assert_match(/(?:"error_class":"ArgumentError"|error_class=ArgumentError)/, output)
       assert_match(/(?:"error_message":"boom"|error_message=boom)/, output)
+
+      failure_payload = output.lines
+        .map { |line| MultiJSON.parse(line) }
+        .find { |payload| payload["error_class"] == "ArgumentError" && payload["error_message"] == "boom" }
+
+      assert_equal "Workflow run failed", failure_payload.fetch("message")
+      assert_equal "ArgumentError", failure_payload.fetch("error_class")
+      assert_equal "boom", failure_payload.fetch("error_message")
+      assert_instance_of Array, failure_payload.fetch("backtrace")
     end
 
     test "prevents overriding perform method in subclasses" do

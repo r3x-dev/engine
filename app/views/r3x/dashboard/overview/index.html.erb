@@ -44,8 +44,8 @@
             <% if error.present? %>
               <section class="failure-summary overview-error-panel">
                 <div class="overview-error-header">
-                  <% if error[:exception_class].present? %>
-                    <%= dashboard_pill(error[:exception_class], "danger") %>
+                  <% if error[:error_class].present? %>
+                    <%= dashboard_pill(error[:error_class], "danger") %>
                   <% end %>
                 </div>
 
