@@ -165,11 +165,11 @@ module R3x
       end
 
       def dashboard_error_summary(text)
-        truncate(dashboard_error_parser(text).summary, length: 160, separator: " ")
+        truncate(dashboard_error_details(text).summary, length: 160, separator: " ")
       end
 
       def dashboard_error_body(text)
-        dashboard_error_parser(text).body
+        dashboard_error_details(text).body
       end
 
       def dashboard_error_details_visible?(text)
@@ -178,7 +178,7 @@ module R3x
       end
 
       def dashboard_structured_error(text)
-        dashboard_error_parser(text).structured
+        dashboard_error_details(text).structured
       end
 
       def dashboard_icon(name)
@@ -262,8 +262,8 @@ module R3x
         end
       end
 
-      def dashboard_error_parser(text)
-        ErrorParser.new(text)
+      def dashboard_error_details(text)
+        ErrorDetails.new(text)
       end
     end
   end

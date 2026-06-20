@@ -2,7 +2,7 @@
 
 module R3x
   module Dashboard
-    class ErrorParser
+    class ErrorDetails
       ERROR_KEYS = %w[exception_class error_class message error backtrace trace stack].freeze
 
       def initialize(error)
