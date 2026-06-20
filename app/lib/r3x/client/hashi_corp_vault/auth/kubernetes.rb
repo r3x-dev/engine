@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "base64"
 
 module R3x
@@ -13,12 +15,12 @@ module R3x
           def client_token
             response = unauthenticated_connection.post(
               "#{config.vault_addr}/v1/#{config.kubernetes_auth_path}/login",
-              json: { role: config.kubernetes_role, jwt: service_account_token }
+              json: { role: config.kubernetes_role, jwt: service_account_token },
             )
 
-            raise_login_error(response) unless response.status >= 200 && response.status < 300
+            raise_login_error(response) { response.raise_for_status }
 
-            body = MultiJSON.parse(response.body.to_s)
+            body = response.json
             auth = body.is_a?(Hash) && body["auth"]
             raise "Vault response missing kubernetes auth data" unless auth.is_a?(Hash)
 
@@ -46,6 +48,8 @@ module R3x
           end
 
           def raise_login_error(response)
+            yield
+          rescue HTTPX::HTTPError
             identity = service_account_identity
             scope = if identity
               " (#{identity.fetch(:namespace)}/#{identity.fetch(:service_account_name)})"
@@ -67,8 +71,8 @@ module R3x
             return if namespace.blank? || service_account_name.blank?
 
             {
-              namespace: namespace,
-              service_account_name: service_account_name
+              namespace:,
+              service_account_name:,
             }
           rescue ArgumentError, MultiJSON::ParseError
             nil
@@ -86,9 +90,9 @@ module R3x
           end
 
           def request_errors(response)
-            body = MultiJSON.parse(response.body.to_s)
+            body = response.json
             body.is_a?(Hash) ? body["errors"] : body
-          rescue MultiJSON::ParseError
+          rescue StandardError
             response.body.to_s
           end
         end

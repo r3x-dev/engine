@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -10,21 +12,19 @@ module R3x
       end
 
       test "from_env resolves scope aliases and loads credentials from env" do
-        stub_client = Object.new
+        stub_client = mock("signet_client")
         captured = {}
 
-        stub_client.define_singleton_method(:fetch_access_token!) { true }
-
-        original_new = Signet::OAuth2::Client.method(:new)
-        Signet::OAuth2::Client.singleton_class.define_method(:new) do |**kwargs|
+        stub_client.stubs(:fetch_access_token!).returns(true)
+        Signet::OAuth2::Client.stubs(:new).with do |**kwargs|
           captured = kwargs
-          stub_client
-        end
+          true
+        end.returns(stub_client)
 
         with_env(
           "GOOGLE_CLIENT_ID_TESTPROJ"     => "client-id",
           "GOOGLE_CLIENT_SECRET_TESTPROJ" => "client-secret",
-          "GOOGLE_REFRESH_TOKEN_TESTPROJ" => "refresh-token"
+          "GOOGLE_REFRESH_TOKEN_TESTPROJ" => "refresh-token",
         ) do
           GoogleAuth.from_env(project: "TESTPROJ", scope: "gmail.send")
         end
@@ -32,9 +32,7 @@ module R3x
         assert_equal "client-id", captured.fetch(:client_id)
         assert_equal "client-secret", captured.fetch(:client_secret)
         assert_equal "refresh-token", captured.fetch(:refresh_token)
-        assert_equal [ ::Google::Apis::GmailV1::AUTH_GMAIL_SEND ], captured.fetch(:scope)
-      ensure
-        Signet::OAuth2::Client.singleton_class.define_method(:new, original_new)
+        assert_equal [::Google::Apis::GmailV1::AUTH_GMAIL_SEND], captured.fetch(:scope)
       end
 
       test "from_env loads googleauth on first use" do
@@ -46,72 +44,52 @@ module R3x
         with_env(
           "GOOGLE_CLIENT_ID_TESTPROJ"     => "client-id",
           "GOOGLE_CLIENT_SECRET_TESTPROJ" => "client-secret",
-          "GOOGLE_REFRESH_TOKEN_TESTPROJ" => "refresh-token"
+          "GOOGLE_REFRESH_TOKEN_TESTPROJ" => "refresh-token",
         ) do
           GoogleAuth.from_env(project: "TESTPROJ", scope: "gmail.send")
         end
       end
 
       test "from_json loads googleauth on first use" do
-        required_features = []
-        original_require = R3x::GemLoader.method(:require)
-        stub_client = Object.new
-        original_new = nil
+        stub_client = mock("signet_client")
 
-        stub_client.define_singleton_method(:fetch_access_token!) { true }
-
-        R3x::GemLoader.singleton_class.define_method(:require) do |feature|
-          required_features << feature
-          result = original_require.call(feature)
-
-          if feature == "googleauth" && original_new.nil?
-            original_new = Signet::OAuth2::Client.method(:new)
-            Signet::OAuth2::Client.singleton_class.define_method(:new) do |**_kwargs|
-              stub_client
-            end
-          end
-
-          result
-        end
+        GoogleAuth.expects(:require_googleauth!).once
+        stub_client.stubs(:fetch_access_token!).returns(true)
+        Signet::OAuth2::Client.stubs(:new).returns(stub_client)
 
         GoogleAuth.from_json(
           {
             "client_id"     => "client-id",
             "client_secret" => "client-secret",
-            "refresh_token" => "refresh-token"
+            "refresh_token" => "refresh-token",
           },
-          scope: "gmail.send"
+          scope: "gmail.send",
         )
-
-        assert_includes required_features, "googleauth"
-      ensure
-        R3x::GemLoader.singleton_class.define_method(:require, original_require)
-        Signet::OAuth2::Client.singleton_class.define_method(:new, original_new) if original_new
       end
 
       test "from_json resolves scope aliases before fetching token" do
         R3x::GemLoader.require("googleauth")
 
-        stub_client = Object.new
+        stub_client = mock("signet_client")
         captured_scope = nil
 
-        stub_client.define_singleton_method(:fetch_access_token!) { true }
+        stub_client.stubs(:fetch_access_token!).returns(true)
 
-        Signet::OAuth2::Client.stubs(:new).with { |**kwargs|
+        Signet::OAuth2::Client.stubs(:new).with do |**kwargs|
           captured_scope = kwargs.fetch(:scope)
           true
-        }.returns(stub_client)
+        end.returns(stub_client)
 
         GoogleAuth.from_json(
           {
             "client_id"     => "client-id",
             "client_secret" => "client-secret",
-            "refresh_token" => "refresh-token"
+            "refresh_token" => "refresh-token",
           },
-          scope: "gmail.send"
+          scope: "gmail.send",
         )
 
-        assert_equal [ ::Google::Apis::GmailV1::AUTH_GMAIL_SEND ], captured_scope
+        assert_equal [::Google::Apis::GmailV1::AUTH_GMAIL_SEND], captured_scope
       end
 
       test "resolve_scope resolves translate alias directly" do

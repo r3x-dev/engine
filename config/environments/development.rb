@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "active_support/core_ext/integer/time"
 require "r3x/log"
 require "r3x/log/json_formatter"

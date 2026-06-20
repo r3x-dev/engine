@@ -1,143 +1,156 @@
-# TODO / future improvements
+# TODO / Future Improvements
 
-This file collects improvement proposals and future ideas for the project.
-Items are ordered by expected impact (Pareto: biggest payoff for smallest effort first).
+This file tracks the current quality backlog for the app. Keep it short, concrete,
+and ordered by payoff. When a task changes architecture, workflow loading, trigger
+discovery, scheduling, validation contracts, env behavior, HTTP policy, or repo
+layout, update `AGENTS.md` in the same change.
 
 ## Legend
 
-- `[ ]` — not started
-- `[~]` — in progress
-- `[x]` — done
+- `[ ]` - not started
+- `[~]` - in progress
+- `[x]` - done
 
 ---
 
-## Phase 1 — safety and AGENTS.md compliance
+## Phase 1 - Correctness
 
-### [x] A. `R3x::Policy` — development should default to dry-run
-
-**File:** `lib/r3x/policy.rb:22`
-
-**Done:** changed default to `Rails.env.test? || Rails.env.development?`, added a regression test, and updated CLI to support `--no-dry-run` so real delivery is an explicit opt-out in development. Updated `README.md`, `docs/workflows.md`, and `docs/environment.md`.
-
----
-
-### [x] B. `R3x::Env.load_from_vault` should fail-fast on bad Vault config
-
-**File:** `lib/r3x/env.rb:81-86`
-
-**Done:** removed the broad `rescue => e` block in `load_from_vault` so all Vault configuration and request errors propagate and fail fast. Added test verification in `test/lib/r3x/env/vault_test.rb`.
-
-**Verification:** `bin/rails test` (504 runs, 0 failures).
-
----
-
-### [x] C. `Dashboard::Run.observed_triggers` dead placeholder
-
-**Files:** `app/models/dashboard/run.rb:35`, `app/lib/r3x/dashboard/workflow/catalog.rb:5,89-139`
-
-The `observed_triggers` scope always returned `where(class_name: [])`, making the `recent_trigger_observed_jobs` path in `Catalog` dead code. This was leftover from the removed change-detecting trigger runtime (#73).
-
-**Done:** removed the scope, `TRIGGER_OBSERVATION_JOB_LIMIT`, `recent_trigger_observed_jobs`, `workflow_key_from_trigger`, and simplified `observed_class_names_to_keys`.
-
-**Verification:** `bin/rails test` (502 runs, 0 failures) and `bin/lint-r3x` (81 passed).
-
----
-
-## Phase 2 — configuration and client consistency
-
-### [ ] D. Replace direct `ENV` reads with `R3x::Env`
+### [x] A. Fix workflow `previous_run_at` lookup for namespaced recurring task keys
 
 **Files:**
 
-- `config/runtime_profile.rb:11`
-- `config/puma.rb:28,31,34,40,44`
-- `config/environments/production.rb:5,47,92`
-- `config/initializers/r3x_vault_env.rb:4`
-- `lib/r3x/log.rb:28`
-- `lib/r3x/workflow/entrypoint.rb:17,22`
-- `lib/r3x/workflow/pack_loader.rb:51`
+- `lib/r3x/workflow/execution.rb`
+- `lib/r3x/workflow/context.rb`
+- `lib/r3x/workflow/executor.rb`
+- `test/lib/r3x/workflow/context_test.rb`
 
-Many places read `ENV` directly instead of the project’s own helper. This allows empty strings from `.env` files to pass as valid values and skips fail-fast boolean parsing.
+`R3x::Workflow::Execution#previous_run_at` used to look up a recurring task by
+`key: workflow_key`, but schedulable workflow tasks are persisted as
+`workflow:<workflow_key>:<trigger_key>` by `R3x::RecurringTasksConfig`.
 
-**Suggested fix:** migrate to `R3x::Env.fetch` / `fetch!` / `fetch_boolean` / `present?`. Pay special attention to `config/puma.rb:31`, which uses `ActiveModel::Type::Boolean.new.cast` and silently accepts typos.
+The existing tests create synthetic Solid Queue task keys such as `test_fr`, so
+they do not exercise the production key format. This can make
+`ctx.execution.first_run?` report `true` even when a scheduled workflow has
+already run.
+
+**Done:** `Executor` passes the resolved trigger key and Active Job id through
+`Context` into `Execution`, and `Execution#previous_run_at` delegates to
+`Dashboard::RecurringTask` so the namespaced key format and current-run exclusion
+live at the Solid Queue boundary.
 
 ---
 
-### [ ] E. Large classes with too many responsibilities
+## Phase 2 - Client Consistency
+
+### [x] B. Consolidate repeated `HTTPX.with(...)` option setup
 
 **Files:**
 
-- `app/models/dashboard/run.rb` (254 lines) — argument parsing, Solid Queue statuses, enqueueing, normalization, querying.
-- `app/lib/r3x/dashboard/workflow/summaries.rb` (274 lines) — summary building, Ruby sorting, health logic.
-- `app/helpers/r3x/dashboard/application_helper.rb` (378 lines) — view helpers plus manual error parsing with regexes.
+- `app/lib/r3x/client/http.rb`
+- `app/lib/r3x/client/miniflux.rb`
+- `app/lib/r3x/client/ocr.rb`
+- `app/lib/r3x/client/apify.rb`
+- `app/lib/r3x/client/healthchecks_io.rb`
+- `app/lib/r3x/client/markdownify.rb`
+- `app/lib/r3x/client/victoria_logs.rb`
+- `lib/r3x/workflow/context/client.rb`
 
-This violates SRP and makes every Solid Queue / error-format / UI change touch the same files.
+Several clients built `HTTPX.with(...)` timeout options by hand even when the
+provider did not need custom timeout policy.
+
+**Done:** speculative timeout overrides were removed from thin clients that can
+use HTTPX defaults. `R3x::Client::Http` now keeps its own option builder private
+and only applies options when callers request custom SSL or timeout behavior.
+Client-specific headers stay near the request code.
+
+Also resolved an issue where `Context::Client.llm` explicitly forwarded default keyword arguments (e.g. `max_retries: nil`), overriding the constructor-level defaults in `Llm.new` and disabling LLM retries. Refactored the method to use anonymous keyword arguments forwarding (`**`), ensuring default settings are correctly restored when not overridden by the workflow.
+
+---
+
+### [ ] C. Normalize dry-run logging in integration clients
+
+**Files:**
+
+- `app/lib/r3x/client/discord.rb`
+- `app/lib/r3x/client/google/gmail.rb`
+- `app/lib/r3x/client/markdownify.rb`
+- workflow clients that add new dry-run paths
+
+Dry-run logs currently use slightly different labels and payload shapes, and some
+paths log full message bodies. This makes dashboard logs harder to scan and can
+expose more content than needed.
 
 **Suggested fix:**
 
-- Extract `Dashboard::Run::ArgumentsNormalizer` and `Dashboard::Run::StatusResolver`.
-- Extract error parsing logic to `Dashboard::ErrorParser`.
-- Simplify or move sorting in `Summaries` closer to SQL.
+- Standardize on one dry-run prefix, for example `[DRY-RUN]`.
+- Log compact metadata by default: provider, action, destination, subject/title,
+  URL, or content length.
+- Avoid logging full email or Discord bodies unless a caller explicitly needs
+  that detail for local debugging.
+- Use the existing `R3x::Concerns::Logger` class tags; avoid a new mixin unless
+  duplication becomes real after the first cleanup.
 
 ---
 
-### [ ] F. Coupling `lib/r3x/workflow/` to Solid Queue internals
+## Phase 3 - Dashboard Shape
 
-**File:** `lib/r3x/workflow/execution.rb:25`
-
-```ruby
-@recurring_task = SolidQueue::RecurringTask.find_by(key: @workflow_key)
-```
-
-`AGENTS.md` points to `app/models/dashboard/` as the boundary over `solid_queue_*`. Framework code in `lib/r3x/workflow/` should not query Solid Queue internal tables directly.
-
-**Suggested fix:** introduce a small adapter/repository, e.g. `Dashboard::RecurringTask.find_by_workflow_key(...)`, or pass `previous_run_at` from a higher layer.
-
----
-
-### [ ] G. Duplicate HTTP setup and inconsistent dry-run logging
+### [x] D. Split dashboard error parsing out of `ApplicationHelper`
 
 **Files:**
 
-- `app/lib/r3x/client/miniflux.rb:61`
-- `app/lib/r3x/client/ocr.rb:42`
-- `app/lib/r3x/client/apify.rb:44`
-- `app/lib/r3x/client/healthchecks_io.rb:94`
-- `app/lib/r3x/client/markdownify.rb:99`
-- `app/lib/r3x/client/victoria_logs.rb:9`
+- `app/helpers/r3x/dashboard/application_helper.rb`
+- `test/lib/r3x/dashboard/application_helper_test.rb`
 
-Each client builds `HTTPX.with(...)` by hand. There is no shared timeout/SSL/options builder.
+`ApplicationHelper` still owns view helpers, timestamp formatting, icon helpers,
+sort links, and manual error parsing. The highest-value extraction is the error
+parsing code because it has regex-heavy behavior and should be testable without
+view helper setup.
 
-Also, dry-run logging uses hard-coded tags:
+**Suggested fix:**
 
-```ruby
-logger.info "[DRY-RUN]: content: #{content}"
-```
+- Extract a small `R3x::Dashboard::ErrorDetails`.
+- Keep helper methods focused on formatting parsed data for views.
+- Move existing structured-error assertions to detail-level tests where possible.
 
-`AGENTS.md` prefers `R3x::Concerns::Logger` with `self.class.name`.
-
-**Suggested fix:** introduce `R3x::Client::HttpBuilder` (or extend `R3x::Client::Http`) and a shared dry-run logging mixin.
+**Done:** Regex-heavy error details now live in shared `R3x::ErrorDetails`.
+Structured logging, dashboard log normalization, and dashboard helpers use it so
+`error_class`, `message`, and `backtrace` stay aligned. `R3x::Dashboard::ErrorDetails`
+remains a small dashboard-facing wrapper for display behavior.
 
 ---
 
-## Phase 3 — architecture and tests
-
-### [ ] H. Refactor tests to use Mocha and add missing coverage
+### [x] E. Revisit dashboard run and summary responsibilities
 
 **Files:**
 
-- `test/lib/r3x/client/google/gmail_test.rb:8-46` — manual `define_singleton_method` / `alias_method`.
-- `test/lib/r3x/dashboard/run_test.rb:166-182` — manual `alias_method` on `SolidQueue::Job.singleton_class`.
-- `test/lib/r3x/client/llm_test.rb:42-105` — `expects` on internal `RubyLLM` objects (fragile, “stubbing what you don't own”).
-- `test/lib/r3x/policy_test.rb` — missing a `development` dry-run test.
+- `app/models/dashboard/run.rb`
+- `app/lib/r3x/dashboard/workflow/summaries.rb`
+- `app/lib/r3x/dashboard/workflow/runs.rb`
+- `app/lib/r3x/dashboard/workflow/run_counts.rb`
 
-`AGENTS.md` strongly recommends Mocha and warns against manual monkey-patching and stubbing third-party internals.
+`Dashboard::Run` and dashboard workflow query objects still mix Solid Queue
+state mapping, logical status resolution, summary shaping, and sorting. The code
+works, but future Solid Queue or dashboard changes will continue touching the
+same broad files.
 
-**Suggested fix:** rewrite to Mocha `stubs`/`expects`, add the missing `development` policy test, and wrap RubyLLM behind a narrow client boundary so tests can stub our own API instead of the gem.
+**Suggested fix:**
+
+- Extract only when making a related behavior change.
+- Good first candidates are status resolution and Active Job argument
+  normalization.
+- Avoid moving code just to make files smaller; each extraction should remove a
+  real reason for unrelated changes to collide.
+
+**Done:** `R3x::Dashboard::Workflow::LogicalRun` now owns the shared logical run
+hash construction used by run listings and workflow summaries. Solid Queue
+scopes, status filtering, argument normalization, and count SQL remain on
+`Dashboard::Run` where they belong.
 
 ---
 
-### [ ] I. `R3x::TriggerManager::Execution` uses `method_missing` for type predicates
+## Phase 4 - Local Workflow
+
+### [ ] I. Remove magic predicates in `TriggerManager::Execution`
 
 **File:** `lib/r3x/trigger_manager/execution.rb:16-26`
 
@@ -186,13 +199,15 @@ This is brittle against interpreter changes and hard to understand.
 
 ---
 
-### [ ] L. Pre-commit hook runs the full CI suite
+### [ ] F. Decide whether the pre-commit hook should keep running full CI
 
 **File:** `.githooks/pre-commit`
 
-The hook runs `bin/ci`, which includes `bin/lint-r3x`, RuboCop, dprint, typecheck, bundler-audit, brakeman, and the full test suite. This can be slow for every commit.
+The hook currently runs `bin/ci`, which includes setup, RuboCop, dprint, `bin/lint-r3x`, typecheck, bundler-audit, Brakeman, and the full Rails test suite. This makes every commit green but slows down local commit shaping.
 
-**Suggested fix:** consider a lighter pre-commit (format + lint references) and run the full suite on push / in CI.
+**Suggested fix:**
+- Keep as-is if green commits matter more than fast local history editing.
+- Otherwise move full `bin/ci` to pre-push or CI, and keep pre-commit focused on formatting plus cheap lint checks.
 
 ---
 
@@ -226,6 +241,6 @@ These are not actionable todos yet; they are framing notes for larger refactor d
 
 ## Notes
 
-- This backlog is intentionally read-only design-debt tracking. Pick items in order; do not try to fix everything at once.
-- When an item changes code covered by `AGENTS.md`, update `AGENTS.md` in the same PR.
-- When an item changes `R3x::Workflow::Context`, `R3x::Workflow::Context::Client`, or `R3x::Client::Http`, update matching `sig/` files.
+- Prefer direct fixes over new cops or enforcement machinery unless the same drift repeats.
+- Keep behavior changes and mechanical/style cleanup in separate commits.
+- Before closing any item, run focused tests first, then `bin/ci`.

@@ -2,8 +2,10 @@ module R3x
   module Workflow
     class Execution
       attr_reader workflow_key: String
+      attr_reader trigger_key: String?
+      attr_reader active_job_id: String?
 
-      def initialize: (workflow_key: String workflow_key) -> void
+      def initialize: (workflow_key: String, ?trigger_key: String?, ?active_job_id: String?) -> void
 
       def previous_run_at: () -> untyped
 

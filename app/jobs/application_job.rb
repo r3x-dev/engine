@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ApplicationJob < ActiveJob::Base
   include R3x::StructuredLogging
 
@@ -5,17 +7,17 @@ class ApplicationJob < ActiveJob::Base
 
   private
 
-  def with_log_tags(*tags, &block)
-    Rails.logger.tagged(*tags.compact, &block)
+  def with_log_tags(*tags, &)
+    Rails.logger.tagged(*tags.compact, &)
   end
 
-  def tag_log_context
-    with_log_tags(*log_tags) { yield }
+  def tag_log_context(&)
+    with_log_tags(*log_tags, &)
   end
 
   def log_tags
     [
-      R3x::Log.tag(R3x::Log::RUN_ACTIVE_JOB_ID_TAG, job_id)
+      R3x::Log.tag(R3x::Log::RUN_ACTIVE_JOB_ID_TAG, job_id),
     ]
   end
 end

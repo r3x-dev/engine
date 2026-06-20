@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -41,9 +43,9 @@ module R3x
             status: 200,
             body: {
               status: "success",
-              data: { resultType: "vector", result: [] }
+              data: { resultType: "vector", result: [] },
             }.to_json,
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         client = Prometheus.new(url_env: "PROMETHEUS_URL_CUSTOM")
@@ -78,11 +80,11 @@ module R3x
               data: {
                 resultType: "vector",
                 result: [
-                  { metric: { "__name__" => "up", "job" => "test" }, value: [ 1700000000, "1" ] }
-                ]
-              }
+                  { metric: { "__name__" => "up", "job" => "test" }, value: [1700000000, "1"] },
+                ],
+              },
             }.to_json,
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         client = Prometheus.new

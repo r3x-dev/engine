@@ -86,7 +86,7 @@ module R3x
         rid = "123e4567-e89b-12d3-a456-426614174000"
         stub_request(:head, "#{@ping_url}?rid=#{rid}").to_return(status: 200, body: "OK")
 
-        response = @client.ping(rid: rid)
+        response = @client.ping(rid:)
 
         assert_predicate response, :success?
         assert_requested :head, "#{@ping_url}?rid=#{rid}", times: 1
@@ -118,7 +118,7 @@ module R3x
           .with(body: "Line 1\nLine 2\nLine 3")
           .to_return(status: 200, body: "OK")
 
-        response = @client.log(lines: [ "Line 1", "Line 2", "Line 3" ])
+        response = @client.log(lines: ["Line 1", "Line 2", "Line 3"])
 
         assert_predicate response, :success?
         assert_requested request

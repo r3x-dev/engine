@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 module R3x
   module Client
     class HashiCorpVault
       class Config
-        DEFAULT_KUBERNETES_AUTH_PATH = "auth/kubernetes"
-        DEFAULT_KUBERNETES_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+        DEFAULT_KUBERNETES_AUTH_PATH = "auth/kubernetes".freeze
+        DEFAULT_KUBERNETES_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token".freeze
         REQUIRED_AUTH_ENV_KEYS = { token: "R3X_VAULT_TOKEN", kubernetes: "R3X_VAULT_KUBERNETES_ROLE" }.freeze
 
         def self.configured?

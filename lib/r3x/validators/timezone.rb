@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Validators
     class Timezone < ActiveModel::Validator

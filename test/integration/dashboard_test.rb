@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class DashboardTest < ActionDispatch::IntegrationTest
@@ -15,17 +17,17 @@ class DashboardTest < ActionDispatch::IntegrationTest
       key: "workflow:test_workflow:#{@trigger}",
       schedule: "0 * * * *",
       class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       queue_name: "default",
-      static: false
+      static: false,
     )
     @job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       active_job_id: "aj-123",
       finished_at: 1.minute.ago,
       created_at: 10.minutes.ago,
-      updated_at: 1.minute.ago
+      updated_at: 1.minute.ago,
     )
   end
 
@@ -56,7 +58,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
         workflow_key: "workflow_#{index}",
         trigger_key: "schedule:#{index}",
         run_status: "finished",
-        recorded_at: created_at + 30.seconds
+        recorded_at: created_at + 30.seconds,
       )
     end
 
@@ -64,7 +66,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal 10, css_select(".overview-recent-runs-table tbody tr").size
-    refute_includes response.body, "Workflow shortcuts"
+    assert_not_includes response.body, "Workflow shortcuts"
   end
 
   test "root overview recent runs are ordered by observed activity, not enqueue time" do
@@ -74,7 +76,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       workflow_key: "slow_workflow",
       trigger_key: "schedule:slow",
       run_status: "finished",
-      recorded_at: 5.seconds.ago
+      recorded_at: 5.seconds.ago,
     )
 
     12.times do |index|
@@ -84,7 +86,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
         workflow_key: "workflow_#{index}",
         trigger_key: "schedule:#{index}",
         run_status: "finished",
-        recorded_at: finished_at
+        recorded_at: finished_at,
       )
     end
 
@@ -106,10 +108,10 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
       DashboardJobRows.create_job!(
         job_class_name: "CleanupJob",
-        arguments: [ "tmp/#{index}" ],
-        finished_at: finished_at,
+        arguments: ["tmp/#{index}"],
+        finished_at:,
         created_at: finished_at - 30.seconds,
-        updated_at: finished_at
+        updated_at: finished_at,
       )
     end
 
@@ -120,7 +122,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
         workflow_key: "visible_workflow#{index}",
         trigger_key: "schedule:visible:#{index}",
         run_status: "finished",
-        recorded_at: finished_at
+        recorded_at: finished_at,
       )
     end
 
@@ -129,15 +131,15 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal 10, css_select(".overview-recent-runs-table tbody tr").size
     assert_includes response.body, "Visible Workflow0"
-    refute_includes response.body, "CleanupJob"
+    assert_not_includes response.body, "CleanupJob"
   end
 
   test "root overview keeps workflow and failure drill-downs inside needs attention cards" do
     failed_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom", created_at: 30.seconds.ago)
 
@@ -153,14 +155,14 @@ class DashboardTest < ActionDispatch::IntegrationTest
   test "root overview formats structured failure details instead of dumping raw hash text" do
     failed_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(
       job_id: failed_job.id,
       error: '{"exception_class" => "HTTPX::HTTPError", "message" => "the server responded with status 403", "backtrace" => ["line one", "line two"]}',
-      created_at: 30.seconds.ago
+      created_at: 30.seconds.ago,
     )
 
     get "/"
@@ -169,7 +171,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "HTTPX::HTTPError"
     assert_includes response.body, "the server responded with status 403"
     assert_includes response.body, "Backtrace (2 frames)"
-    refute_includes response.body, "&quot;exception_class&quot; =&gt;"
+    assert_not_includes response.body, "&quot;exception_class&quot; =&gt;"
   end
 
   test "root overview orders needs attention by actual failure time, not later heartbeat time" do
@@ -179,13 +181,13 @@ class DashboardTest < ActionDispatch::IntegrationTest
       workflow_key: "stale_failure_workflow",
       trigger_key: "schedule:stale",
       run_status: "failed",
-      recorded_at: 2.days.ago
+      recorded_at: 2.days.ago,
     )
     create_dashboard_workflow(
       workflow_key: "recent_failure_workflow",
       trigger_key: "schedule:recent",
       run_status: "failed",
-      recorded_at: 10.minutes.ago
+      recorded_at: 10.minutes.ago,
     )
 
     get "/"
@@ -210,15 +212,15 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Triggers"
     assert_includes response.body, @trigger
     assert_includes response.body, "Run now"
-    refute_includes response.body, "Recent logs"
+    assert_not_includes response.body, "Recent logs"
   end
 
   test "workflow detail shows latest failure shortcut when a failed run exists" do
     failed_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom", created_at: 30.seconds.ago)
 
@@ -232,9 +234,9 @@ class DashboardTest < ActionDispatch::IntegrationTest
   test "workflows index links last run to run details when the latest run failed" do
     failed_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom", created_at: 30.seconds.ago)
 
@@ -280,20 +282,20 @@ class DashboardTest < ActionDispatch::IntegrationTest
       workflow_key: "healthy_workflow",
       trigger_key: "schedule:healthy",
       run_status: "finished",
-      recorded_at: 3.minutes.ago
+      recorded_at: 3.minutes.ago,
     )
     create_dashboard_workflow(
       workflow_key: "failed_workflow",
       trigger_key: "schedule:failed",
       run_status: "failed",
-      recorded_at: 2.minutes.ago
+      recorded_at: 2.minutes.ago,
     )
     get "/workflows", params: { sort: "health", direction: "desc" }
 
     assert_response :success
     assert_equal(
-      [ "Idle Workflow", "Healthy Workflow", "Failed Workflow" ],
-      css_select("#workflows-catalog tbody tr .title-link").map { |link| link.text.strip }
+      ["Idle Workflow", "Healthy Workflow", "Failed Workflow"],
+      css_select("#workflows-catalog tbody tr .title-link").map { |link| link.text.strip },
     )
     assert_includes response.body, 'href="/workflows?direction=asc&amp;sort=health#workflows-catalog"'
     assert_includes response.body, 'aria-sort="descending"'
@@ -303,10 +305,10 @@ class DashboardTest < ActionDispatch::IntegrationTest
     51.times do |index|
       running_job = DashboardJobRows.create_job!(
         job_class_name: WORKFLOW_JOB_CLASS_NAME,
-        arguments: [ @trigger ],
+        arguments: [@trigger],
         active_job_id: "aj-running-#{index}",
         created_at: (index + 1).hours.ago,
-        updated_at: (index + 1).hours.ago
+        updated_at: (index + 1).hours.ago,
       )
       claim_job!(running_job)
     end
@@ -316,10 +318,10 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
       DashboardJobRows.create_job!(
         job_class_name: WORKFLOW_JOB_CLASS_NAME,
-        arguments: [ @trigger ],
-        finished_at: finished_at,
+        arguments: [@trigger],
+        finished_at:,
         created_at: finished_at - 30.seconds,
-        updated_at: finished_at
+        updated_at: finished_at,
       )
     end
 
@@ -338,9 +340,9 @@ class DashboardTest < ActionDispatch::IntegrationTest
   test "recent runs supports filtering" do
     failed_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom", created_at: 30.seconds.ago)
 
@@ -351,10 +353,10 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Failed"
     assert_includes response.body, "boom"
     assert_includes response.body, "Open run"
-    assert_equal [ "Open run" ], css_select("tbody tr td:last-child a.button.subtle").map { |link| link.text.strip }.uniq
-    assert_equal [ "Open run" ], css_select("tbody tr").map { |row| row.css("td").last.text.squish }.uniq
+    assert_equal ["Open run"], css_select("tbody tr td:last-child a.button.subtle").map { |link| link.text.strip }.uniq
+    assert_equal ["Open run"], css_select("tbody tr").map { |row| row.css("td").last.text.squish }.uniq
     assert_equal 1, css_select("tbody tr .pill.danger[title='boom']").size
-    refute_match(/No workflow runs match/, response.body)
+    assert_no_match(/No workflow runs match/, response.body)
   end
 
   test "workflow run detail shows full error and navigation" do
@@ -363,9 +365,9 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     failed_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: "boom\nstack line 1\nstack line 2", created_at: 30.seconds.ago)
 
@@ -389,9 +391,9 @@ class DashboardTest < ActionDispatch::IntegrationTest
     long_error = "API error: " + ("x" * 220)
     failed_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       created_at: 5.minutes.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     SolidQueue::FailedExecution.create!(job_id: failed_job.id, error: long_error, created_at: 30.seconds.ago)
 
@@ -407,8 +409,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
     get "/workflow-runs/#{@job.id}"
 
     assert_response :success
-    refute_includes response.body, "Failure summary"
-    refute_includes response.body, "Full error"
+    assert_not_includes response.body, "Failure summary"
+    assert_not_includes response.body, "Full error"
   end
 
   test "workflow run detail shows absolute metadata timestamps" do
@@ -418,41 +420,41 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Summary"
     assert_includes response.body, "Duration"
     assert_match(/<span class="label">Duration<\/span>\s*<strong>\d{2}:\d{2}:\d{2}<\/strong>/, response.body)
-    refute_includes response.body, "<span class=\"label\">Result</span>"
+    assert_not_includes response.body, "<span class=\"label\">Result</span>"
     assert_match(/<dt>Enqueued<\/dt>\s*<dd><time[^>]*>\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}/, response.body)
-    refute_match(/<dt>Enqueued<\/dt>\s*<dd><time[^>]*>about /, response.body)
+    assert_no_match(/<dt>Enqueued<\/dt>\s*<dd><time[^>]*>about /, response.body)
     assert_match(/<dt>Finished<\/dt>\s*<dd><time[^>]*>\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}/, response.body)
-    refute_includes response.body, "Recorded"
+    assert_not_includes response.body, "Recorded"
   end
 
   test "workflow run detail hides finished timestamp for non-terminal runs" do
     queued_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       created_at: 30.seconds.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
 
     get "/workflow-runs/#{queued_job.id}"
 
     assert_response :success
-    refute_match(/<dt>Finished<\/dt>/, response.body)
+    assert_no_match(/<dt>Finished<\/dt>/, response.body)
   end
 
   test "workflow run detail shows scheduled timestamp only in advanced details" do
     scheduled_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       created_at: Time.zone.parse("2026-04-23 10:00:00 UTC"),
       updated_at: Time.zone.parse("2026-04-23 10:05:15 UTC"),
       finished_at: Time.zone.parse("2026-04-23 10:05:15 UTC"),
-      scheduled_at: Time.zone.parse("2026-04-23 10:00:00 UTC")
+      scheduled_at: Time.zone.parse("2026-04-23 10:00:00 UTC"),
     )
 
     get "/workflow-runs/#{scheduled_job.id}"
 
     assert_response :success
-    refute_match(/<span class="label">Scheduled<\/span>/, response.body)
+    assert_no_match(/<span class="label">Scheduled<\/span>/, response.body)
     assert_match(/<dt>Scheduled<\/dt>\s*<dd><time[^>]*>\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}/, response.body)
   end
 
@@ -460,8 +462,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
     get "/workflow-runs/#{@job.id}"
 
     assert_response :success
-    refute_includes response.body, "Rerun"
-    refute_includes response.body, "/workflow-runs/#{@job.id}/rerun"
+    assert_not_includes response.body, "Rerun"
+    assert_not_includes response.body, "/workflow-runs/#{@job.id}/rerun"
   end
 
   test "workflow run rerun route no longer exists" do
@@ -481,11 +483,11 @@ class DashboardTest < ActionDispatch::IntegrationTest
           "_time"                     => "2026-04-15T12:00:01Z",
           "_msg"                      => MultiJSON.generate(
             "level"   => "info",
-            "message" => "[r3x.run_active_job_id=#{@job.active_job_id}] [r3x.workflow_key=test_workflow] [r3x.trigger_key=#{@trigger}] [#{WORKFLOW_JOB_CLASS_NAME}] Running workflow trigger_type=schedule"
+            "message" => "[r3x.run_active_job_id=#{@job.active_job_id}] [r3x.workflow_key=test_workflow] [r3x.trigger_key=#{@trigger}] [#{WORKFLOW_JOB_CLASS_NAME}] Running workflow trigger_type=schedule",
           ),
           "kubernetes.container_name" => "app",
-          "kubernetes.pod_name"       => "r3x-jobs-123"
-        }.to_json + "\n"
+          "kubernetes.pod_name"       => "r3x-jobs-123",
+        }.to_json + "\n",
       )
 
     get "/workflow-runs/#{@job.id}"
@@ -497,11 +499,11 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "log-message"
     assert_includes response.body, "log-level"
     assert_includes response.body, "INFO"
-    refute_includes response.body, "log-meta"
-    refute_includes response.body, "r3x-jobs-123 / app"
-    refute_includes response.body, "[r3x.run_active_job_id="
-    refute_includes response.body, "[r3x.workflow_key=test_workflow]"
-    refute_includes response.body, "[#{WORKFLOW_JOB_CLASS_NAME}]"
+    assert_not_includes response.body, "log-meta"
+    assert_not_includes response.body, "r3x-jobs-123 / app"
+    assert_not_includes response.body, "[r3x.run_active_job_id="
+    assert_not_includes response.body, "[r3x.workflow_key=test_workflow]"
+    assert_not_includes response.body, "[#{WORKFLOW_JOB_CLASS_NAME}]"
   end
 
   test "workflow run detail renders logs immediately when configured" do
@@ -516,8 +518,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Logs"
     assert_includes response.body, "No indexed logs were found for this run in its execution window."
-    refute_includes response.body, "Hide logs"
-    refute_includes response.body, "Load logs"
+    assert_not_includes response.body, "Hide logs"
+    assert_not_includes response.body, "Load logs"
     assert_select "section.logs-placeholder-panel", count: 0
   end
 
@@ -527,10 +529,10 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     running_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       active_job_id: "aj-running-empty",
       created_at: 1.minute.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     claim_job!(running_job)
 
@@ -550,10 +552,10 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     queued_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       active_job_id: "aj-queued",
       created_at: 1.minute.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
 
     stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query")
@@ -578,10 +580,10 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     running_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       active_job_id: "aj-running",
       created_at: 1.minute.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     claim_job!(running_job)
 
@@ -590,8 +592,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
         status: 200,
         body: {
           "_time" => "2026-04-15T12:00:01Z",
-          "_msg"  => MultiJSON.generate("level" => "info", "message" => "[r3x.run_active_job_id=aj-running] Still working")
-        }.to_json + "\n"
+          "_msg"  => MultiJSON.generate("level" => "info", "message" => "[r3x.run_active_job_id=aj-running] Still working"),
+        }.to_json + "\n",
       )
 
     get "/workflow-runs/#{running_job.id}"
@@ -629,10 +631,10 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     running_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
-      arguments: [ @trigger ],
+      arguments: [@trigger],
       active_job_id: "aj-running-panel",
       created_at: 1.minute.ago,
-      updated_at: 30.seconds.ago
+      updated_at: 30.seconds.ago,
     )
     claim_job!(running_job)
 
@@ -641,8 +643,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
         status: 200,
         body: {
           "_time" => "2026-04-15T12:00:02Z",
-          "_msg"  => MultiJSON.generate("level" => "info", "message" => "[r3x.run_active_job_id=aj-running-panel] Fresh line")
-        }.to_json + "\n"
+          "_msg"  => MultiJSON.generate("level" => "info", "message" => "[r3x.run_active_job_id=aj-running-panel] Fresh line"),
+        }.to_json + "\n",
       )
 
     get "/workflow-runs/#{running_job.id}/logs"
@@ -651,8 +653,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'id="run-logs"'
     assert_includes response.body, 'data-r3x-log-refresh="true"'
     assert_includes response.body, "Fresh line"
-    refute_includes response.body, "<html"
-    refute_includes response.body, "R3x Dashboard"
+    assert_not_includes response.body, "<html"
+    assert_not_includes response.body, "R3x Dashboard"
   end
 
   test "recent runs keeps run detail shortcut when logs are configured" do
@@ -663,7 +665,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Open run"
-    refute_includes response.body, "logs=1"
+    assert_not_includes response.body, "logs=1"
   end
 
   test "recent runs hides log shortcut when provider-specific config is missing" do
@@ -673,7 +675,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     get "/workflow-runs"
 
     assert_response :success
-    refute_includes response.body, "View logs"
+    assert_not_includes response.body, "View logs"
   end
 
   test "workflow run detail reports unsupported log provider" do
@@ -692,27 +694,27 @@ class DashboardTest < ActionDispatch::IntegrationTest
     get "/workflows/test_workflow"
 
     assert_response :success
-    refute_includes response.body, "Load logs"
-    refute_includes response.body, "Hide logs"
-    refute_includes response.body, "Recent logs"
+    assert_not_includes response.body, "Load logs"
+    assert_not_includes response.body, "Hide logs"
+    assert_not_includes response.body, "Recent logs"
   end
 
   test "workflow detail recent runs lead with trigger and omit workflow queue columns" do
     get "/workflows/test_workflow"
 
     assert_response :success
-    assert_equal [ "Result", "Observed", "Trigger", "Open" ], css_select("table").last.css("thead th").map(&:text)
-    refute_includes response.body, "<th>Workflow</th>"
-    refute_includes response.body, "<th>Queue</th>"
+    assert_equal %w[Result Observed Trigger Open], css_select("table").last.css("thead th").map(&:text)
+    assert_not_includes response.body, "<th>Workflow</th>"
+    assert_not_includes response.body, "<th>Queue</th>"
   end
 
   test "recent runs table omits queue and inline job label" do
     get "/workflow-runs"
 
     assert_response :success
-    assert_equal [ "Workflow", "Result", "Observed", "Trigger", "Open" ], css_select("table").last.css("thead th").map(&:text)
-    refute_includes response.body, "<th>Queue</th>"
-    refute_includes response.body, WORKFLOW_JOB_CLASS_NAME
+    assert_equal %w[Workflow Result Observed Trigger Open], css_select("table").last.css("thead th").map(&:text)
+    assert_not_includes response.body, "<th>Queue</th>"
+    assert_not_includes response.body, WORKFLOW_JOB_CLASS_NAME
   end
 
   test "ops jobs route stays available" do
@@ -739,7 +741,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       arguments: [],
       finished_at: 1.minute.ago,
       created_at: 2.minutes.ago,
-      updated_at: 1.minute.ago
+      updated_at: 1.minute.ago,
     )
 
     get "/workflows"
@@ -747,7 +749,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Manual Only Workflow"
     assert_includes response.body, "/workflows/manual_only_workflow/runs"
-    refute_includes response.body, "Unavailable"
+    assert_not_includes response.body, "Unavailable"
   end
 
   test "workflow detail run now returns not found for unknown workflow keys" do
@@ -772,7 +774,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
       hostname: "test",
       metadata: "{}",
       name: "test-worker-#{job.id}",
-      created_at: Time.current
+      created_at: Time.current,
     )
 
     SolidQueue::ClaimedExecution.create!(job_id: job.id, process_id: process.id, created_at: 30.seconds.ago)
@@ -785,19 +787,19 @@ class DashboardTest < ActionDispatch::IntegrationTest
       key: "workflow:#{workflow_key}:#{trigger_key}",
       schedule: "0 * * * *",
       class_name: job_class_name,
-      arguments: [ trigger_key ],
+      arguments: [trigger_key],
       queue_name: "default",
-      static: false
+      static: false,
     )
 
     return if run_status.blank?
 
     job = DashboardJobRows.create_job!(
-      job_class_name: job_class_name,
-      arguments: [ trigger_key ],
+      job_class_name:,
+      arguments: [trigger_key],
       finished_at: (run_status == "finished") ? recorded_at : nil,
       created_at: recorded_at - 1.minute,
-      updated_at: recorded_at
+      updated_at: recorded_at,
     )
 
     return job unless run_status == "failed"

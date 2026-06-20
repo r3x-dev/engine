@@ -1,8 +1,14 @@
+# frozen_string_literal: true
+
 module R3x
   module Client
     class VictoriaLogs
-      DEFAULT_URL_ENV = "R3X_VICTORIA_LOGS_URL"
-      DEFAULT_TIMEOUT = "5s"
+      DEFAULT_URL_ENV = "R3X_VICTORIA_LOGS_URL".freeze
+      DEFAULT_TIMEOUT = "5s".freeze
+
+      def self.configured?
+        R3x::Env.present?(DEFAULT_URL_ENV)
+      end
 
       def initialize(url_env: DEFAULT_URL_ENV)
         base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_")
@@ -11,7 +17,7 @@ module R3x
       end
 
       def query(query:, start_at: nil, end_at: nil, limit: 100, timeout: DEFAULT_TIMEOUT)
-        params = query_params(query: query, start_at: start_at, end_at: end_at, limit: limit, timeout: timeout)
+        params = query_params(query:, start_at:, end_at:, limit:, timeout:)
         response = @client.post("#{@base_url}/select/logsql/query", form: params).raise_for_status
 
         parse_json_lines(response.body)
@@ -27,7 +33,7 @@ module R3x
           "limit"   => limit,
           "query"   => sort_query(query),
           "start"   => format_time(start_at),
-          "timeout" => timeout
+          "timeout" => timeout,
         }.compact
       end
 

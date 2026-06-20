@@ -37,8 +37,11 @@ module R3x
   end
 
   module Env
-    def self.secure_fetch: (String name, prefix: String | Regexp prefix) -> String
+    def self.fetch: (String name) -> String?
     def self.fetch!: (String name) -> String
+    def self.fetch_boolean: (String name) -> bool?
+    def self.present?: (String name) -> bool
+    def self.secure_fetch: (String name, prefix: String | Regexp prefix) -> String
   end
 
   module Client

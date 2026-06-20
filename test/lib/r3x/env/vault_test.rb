@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -25,11 +27,11 @@ module R3x
             data: {
               data: {
                 "GEMINI_API_KEY_TEST"     => "secret-value",
-                "R3X_DISCORD_WEBHOOK_URL" => "https://discord.example.test"
-              }
-            }
+                "R3X_DISCORD_WEBHOOK_URL" => "https://discord.example.test",
+              },
+            },
           }.to_json,
-          headers: { "Content-Type" => "application/json" }
+          headers: { "Content-Type" => "application/json" },
         )
 
       error = assert_raises(RuntimeError) do
@@ -51,7 +53,7 @@ module R3x
 
         stub_request(:post, "https://vault.test/v1/auth/kubernetes/login")
           .with(
-            body: ->(body) { MultiJSON.parse(body) == { "role" => "r3x", "jwt" => "k8s-service-account-jwt" } }
+            body: ->(body) { MultiJSON.parse(body) == { "role" => "r3x", "jwt" => "k8s-service-account-jwt" } },
           )
           .to_return(
             status: 200,
@@ -59,10 +61,10 @@ module R3x
               auth: {
                 client_token: "vault-k8s-token",
                 renewable: true,
-                policies: [ "r3x-env-read" ]
-              }
+                policies: ["r3x-env-read"],
+              },
             }.to_json,
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         stub_request(:get, "https://vault.test/v1/secret/data/test")
@@ -72,11 +74,11 @@ module R3x
             body: {
               data: {
                 data: {
-                  "GEMINI_API_KEY_TEST" => true
-                }
-              }
+                  "GEMINI_API_KEY_TEST" => true,
+                },
+              },
             }.to_json,
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         assert_equal({ "GEMINI_API_KEY_TEST" => true }, Env.load_from_vault("secret/data/test"))
@@ -130,8 +132,8 @@ module R3x
         .with(headers: { "X-Vault-Token" => "test-token" })
         .to_return(
           status: 500,
-          body: { errors: [ "internal error" ] }.to_json,
-          headers: { "Content-Type" => "application/json" }
+          body: { errors: ["internal error"] }.to_json,
+          headers: { "Content-Type" => "application/json" },
         )
 
       error = assert_raises(RuntimeError) do

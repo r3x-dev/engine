@@ -1,8 +1,46 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
   module Client
     class LlmTest < ActiveSupport::TestCase
+      class FakeLlmContext
+        attr_reader :chat_calls
+
+        def initialize(conversation)
+          @chat_calls = []
+          @conversation = conversation
+        end
+
+        def chat(**options)
+          chat_calls << options
+          @conversation
+        end
+      end
+
+      class FakeChat
+        Response = Struct.new(:content)
+
+        attr_reader :ask_calls, :schema_calls
+
+        def initialize(*contents)
+          @contents = contents
+          @ask_calls = []
+          @schema_calls = []
+        end
+
+        def with_schema(schema)
+          schema_calls << schema
+          self
+        end
+
+        def ask(prompt, with: nil)
+          ask_calls << { prompt:, with: }
+          Response.new(@contents.shift)
+        end
+      end
+
       test "can configure gemini api key dynamically" do
         llm = Llm.new(api_key: "test-key", config_api_key_attr: "gemini_api_key")
 
@@ -22,7 +60,7 @@ module R3x
           config_api_key_attr: "gemini_api_key",
           max_retries: 5,
           retry_interval: 30.0,
-          retry_backoff_factor: 4
+          retry_backoff_factor: 4,
         )
         context = llm.instance_variable_get(:@llm_context)
 
@@ -32,32 +70,35 @@ module R3x
       end
 
       test "infers provider and assume_model_exists when provider is registered but has no statically registered models" do
+        chat = FakeChat.new("response", '{"category":"other"}')
+        context = FakeLlmContext.new(chat)
+        R3x::GemLoader.require("ruby_llm")
+        RubyLLM.stubs(:context).returns(context)
+
         llm = Llm.new(
           api_key: "opencode-key",
-          config_api_key_attr: "opencode_go_api_key"
+          config_api_key_attr: "opencode_go_api_key",
         )
-        context = llm.instance_variable_get(:@llm_context)
-
-        mock_chat = mock("chat")
-        context.expects(:chat).with(model: "deepseek-chat", provider: :opencode_go, assume_model_exists: true).returns(mock_chat)
-        mock_chat.expects(:ask).with("hello", with: nil).returns(stub(content: "response"))
 
         assert_equal "response", llm.message(model: "deepseek-chat", prompt: "hello").content
-
-        mock_classify_chat = mock("classify_chat")
-        context.expects(:chat).with(model: "deepseek-chat", provider: :opencode_go, assume_model_exists: true).returns(mock_classify_chat)
-        mock_classify_chat.expects(:with_schema).with(anything).returns(mock_classify_chat)
-        mock_classify_chat.expects(:ask).with(anything, with: nil).returns(stub(content: '{"category":"other"}'))
 
         result = llm.classify(text: "some text", model: "deepseek-chat", categories: { "billing" => "billing issues" })
 
         assert_equal '{"category":"other"}', result
+        assert_equal(
+          [
+            { model: "deepseek-chat", provider: :opencode_go, assume_model_exists: true },
+            { model: "deepseek-chat", provider: :opencode_go, assume_model_exists: true },
+          ],
+          context.chat_calls,
+        )
+        assert_equal 1, chat.schema_calls.size
       end
 
       test "opencode go provider keeps underscore slug for dynamic model context switching" do
         llm = Llm.new(
           api_key: "opencode-key",
-          config_api_key_attr: "opencode_go_api_key"
+          config_api_key_attr: "opencode_go_api_key",
         )
         context = llm.instance_variable_get(:@llm_context)
         chat = context.chat(model: "deepseek-chat", provider: :opencode_go)
@@ -67,12 +108,10 @@ module R3x
         assert_equal "opencode_go", chat.with_context(context).model.provider
       end
 
-      test "does not scan ruby llm model registry during initialization" do
-        R3x::GemLoader.require("ruby_llm")
+      test "uses provider metadata instead of pinning opencode go to registered models" do
+        llm = Llm.new(api_key: "opencode-key", config_api_key_attr: "opencode_go_api_key")
 
-        RubyLLM::Models.instance.expects(:any?).never
-
-        Llm.new(api_key: "opencode-key", config_api_key_attr: "opencode_go_api_key")
+        assert_equal({ provider: :opencode_go, assume_model_exists: true }, llm.instance_variable_get(:@chat_options))
       end
 
       test "provider registry is idempotent" do
@@ -85,32 +124,35 @@ module R3x
       end
 
       test "leaves provider unset for registry-backed models" do
-        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key")
-        context = llm.instance_variable_get(:@llm_context)
+        chat = FakeChat.new("response")
+        context = FakeLlmContext.new(chat)
+        R3x::GemLoader.require("ruby_llm")
+        RubyLLM.stubs(:context).returns(context)
 
-        mock_chat = mock("chat")
-        context.expects(:chat).with(model: "gemini-1.5-flash").returns(mock_chat)
-        mock_chat.expects(:ask).with("hello", with: nil).returns(stub(content: "response"))
+        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key")
 
         assert_equal "response", llm.message(model: "gemini-1.5-flash", prompt: "hello").content
+        assert_equal [{ model: "gemini-1.5-flash" }], context.chat_calls
+        assert_equal [{ prompt: "hello", with: nil }], chat.ask_calls
       end
 
       test "analyze_image asks with binary image attachment and returns response content" do
+        chat = FakeChat.new("image response")
+        context = FakeLlmContext.new(chat)
+        R3x::GemLoader.require("ruby_llm")
+        RubyLLM.stubs(:context).returns(context)
+
         llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key")
-        context = llm.instance_variable_get(:@llm_context)
-
-        mock_chat = mock("chat")
-        context.expects(:chat).with(model: "gemini-1.5-flash").returns(mock_chat)
-        mock_chat.expects(:with_schema).with(:schema).returns(mock_chat)
-        mock_chat.expects(:ask).with do |prompt, options|
-          image = options.fetch(:with).sole
-
-          prompt == "describe" &&
-            image.is_a?(StringIO) &&
-            image.external_encoding == Encoding::BINARY
-        end.returns(stub(content: "image response"))
 
         assert_equal "image response", llm.analyze_image("bytes", prompt: "describe", model: "gemini-1.5-flash", schema: :schema)
+
+        image = chat.ask_calls.sole.fetch(:with).sole
+
+        assert_equal [{ model: "gemini-1.5-flash" }], context.chat_calls
+        assert_equal [:schema], chat.schema_calls
+        assert_equal "describe", chat.ask_calls.sole.fetch(:prompt)
+        assert_instance_of StringIO, image
+        assert_equal Encoding::BINARY, image.external_encoding
       end
 
       test "does not pin chat options to the first provider initialized in a process" do

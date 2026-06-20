@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -14,16 +16,16 @@ module R3x
           key: "workflow:test_workflow:schedule:abc123",
           schedule: "0 * * * *",
           class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           queue_name: "default",
-          static: false
+          static: false,
         )
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           finished_at: 1.minute.ago,
           created_at: 10.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
 
         summary = Workflow::Summaries.new.find!("test_workflow")
@@ -42,7 +44,7 @@ module R3x
           arguments: [],
           finished_at: 1.minute.ago,
           created_at: 2.minutes.ago,
-          updated_at: 1.minute.ago
+          updated_at: 1.minute.ago,
         )
 
         summary = Workflow::Summaries.new.find!("manual_only_workflow")
@@ -58,13 +60,13 @@ module R3x
           workflow_key: "healthy_workflow",
           trigger_key: "schedule:healthy",
           run_status: "finished",
-          recorded_at: 3.minutes.ago
+          recorded_at: 3.minutes.ago,
         )
         create_dashboard_workflow(
           workflow_key: "failed_workflow",
           trigger_key: "schedule:failed",
           run_status: "failed",
-          recorded_at: 2.minutes.ago
+          recorded_at: 2.minutes.ago,
         )
         summaries = Workflow::Summaries.new.all
 
@@ -77,13 +79,13 @@ module R3x
           workflow_key: "healthy_workflow",
           trigger_key: "schedule:healthy",
           run_status: "finished",
-          recorded_at: 3.minutes.ago
+          recorded_at: 3.minutes.ago,
         )
         create_dashboard_workflow(
           workflow_key: "failed_workflow",
           trigger_key: "schedule:failed",
           run_status: "failed",
-          recorded_at: 2.minutes.ago
+          recorded_at: 2.minutes.ago,
         )
         summaries = Workflow::Summaries.new(sort: "health", direction: "desc").all
 
@@ -95,13 +97,13 @@ module R3x
           workflow_key: "zeta_workflow",
           trigger_key: "schedule:zeta",
           run_status: "finished",
-          recorded_at: 5.minutes.ago
+          recorded_at: 5.minutes.ago,
         )
         create_dashboard_workflow(
           workflow_key: "alpha_workflow",
           trigger_key: "schedule:alpha",
           run_status: "finished",
-          recorded_at: 1.minute.ago
+          recorded_at: 1.minute.ago,
         )
 
         workflow_asc = Workflow::Summaries.new(sort: "workflow", direction: "asc").all
@@ -122,25 +124,25 @@ module R3x
           key: "workflow:overlap_workflow:schedule:abc123",
           schedule: "0 * * * *",
           class_name: job_class_name,
-          arguments: [ "schedule:abc123" ],
+          arguments: ["schedule:abc123"],
           queue_name: "default",
-          static: false
+          static: false,
         )
 
         long_running_job = DashboardJobRows.create_job!(
-          job_class_name: job_class_name,
-          arguments: [ "schedule:abc123" ],
+          job_class_name:,
+          arguments: ["schedule:abc123"],
           created_at: 10.minutes.ago,
-          updated_at: 30.seconds.ago
+          updated_at: 30.seconds.ago,
         )
         SolidQueue::FailedExecution.create!(job_id: long_running_job.id, error: "boom", created_at: 30.seconds.ago)
 
         DashboardJobRows.create_job!(
-          job_class_name: job_class_name,
-          arguments: [ "schedule:abc123" ],
+          job_class_name:,
+          arguments: ["schedule:abc123"],
           finished_at: 2.minutes.ago,
           created_at: 5.minutes.ago,
-          updated_at: 2.minutes.ago
+          updated_at: 2.minutes.ago,
         )
 
         summary = Workflow::Summaries.new.find!("overlap_workflow")
@@ -150,18 +152,66 @@ module R3x
         assert_equal "Last run failed", summary.dig(:health, :label)
       end
 
+      test "last run summary counts the final resumed execution" do
+        SolidQueue::RecurringTask.create!(
+          key: "workflow:test_workflow:schedule:abc123",
+          schedule: "0 * * * *",
+          class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: ["schedule:abc123"],
+          queue_name: "default",
+          static: false,
+        )
+
+        active_job_id = "aj-summary-finished-after-two-resumes"
+        DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: ["schedule:abc123"],
+          active_job_id:,
+          finished_at: 5.minutes.ago,
+          created_at: 7.minutes.ago,
+          updated_at: 5.minutes.ago,
+        )
+        DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: ["schedule:abc123"],
+          active_job_id:,
+          finished_at: 3.minutes.ago,
+          created_at: 5.minutes.ago,
+          updated_at: 3.minutes.ago,
+        )
+        final_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: ["schedule:abc123"],
+          active_job_id:,
+          finished_at: 1.minute.ago,
+          created_at: 3.minutes.ago,
+          updated_at: 1.minute.ago,
+        )
+        final_job.update!(
+          arguments: final_job.arguments.merge(
+            "continuation" => { "completed" => %w[check_camera_1 check_camera_2] },
+            "resumptions"  => 1,
+          ),
+        )
+
+        summary = Workflow::Summaries.new.find!("test_workflow")
+
+        assert_equal final_job.id, summary.dig(:last_run, :job_id)
+        assert_equal 2, summary.dig(:last_run, :resumptions)
+      end
+
       test "builds all summaries without per-workflow run lookups" do
         create_dashboard_workflow(
           workflow_key: "first_workflow",
           trigger_key: "schedule:first",
           run_status: "finished",
-          recorded_at: 3.minutes.ago
+          recorded_at: 3.minutes.ago,
         )
         create_dashboard_workflow(
           workflow_key: "second_workflow",
           trigger_key: "schedule:second",
           run_status: "failed",
-          recorded_at: 1.minute.ago
+          recorded_at: 1.minute.ago,
         )
 
         Workflow::Runs.stubs(:new).raises("per-workflow run lookup")
@@ -185,19 +235,19 @@ module R3x
           key: "workflow:#{workflow_key}:#{trigger_key}",
           schedule: "0 * * * *",
           class_name: job_class_name,
-          arguments: [ trigger_key ],
+          arguments: [trigger_key],
           queue_name: "default",
-          static: false
+          static: false,
         )
 
         return if run_status.blank?
 
         job = DashboardJobRows.create_job!(
-          job_class_name: job_class_name,
-          arguments: [ trigger_key ],
+          job_class_name:,
+          arguments: [trigger_key],
           finished_at: run_status == "finished" ? recorded_at : nil,
           created_at: recorded_at - 1.minute,
-          updated_at: recorded_at
+          updated_at: recorded_at,
         )
 
         return unless run_status == "failed"

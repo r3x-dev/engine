@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Dashboard
     module Workflow
@@ -28,18 +30,18 @@ module R3x
           catalog_entry = catalog.find!(workflow_key)
 
           ::Dashboard::Run.manual_enqueue_options_for(
-            workflow_key: workflow_key,
+            workflow_key:,
             class_name: catalog_entry[:class_name],
             recurring_task: preferred_recurring_task,
-            last_run: last_run
+            last_run:,
           ) || raise(KeyError, "No direct workflow enqueue target for '#{workflow_key}'")
         end
 
         def recurring_task
           @recurring_task ||= ::Dashboard::RecurringTask
             .find_by_workflow_and_trigger_key!(
-              workflow_key: workflow_key,
-              trigger_key: trigger_key
+              workflow_key:,
+              trigger_key:,
             )
         end
 
@@ -49,7 +51,7 @@ module R3x
 
         def last_run
           @last_run ||= begin
-            run = Workflow::Runs.new(workflow_key: workflow_key, limit: 1).all.first
+            run = Workflow::Runs.new(workflow_key:, limit: 1).all.first
             ::Dashboard::Run.with_execution_associations.find_by(id: run[:job_id]) if run.present?
           end
         end

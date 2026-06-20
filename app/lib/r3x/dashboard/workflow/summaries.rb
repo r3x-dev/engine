@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 require "fugit"
 
 module R3x
   module Dashboard
     module Workflow
       class Summaries
-        DEFAULT_SORT = "health"
+        DEFAULT_SORT = "health".freeze
         DEFAULT_DIRECTIONS = { "workflow" => "asc", "health" => "asc", "next_trigger" => "asc", "last_run" => "desc" }.freeze
         HEALTH_SORT_ORDER = %w[failed healthy idle].freeze
 
@@ -51,41 +53,33 @@ module R3x
           recurring_tasks = recurring_tasks_by_workflow_key.fetch(workflow_key, [])
           trigger_entries = trigger_entries_for(workflow_key:, recurring_tasks:)
           last_run = latest_run_for(workflow_key)
+          last_run_summary = last_run && build_run_summary(last_run, workflow_key)
           preferred_recurring_task = recurring_tasks.find { |task| task.direct_workflow_class_name.present? } ||
             recurring_tasks.first
           manual_enqueue_options = ::Dashboard::Run.manual_enqueue_options_for(
-            workflow_key: workflow_key,
+            workflow_key:,
             class_name: preferred_recurring_task&.direct_workflow_class_name,
             recurring_task: preferred_recurring_task,
-            last_run: last_run
+            last_run:,
           )
 
           {
             class_name: manual_enqueue_options&.fetch(:class_name),
-            health: health_for(last_run: last_run),
-            last_seen_at: last_seen_at_for(last_run: last_run),
-            last_run: last_run && build_run_summary(last_run, workflow_key),
+            health: health_for(last_run: last_run_summary),
+            last_seen_at: last_seen_at_for(last_run: last_run_summary),
+            last_run: last_run_summary,
             mission_control_path: "/ops/jobs",
             next_trigger_at: trigger_entries.filter_map { |entry| entry[:next_trigger_at] }.min,
             run_now_available: manual_enqueue_options.present?,
             title: workflow_key.titleize,
             trigger_count: trigger_entries.size,
-            trigger_entries: trigger_entries,
-            workflow_key: workflow_key
+            trigger_entries:,
+            workflow_key:,
           }
         end
 
         def build_run_summary(run, workflow_key)
-          {
-            class_name: run.class_name,
-            error: run.failed_execution&.error,
-            job_id: run.id,
-            priority: run.priority,
-            queue_name: run.queue_name,
-            recorded_at: run.recorded_at,
-            status: run.status,
-            workflow_key: workflow_key
-          }
+          Workflow::LogicalRun.new(jobs: related_jobs_for(run), workflow_key:).summary
         end
 
         def compare_workflows(left, right)
@@ -111,7 +105,7 @@ module R3x
           comparison = compare_numbers(
             health_rank(left.dig(:health, :status)),
             health_rank(right.dig(:health, :status)),
-            direction:
+            direction:,
           )
           return comparison unless comparison.zero?
 
@@ -154,9 +148,9 @@ module R3x
 
           trigger_keys.sort.map do |trigger_key|
             build_trigger_entry(
-              workflow_key: workflow_key,
-              trigger_key: trigger_key,
-              recurring_task: recurring_tasks_by_trigger_key[trigger_key]
+              workflow_key:,
+              trigger_key:,
+              recurring_task: recurring_tasks_by_trigger_key[trigger_key],
             )
           end
         end
@@ -167,15 +161,15 @@ module R3x
             mode: trigger_mode_for(recurring_task),
             next_trigger_at: next_trigger_at_for(recurring_task),
             queue_name: recurring_task&.queue_name || latest_queue_name(workflow_key),
-            recurring_task: recurring_task,
+            recurring_task:,
             run_now_available: recurring_task.present?,
             unique_key: trigger_key,
-            workflow_key: workflow_key
+            workflow_key:,
           }
         end
 
         def health_for(last_run:)
-          return failed_run_health(last_run) if last_run&.status == "failed"
+          return failed_run_health(last_run) if last_run&.fetch(:status) == "failed"
           return healthy_health if last_run.present?
 
           idle_health
@@ -183,9 +177,9 @@ module R3x
 
         def failed_run_health(last_run)
           {
-            detail: last_run.failed_execution&.error,
+            detail: last_run[:error],
             label: "Last run failed",
-            status: "failed"
+            status: "failed",
           }
         end
 
@@ -193,7 +187,7 @@ module R3x
           {
             detail: nil,
             label: "Healthy",
-            status: "healthy"
+            status: "healthy",
           }
         end
 
@@ -201,7 +195,7 @@ module R3x
           {
             detail: nil,
             label: "No runs yet",
-            status: "idle"
+            status: "idle",
           }
         end
 
@@ -235,7 +229,7 @@ module R3x
         end
 
         def last_seen_at_for(last_run:)
-          last_run&.recorded_at
+          last_run&.fetch(:recorded_at)
         end
 
         def latest_queue_name(workflow_key)
@@ -258,6 +252,30 @@ module R3x
 
         def latest_visible_runs
           ::Dashboard::Run.latest_activity_candidates(class_names: catalog.class_names_to_keys.keys)
+        end
+
+        def related_jobs_for(run)
+          return [run] if run.active_job_id.blank?
+
+          related_jobs_by_active_job_id.fetch(run.active_job_id, [run])
+        end
+
+        def related_jobs_by_active_job_id
+          @related_jobs_by_active_job_id ||= begin
+            active_job_ids = latest_visible_runs.map(&:active_job_id).compact_blank.uniq
+
+            if active_job_ids.empty?
+              {}
+            else
+              ::Dashboard::Run
+                .with_execution_associations
+                .where(active_job_id: active_job_ids)
+                .to_a
+                .group_by(&:active_job_id)
+            end
+          rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
+            {}
+          end
         end
 
         def compare_latest_runs(left, right)

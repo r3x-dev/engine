@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Workflow
     module Dsl
@@ -17,8 +19,8 @@ module R3x
           name.demodulize.underscore
         end
 
-        def trigger(type, **options)
-          trigger_instance = Triggers.resolve(type).new(**options)
+        def trigger(type, **)
+          trigger_instance = Triggers.resolve(type).new(**)
           trigger_instance.validate!(message_prefix: "Invalid trigger :#{type} for #{name}")
           _triggers.add(trigger_instance)
         end
@@ -39,7 +41,7 @@ module R3x
         # Returns all triggers, with a default Manual trigger if none declared
         def triggers
           triggers = _triggers.to_a
-          triggers.empty? ? [ Triggers::Manual.new ] : triggers
+          triggers.empty? ? [Triggers::Manual.new] : triggers
         end
 
         # Returns only explicitly declared triggers that support cron scheduling

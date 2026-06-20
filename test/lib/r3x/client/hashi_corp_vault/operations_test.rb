@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -16,18 +18,18 @@ module R3x
             body: {
               data: {
                 display_name: "token-r3x-env",
-                policies: [ "default", "r3x-env-read" ],
+                policies: %w[default r3x-env-read],
                 ttl: 3600,
-                renewable: true
-              }
+                renewable: true,
+              },
             }.to_json,
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
         result = HashiCorpVault.lookup_self
 
         assert_equal "token-r3x-env", result["display_name"]
-        assert_equal [ "default", "r3x-env-read" ], result["policies"]
+        assert_equal %w[default r3x-env-read], result["policies"]
         assert result["renewable"]
       end
 
@@ -38,19 +40,19 @@ module R3x
         stub_request(:post, "https://vault.test/v1/sys/capabilities-self")
           .with(
             headers: { "X-Vault-Token" => "test-token" },
-            body: ->(body) { MultiJSON.parse(body) == { "paths" => [ "secret/data/env/r3x" ] } }
+            body: ->(body) { MultiJSON.parse(body) == { "paths" => ["secret/data/env/r3x"] } },
           )
           .to_return(
             status: 200,
             body: {
-              "secret/data/env/r3x" => [ "read" ]
+              "secret/data/env/r3x" => ["read"],
             }.to_json,
-            headers: { "Content-Type" => "application/json" }
+            headers: { "Content-Type" => "application/json" },
           )
 
-        result = HashiCorpVault.capabilities_self([ "secret/data/env/r3x" ])
+        result = HashiCorpVault.capabilities_self(["secret/data/env/r3x"])
 
-        assert_equal [ "read" ], result["secret/data/env/r3x"]
+        assert_equal ["read"], result["secret/data/env/r3x"]
       end
     end
   end

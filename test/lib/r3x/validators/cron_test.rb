@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -8,7 +10,7 @@ module R3x
 
         attr_reader :cron
 
-        validates_with R3x::Validators::Cron, attributes: [ :cron ], allow_blank: true
+        validates_with R3x::Validators::Cron, attributes: [:cron], allow_blank: true
 
         def initialize(cron:)
           @cron = cron

@@ -1,44 +1,113 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
   module Workflow
     class ExecutionTest < ActiveSupport::TestCase
+      setup do
+        TestDbCleanup.clear_runtime_tables!
+      end
+
+      teardown do
+        TestDbCleanup.clear_runtime_tables!
+      end
+
       test "previous_run_at returns nil when no execution in solid_queue" do
         execution = Execution.new(workflow_key: "nonexistent_workflow")
 
         assert_nil execution.previous_run_at
       end
 
-      test "previous_run_at is memoized" do
-        job = SolidQueue::Job.create!(
-          queue_name: "default",
-          class_name: R3x::TestSupport::DashboardWorkflowJob.name,
-          arguments: [ "test_memo" ]
-        )
+      test "previous_run_at finds production workflow recurring task key" do
+        task_key = "workflow:test_workflow:schedule:daily"
+        previous_run_at = 2.hours.ago.change(usec: 0)
+        job = create_workflow_job!(arguments: ["schedule:daily"])
         SolidQueue::RecurringTask.create!(
-          key: "test_memo",
+          key: task_key,
           schedule: "0 * * * *",
           class_name: R3x::TestSupport::DashboardWorkflowJob.name,
-          arguments: [],
-          queue_name: "default"
+          arguments: ["schedule:daily"],
+          queue_name: "default",
         )
         SolidQueue::RecurringExecution.create!(
-          task_key: "test_memo",
-          run_at: 2.hours.ago,
-          job_id: job.id
+          task_key:,
+          run_at: previous_run_at,
+          job_id: job.id,
         )
 
-        execution = Execution.new(workflow_key: "test_memo")
+        execution = Execution.new(workflow_key: "test_workflow", trigger_key: "schedule:daily")
+
+        assert_equal previous_run_at, execution.previous_run_at
+      end
+
+      test "previous_run_at ignores the current recurring execution" do
+        task_key = "workflow:test_workflow:schedule:daily"
+        current_run_at = 1.hour.ago.change(usec: 0)
+        current_job = create_workflow_job!(arguments: ["schedule:daily"])
+        create_recurring_task!(task_key:, arguments: ["schedule:daily"])
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: current_run_at,
+          job_id: current_job.id,
+        )
+
+        execution = Execution.new(
+          workflow_key: "test_workflow",
+          trigger_key: "schedule:daily",
+          active_job_id: current_job.active_job_id,
+        )
+
+        assert_nil execution.previous_run_at
+        assert_predicate execution, :first_run?
+      end
+
+      test "previous_run_at returns the previous recurring execution before the current job" do
+        task_key = "workflow:test_workflow:schedule:daily"
+        previous_run_at = 2.hours.ago.change(usec: 0)
+        current_run_at = 1.hour.ago.change(usec: 0)
+        previous_job = create_workflow_job!(arguments: ["schedule:daily"])
+        current_job = create_workflow_job!(arguments: ["schedule:daily"])
+        create_recurring_task!(task_key:, arguments: ["schedule:daily"])
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: previous_run_at,
+          job_id: previous_job.id,
+        )
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: current_run_at,
+          job_id: current_job.id,
+        )
+
+        execution = Execution.new(
+          workflow_key: "test_workflow",
+          trigger_key: "schedule:daily",
+          active_job_id: current_job.active_job_id,
+        )
+
+        assert_equal previous_run_at, execution.previous_run_at
+        assert_not_predicate execution, :first_run?
+      end
+
+      test "previous_run_at is memoized" do
+        task_key = "workflow:test_memo:schedule:memo"
+        previous_run_at = 2.hours.ago.change(usec: 0)
+        job = create_workflow_job!(arguments: ["schedule:memo"])
+        create_recurring_task!(task_key:, arguments: ["schedule:memo"])
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: previous_run_at,
+          job_id: job.id,
+        )
+
+        execution = Execution.new(workflow_key: "test_memo", trigger_key: "schedule:memo")
 
         t1 = execution.previous_run_at
         t2 = execution.previous_run_at
 
         assert_equal t1, t2
-        assert_predicate t1, :present?
-      ensure
-        SolidQueue::RecurringExecution.where(task_key: "test_memo").delete_all
-        SolidQueue::RecurringTask.where(key: "test_memo").delete_all
-        SolidQueue::Job.where(class_name: R3x::TestSupport::DashboardWorkflowJob.name).delete_all
+        assert_equal previous_run_at, t1
       end
 
       test "first_run? returns true when no previous_run_at" do
@@ -48,38 +117,41 @@ module R3x
       end
 
       test "first_run? returns false when previous_run_at exists" do
-        job = SolidQueue::Job.create!(
-          queue_name: "default",
-          class_name: R3x::TestSupport::DashboardWorkflowJob.name,
-          arguments: [ "test_fr" ]
+        task_key = "workflow:test_fr:schedule:first_run"
+        job = create_workflow_job!(arguments: ["schedule:first_run"])
+        create_recurring_task!(task_key:, arguments: ["schedule:first_run"])
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: 2.hours.ago.change(usec: 0),
+          job_id: job.id,
         )
+
+        execution = Execution.new(workflow_key: "test_fr", trigger_key: "schedule:first_run")
+
+        assert_not_predicate execution, :first_run?
+      end
+
+      private
+
+      def create_workflow_job!(arguments:)
+        SolidQueue::Job.enqueue(R3x::TestSupport::DashboardWorkflowJob.new(*arguments))
+      end
+
+      def create_recurring_task!(task_key:, arguments:)
         SolidQueue::RecurringTask.create!(
-          key: "test_fr",
+          key: task_key,
           schedule: "0 * * * *",
           class_name: R3x::TestSupport::DashboardWorkflowJob.name,
-          arguments: [],
-          queue_name: "default"
+          arguments:,
+          queue_name: "default",
         )
-        SolidQueue::RecurringExecution.create!(
-          task_key: "test_fr",
-          run_at: 2.hours.ago,
-          job_id: job.id
-        )
-
-        execution = Execution.new(workflow_key: "test_fr")
-
-        refute_predicate execution, :first_run?
-      ensure
-        SolidQueue::RecurringExecution.where(task_key: "test_fr").delete_all
-        SolidQueue::RecurringTask.where(key: "test_fr").delete_all
-        SolidQueue::Job.where(class_name: R3x::TestSupport::DashboardWorkflowJob.name).delete_all
       end
     end
 
     class ContextTest < ActiveSupport::TestCase
       test "has trigger and execution" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
-        trigger_execution = R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "test")
+        trigger_execution = R3x::TriggerManager::Execution.new(trigger:, workflow_key: "test")
         ctx = Context.new(trigger: trigger_execution, workflow_key: "test")
 
         assert_equal :schedule, ctx.trigger.type
@@ -89,7 +161,7 @@ module R3x
 
       test "client proxy builds gmail client from project" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
-        trigger_execution = R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "test")
+        trigger_execution = R3x::TriggerManager::Execution.new(trigger:, workflow_key: "test")
         ctx = Context.new(trigger: trigger_execution, workflow_key: "test")
         gmail = ctx.client.gmail(project: "MISSING")
 
@@ -98,7 +170,7 @@ module R3x
 
       test "client proxy builds google translate client from project" do
         trigger = R3x::Triggers::Schedule.new(cron: "0 13 * * *")
-        trigger_execution = R3x::TriggerManager::Execution.new(trigger: trigger, workflow_key: "test")
+        trigger_execution = R3x::TriggerManager::Execution.new(trigger:, workflow_key: "test")
         ctx = Context.new(trigger: trigger_execution, workflow_key: "test")
         translate = ctx.client.google_translate(project: "MISSING")
 
@@ -110,9 +182,9 @@ module R3x
           ctx = Context.new(
             trigger: R3x::TriggerManager::Execution.new(
               trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-              workflow_key: "test"
+              workflow_key: "test",
             ),
-            workflow_key: "test"
+            workflow_key: "test",
           )
           discord = ctx.client.discord(webhook_url_env: "DISCORD_WEBHOOK_URL_TEST")
 
@@ -125,9 +197,9 @@ module R3x
           ctx = Context.new(
             trigger: R3x::TriggerManager::Execution.new(
               trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-              workflow_key: "test"
+              workflow_key: "test",
             ),
-            workflow_key: "test"
+            workflow_key: "test",
           )
           healthchecks = ctx.client.healthchecks_io("test-check")
 
@@ -151,14 +223,14 @@ module R3x
                 </channel>
               </rss>
             XML
-            headers: { "Content-Type" => "application/rss+xml" }
+            headers: { "Content-Type" => "application/rss+xml" },
           )
         ctx = Context.new(
           trigger: R3x::TriggerManager::Execution.new(
             trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-            workflow_key: "test"
+            workflow_key: "test",
           ),
-          workflow_key: "test"
+          workflow_key: "test",
         )
 
         feed = ctx.client.rss("https://news.test/feed.xml")
@@ -174,19 +246,19 @@ module R3x
         ctx = Context.new(
           trigger: R3x::TriggerManager::Execution.new(
             trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-            workflow_key: "test"
+            workflow_key: "test",
           ),
-          workflow_key: "test"
+          workflow_key: "test",
         )
 
         bodies = ctx.client.persistent_http(timeout: 30) do |http|
           [
             http.get("https://api.test/one").body.to_s,
-            http.get("https://api.test/two").body.to_s
+            http.get("https://api.test/two").body.to_s,
           ]
         end
 
-        assert_equal [ "first", "second" ], bodies
+        assert_equal %w[first second], bodies
         assert_requested :get, "https://api.test/one"
         assert_requested :get, "https://api.test/two"
       end
@@ -196,15 +268,16 @@ module R3x
           stub_request(:post, "https://markdown.new/")
             .to_return(
               status: 200,
-              body: MultiJSON.generate({ "content" => "# Hello from markdown.new" })
+              body: MultiJSON.generate({ "content" => "# Hello from markdown.new" }),
+              headers: { "Content-Type" => "application/json" },
             )
 
           ctx = Context.new(
             trigger: R3x::TriggerManager::Execution.new(
               trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-              workflow_key: "test"
+              workflow_key: "test",
             ),
-            workflow_key: "test"
+            workflow_key: "test",
           )
           result = ctx.client.markdownify(url: "https://example.com")
 
@@ -217,9 +290,9 @@ module R3x
           ctx = Context.new(
             trigger: R3x::TriggerManager::Execution.new(
               trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-              workflow_key: "test"
+              workflow_key: "test",
             ),
-            workflow_key: "test"
+            workflow_key: "test",
           )
           llm = ctx.client.llm(api_key_env: "OPENCODE_GO_API_KEY")
 
@@ -236,9 +309,9 @@ module R3x
           ctx = Context.new(
             trigger: R3x::TriggerManager::Execution.new(
               trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
-              workflow_key: "test"
+              workflow_key: "test",
             ),
-            workflow_key: "test"
+            workflow_key: "test",
           )
           llm = ctx.client.llm(api_key_env: "OPENCODE_GO_API_KEY_PROJECTA")
 
@@ -250,7 +323,23 @@ module R3x
         end
       end
 
+      test "client proxy uses default retry settings when not overridden" do
+        with_env("OPENCODE_GO_API_KEY" => "go-base-key") do
+          ctx = Context.new(
+            trigger: R3x::TriggerManager::Execution.new(
+              trigger: R3x::Triggers::Schedule.new(cron: "0 13 * * *"),
+              workflow_key: "test",
+            ),
+            workflow_key: "test",
+          )
+          llm = ctx.client.llm(api_key_env: "OPENCODE_GO_API_KEY")
+          context = llm.instance_variable_get(:@llm_context)
 
+          assert_equal R3x::Client::Llm::MAX_RETRIES, context.config.max_retries
+          assert_in_delta R3x::Client::Llm::RETRY_INTERVAL, context.config.retry_interval
+          assert_equal R3x::Client::Llm::RETRY_BACKOFF_FACTOR, context.config.retry_backoff_factor
+        end
+      end
 
       private
 

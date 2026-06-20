@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 module R3x
   module Workflow
     module PackLoader
       extend self
       extend R3x::Concerns::Logger
 
-      WORKFLOW_ENTRYPOINT_FILENAME = "workflow.rb"
-      DISABLE_PRAGMA_PREFIX = "# r3x:disable"
+      WORKFLOW_ENTRYPOINT_FILENAME = "workflow.rb".freeze
+      DISABLE_PRAGMA_PREFIX = "# r3x:disable".freeze
       PRAGMA_SCAN_LINES = 20
       MUTEX = Mutex.new
       LOADED = Concurrent::AtomicBoolean.new(false)
@@ -48,7 +50,7 @@ module R3x
       end
 
       def workflow_files
-        ENV.fetch("R3X_WORKFLOW_PATHS", "").split(File::PATH_SEPARATOR).flat_map do |path|
+        R3x::Env.fetch("R3X_WORKFLOW_PATHS").to_s.split(File::PATH_SEPARATOR).flat_map do |path|
           base = File.expand_path(path.strip)
           next [] unless File.directory?(base)
 

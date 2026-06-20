@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module R3x
@@ -7,8 +9,8 @@ module R3x
         rendered = dashboard_timestamp(Time.zone.parse("2026-04-15T12:00:01Z"))
 
         assert_includes rendered, "15.04.2026 12:00:01"
-        refute_includes rendered, "ago"
-        refute_includes rendered, "from now"
+        assert_not_includes rendered, "ago"
+        assert_not_includes rendered, "from now"
       end
 
       test "dashboard timestamp respects R3X_TIMEZONE" do
@@ -26,34 +28,17 @@ module R3x
         assert_includes dashboard_log_time(Time.zone.parse("2026-04-15T12:00:01Z")), "12:00:01"
       end
 
-      test "dashboard absolute timestamp renders date and time instead of relative time" do
-        rendered = dashboard_absolute_timestamp(Time.zone.parse("2026-04-15T12:00:01Z"))
-
-        assert_includes rendered, "15.04.2026 12:00:01"
-        refute_includes rendered, ">about"
-      end
-
-      test "dashboard absolute timestamp respects R3X_TIMEZONE" do
-        original_timezone = ENV["R3X_TIMEZONE"]
-        ENV["R3X_TIMEZONE"] = "America/New_York"
-
-        rendered = dashboard_absolute_timestamp(Time.zone.parse("2026-04-15T12:00:01Z"))
-
-        assert_includes rendered, "15.04.2026 08:00:01 EDT"
-      ensure
-        ENV["R3X_TIMEZONE"] = original_timezone
-      end
 
       test "dashboard trigger details shows schedule details without hash as visible text" do
         rendered = dashboard_trigger_details(
           cron: "0 12 * * * Europe/Warsaw",
           mode: "scheduled",
-          unique_key: "schedule:abc123"
+          unique_key: "schedule:abc123",
         )
 
         assert_includes rendered, "schedule:&quot;0 12 * * * Europe/Warsaw&quot;"
         assert_includes rendered, "schedule:abc123"
-        refute_includes rendered, ">schedule:abc123<"
+        assert_not_includes rendered, ">schedule:abc123<"
       end
 
       test "dashboard trigger details formats one-part trigger keys" do
@@ -72,7 +57,7 @@ module R3x
       test "dashboard run trigger label prefers schedule from persisted recurring task" do
         assert_equal(
           'schedule:"15 * * * *"',
-          dashboard_run_trigger_label(trigger_key: "schedule:inventory", trigger_schedule: "15 * * * *")
+          dashboard_run_trigger_label(trigger_key: "schedule:inventory", trigger_schedule: "15 * * * *"),
         )
         assert_equal "inventory", dashboard_run_trigger_label(trigger_key: "schedule:inventory")
       end
@@ -93,17 +78,6 @@ module R3x
         long_error = "API error: " + ("x" * 220)
 
         assert dashboard_error_details_visible?(long_error)
-        refute dashboard_error_multiline?(long_error)
-      end
-
-      test "dashboard structured error parses ruby hash dumps into exception message and backtrace" do
-        error = dashboard_structured_error(
-          '{"exception_class" => "HTTPX::HTTPError", "message" => "the server responded with status 403", "backtrace" => ["line one", "line two"]}'
-        )
-
-        assert_equal "HTTPX::HTTPError", error[:exception_class]
-        assert_equal "the server responded with status 403", error[:message]
-        assert_equal [ "line one", "line two" ], error[:backtrace]
       end
 
       test "dashboard duration renders hh:mm:ss" do

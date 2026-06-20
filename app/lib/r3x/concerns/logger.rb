@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Provides a tagged logger to any class that includes or extends it.
 # The logger is automatically tagged with the class name.
 #

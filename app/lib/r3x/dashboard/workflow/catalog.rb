@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module R3x
   module Dashboard
     module Workflow
@@ -38,13 +40,13 @@ module R3x
           {
             class_name: class_names_for(workflow_key).first,
             trigger_count: trigger_keys_for(workflow_key).size,
-            workflow_key: workflow_key,
-            title: workflow_key.titleize
+            workflow_key:,
+            title: workflow_key.titleize,
           }
         end
 
         def trigger_keys_for(workflow_key)
-          recurring_tasks_for(workflow_key).map(&:trigger_key).compact.uniq.sort
+          recurring_tasks_for(workflow_key).filter_map(&:trigger_key).uniq.sort
         end
 
         def workflow_keys_from_recurring_tasks
@@ -74,7 +76,7 @@ module R3x
 
         def class_names_by_workflow_key
           @class_names_by_workflow_key ||= class_names_to_keys.each_with_object(
-            Hash.new { |hash, key| hash[key] = [] }
+            Hash.new { |hash, key| hash[key] = [] },
           ) do |(class_name, workflow_key), mapping|
             mapping[workflow_key] << class_name
           end
@@ -105,16 +107,6 @@ module R3x
           return unless class_name.to_s.start_with?("Workflows::")
 
           class_name.demodulize.underscore
-        end
-
-        def trigger_keys_to_workflow_keys
-          @trigger_keys_to_workflow_keys ||= begin
-            mapping = Hash.new { |hash, key| hash[key] = [] }
-
-            recurring_tasks.each { |task| mapping[task.trigger_key] << task.workflow_key }
-
-            mapping.transform_values { |values| values.compact.uniq }
-          end
         end
       end
     end

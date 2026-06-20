@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 require "multi_json"
 require "shellwords"
@@ -30,7 +32,7 @@ class WorkflowCliRuntimeProfileBootTest < ActiveSupport::TestCase
     assert_equal "constant", payload.fetch("workflow_base")
     assert_equal "constant", payload.fetch("workflow_entrypoint")
     assert_equal "Workflows::TestWorkflow", payload.fetch("registered_workflow")
-    refute_includes payload.fetch("routes_reloader_paths"), Rails.root.join("config/routes.rb").to_s
+    assert_not_includes payload.fetch("routes_reloader_paths"), Rails.root.join("config/routes.rb").to_s
     assert_nil payload["mission_control"]
     assert_nil payload["web_controller"]
     assert_nil payload["dashboard"]
@@ -45,7 +47,7 @@ class WorkflowCliRuntimeProfileBootTest < ActiveSupport::TestCase
       "R3X_RUNTIME_PROFILE"     => "workflow_cli",
       "R3X_SKIP_VAULT_ENV_LOAD" => "true",
       "R3X_WORKFLOW_PATHS"      => Rails.root.join("test/fixtures/workflows").to_s,
-      "SECRET_KEY_BASE"         => "workflow-cli-runtime-profile-test-secret"
+      "SECRET_KEY_BASE"         => "workflow-cli-runtime-profile-test-secret",
     }
 
     env_string = env.map { |key, value| "#{key}=#{Shellwords.escape(value)}" }.join(" ")

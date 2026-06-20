@@ -1,11 +1,11 @@
 module R3x
   module Client
     class Http
-      def self.with_persistence: (?verify_ssl: bool verify_ssl, ?timeout: Integer timeout) { (R3x::Client::Http) -> untyped } -> untyped
+      def self.with_persistence: (?verify_ssl: bool verify_ssl, ?timeout: Integer? timeout) { (R3x::Client::Http) -> untyped } -> untyped
 
-      def self.session_options: (verify_ssl: bool verify_ssl, timeout: Integer timeout) -> Hash[Symbol, untyped]
+      def self.httpx_options: (verify_ssl: bool verify_ssl, timeout: Integer? timeout) -> Hash[Symbol, untyped]
 
-      def initialize: (?verify_ssl: bool verify_ssl, ?timeout: Integer timeout) -> void
+      def initialize: (?verify_ssl: bool verify_ssl, ?timeout: Integer? timeout) -> void
 
       def get: (String url, ?params: Hash[untyped, untyped] params, ?headers: Hash[untyped, untyped] headers) -> untyped
 

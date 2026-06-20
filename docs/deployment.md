@@ -12,7 +12,7 @@ See `docs/environment.md` for the central environment-variable index.
 - `R3X_DATABASE_URL`: preferred production database URL. `R3X_DATABASE_PATH`
   remains available for SQLite-style file paths.
 - `R3X_WORKFLOW_PATHS`: one or more workflow pack directories for jobs processes.
-- `R3X_SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS`: optional graceful shutdown timeout
+- `SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS`: optional graceful shutdown timeout
   for Solid Queue. Defaults to `900` seconds in production.
 - `R3X_LOG_FORMAT=json` or `plain` (default `plain`): controls app log output
   format. Structured JSON is required for the dashboard log view.

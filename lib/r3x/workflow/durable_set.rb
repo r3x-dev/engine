@@ -19,12 +19,12 @@ module R3x
         Rails.cache.exist?(cache_key_for(member))
       end
 
-      def add(member, ttl: default_ttl)
-        write(member, ttl: ttl)
+      def add(member, ttl: @ttl)
+        write(member, ttl:)
       end
 
-      def add?(member, ttl: default_ttl)
-        write(member, ttl: ttl, unless_exist: true)
+      def add?(member, ttl: @ttl)
+        write(member, ttl:, unless_exist: true)
       end
 
       def delete(member)
@@ -35,14 +35,10 @@ module R3x
 
       attr_reader :workflow_key, :name, :ttl
 
-      def default_ttl
-        ttl
-      end
-
       def write(member, ttl:, unless_exist: false)
         validate_ttl!(ttl)
 
-        Rails.cache.write(cache_key_for(member), { "added_at" => Time.current.iso8601 }, expires_in: ttl, unless_exist: unless_exist)
+        Rails.cache.write(cache_key_for(member), { "added_at" => Time.current.iso8601 }, expires_in: ttl, unless_exist:)
       end
 
       def validate_ttl!(ttl)
@@ -56,9 +52,8 @@ module R3x
         cache_store = Array(Rails.application.config.cache_store).first
         return unless cache_store == :solid_cache_store
 
-        cache_config = Rails.application.config_for(:cache).to_h
-        store_options = cache_config[:store_options] || cache_config["store_options"] || {}
-        max_age = store_options[:max_age] || store_options["max_age"]
+        cache_config = Rails.application.config_for(:cache)
+        max_age = cache_config.dig(:store_options, :max_age) || cache_config.dig("store_options", "max_age")
 
         max_age.to_i if max_age.present?
       end
@@ -67,7 +62,7 @@ module R3x
         normalized_member = normalize!(member, label: "member")
         digest = Digest::SHA256.hexdigest(normalized_member)
 
-        [ "r3x", "workflow", workflow_key, "durable_set", name, digest ].join(":")
+        ["r3x", "workflow", workflow_key, "durable_set", name, digest].join(":")
       end
 
       def normalize!(value, label:)

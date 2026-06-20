@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module R3x
   module Triggers
     class Manual < Base
-      def initialize(**options)
-        super(:manual, **options)
+      def initialize(**)
+        super(:manual, **)
       end
     end
   end
