@@ -416,6 +416,35 @@ module R3x
         assert_equal ["app/lib/a.rb:1", "app/lib/b.rb:2"], entry[:backtrace]
       end
 
+      test "normalizes legacy exception_class when error_class is blank string" do
+        client = FakeLogsClient.new(entries: [
+          {
+            "_time" => "2026-04-15T12:00:01Z",
+            "_msg"  => MultiJSON.generate(
+              "level"           => "error",
+              "message"         => "Workflow run failed",
+              "error_class"     => "",
+              "exception_class" => "NameError",
+              "error"           => "uninitialized constant",
+            ),
+          },
+        ])
+
+        run = {
+          active_job_id: "aj-123",
+          enqueued_at: Time.zone.parse("2026-04-15T12:00:00Z"),
+          finished_at: Time.zone.parse("2026-04-15T12:00:30Z"),
+        }
+
+        Logs.stubs(logs_client: client)
+        result = Logs.run_logs(run)
+        entry = result[:entries].first
+
+        assert_equal "Workflow run failed", entry[:message]
+        assert_equal "NameError", entry[:error_class]
+        assert_equal "uninitialized constant", entry[:error_message]
+      end
+
       test "returns provider error when provider is unsupported" do
         Logs.stubs(provider_name: "unknown")
         result = Logs.run_logs(active_job_id: "aj-123")
