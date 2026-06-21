@@ -137,7 +137,7 @@ GEM
       grpc (~> 1.66)
     globalid (1.3.0)
       activesupport (>= 6.1)
-    google-apis-calendar_v3 (0.54.0)
+    google-apis-calendar_v3 (0.55.0)
       google-apis-core (>= 0.15.0, < 2.a)
     google-apis-core (1.2.3)
       addressable (~> 2.9)
@@ -601,7 +601,7 @@ CHECKSUMS
   fugit (1.12.2) sha256=643f2bf28db263bd400cbf8e0dd8b76b2c9b94bdb130e12d2394de04d9c20e5e
   gapic-common (1.3.0) sha256=4e5d9be1effb7366e2cda13c0f44922285d5613ac8de8b9b18c2c835fe4faa91
   globalid (1.3.0) sha256=05c639ad6eb4594522a0b07983022f04aa7254626ab69445a0e493aa3786ff11
-  google-apis-calendar_v3 (0.54.0) sha256=80ddbbd027e0ebb02740b48296668c94b6cb6f16055263eeca98caa6f984a52e
+  google-apis-calendar_v3 (0.55.0) sha256=ba411fa5eafbcfa48e9dc5455cbb1aa723d32da374076d0233002303db01bc87
   google-apis-core (1.2.3) sha256=2ce34c17c144e24d966ecb0efa5d46aaba3e3e3721ba1faa1ed80db2389e7b08
   google-apis-gmail_v1 (0.51.0) sha256=cec89406ee645e71697a0eb0237e972df213d4dde86a772b05979175c48a6d11
   google-apis-sheets_v4 (0.47.0) sha256=18b38419ea7365867af14a6cd4ad3000c1b4804fceb34417f98c8d303d097238
