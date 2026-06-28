@@ -9,10 +9,10 @@ module R3x
         @registry = registry
       end
 
-      def run(path, dry_run: nil, skip_cache: false)
+      def run(path, dry_run: nil, skip_cache: false, wait: true)
         with_run_env(dry_run:, skip_cache:) do
           stdout.puts run_message(path, dry_run_explicit: dry_run == true)
-          load_workflow(path).new.perform
+          run_workflow(load_workflow(path), wait:)
         end
       end
 
@@ -46,6 +46,43 @@ module R3x
       private
 
       attr_reader :pack_loader, :registry, :stdout
+
+      def run_workflow(workflow_class, wait:)
+        workflow = workflow_class.new
+
+        loop do
+          return workflow.perform
+        rescue ActiveJob::Continuation::Interrupt
+          # Isolated Continuable steps interrupt so a queue adapter can persist progress
+          # and resume the job later. The local CLI runs in-process, so it carries that
+          # serialized continuation forward itself.
+          max_resumptions = workflow.class.max_resumptions
+
+          if max_resumptions && workflow.resumptions >= max_resumptions
+            raise ActiveJob::Continuation::ResumeLimitError, "Job was resumed a maximum of #{max_resumptions} times"
+          end
+
+          sleep resume_delay_for(workflow) if wait
+          workflow = workflow.class.deserialize(workflow.serialize).tap { it.resumptions += 1 }
+        end
+      end
+
+      def resume_delay_for(workflow)
+        resume_options = workflow.class.resume_options
+
+        if resume_options[:wait_until]
+          return [resume_options[:wait_until].to_f - Time.current.to_f, 0].max
+        end
+
+        return 0 unless resume_options[:wait]
+
+        workflow.send(
+          :determine_delay,
+          seconds_or_duration_or_algorithm: resume_options[:wait],
+          executions: workflow.resumptions + 1,
+          jitter: 0,
+        )
+      end
 
       def load_workflow(path)
         full_path = workflow_file_path(path)

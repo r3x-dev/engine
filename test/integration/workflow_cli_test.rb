@@ -21,6 +21,12 @@ class WorkflowCliTest < ActiveSupport::TestCase
     assert_includes output, "Running with dry run: #{@fixture_path}"
   end
 
+  test "run command accepts skip wait option" do
+    output = run_cli("run --skip-wait #{@fixture_path}")
+
+    assert_includes output, "Running with dry run: #{@fixture_path}"
+  end
+
   test "nonexistent file shows error" do
     output = run_cli("run /nonexistent/path.rb", allow_failure: true)
 
