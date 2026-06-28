@@ -175,6 +175,22 @@ module R3x
           Llm.new(api_key: "unknown-key", config_api_key_attr: "unknown_service_api_key")
         end
       end
+
+      test "configures RubyLLM logger to Rails.logger lazily" do
+        original_logger = RubyLLM.config.logger
+        RubyLLM.configure { |config| config.logger = nil }
+        RubyLLM.instance_variable_set(:@logger, nil)
+
+        begin
+          Llm.new(api_key: "test-key", config_api_key_attr: "gemini_api_key")
+
+          assert_not_nil RubyLLM.config.logger
+          assert_same RubyLLM.config.logger, RubyLLM.logger
+        ensure
+          RubyLLM.configure { |config| config.logger = original_logger }
+          RubyLLM.instance_variable_set(:@logger, nil)
+        end
+      end
     end
   end
 end
