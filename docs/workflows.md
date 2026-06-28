@@ -220,47 +220,8 @@ bin/workflow run --dry-run workflows/porto_santo_news/workflow.rb
 
 ## Testing Workflows
 
-Workflow packs can have their own Minitest tests next to the workflow code:
+Do NOT write tests for workflows under `workflows/` unless explicitly required! Workflows should be simple scripts containing minimal logic, relying on standard framework helpers and dry-run policies. For now, test workflows manually after writing them (e.g. using `bin/workflow run`).
 
-```text
-workflows/
-  example_digest/
-    workflow.rb
-    test/
-      workflow_test.rb
-```
-
-Pack-local tests should require the Rails environment and the workflow file, then instantiate the
-workflow directly. Use small fakes for workflow clients so tests verify behavior without calling
-external services.
-
-```ruby
-#!/usr/bin/env ruby
-
-require "bundler/setup"
-require "minitest/autorun"
-require_relative "../../../config/environment"
-require_relative "../workflow"
-
-class ExampleDigestTest < Minitest::Test
-  def test_declares_schedule_trigger
-    schedule = Workflows::ExampleDigest.triggers.find(&:cron_schedulable?)
-
-    assert schedule
-    assert_equal "0 8 * * *", schedule.cron
-  end
-end
-```
-
-Run a pack-local test directly:
-
-```bash
-ruby workflows/<workflow_name>/test/workflow_test.rb
-```
-
-Use Minitest for workflow tests. Prefer real parsing and transformation code with fake client
-boundaries over stubbing the whole workflow. A useful test should fail if the workflow stops
-filtering, deduplicating, rendering, or delivering the expected thing.
 
 ## Local Secret Parity With Vault
 
