@@ -1,0 +1,22 @@
+module R3x
+  module Client
+    class VictoriaLogs
+      DEFAULT_URL_ENV: String
+      DEFAULT_TIMEOUT: String
+
+      def self.configured?: () -> bool
+
+      def initialize: (?url_env: String url_env) -> void
+      def query: (query: String query, ?start_at: untyped start_at, ?end_at: untyped end_at, ?limit: Integer limit, ?timeout: String timeout) -> Array[Hash[String, untyped]]
+
+      private
+      attr_reader client: untyped
+      attr_reader base_url: String
+
+      def query_params: (query: String query, start_at: untyped start_at, end_at: untyped end_at, limit: Integer limit, timeout: String timeout) -> Hash[String, untyped]
+      def sort_query: (String query) -> String
+      def format_time: (untyped value) -> String?
+      def parse_json_lines: (untyped body) -> Array[Hash[String, untyped]]
+    end
+  end
+end

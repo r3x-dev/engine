@@ -1,0 +1,22 @@
+module R3x
+  module Client
+    class WordPress
+      API_PATH: String
+
+      def initialize: (url: String url) -> void
+
+      def posts: (?per_page: Integer per_page, **untyped params) -> untyped
+
+      def post: (Integer | String id) -> untyped
+
+      def pages: (?per_page: Integer per_page, **untyped params) -> untyped
+
+      def page: (Integer | String id) -> untyped
+
+      private
+      attr_reader base_url: String
+
+      def get: (String path, **untyped params) -> untyped
+    end
+  end
+end

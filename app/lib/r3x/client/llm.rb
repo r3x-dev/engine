@@ -6,8 +6,8 @@ module R3x
       MAX_RETRIES = 3
       RETRY_INTERVAL = 60.0
       RETRY_BACKOFF_FACTOR = 2
-      DEFAULT_CHAT_OPTIONS = {}.freeze
-      CHAT_OPTIONS_BY_PROVIDER = {} # rubocop:disable Style/MutableConstant
+      DEFAULT_CHAT_OPTIONS = Hash.new.freeze
+      CHAT_OPTIONS_BY_PROVIDER = Hash.new
       CHAT_OPTIONS_BY_PROVIDER_MUTEX = Mutex.new
 
       class << self

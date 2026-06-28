@@ -7,7 +7,7 @@ module R3x
       DEFAULT_TIMEOUT = "5s".freeze
 
       def self.configured?
-        R3x::Env.fetch(DEFAULT_URL_ENV).present?
+        R3x::Env.present?(DEFAULT_URL_ENV)
       end
 
       def initialize(url_env: DEFAULT_URL_ENV)

@@ -72,6 +72,10 @@ group :development, :test do
   gem "rubocop-minitest", require: false
   gem "rubocop-thread_safety", "~> 0.7.3", require: false
 
+  # Narrow static type-checking spike for workflow-facing API contracts.
+  gem "rbs", require: false
+  gem "steep", require: false
+
   # Auto-load environment variables from .env file
   gem "dotenv-rails", require: false
 end

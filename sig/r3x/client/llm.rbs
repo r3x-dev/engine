@@ -1,0 +1,37 @@
+module R3x
+  module Client
+    class Llm
+      MAX_RETRIES: Integer
+      RETRY_INTERVAL: Float
+      RETRY_BACKOFF_FACTOR: Integer
+      DEFAULT_CHAT_OPTIONS: Hash[Symbol, untyped]
+      CHAT_OPTIONS_BY_PROVIDER: Hash[Symbol, Hash[Symbol, untyped]]
+      CHAT_OPTIONS_BY_PROVIDER_MUTEX: Mutex
+
+      def self.chat_options_for: (Symbol provider) -> Hash[Symbol, untyped]
+
+      def self.build_chat_options_for: (Symbol provider) -> Hash[Symbol, untyped]
+
+      def initialize: (
+        api_key: String api_key,
+        config_api_key_attr: String config_api_key_attr,
+        ?max_retries: Integer? max_retries,
+        ?retry_interval: Numeric? retry_interval,
+        ?retry_backoff_factor: Numeric? retry_backoff_factor
+      ) -> void
+
+      def analyze_image: (String image_bytes, prompt: String prompt, model: String model, ?schema: untyped schema) -> untyped
+
+      def message: (model: String model, prompt: String prompt, ?schema: untyped schema) -> untyped
+
+      def classify: (text: String text, model: String model, categories: Hash[String, String] categories, ?include_reason: bool include_reason, ?allow_other: bool allow_other) -> untyped
+
+      private
+
+      attr_reader llm_context: untyped
+      attr_reader chat_options: Hash[Symbol, untyped]
+
+      def ask_model: (model: String model, prompt: String prompt, schema: untyped schema, ?attachments: untyped attachments) -> untyped
+    end
+  end
+end

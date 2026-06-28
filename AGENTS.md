@@ -97,11 +97,68 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 
 ## Naming, Zeitwerk, Autoloading
 
-- Do not repeat namespace names in class names: `R3x::Client::Http`, not `R3x::Client::HttpClient`.
-- Follow Zeitwerk path-to-constant mapping exactly. Files, directories, namespaces, and acronyms must align.
-- Do not `require` or `require_relative` files from Rails autoload paths. Just reference the constant. Require only external gems/components that do not auto-require.
-- One class per file. Extract nested classes to files under the parent namespace.
+This repo uses `.githooks/` directory for git hooks. The pre-commit hook runs `bin/ci` which includes `bin/lint-r3x` to verify AGENTS.md references.
 
+## Static Typing
+
+- This repo uses RBS + Steep for static type checks. The current Steep scope is intentionally narrow and starts with the workflow-facing API contract.
+- Run `bin/typecheck` after changing files covered by `Steepfile`.
+- When changing `R3x::Workflow::Context`, `R3x::Workflow::Context::Client`, or `R3x::Client::Http`, update the matching files under `sig/`.
+- When adding a new workflow client method to `R3x::Workflow::Context::Client`, add its RBS signature and any minimal dependency stub needed for `bin/typecheck`.
+- Keep the Steep scope narrow. Do not expand it to the whole Rails app unless explicitly planned.
+- Treat `sig/r3x/client/_stubs.rbs` and `sig/r3x/external_stubs.rbs` as dependency stubs, not source of truth for unchecked implementation details.
+
+## Iterative Design Reviews
+
+- When the user is still reviewing the shape of a refactor or API design, keep the first pass focused on production code only unless they explicitly ask for full follow-through.
+- Do not update tests, fixtures, or RBS signatures for an unaccepted design sketch. Wait until the user accepts the code shape, then synchronize tests and `sig/` files in the follow-up pass.
+- It is still fine to run syntax checks on the touched Ruby files during the sketch phase. Do not treat typecheck failures caused only by intentionally stale RBS as blockers until the user accepts the design.
+
+## JSON
+
+- Prefer `MultiJSON` for JSON parsing and serialization work.
+- Reasoning: it gives the app one consistent JSON abstraction instead of scattering direct `JSON` stdlib usage across the codebase, which makes adapter swaps and shared conventions easier later.
+
+## HTTP
+
+- Prefer `httpx` for outbound HTTP and API integrations in `R3x::Client` code.
+- Reasoning: `httpx` provides native multipart uploads, JSON request/response handling, persistent connections, and built-in retries without the middleware boilerplate that Faraday requires. It reduces client code volume and eliminates thread-unsafe runtime middleware mutation.
+- `Faraday` remains in `Gemfile.lock` as a transitive dependency of `googleauth`, `ruby_llm`, and `google-apis-*`. Do not add new direct Faraday dependencies or use Faraday in internal clients.
+- For small integration clients under `R3x::Client`, build the `httpx` client inside the class instead of injecting a `connection` dependency.
+- Reasoning: these clients are thin integration boundaries, so passing a raw HTTP client through the initializer adds indirection without improving the public interface we actually want to use.
+- Do not use empty `HTTPX.with({})`; call `HTTPX.get/post/...` directly when there are no shared options. When multiple code paths need the same timeout/SSL/options payload for `HTTPX.with`, build that payload once in a small helper and pass it with keyword splat. Use Ruby keyword argument shorthand (`verify_ssl:, timeout:`) when the local variable names match the keyword names. In options helpers, set only the timeout by default and conditionally assign the `ssl` key (e.g. `opts[:ssl] = ... unless verify_ssl`) so the `ssl` option is entirely omitted when SSL verification is enabled.
+- For workflow code that needs repeated HTTP requests in one controlled scope, prefer the block-scoped `ctx.client.persistent_http(...) { |http| ... }` helper over exposing raw `HTTPX.plugin(:persistent)` usage in workflows. Keep persistence opt-in for measured batch/hot paths, not as a default for thin clients.
+- **JSON handling**: When making HTTP requests that send/receive JSON, use `httpx`'s native `json:` option instead of manually serializing with `MultiJSON`. This automatically sets the `Content-Type` header and handles serialization.
+  - **Bad**: `request.body = MultiJSON.generate({"key" => "value"})`
+  - **Good**: `client.post(url, json: { key: "value" })`
+- **Error handling**: `httpx` does not raise on 4xx/5xx by default. Call `.raise_for_status` on the response when the client should fail fast on HTTP errors, matching the previous `Faraday::Error` behavior. Do not hand-roll ordinary HTTP status checks in thin `R3x::Client` wrappers.
+  - **Bad**: `response = client.get(url)` (silently ignores 404/500)
+  - **Bad**: `raise "Request failed: #{response.status}" unless response.status >= 200 && response.status < 300`
+  - **Good**: `response = client.post(url, json: payload).raise_for_status`
+  - Manual error translation is still fine for provider-specific response bodies after the transport status has succeeded, e.g. an API returns `200` with `{ "IsErroredOnProcessing": true }`.
+
+## Naming Conventions
+
+- When a class is namespaced within a descriptive module (e.g., `R3x::Client`, `R3x::Triggers`), do not repeat the module name in the class name.
+- **Good**: `R3x::Client::Http`, `R3x::Triggers::Schedule`, `R3x::Client::Discord::Webhook`
+- **Bad**: `R3x::Client::HttpClient`, `R3x::Triggers::ScheduleTrigger`
+
+### Zeitwerk & File Structure
+
+- Adhere strictly to Zeitwerk's path-to-constant mapping: file names must match their defined constant exactly (snake_case to CamelCase).
+- **Files**: `app/lib/r3x/client/http.rb` must define `R3x::Client::Http`.
+- **Directories**: Directories represent namespaces. If a file is in `app/models/r3x/`, it must be wrapped in `module R3x`.
+- **Acronyms**: Use standard inflection (e.g., `lib/r3x/env.rb` → `R3x::Env`) unless a custom inflection is explicitly defined in `config/initializers/inflections.rb`.
+- **Validation**: Always ensure the filename and the class/module name are perfectly aligned to avoid `NameError` during autoloading.
+- **One class per file**: Extract nested classes to files under the parent namespace directory structure.
+
+### Autoloading
+
+- Everything autoloaded by Rails (paths configured in `autoload_paths`, `autoload_lib`, etc.) is handled by Zeitwerk. You should never need to use `require` or `require_relative` for files within autoloaded paths.
+- **Bad**: `require_relative "../validators/cron"` at the top of a file in `lib/r3x/triggers/`
+- **Good**: Just reference `R3x::Validators::Cron` directly - Zeitwerk will find and load it automatically.
+- The only exception is requiring external gems that don't auto-require their components.
+- **Debugging**: If you get a `NameError` when referencing a class that should exist, it's likely a Zeitwerk autoloading issue (wrong file name, wrong constant name, or missing namespace). Check that file names match constants exactly (snake_case ↔ CamelCase).
 ## Object Design
 
 - Prefer capability-based APIs over branching on symbolic types when behavior can live on the object.

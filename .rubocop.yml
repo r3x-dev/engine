@@ -42,7 +42,7 @@ Style/ItBlockParameter:
   EnforcedStyle: allow_single_line
 
 Style/EmptyLiteral:
-  Enabled: true
+  Enabled: false
 
 Style/BlockDelimiters:
   Enabled: true
@@ -50,7 +50,6 @@ Style/BlockDelimiters:
 
 Style/TrivialAccessors:
   Enabled: true
-
 Layout/LineLength:
   Enabled: true
   Max: 140

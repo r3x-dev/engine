@@ -20,7 +20,7 @@ module R3x
         private
 
         def httpx_options(verify_ssl:, timeout:)
-          opts = {}
+          opts = Hash.new
           opts[:timeout] = { operation_timeout: timeout } if timeout
           opts[:ssl] = { verify_mode: OpenSSL::SSL::VERIFY_NONE } unless verify_ssl
           opts
