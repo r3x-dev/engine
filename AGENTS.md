@@ -170,6 +170,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Prefer expressive stdlib methods (`values_at`, `slice`, `filter_map`, `each_with_object`, `sum`, `tally`) over verbose manual loops when they make intent clearer.
 - For conditional hash keys, build a base hash, assign optional keys, and return it. Avoid `Hash#tap`/`merge` for simple conditional key assignment.
 - Method chaining is fine when it makes data flow clearer; introduce locals when the intermediate value is reused or has important meaning.
+- Prefer one-line `tap { it... }` for a single obvious post-construction tweak on the returned object. Use a named block parameter or multiline block when the object role is not obvious, there is more than one mutation, or the block contains branching/side effects that deserve a name.
 - Do not remove existing code comments without explicit user approval.
 
 ## Ruby Version Updates
