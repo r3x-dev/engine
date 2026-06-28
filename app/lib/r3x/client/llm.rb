@@ -3,6 +3,8 @@
 module R3x
   module Client
     class Llm
+      include R3x::Concerns::Logger
+
       MAX_RETRIES = 3
       RETRY_INTERVAL = 60.0
       RETRY_BACKOFF_FACTOR = 2
@@ -38,6 +40,10 @@ module R3x
         retry_backoff_factor: RETRY_BACKOFF_FACTOR
       )
         R3x::GemLoader.require("ruby_llm")
+
+        # Configure RubyLLM with the our logger from R3x::Concerns::Logger
+        RubyLLM.configure { |c| c.logger = logger }
+
         ProviderRegistry.register!
 
         inferred_provider = config_api_key_attr.delete_suffix("_api_key").to_sym
