@@ -43,10 +43,10 @@ Rails.application.configure do
     config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT))
   end
 
-  config.after_initialize { Rails.logger.info { "Log format: #{R3x::Log.format} (set R3X_LOG_FORMAT=json for structured output)" } }
-
   # Change to "debug" to log everything (including potentially personally-identifiable information!).
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+
+  config.after_initialize { Rails.logger.info { "Log format: #{R3x::Log.format}, Log level: #{Rails.configuration.log_level}" } }
 
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
