@@ -189,6 +189,7 @@ bin/workflow info <workflow_key>
 bin/workflow run workflows/<workflow_name>/workflow.rb
 bin/workflow run --dry-run workflows/<workflow_name>/workflow.rb
 bin/workflow run --skip-cache workflows/<workflow_name>/workflow.rb
+bin/workflow run --skip-wait workflows/<workflow_name>/workflow.rb
 ```
 
 For an included workflow in this checkout:
@@ -202,10 +203,14 @@ bin/workflow run --dry-run workflows/porto_santo_news/workflow.rb
 - `run` always takes a direct path to a `workflow.rb` file.
 - In `development` and `test`, `bin/workflow run` defaults to dry-run, so dry-run-aware clients avoid
   real side effects.
+- `run` resumes `ActiveJob::Continuable` interruptions in-process until the workflow completes.
+  For `isolated: true` steps it waits according to the workflow's `resume_options[:wait]`, matching
+  queued execution.
 - `--dry-run` explicitly enables dry-run for that run (`R3X_DRY_RUN=true`).
 - `--no-dry-run` explicitly disables dry-run for that run (`R3X_DRY_RUN=false`), even in
   `development`.
 - `--skip-cache` sets `R3X_SKIP_CACHE=true` for that run and bypasses `with_cache`.
+- `--skip-wait` fast-forwards through local Continuable waits when debugging isolated steps.
 - Use `--dry-run --skip-cache` together when you want a fresh, low-risk local run:
 
   ```bash

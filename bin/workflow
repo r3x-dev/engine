@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 ENV["R3X_RUNTIME_PROFILE"] = "workflow_cli"
 
 require_relative "../config/environment"
@@ -18,10 +20,11 @@ class WorkflowCli < Thor
   desc "run PATH", "Run a workflow from file path"
   option :dry_run, type: :boolean, desc: "Run with global dry run mode (clients skip external side effects)"
   option :skip_cache, type: :boolean, desc: "Run without workflow cache (with_cache blocks execute directly)"
+  option :skip_wait, type: :boolean, desc: "Skip waits between resumable workflow executions"
   option :verbose, type: :boolean, aliases: "-v", desc: "Enable verbose logging (debug level)"
   def execute(path)
     Rails.logger.level = Logger::DEBUG if options[:verbose]
-    cli.run(path, dry_run: options[:dry_run], skip_cache: options[:skip_cache])
+    cli.run(path, dry_run: options[:dry_run], skip_cache: options[:skip_cache], wait: !options[:skip_wait])
   end
 
   desc "list", "List available workflows"

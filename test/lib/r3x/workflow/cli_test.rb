@@ -9,9 +9,11 @@ module R3x
       setup do
         @fixture_dir = Rails.root.join("test/fixtures/workflows")
         @fixture_path = @fixture_dir.join("test_workflow/workflow.rb")
+        @continuable_fixture_path = @fixture_dir.join("continuable_workflow/workflow.rb")
         @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
         ENV["R3X_WORKFLOW_PATHS"] = @fixture_dir.to_s
         R3x::Workflow::PackLoader.load!(rebuild_registry: true)
+        Workflows::ContinuableWorkflow.reset_events!
       end
 
       teardown do
@@ -63,6 +65,61 @@ module R3x
 
         assert_includes output.string, "Running with dry run: #{@fixture_path}"
         assert_equal({ "test" => true, "message" => "Test workflow executed successfully" }, result)
+      end
+
+      test "run resumes continuable workflows until completion" do
+        output = StringIO.new
+        cli = Cli.new(stdout: output)
+        cli.stubs(:sleep)
+
+        result = cli.run(@continuable_fixture_path.to_s)
+
+        assert_equal %w[first second third complete], Workflows::ContinuableWorkflow.events
+        assert_equal({ "events" => %w[first second third] }, result)
+      end
+
+      test "run waits between continuable workflow resumptions by default" do
+        output = StringIO.new
+        cli = Cli.new(stdout: output)
+        cli.expects(:sleep).twice.with(2.minutes.to_i)
+
+        cli.run(@continuable_fixture_path.to_s)
+      end
+
+      test "run supports polynomial wait between continuable workflow resumptions" do
+        original_resume_options = Workflows::ContinuableWorkflow.resume_options
+        Workflows::ContinuableWorkflow.resume_options = { wait: :polynomially_longer }
+        output = StringIO.new
+        cli = Cli.new(stdout: output)
+        sleeps = sequence("sleeps")
+        cli.expects(:sleep).with(3).in_sequence(sleeps)
+        cli.expects(:sleep).with(18).in_sequence(sleeps)
+
+        cli.run(@continuable_fixture_path.to_s)
+      ensure
+        Workflows::ContinuableWorkflow.resume_options = original_resume_options
+      end
+
+      test "run supports wait until between continuable workflow resumptions" do
+        original_resume_options = Workflows::ContinuableWorkflow.resume_options
+        travel_to Time.zone.local(2026, 1, 1, 12) do
+          Workflows::ContinuableWorkflow.resume_options = { wait_until: 30.seconds.from_now }
+          output = StringIO.new
+          cli = Cli.new(stdout: output)
+          cli.expects(:sleep).twice.with(30.0)
+
+          cli.run(@continuable_fixture_path.to_s)
+        end
+      ensure
+        Workflows::ContinuableWorkflow.resume_options = original_resume_options
+      end
+
+      test "run can skip waiting between continuable workflow resumptions" do
+        output = StringIO.new
+        cli = Cli.new(stdout: output)
+        cli.expects(:sleep).never
+
+        cli.run(@continuable_fixture_path.to_s, wait: false)
       end
 
       test "run supports dry run and skip cache messaging without leaking env overrides" do
