@@ -43,7 +43,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - `app/models/dashboard/`: dashboard-facing models over Solid Queue metadata.
 - `app/controllers/r3x/`, `app/views/r3x/dashboard/`, `app/views/layouts/r3x/dashboard.html.erb`: dashboard and HTML surfaces in the API app.
 - `app/jobs/r3x/`, `app/models/r3x/`: runtime support jobs/models.
-- `workflows/`: user workflow packs; pack-local tests live in `workflows/<pack>/test/`.
+- `workflows/`: user workflow packs. Do not write tests for workflows under this folder.
 - `test/fixtures/workflows/`: fixture workflows for framework tests.
 - Third-party Google constants must be referenced as `::Google`; `R3x::Client::Google` is a project namespace.
 
@@ -114,7 +114,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 ## Testing
 
 - Framework tests for workflow DSL/runtime must use generic workflow names or fixtures from `test/fixtures/workflows/`; do not hardcode real `workflows/` classes.
-- Pack-specific tests belong next to the pack in `workflows/<pack>/test/`.
+- Do NOT write tests for user workflow packs under `workflows/` unless explicitly required. For now, test workflows manually after writing them.
 - Bug fixes should follow red/green: write a failing regression test, verify it fails, fix, verify it passes.
 - Use Minitest, fixtures, semantic assertions, and the repo's RuboCop/Minitest conventions.
 - Prefer `assert_predicate`, `assert_empty`, `assert_includes`, `assert_nil`, etc. over generic boolean/equality assertions.
