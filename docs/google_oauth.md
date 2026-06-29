@@ -85,6 +85,30 @@ Checks whether `GOOGLE_CLIENT_ID_<PROJECT>`, `GOOGLE_CLIENT_SECRET_<PROJECT>`, a
 bin/google-oauth status --project MYAPP
 ```
 
+### `bin/google-oauth current-scopes --project <PROJECT>`
+
+Shows the scopes currently granted to the stored refresh token without printing the token itself.
+
+```bash
+bin/google-oauth current-scopes --project MYAPP
+```
+
+### `bin/google-oauth add-scopes --project <PROJECT> --scopes <SCOPES>`
+
+Reads the scopes granted to the stored refresh token, adds the requested aliases, and starts an OAuth flow for a replacement refresh token that preserves the existing grants.
+
+```bash
+bin/google-oauth add-scopes --project MYAPP --scopes gmail.send
+```
+
+### `bin/google-oauth remove-scopes --project <PROJECT> --scopes <SCOPES>`
+
+Reads the scopes granted to the stored refresh token, removes the requested aliases, and starts an OAuth flow for a replacement refresh token.
+
+```bash
+bin/google-oauth remove-scopes --project MYAPP --scopes gmail.readonly
+```
+
 ### `bin/google-oauth scopes`
 
 Lists all supported scope aliases and their full Google OAuth2 scope URLs.
