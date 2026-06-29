@@ -146,6 +146,34 @@ module R3x
         assert_equal 1, result["total"]
       end
 
+      test "category_entries omits status when explicitly nil" do
+        stub_request(:get, "https://miniflux.test/v1/categories/22/entries")
+          .with(
+            query: {
+              "limit"     => "5",
+              "order"     => "published_at",
+              "direction" => "asc",
+            },
+            headers: { "X-Auth-Token" => "api-key" },
+          )
+          .to_return(
+            status: 200,
+            body: MultiJSON.generate("total" => 0, "entries" => []),
+            headers: { "Content-Type" => "application/json" },
+          )
+
+        result = with_client_env do
+          Miniflux.new(url_env: "MINIFLUX_URL", api_key_env: "MINIFLUX_API_KEY").category_entries(
+            category_id: 22,
+            status: nil,
+            limit: 5,
+            direction: "asc",
+          )
+        end
+
+        assert_equal 0, result["total"]
+      end
+
       test "entries supports passing arbitrary custom query filters" do
         stub_entries_request("/v1/entries", query: {
           "status"    => "unread",
@@ -197,6 +225,47 @@ module R3x
         end
 
         assert result
+      end
+
+      test "update_entries sends selected ids and status" do
+        delivered = nil
+        stub_request(:put, "https://miniflux.test/v1/entries")
+          .with(headers: { "X-Auth-Token" => "api-key" })
+          .to_return do |request|
+            delivered = MultiJSON.parse(request.body)
+
+            { status: 204 }
+          end
+
+        result = with_client_env do
+          Miniflux.new(url_env: "MINIFLUX_URL", api_key_env: "MINIFLUX_API_KEY")
+            .update_entries(entry_ids: ["123", 456], status: "read")
+        end
+
+        assert result
+        assert_equal({ "entry_ids" => [123, 456], "status" => "read" }, delivered)
+      end
+
+      test "update_entries rejects empty ids" do
+        error = assert_raises(ArgumentError) do
+          with_client_env do
+            Miniflux.new(url_env: "MINIFLUX_URL", api_key_env: "MINIFLUX_API_KEY")
+              .update_entries(entry_ids: [], status: "read")
+          end
+        end
+
+        assert_equal "entry_ids must not be empty", error.message
+      end
+
+      test "update_entries requires an update" do
+        error = assert_raises(ArgumentError) do
+          with_client_env do
+            Miniflux.new(url_env: "MINIFLUX_URL", api_key_env: "MINIFLUX_API_KEY")
+              .update_entries(entry_ids: [123])
+          end
+        end
+
+        assert_equal "status or starred is required", error.message
       end
 
       test "context client builds miniflux client" do
