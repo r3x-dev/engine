@@ -55,6 +55,29 @@ module R3x
           end
         end
 
+        test "deliver sends multipart alternative message with html body" do
+          service = FakeGmailService.new
+
+          with_env("R3X_GMAIL_DRY_RUN" => "false") do
+            R3x::Client::GoogleAuth.require_gmail!
+            R3x::Client::GoogleAuth.stubs(:from_env).returns(Object.new)
+            ::Google::Apis::GmailV1::GmailService.stubs(:new).returns(service)
+
+            Gmail.new(project: "TEST_APP").deliver(
+              to: "recipient@example.com",
+              subject: "Hello",
+              body: "Plain body",
+              html_body: "<p><a href=\"https://example.test\">HTML body</a></p>",
+            )
+
+            message = Mail.read_from_string(service.delivered_message.raw)
+
+            assert_predicate message, :multipart?
+            assert_equal "Plain body", message.text_part.decoded
+            assert_includes message.html_part.decoded, "<a href=\"https://example.test\">HTML body</a>"
+          end
+        end
+
         private
 
         def with_env(hash)
