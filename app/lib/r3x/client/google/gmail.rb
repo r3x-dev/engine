@@ -10,16 +10,16 @@ module R3x
           @project = project
         end
 
-        def deliver(to:, subject:, body:, attachments: [])
+        def deliver(to:, subject:, body:, html_body: nil, attachments: [])
           if R3x::Policy.dry_run_for(:gmail)
-            logger.info "[DRY-RUN]: \nto: #{to}\nsubject: #{subject}\nbody: #{body}"
+            logger.info "[DRY-RUN]: \nto: #{to}\nsubject: #{subject}\nbody: #{html_body.presence || body}"
 
             return { "mode" => "dry_run" }
           end
 
           result = build_service.send_user_message(
             "me", # The user's email address. The special value `me` can be used to indicate the
-            ::Google::Apis::GmailV1::Message.new(raw: raw_message(to:, subject:, body:, attachments:)),
+            ::Google::Apis::GmailV1::Message.new(raw: raw_message(to:, subject:, body:, html_body:, attachments:)),
           )
 
           {
@@ -38,7 +38,7 @@ module R3x
           ::Google::Apis::GmailV1::GmailService.new.tap { |service| service.authorization = R3x::Client::GoogleAuth.from_env(project:, scope: "gmail.send") }
         end
 
-        def raw_message(to:, subject:, body:, attachments: [])
+        def raw_message(to:, subject:, body:, html_body: nil, attachments: [])
           R3x::GemLoader.require("mail")
 
           Mail.new.tap do |mail|
@@ -46,13 +46,25 @@ module R3x
             mail.to = to
             mail.subject = subject
 
-            if attachments.any?
-              mail.text_part = Mail::Part.new { it.body = body }
-
-              attachments.each { |attachment| mail.add_file(filename: attachment[:filename], content: attachment[:content]) }
+            if html_body.present?
+              mail.text_part = Mail::Part.new do |part|
+                part.content_type = "text/plain; charset=UTF-8"
+                part.body = body
+              end
+              mail.html_part = Mail::Part.new do |part|
+                part.content_type = "text/html; charset=UTF-8"
+                part.body = html_body
+              end
+            elsif attachments.any?
+              mail.text_part = Mail::Part.new do |part|
+                part.content_type = "text/plain; charset=UTF-8"
+                part.body = body
+              end
             else
               mail.body = body
             end
+
+            attachments.each { |attachment| mail.add_file(filename: attachment[:filename], content: attachment[:content]) }
           end.to_s
         end
       end
