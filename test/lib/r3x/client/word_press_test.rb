@@ -25,6 +25,12 @@ module R3x
         assert_equal "https://wordpress.test", client.send(:base_url)
       end
 
+      test "raises ArgumentError when api_path is blank" do
+        assert_raises(ArgumentError) do
+          WordPress.new(url: "https://wordpress.test", api_path: "")
+        end
+      end
+
       test "posts fetches posts with default per_page" do
         stub_request(:get, "https://wordpress.test/wp-json/wp/v2/posts")
           .with(query: { "per_page" => "10" })
@@ -54,6 +60,29 @@ module R3x
         result = client.posts(per_page: 5, categories: 2)
 
         assert_empty result
+      end
+
+      test "get fetches custom endpoint under custom api path" do
+        stub_request(:get, "https://wordpress.test/wp-json/obs/v5/items/url/https%3A%2F%2Fwordpress.test%2Fstory")
+          .with(
+            query: { "include" => "body" },
+            headers: { "Accept" => "*/*", "User-Agent" => "Observador/4.11.2 Android" },
+          )
+          .to_return(
+            status: 200,
+            body: MultiJSON.generate("content" => "Story body"),
+            headers: { "Content-Type" => "application/json" },
+          )
+
+        client = WordPress.new(
+          url: "https://wordpress.test/",
+          api_path: "/wp-json/obs/v5/",
+          user_agent: "Observador/4.11.2 Android",
+          headers: { "Accept" => "*/*", "User-Agent" => "Ignored" },
+        )
+        result = client.get("/items/url/https%3A%2F%2Fwordpress.test%2Fstory", include: "body")
+
+        assert_equal "Story body", result["content"]
       end
 
       test "post fetches a single post" do
@@ -107,6 +136,25 @@ module R3x
 
         assert_instance_of WordPress, client
         assert_equal "https://wordpress.test", client.send(:base_url)
+      end
+
+      test "context client passes wordpress options" do
+        stub_request(:get, "https://wordpress.test/api/custom/items")
+          .with(headers: { "Accept" => "*/*", "User-Agent" => "Custom agent" })
+          .to_return(
+            status: 200,
+            body: MultiJSON.generate("ok" => true),
+            headers: { "Content-Type" => "application/json" },
+          )
+
+        client = R3x::Workflow::Context::Client.wordpress(
+          url: "https://wordpress.test",
+          api_path: "api/custom",
+          user_agent: "Custom agent",
+          headers: { "Accept" => "*/*" },
+        )
+
+        assert client.get("items")["ok"]
       end
     end
   end

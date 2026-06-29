@@ -64,8 +64,8 @@ module R3x
           R3x::Client::Miniflux.new(url_env:, api_key_env:)
         end
 
-        def wordpress(url:)
-          R3x::Client::WordPress.new(url:)
+        def wordpress(url:, api_path: R3x::Client::WordPress::API_PATH, user_agent: nil, headers: {})
+          R3x::Client::WordPress.new(url:, api_path:, user_agent:, headers:)
         end
 
         def discord(webhook_url_env: R3x::Client::Discord::DEFAULT_WEBHOOK_URL_ENV)
