@@ -42,16 +42,31 @@ module R3x
         put("/v1/categories/#{Integer(category_id)}/mark-all-as-read")
       end
 
+      # PUT /v1/entries
+      # See https://miniflux.app/docs/api.html#endpoint-update-entries
+      def update_entries(entry_ids:, status: nil, starred: nil)
+        ids = Array(entry_ids).map { |id| Integer(id) }
+        raise ArgumentError, "entry_ids must not be empty" if ids.empty?
+        raise ArgumentError, "status or starred is required" if status.nil? && starred.nil?
+
+        payload = { entry_ids: ids }
+        payload[:status] = status if status.present?
+        payload[:starred] = starred unless starred.nil?
+
+        put("/v1/entries", json: payload)
+      end
+
       private
 
       attr_reader :base_url, :api_key
 
       def get(path, **params)
-        connection.get("#{base_url}#{path}", params:).raise_for_status.json
+        connection.get("#{base_url}#{path}", params: params.compact).raise_for_status.json
       end
 
-      def put(path)
-        connection.put("#{base_url}#{path}").raise_for_status
+      def put(path, json: nil)
+        response = json.nil? ? connection.put("#{base_url}#{path}") : connection.put("#{base_url}#{path}", json:)
+        response.raise_for_status
         true
       end
 
