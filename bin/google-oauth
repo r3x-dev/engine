@@ -13,112 +13,54 @@ class GoogleOAuthCLI < Thor
   option :project, type: :string, aliases: "-p", required: true, desc: "Project name (e.g. MYAPP)"
   option :scopes, type: :string, aliases: "-s", desc: "Comma-separated scope aliases (optional - will prompt if not provided)"
   def authorize
-    project = options[:project]
+    project = option_value(:project)
 
-    step("[Step 1] Loading client credentials...")
+    authorize_project(project:) { option_value(:scopes)&.strip&.presence || interactive_scope_selection }
+  end
 
-    client_id = fetch_env!("GOOGLE_CLIENT_ID_#{project}")
-    success("Found GOOGLE_CLIENT_ID_#{project}")
-
-    client_secret = fetch_env!("GOOGLE_CLIENT_SECRET_#{project}")
-    success("Found GOOGLE_CLIENT_SECRET_#{project}")
-
-    scope_aliases = if options[:scopes]&.strip&.present?
-      options[:scopes]
-    else
-      interactive_scope_selection
-    end
-
-    scopes = scope_aliases.split(",").map(&:strip).map do |s|
-      R3x::Client::GoogleAuth.resolve_scope(s)
-    end
+  desc "add-scopes", "Authorize a replacement refresh token with extra scopes"
+  option :project, type: :string, aliases: "-p", required: true, desc: "Project name (e.g. MYAPP)"
+  option :scopes, type: :string, aliases: "-s", required: true, desc: "Comma-separated scope aliases to add"
+  def add_scopes
+    project = option_value(:project)
+    current = scope_names_for(current_scope_values(project))
+    additions = option_value(:scopes).split(",").map(&:strip).reject(&:blank?)
+    scope_aliases = (current + additions).uniq.join(",")
 
     puts ""
-    puts "=== Google OAuth2 Authorization ==="
-    puts ""
-    puts "Project: #{project}"
-    puts "Scopes:  #{scopes.join(', ')}"
+    puts "Current scopes: #{current.join(', ')}"
+    puts "Adding scopes:  #{additions.join(', ')}"
+    puts "Final scopes:   #{scope_aliases}"
 
-    step("[Step 2] Generating authorization URL...")
+    authorize_project(project:, scope_aliases:)
+  end
 
-    auth_client = Signet::OAuth2::Client.new(
-      client_id:     client_id,
-      client_secret: client_secret,
-      redirect_uri:  "http://localhost",
-      scope:         scopes,
-      authorization_uri: "https://accounts.google.com/o/oauth2/auth"
-    )
+  desc "remove-scopes", "Authorize a replacement refresh token without selected scopes"
+  option :project, type: :string, aliases: "-p", required: true, desc: "Project name (e.g. MYAPP)"
+  option :scopes, type: :string, aliases: "-s", required: true, desc: "Comma-separated scope aliases to remove"
+  def remove_scopes
+    project = option_value(:project)
+    current = scope_names_for(current_scope_values(project))
+    removals = option_value(:scopes).split(",").map(&:strip).reject(&:blank?)
+    scope_aliases = (current - removals).join(",")
 
-    auth_url = auth_client.authorization_uri.to_s
-
-    puts ""
-    puts "  Open this URL in your browser:"
-    puts ""
-    puts "  #{auth_url}"
-
-    step("[Step 3] After granting access...")
-    puts "  Google will redirect to a URL like:"
-    puts "    http://localhost/?code=4/0AX4XfWh..."
-    puts ""
-    puts "  The browser may show a connection error — that's expected."
-    puts "  Copy the full redirect URL from the browser address bar."
-
-    puts ""
-    print "  Paste the redirect URL: "
-    redirect_url = $stdin.gets&.chomp
-
-    if redirect_url.nil? || redirect_url.strip.empty?
-      puts ""
-      failure("No URL provided — aborting")
+    if scope_aliases.blank?
+      failure("Removing those scopes would leave no scopes to authorize")
       abort
     end
 
-    code = extract_code_from_url(redirect_url.strip)
-
-    step("[Step 4] Exchanging code for tokens...")
-
-    token_client = Signet::OAuth2::Client.new(
-      client_id:     client_id,
-      client_secret: client_secret,
-      redirect_uri:  "http://localhost",
-      code:          code,
-      token_credential_uri: "https://oauth2.googleapis.com/token"
-    )
-
-    begin
-      token_client.fetch_access_token!
-    rescue Signet::AuthorizationError => e
-      failure("Token exchange failed: #{e.message}")
-      puts ""
-      puts "  Make sure you copied the full authorization code."
-      puts "  Re-run this command to try again."
-      abort
-    rescue StandardError => e
-      failure("Unexpected error: #{e.class} — #{e.message}")
-      abort
-    end
-
-    success("Access token obtained")
-
-    refresh_token = token_client.refresh_token
-
-    step("[Step 5] Store the refresh token in Vault")
-    vault_key = "GOOGLE_REFRESH_TOKEN_#{project}"
     puts ""
-    puts "  Vault key: #{vault_key}"
-    puts ""
-    puts "  #{refresh_token}"
-    puts ""
-    puts "  Run:"
-    puts "  vault kv put secret/data/env/r3x #{vault_key}='#{refresh_token}'"
-    puts ""
-    puts "Done! Test with: bin/google-oauth status --project #{project}"
+    puts "Current scopes:  #{current.join(', ')}"
+    puts "Removing scopes: #{removals.join(', ')}"
+    puts "Final scopes:    #{scope_aliases}"
+
+    authorize_project(project:, scope_aliases:)
   end
 
   desc "status", "Check credential status for a project"
   option :project, type: :string, aliases: "-p", required: true, desc: "Project name (e.g. MYAPP)"
   def status
-    project = options[:project]
+    project = option_value(:project)
 
     puts ""
     puts "=== Google OAuth2 Status ==="
@@ -152,8 +94,8 @@ class GoogleOAuthCLI < Thor
 
     begin
       R3x::Client::GoogleAuth.from_env(
-        project: project,
-        scope: "https://www.googleapis.com/auth/spreadsheets.readonly"
+        project:,
+        scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
       )
       success("Token valid — access token obtained")
     rescue Signet::AuthorizationError => e
@@ -178,7 +120,7 @@ class GoogleOAuthCLI < Thor
   def scopes
     puts ""
     puts "Available scope aliases:"
-    R3x::Client::GoogleAuth.scope_aliases.each do |alias_name, const_name|
+    R3x::Client::GoogleAuth.scope_aliases.each_key do |alias_name|
       scope = R3x::Client::GoogleAuth.resolve_scope(alias_name)
       puts "  %-24s %s" % [alias_name, scope]
     end
@@ -186,7 +128,137 @@ class GoogleOAuthCLI < Thor
     puts "Example: --scopes gmail.readonly,sheets.readonly"
   end
 
+  desc "current-scopes", "Show scopes granted to the stored refresh token"
+  option :project, type: :string, aliases: "-p", required: true, desc: "Project name (e.g. MYAPP)"
+  def current_scopes
+    project = option_value(:project)
+
+    puts ""
+    puts "=== Google OAuth2 Current Scopes ==="
+    puts ""
+    puts "Project: #{project}"
+
+    scope_values = current_scope_values(project)
+
+    success("Granted scopes:")
+    scope_values.each { |scope| puts "  #{scope}" }
+
+    alias_names = scope_names_for(scope_values)
+    return if alias_names.empty?
+
+    puts ""
+    puts "Matching aliases:"
+    alias_names.each { |alias_name| puts "  #{alias_name}" }
+  rescue Signet::AuthorizationError => e
+    failure("Token invalid: #{e.class} — #{e.message}")
+    abort
+  rescue HTTPX::HTTPError => e
+    failure("Token info request failed: #{e.message}")
+    abort
+  end
+
   private
+
+  def authorize_project(project:, scope_aliases: nil)
+    step("[Step 1] Loading client credentials...")
+
+    client_id = fetch_env!("GOOGLE_CLIENT_ID_#{project}")
+    success("Found GOOGLE_CLIENT_ID_#{project}")
+
+    client_secret = fetch_env!("GOOGLE_CLIENT_SECRET_#{project}")
+    success("Found GOOGLE_CLIENT_SECRET_#{project}")
+
+    scope_aliases ||= yield
+
+    scopes = scope_aliases.split(",").map(&:strip).map do |s|
+      R3x::Client::GoogleAuth.resolve_scope(s)
+    end
+
+    puts ""
+    puts "=== Google OAuth2 Authorization ==="
+    puts ""
+    puts "Project: #{project}"
+    puts "Scopes:  #{scopes.join(', ')}"
+
+    step("[Step 2] Generating authorization URL...")
+
+    auth_client = Signet::OAuth2::Client.new(
+      client_id:,
+      client_secret:,
+      redirect_uri: "http://localhost",
+      scope: scopes,
+      authorization_uri: "https://accounts.google.com/o/oauth2/auth",
+    )
+
+    auth_url = auth_client.authorization_uri.to_s
+
+    puts ""
+    puts "  Open this URL in your browser:"
+    puts ""
+    puts "  #{auth_url}"
+
+    step("[Step 3] After granting access...")
+    puts "  Google will redirect to a URL like:"
+    puts "    http://localhost/?code=4/0AX4XfWh..."
+    puts ""
+    puts "  The browser may show a connection error — that's expected."
+    puts "  Copy the full redirect URL from the browser address bar."
+
+    puts ""
+    print "  Paste the redirect URL: "
+    redirect_url = $stdin.gets&.chomp
+
+    if redirect_url.nil? || redirect_url.strip.empty?
+      puts ""
+      failure("No URL provided — aborting")
+      abort
+    end
+
+    code = extract_code_from_url(redirect_url.strip)
+
+    step("[Step 4] Exchanging code for tokens...")
+
+    token_client = Signet::OAuth2::Client.new(
+      client_id:,
+      client_secret:,
+      redirect_uri: "http://localhost",
+      code:,
+      token_credential_uri: "https://oauth2.googleapis.com/token",
+    )
+
+    begin
+      token_client.fetch_access_token!
+    rescue Signet::AuthorizationError => e
+      failure("Token exchange failed: #{e.message}")
+      puts ""
+      puts "  Make sure you copied the full authorization code."
+      puts "  Re-run this command to try again."
+      abort
+    rescue StandardError => e
+      failure("Unexpected error: #{e.class} — #{e.message}")
+      abort
+    end
+
+    success("Access token obtained")
+
+    refresh_token = token_client.refresh_token
+
+    step("[Step 5] Store the refresh token in Vault")
+    vault_key = "GOOGLE_REFRESH_TOKEN_#{project}"
+    puts ""
+    puts "  Vault key: #{vault_key}"
+    puts ""
+    puts "  #{refresh_token}"
+    puts ""
+    puts "  Run:"
+    puts "  vault kv put secret/data/env/r3x #{vault_key}='#{refresh_token}'"
+    puts ""
+    puts "Done! Test with: bin/google-oauth status --project #{project}"
+  end
+
+  def option_value(name)
+    options[name] || options[name.to_s]
+  end
 
   def checkmark
     "  \e[32m✓\e[0m"
@@ -236,6 +308,41 @@ class GoogleOAuthCLI < Thor
     end
   end
 
+  def current_scope_values(project)
+    step("[Step 1] Loading stored credentials...")
+
+    token_client = Signet::OAuth2::Client.new(
+      client_id: fetch_env!("GOOGLE_CLIENT_ID_#{project}"),
+      client_secret: fetch_env!("GOOGLE_CLIENT_SECRET_#{project}"),
+      refresh_token: fetch_env!("GOOGLE_REFRESH_TOKEN_#{project}"),
+      token_credential_uri: "https://oauth2.googleapis.com/token",
+    )
+
+    step("[Step 2] Fetching access token from refresh token...")
+
+    token_client.fetch_access_token!
+
+    step("[Step 3] Reading token info...")
+
+    token_info = HTTPX.get(
+      "https://oauth2.googleapis.com/tokeninfo",
+      params: { access_token: token_client.access_token },
+    ).raise_for_status.json
+
+    token_info.fetch("scope", "").split.sort.presence || begin
+      failure("No scopes reported by tokeninfo")
+      abort
+    end
+  end
+
+  def scope_names_for(scopes)
+    scopes.map do |scope|
+      R3x::Client::GoogleAuth.scope_aliases.keys.find do |alias_name|
+        R3x::Client::GoogleAuth.resolve_scope(alias_name) == scope
+      end || scope
+    end
+  end
+
   def interactive_scope_selection
     require "highline"
 
@@ -259,26 +366,26 @@ class GoogleOAuthCLI < Thor
       puts "Available scopes (selected: #{selected_aliases.size}):"
       puts ""
 
-        choice = cli.choose do |menu|
-          menu.prompt = "Select a scope (or 'done' to finish): "
+      choice = cli.choose do |menu|
+        menu.prompt = "Select a scope (or 'done' to finish): "
 
-          remaining.each do |alias_name|
-            scope = R3x::Client::GoogleAuth.resolve_scope(alias_name)
-            menu.choice("#{alias_name} (#{scope})") { alias_name }
-          end
-
-          menu.choice(:all) { :all }
-          menu.choice(:done) { nil }
+        remaining.each do |alias_name|
+          scope = R3x::Client::GoogleAuth.resolve_scope(alias_name)
+          menu.choice("#{alias_name} (#{scope})") { alias_name }
         end
 
-        break if choice.nil? || choice == :done
+        menu.choice(:all) { :all }
+        menu.choice(:done) { nil }
+      end
 
-        if choice == :all
-          selected_aliases.concat(remaining)
-          break
-        end
+      break if choice.nil? || choice == :done
 
-        selected_aliases << choice
+      if choice == :all
+        selected_aliases.concat(remaining)
+        break
+      end
+
+      selected_aliases << choice
       puts "  ✓ Added: #{choice}"
       puts ""
 
