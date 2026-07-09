@@ -165,6 +165,7 @@ makes every commit green but slows down local commit shaping.
 
 ## Notes
 
+- **Agent Skills:** When installing or updating agent skills using `npx skills add` (e.g. `thoughtbot/rails-audit-thoughtbot`), be aware of a known CLI bug (issue #1517) where skills with `SKILL.md` at the repository root are "collapsed", stripping sibling directories (`agents/`, `references/`). Workaround: manually clone the repository using `git clone <repo> .agents/skills/<name>`.
 - Prefer direct fixes over new cops or enforcement machinery unless the same
   drift repeats.
 - Keep behavior changes and mechanical/style cleanup in separate commits.
