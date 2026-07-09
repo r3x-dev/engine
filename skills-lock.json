@@ -30,6 +30,12 @@
       "skillPath": "skills/open-pr/SKILL.md",
       "computedHash": "f79fdc14a6bbb5e4d0158a659b75a4ec2b0993d60c932e72dc683c4163f578ed"
     },
+    "rails-audit-thoughtbot": {
+      "source": "thoughtbot/rails-audit-thoughtbot",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "341c6954c1c353917521ba7fc0d01772082d1e0d24e5a5d782eb3c215802ab41"
+    },
     "rebase": {
       "source": "raine/workmux",
       "sourceType": "github",
