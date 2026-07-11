@@ -68,9 +68,15 @@ module R3x
         webhook_url = "https://discord.test/webhook"
 
         with_env("R3X_DISCORD_DRY_RUN" => "true", "DISCORD_WEBHOOK_URL_TEST" => webhook_url) do
-          result = Discord.new(webhook_url_env: "DISCORD_WEBHOOK_URL_TEST").deliver(content: "Hello")
+          result = nil
+          output = capture_logged_output do
+            result = Discord.new(webhook_url_env: "DISCORD_WEBHOOK_URL_TEST").deliver(content: "private message")
+          end
 
           assert_equal({ "mode" => "dry_run" }, result)
+          assert_includes output, "DRY-RUN"
+          assert_includes output, "action=deliver content_length=15"
+          assert_includes output, 'content_preview=\"private message\"'
         end
       end
 
