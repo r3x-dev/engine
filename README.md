@@ -263,8 +263,10 @@ Run the project lint/reference checks with:
 mise exec -- bin/lint-r3x
 ```
 
-This repo uses `.githooks/`; the pre-commit hook runs `bin/ci`, including the `AGENTS.md` reference
-checks.
+This repo uses `.githooks/`; the pre-commit hook formats staged YAML and then runs the full local
+`bin/ci` suite. This is intentional while the suite remains reasonably fast: developers get the
+complete feedback loop before a commit exists, with GitHub Actions providing an independent check.
+See [DHH's local CI reasoning](https://world.hey.com/dhh/we-re-moving-continuous-integration-back-to-developer-machines-3ac6c611).
 
 ## Documentation
 
