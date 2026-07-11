@@ -183,6 +183,7 @@ class GoogleOAuthCLI < Thor
     step("[Step 2] Generating authorization URL...")
 
     auth_client = Signet::OAuth2::Client.new(
+      access_type: :offline,
       client_id:,
       client_secret:,
       redirect_uri: "http://localhost",
@@ -190,7 +191,7 @@ class GoogleOAuthCLI < Thor
       authorization_uri: "https://accounts.google.com/o/oauth2/auth",
     )
 
-    auth_url = auth_client.authorization_uri.to_s
+    auth_url = auth_client.authorization_uri(prompt: "consent").to_s
 
     puts ""
     puts "  Open this URL in your browser:"
@@ -242,6 +243,12 @@ class GoogleOAuthCLI < Thor
     success("Access token obtained")
 
     refresh_token = token_client.refresh_token
+    if refresh_token.blank?
+      failure("Token exchange returned no refresh token")
+      puts ""
+      puts "  Re-run authorization and complete the consent prompt."
+      abort
+    end
 
     step("[Step 5] Store the refresh token in Vault")
     vault_key = "GOOGLE_REFRESH_TOKEN_#{project}"
