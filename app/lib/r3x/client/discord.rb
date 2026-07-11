@@ -15,7 +15,7 @@ module R3x
 
       def deliver(content:)
         if R3x::Policy.dry_run_for(:discord)
-          logger.info "[DRY-RUN]: content: #{content}"
+          logger.info "[DRY-RUN] action=deliver content_length=#{content.to_s.bytesize} content_preview=#{content.to_s.first(200).inspect}"
 
           return { "mode" => "dry_run" }
         end
