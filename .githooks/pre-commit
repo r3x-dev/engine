@@ -9,7 +9,6 @@ if [ -n "$staged_yaml_files" ]; then
   echo "$staged_yaml_files" | tr '\n' '\0' | xargs -0 git add
 fi
 
-
-echo "Running bin/ci..."
+# Intentional project policy while the suite remains fast; see AGENTS.md.
+echo "Running full local CI..."
 bin/ci
-
