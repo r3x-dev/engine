@@ -12,7 +12,13 @@ module R3x
 
         def deliver(to:, subject:, body:, html_body: nil, attachments: [])
           if R3x::Policy.dry_run_for(:gmail)
-            logger.info "[DRY-RUN]: \nto: #{to}\nsubject: #{subject}\nbody: #{html_body.presence || body}"
+            body_preview = (html_body.presence || body).to_s.first(200).inspect
+
+            logger.info(
+              "[DRY-RUN] action=deliver to=#{Array(to).join(',').squish} subject=#{subject.to_s.squish} " \
+                "body_length=#{body.to_s.bytesize} html_body_length=#{html_body.to_s.bytesize} " \
+                "body_preview=#{body_preview} attachments=#{attachments.size}",
+            )
 
             return { "mode" => "dry_run" }
           end

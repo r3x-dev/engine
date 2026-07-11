@@ -45,13 +45,27 @@ module R3x
 
         test "deliver returns dry_run mode without sending when dry run is active" do
           with_env("R3X_GMAIL_DRY_RUN" => "true") do
-            result = Gmail.new(project: "TEST_APP").deliver(
-              to: "recipient@example.com",
-              subject: "Hello",
-              body: "Body",
-            )
+            result = nil
+            output = capture_logged_output do
+              result = Gmail.new(project: "TEST_APP").deliver(
+                to: "recipient@example.com",
+                subject: "Hello",
+                body: "Private plain body",
+                html_body: "<p>Private HTML body</p>",
+                attachments: [{ filename: "report.txt", content: "private attachment" }],
+              )
+            end
 
             assert_equal({ "mode" => "dry_run" }, result)
+            assert_includes output, "DRY-RUN"
+            assert_includes output, "action=deliver"
+            assert_includes output, "to=recipient@example.com"
+            assert_includes output, "subject=Hello"
+            assert_includes output, "body_length=18"
+            assert_includes output, "html_body_length=24"
+            assert_includes output, 'body_preview=\"<p>Private HTML body</p>\"'
+            assert_includes output, "attachments=1"
+            assert_not_includes output, "private attachment"
           end
         end
 
