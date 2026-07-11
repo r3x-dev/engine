@@ -154,21 +154,19 @@ class Dashboard::RunTest < ActiveSupport::TestCase
   end
 
   test "resumptions SQL follows the active database adapter" do
-    assert_includes Dashboard::Run.resumptions_positive_sql, "json_extract"
+    case Dashboard::Run.connection.adapter_name
+    when /sqlite/i
 
-    postgresql_connection = Struct.new(:adapter_name) do
-      def quote_column_name(name)
-        %("#{name}")
-      end
-    end.new("PostgreSQL")
+      assert_includes Dashboard::Run.resumptions_positive_sql, "json_extract"
+    when /postgres/i
 
-    Dashboard::Run.stubs(:connection).returns(postgresql_connection)
-    Dashboard::Run.stubs(:quoted_table_name).returns(%("solid_queue_jobs"))
-
-    assert_equal(
-      %(COALESCE(("solid_queue_jobs"."arguments"::jsonb ->> 'resumptions')::integer, 0) > 0),
-      Dashboard::Run.resumptions_positive_sql,
-    )
+      assert_equal(
+        %(COALESCE(("solid_queue_jobs"."arguments"::jsonb ->> 'resumptions')::integer, 0) > 0),
+        Dashboard::Run.resumptions_positive_sql,
+      )
+    else
+      flunk "Unsupported test database adapter: #{Dashboard::Run.connection.adapter_name}"
+    end
   end
 
   test "normalize_arguments symbolized marked keyword hashes" do

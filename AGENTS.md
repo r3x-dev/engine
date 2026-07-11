@@ -87,6 +87,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Raw SQL must support both SQLite and PostgreSQL unless explicitly adapter-branched.
 - Do not write DB-specific SQL strings directly without an adapter branch and a clear unsupported-adapter error.
 - Prefer DB-side filtering, deduplication, ranking, aggregation, and `UNION` over loading many rows and shaping them in Ruby.
+- Tests use SQLite by default. Set `R3X_TEST_DATABASE_URL` to exercise PostgreSQL; `just test-postgres` provides the local acceptance path, and CI runs both adapters.
 
 ## Env
 
