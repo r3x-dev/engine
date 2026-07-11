@@ -15,6 +15,7 @@ module R3x
       ENV["R3X_WORKFLOW_PATHS"] = @original_workflow_paths
       ENV["R3X_TIMEZONE"] = @original_timezone
       SolidQueue::RecurringTask.dynamic.where("key LIKE 'workflow:test_workflow:%'").delete_all
+      SolidQueue::RecurringTask.dynamic.where("key LIKE 'workflow:audit_probe:%'").delete_all
     end
 
     test "generates recurring tasks from workflow DSL" do
@@ -145,6 +146,24 @@ module R3x
       RecurringTasksConfig.schedule_all!
 
       assert_not SolidQueue::RecurringTask.dynamic.find_by(key: "workflow:test_workflow:stale_trigger")
+    end
+
+    test "load_and_schedule! preserves recurring tasks when a configured workflow path is missing" do
+      task_key = "workflow:audit_probe:schedule:probe"
+      SolidQueue.schedule_recurring_task(
+        task_key,
+        class: R3x::TestSupport::DashboardWorkflowJob.name,
+        args: ["schedule:probe"],
+        schedule: "0 * * * *",
+      )
+      ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("tmp/missing-workflow-catalog").to_s
+
+      error = assert_raises(ArgumentError) do
+        Workflow::Boot.load_and_schedule!
+      end
+
+      assert_includes error.message, "R3X_WORKFLOW_PATHS"
+      assert_predicate SolidQueue::RecurringTask.where(key: task_key), :exists?
     end
 
     test "schedule_all! is idempotent" do

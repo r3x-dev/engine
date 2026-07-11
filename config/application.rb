@@ -67,7 +67,7 @@ module R3x
     else
       config.api_only = true
       config.mission_control.jobs.base_controller_class = "R3x::WebController"
-      server { R3x::Workflow::Entrypoint.boot_server!(rails_env: Rails.env) }
+      server { R3x::Workflow::Entrypoint.boot_server! }
     end
 
     # Configuration for the application, engines, and railties goes here.

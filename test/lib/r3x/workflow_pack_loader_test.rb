@@ -62,6 +62,28 @@ module R3x
       assert_includes output, "Skipping disabled workflow entrypoint"
     end
 
+    test "requires workflow paths" do
+      ENV.delete("R3X_WORKFLOW_PATHS")
+
+      error = assert_raises(ArgumentError) do
+        R3x::Workflow::PackLoader.load!(rebuild_registry: true)
+      end
+
+      assert_equal "Missing R3X_WORKFLOW_PATHS", error.message
+    end
+
+    test "requires at least one workflow entrypoint" do
+      Dir.mktmpdir do |dir|
+        ENV["R3X_WORKFLOW_PATHS"] = dir
+
+        error = assert_raises(ArgumentError) do
+          R3x::Workflow::PackLoader.load!(rebuild_registry: true)
+        end
+
+        assert_equal "R3X_WORKFLOW_PATHS contains no workflow.rb entrypoints", error.message
+      end
+    end
+
     test "rebuild_registry does not reload already required workflow source" do
       Dir.mktmpdir do |dir|
         workflow_dir = File.join(dir, "reload_semantics")

@@ -28,14 +28,14 @@ that show shape only.
 | `JOB_THREADS` | Optional | Solid Queue config, database pool sizing | Worker thread count. Defaults to `3` in queue configs. | `JOB_THREADS=3` |
 | `JOB_CONCURRENCY` | Optional | Solid Queue config | Worker process count. Defaults to `1`. | `JOB_CONCURRENCY=1` |
 | `SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS` | Optional | Production config | Solid Queue graceful shutdown timeout. Defaults to `900`. | `SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS=900` |
-| `SOLID_QUEUE_IN_PUMA` | Optional | Puma, workflow entrypoint | Runs Solid Queue inside Puma when true. Prefer split web, worker, and scheduler processes for production. | `SOLID_QUEUE_IN_PUMA=false` |
+| `SOLID_QUEUE_IN_PUMA` | Command-owned | `bin/web`, Puma, workflow entrypoint | Plain Puma defaults to combined web, Solid Queue, and workflow loading. `bin/web` sets this to `false` for the explicit web-only role; deployment charts should select the command instead of setting this directly. | `SOLID_QUEUE_IN_PUMA=false` |
 
 ## Workflow Runtime
 
 | Name | Required | Used by | Description | Example |
 | --- | --- | --- | --- | --- |
-| `R3X_WORKFLOW_PATHS` | Required for workflow packs | Pack loader, `bin/workflow` | File path list of workflow pack directories. Uses the platform path separator. | `R3X_WORKFLOW_PATHS=/app/workflows` |
-| `R3X_RUNTIME_PROFILE` | Command-owned | `config/runtime_profile.rb`, `bin/jobs-worker`, `bin/jobs-scheduler`, `bin/workflow` | Internal boot profile. Entrypoints set this themselves; deployment charts should not set it directly. | `R3X_RUNTIME_PROFILE=jobs` |
+| `R3X_WORKFLOW_PATHS` | Required for jobs, CLI, and default Puma | Pack loader, `bin/jobs*`, `bin/workflow` | File path list of workflow pack directories. Catalog-dependent boot fails when a configured directory is missing or the catalog contains no `workflow.rb` entrypoints. Explicit web-only Puma does not use it. Uses the platform path separator. | `R3X_WORKFLOW_PATHS=/app/workflows` |
+| `R3X_RUNTIME_PROFILE` | Command-owned | `config/runtime_profile.rb`, `bin/jobs-worker`, `bin/jobs-scheduler`, `bin/workflow` | Internal headless boot profile. Entrypoints set this themselves; deployment charts should not set it directly. The web-only role is selected separately through `bin/web`. | `R3X_RUNTIME_PROFILE=jobs` |
 | `R3X_TIMEZONE` | Optional | Schedule triggers, dashboard helper | Default timezone for cron triggers and dashboard timestamp display when no trigger timezone is embedded. | `R3X_TIMEZONE=Atlantic/Madeira` |
 | `R3X_SKIP_CACHE` | Optional | Workflow CLI, workflow cache policy | Boolean. Bypasses `with_cache`; also required for production use of `with_cache`. | `R3X_SKIP_CACHE=true` |
 | `R3X_DRY_RUN` | Optional | `R3x::Policy` | Boolean global dry-run override. `true` forces dry-run; `false` disables it. In `development` and `test`, dry-run is the default, so set this to `false` for real delivery. | `R3X_DRY_RUN=false` |

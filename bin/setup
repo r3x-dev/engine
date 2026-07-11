@@ -12,6 +12,11 @@ FileUtils.chdir APP_ROOT do
   # This script is idempotent, so that you can run it at any time and get an expectable outcome.
   # Add necessary setup steps to this file.
 
+  unless File.exist?(".env")
+    puts "== Creating .env from .env.example =="
+    FileUtils.cp ".env.example", ".env"
+  end
+
   puts "== Installing dependencies =="
   system("bundle check") || system!("bundle install")
 

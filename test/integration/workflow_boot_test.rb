@@ -6,7 +6,7 @@ require "shellwords"
 require "securerandom"
 
 class WorkflowBootTest < ActiveSupport::TestCase
-  test "server hook loads workflows but does not schedule them when solid queue is out of process" do
+  test "server hook does not load workflows when Puma is web-only" do
     script_path = Rails.root.join("tmp/server_hook_test_#{SecureRandom.hex(4)}.rb")
     idle_marker_path = Rails.root.join("tmp/server_idle_#{SecureRandom.hex(4)}.txt")
     load_marker_path = Rails.root.join("tmp/server_load_#{SecureRandom.hex(4)}.txt")
@@ -14,6 +14,7 @@ class WorkflowBootTest < ActiveSupport::TestCase
     FileUtils.mkdir_p(script_path.dirname)
     File.write(script_path, <<~RUBY)
       require_relative "../config/environment"
+      ENV.delete("R3X_WORKFLOW_PATHS")
 
       module R3x
         module Workflow
@@ -37,18 +38,63 @@ class WorkflowBootTest < ActiveSupport::TestCase
 
     command_output = run_command(
       "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
-      env: { "RAILS_ENV" => "production", "SOLID_QUEUE_IN_PUMA" => nil },
+      env: { "RAILS_ENV" => "production", "SOLID_QUEUE_IN_PUMA" => "false" },
     )
 
     assert_predicate $?, :success?, "server hook command failed: #{command_output}"
     assert_path_exists idle_marker_path, "expected server hook script to finish: #{command_output}"
-    assert_path_exists load_marker_path, "expected server hook to call load!: #{command_output}"
+    refute_path_exists load_marker_path, "expected server hook not to call load!: #{command_output}"
     refute_path_exists unexpected_schedule_marker_path, "expected server hook not to call load_and_schedule!: #{command_output}"
   ensure
     FileUtils.rm_f(script_path) if script_path
     FileUtils.rm_f(idle_marker_path) if idle_marker_path
     FileUtils.rm_f(load_marker_path) if load_marker_path
     FileUtils.rm_f(unexpected_schedule_marker_path) if unexpected_schedule_marker_path
+  end
+
+  test "server hook loads and schedules workflows when Puma uses its default role" do
+    script_path = Rails.root.join("tmp/combined_server_hook_test_#{SecureRandom.hex(4)}.rb")
+    idle_marker_path = Rails.root.join("tmp/combined_server_idle_#{SecureRandom.hex(4)}.txt")
+    load_marker_path = Rails.root.join("tmp/combined_server_unexpected_load_#{SecureRandom.hex(4)}.txt")
+    schedule_marker_path = Rails.root.join("tmp/combined_server_schedule_#{SecureRandom.hex(4)}.txt")
+    FileUtils.mkdir_p(script_path.dirname)
+    File.write(script_path, <<~RUBY)
+      require_relative "../config/environment"
+
+      module R3x
+        module Workflow
+          module Boot
+            class << self
+              def load!(*args, **kwargs)
+                File.write(#{load_marker_path.to_s.inspect}, "1")
+              end
+
+              def load_and_schedule!(*args, **kwargs)
+                File.write(#{schedule_marker_path.to_s.inspect}, "1")
+              end
+            end
+          end
+        end
+      end
+
+      Rails.application.load_server
+      File.write(#{idle_marker_path.to_s.inspect}, "1")
+    RUBY
+
+    command_output = run_command(
+      "bundle exec ruby #{Shellwords.escape(script_path.to_s)} 2>&1",
+      env: { "RAILS_ENV" => "production" },
+    )
+
+    assert_predicate $?, :success?, "server hook command failed: #{command_output}"
+    assert_path_exists idle_marker_path, "expected server hook script to finish: #{command_output}"
+    refute_path_exists load_marker_path, "expected combined server hook not to call load! directly: #{command_output}"
+    assert_path_exists schedule_marker_path, "expected combined server hook to call load_and_schedule!: #{command_output}"
+  ensure
+    FileUtils.rm_f(script_path) if script_path
+    FileUtils.rm_f(idle_marker_path) if idle_marker_path
+    FileUtils.rm_f(load_marker_path) if load_marker_path
+    FileUtils.rm_f(schedule_marker_path) if schedule_marker_path
   end
 
   test "jobs entrypoint loads and schedules workflows before cli starts when solid queue is out of process" do
