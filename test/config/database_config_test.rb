@@ -21,6 +21,28 @@ class DatabaseConfigTest < ActiveSupport::TestCase
     end
   end
 
+  test "uses SQLite for tests by default" do
+    with_env("R3X_TEST_DATABASE_URL" => nil) do
+      test_database = database_config.fetch("test").fetch("primary")
+
+      assert_equal "sqlite3", test_database.fetch("adapter")
+      assert_equal "storage/test.sqlite3", test_database.fetch("database")
+      assert_not test_database.key?("url")
+    end
+  end
+
+  test "uses the explicit PostgreSQL test database URL" do
+    url = "postgresql://r3x:secret@127.0.0.1:5432/r3x_test"
+
+    with_env("R3X_TEST_DATABASE_URL" => url) do
+      test_database = database_config.fetch("test").fetch("primary")
+
+      assert_equal url, test_database.fetch("url")
+      assert_not test_database.key?("adapter")
+      assert_not test_database.key?("database")
+    end
+  end
+
   private
 
   def database_config

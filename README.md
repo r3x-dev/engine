@@ -247,6 +247,12 @@ Run tests with:
 bin/rails test
 ```
 
+SQLite is the default test adapter. To run the same suite against an ephemeral local PostgreSQL container:
+
+```bash
+just test-postgres
+```
+
 Run the project lint/reference checks with:
 
 ```bash

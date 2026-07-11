@@ -24,6 +24,7 @@ that show shape only.
 | --- | --- | --- | --- | --- |
 | `R3X_DATABASE_URL` | Production preferred | `config/database.yml` | Primary database URL. Preferred production setting. | `R3X_DATABASE_URL=postgres://<user>:<password>@db.example/r3x` |
 | `R3X_DATABASE_PATH` | Optional | `config/database.yml` | SQLite-style production database path fallback. | `R3X_DATABASE_PATH=storage/production.sqlite3` |
+| `R3X_TEST_DATABASE_URL` | Optional test override | `config/database.yml`, CI | Runs the test environment against PostgreSQL instead of the default SQLite database. | `R3X_TEST_DATABASE_URL=postgresql://r3x:<password>@127.0.0.1:5432/r3x_test` |
 | `JOB_THREADS` | Optional | Solid Queue config, database pool sizing | Worker thread count. Defaults to `3` in queue configs. | `JOB_THREADS=3` |
 | `JOB_CONCURRENCY` | Optional | Solid Queue config | Worker process count. Defaults to `1`. | `JOB_CONCURRENCY=1` |
 | `SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS` | Optional | Production config | Solid Queue graceful shutdown timeout. Defaults to `900`. | `SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS=900` |

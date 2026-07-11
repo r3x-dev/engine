@@ -58,6 +58,7 @@
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
+/compose*.yml
 
 mise.toml
 .wtp.yml

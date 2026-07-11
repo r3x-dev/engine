@@ -1,0 +1,19 @@
+name: r3x-test
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: r3x_test
+      POSTGRES_PASSWORD: r3x
+      POSTGRES_USER: r3x
+    ports:
+      - "${R3X_TEST_POSTGRES_PORT:-55432}:5432"
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U r3x -d r3x_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+    stop_grace_period: 5s
