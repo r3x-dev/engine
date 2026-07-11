@@ -5,19 +5,14 @@ module R3x
     module Entrypoint
       extend self
 
-      def server_boot_action(rails_env:, solid_queue_in_puma: nil)
-        return :load_and_schedule if rails_env == "development"
-        return :load_and_schedule if enabled?(solid_queue_in_puma)
-
-        :load
-      end
-
       def jobs_boot_action(solid_queue_in_puma: nil)
         enabled?(solid_queue_in_puma) ? :load : :load_and_schedule
       end
 
-      def boot_server!(rails_env:, solid_queue_in_puma: ENV["SOLID_QUEUE_IN_PUMA"], boot: Boot)
-        dispatch_boot!(server_boot_action(rails_env:, solid_queue_in_puma:), boot:)
+      def boot_server!(solid_queue_in_puma: ENV.fetch("SOLID_QUEUE_IN_PUMA", "true"), boot: Boot)
+        return unless enabled?(solid_queue_in_puma)
+
+        boot.load_and_schedule!
       end
 
       def start_jobs!(argv: ARGV, env: ENV, boot: Boot, cli: SolidQueue::Cli)

@@ -83,6 +83,10 @@ bin/rails server
 
 Open http://localhost:3000/ for the workflow dashboard.
 
+The default development server loads `workflows/` and runs Solid Queue. For a production split
+deployment, use `bin/web` for the workflow-agnostic web process and run `bin/jobs-worker` plus
+`bin/jobs-scheduler` with `R3X_WORKFLOW_PATHS` in separate processes.
+
 Useful local commands:
 
 ```bash

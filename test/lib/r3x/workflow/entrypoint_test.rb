@@ -5,18 +5,6 @@ require "test_helper"
 module R3x
   module Workflow
     class EntrypointTest < ActiveSupport::TestCase
-      test "server boot action schedules in development by default" do
-        assert_equal :load_and_schedule, Entrypoint.server_boot_action(rails_env: "development")
-      end
-
-      test "server boot action schedules when solid queue runs in puma" do
-        assert_equal :load_and_schedule, Entrypoint.server_boot_action(rails_env: "production", solid_queue_in_puma: "true")
-      end
-
-      test "server boot action only loads workflows for out of process production jobs" do
-        assert_equal :load, Entrypoint.server_boot_action(rails_env: "production", solid_queue_in_puma: nil)
-      end
-
       test "jobs boot action schedules when solid queue is out of process" do
         assert_equal :load_and_schedule, Entrypoint.jobs_boot_action(solid_queue_in_puma: nil)
       end
@@ -25,14 +13,22 @@ module R3x
         assert_equal :load, Entrypoint.jobs_boot_action(solid_queue_in_puma: "true")
       end
 
-      test "boot_server dispatches the selected boot action" do
+      test "web-only boot does not load workflows" do
         calls = []
         boot = build_boot_double(calls)
 
-        Entrypoint.boot_server!(rails_env: "production", solid_queue_in_puma: nil, boot:)
-        Entrypoint.boot_server!(rails_env: "production", solid_queue_in_puma: "true", boot:)
+        Entrypoint.boot_server!(solid_queue_in_puma: "false", boot:)
 
-        assert_equal %i[load load_and_schedule], calls
+        assert_empty calls
+      end
+
+      test "default Puma boot loads and schedules workflows" do
+        calls = []
+        boot = build_boot_double(calls)
+
+        Entrypoint.boot_server!(boot:)
+
+        assert_equal [:load_and_schedule], calls
       end
 
       test "start_jobs dispatches boot before starting the cli" do

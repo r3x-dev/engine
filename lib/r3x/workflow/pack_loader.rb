@@ -13,13 +13,17 @@ module R3x
       LOADED = Concurrent::AtomicBoolean.new(false)
 
       def load!(rebuild_registry: false)
+        paths = workflow_paths
+        entrypoints = workflow_files(paths)
+        validate_workflow_catalog!(paths, entrypoints)
+
         MUTEX.synchronize do
           return if LOADED.true? && !rebuild_registry
 
           R3x::Workflow::Registry.reset!
           loaded = []
 
-          workflow_files.each do |entrypoint|
+          entrypoints.each do |entrypoint|
             if disabled_workflow?(entrypoint)
               Rails.logger.tagged("r3x.workflow_entrypoint=#{entrypoint}") { logger.info "Skipping disabled workflow entrypoint" }
               next
@@ -49,9 +53,8 @@ module R3x
         File.foreach(entrypoint).take(PRAGMA_SCAN_LINES).any? { |line| line.strip.start_with?(DISABLE_PRAGMA_PREFIX) }
       end
 
-      def workflow_files
-        R3x::Env.fetch("R3X_WORKFLOW_PATHS").to_s.split(File::PATH_SEPARATOR).flat_map do |path|
-          base = File.expand_path(path.strip)
+      def workflow_files(paths = workflow_paths)
+        paths.flat_map do |base|
           next [] unless File.directory?(base)
 
           files = []
@@ -75,6 +78,29 @@ module R3x
         workflow_class = class_name.constantize
         R3x::Workflow::Registry.register(workflow_class)
         workflow_class
+      end
+
+      private
+
+      def workflow_paths
+        R3x::Env.fetch!("R3X_WORKFLOW_PATHS")
+          .split(File::PATH_SEPARATOR)
+          .filter_map { |path| path.strip.presence }
+          .map { |path| File.expand_path(path) }
+          .uniq
+      end
+
+      def validate_workflow_catalog!(paths, entrypoints)
+        raise ArgumentError, "R3X_WORKFLOW_PATHS contains no paths" if paths.empty?
+
+        missing_paths = paths.reject { |path| File.directory?(path) }
+        if missing_paths.any?
+          raise ArgumentError, "R3X_WORKFLOW_PATHS contains missing directories: #{missing_paths.join(', ')}"
+        end
+
+        return if entrypoints.any?
+
+        raise ArgumentError, "R3X_WORKFLOW_PATHS contains no workflow.rb entrypoints"
       end
     end
   end

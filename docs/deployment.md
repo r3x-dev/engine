@@ -11,7 +11,10 @@ See `docs/environment.md` for the central environment-variable index.
   `bin/rails secret`.
 - `R3X_DATABASE_URL`: preferred production database URL. `R3X_DATABASE_PATH`
   remains available for SQLite-style file paths.
-- `R3X_WORKFLOW_PATHS`: one or more workflow pack directories for jobs processes.
+- `R3X_WORKFLOW_PATHS`: one or more workflow pack directories required by jobs processes,
+  `bin/workflow`, and Puma unless it is explicitly web-only. Those processes fail during boot when
+  a configured directory is missing or the catalog contains no
+  `workflow.rb` entrypoints, so a bad mount cannot sweep persisted schedules as stale.
 - `SOLID_QUEUE_SHUTDOWN_TIMEOUT_SECONDS`: optional graceful shutdown timeout
   for Solid Queue. Defaults to `900` seconds in production.
 - `R3X_LOG_FORMAT=json` or `plain` (default `plain`): controls app log output
@@ -32,7 +35,7 @@ See `docs/environment.md` for the central environment-variable index.
 Run separate controllers or Deployments for the web process, workers, and
 scheduler:
 
-- Web: `./bin/rails server`
+- Web: `./bin/web`
 - Worker: `./bin/jobs-worker`
 - Scheduler: `./bin/jobs-scheduler`
 
@@ -51,14 +54,16 @@ disabled to avoid helper-path scans pulling web-only constants back in.
 
 ### Single-Process Puma Deployment
 
-For small or single-server deployments, set:
+Plain `bin/rails server` defaults to the combined web, Solid Queue, and workflow process. For an
+explicit web-only process, use:
 
 ```sh
-SOLID_QUEUE_IN_PUMA=true
+bin/web
 ```
 
-Puma will run the Solid Queue supervisor in-process. Do not also run a separate
-jobs scheduler that owns recurring scheduling in this mode.
+The default combined process needs `R3X_WORKFLOW_PATHS`; do not also run a separate jobs scheduler
+that owns recurring scheduling. `bin/web` owns its web-only setting and does not need a workflow
+mount.
 
 ### Generic Jobs Entrypoint
 

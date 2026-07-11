@@ -15,6 +15,38 @@ class DockerEntrypointTest < ActiveSupport::TestCase
     assert_includes command_output, "Missing SECRET_KEY_BASE for production runtime"
   end
 
+  test "docker entrypoint recognizes the web-only wrapper as a runtime command" do
+    command_output = run_command(
+      "bin/docker-entrypoint ./bin/web --port 3000 2>&1",
+      env: { "RAILS_ENV" => "production" },
+      inject_production_secret: false,
+    )
+
+    assert_not_predicate $?, :success?, "docker entrypoint unexpectedly succeeded: #{command_output}"
+    assert_includes command_output, "Missing SECRET_KEY_BASE for production runtime"
+  end
+
+  test "docker entrypoint recognizes Rails server with additional arguments" do
+    command_output = run_command(
+      "bin/docker-entrypoint ./bin/rails server --port 3000 2>&1",
+      env: { "RAILS_ENV" => "production" },
+      inject_production_secret: false,
+    )
+
+    assert_not_predicate $?, :success?, "docker entrypoint unexpectedly succeeded: #{command_output}"
+    assert_includes command_output, "Missing SECRET_KEY_BASE for production runtime"
+  end
+
+  test "docker entrypoint ignores runtime command names in later arguments" do
+    command_output = run_command(
+      "bin/docker-entrypoint ruby -e 'exit 0' ./bin/web 2>&1",
+      env: { "RAILS_ENV" => "production" },
+      inject_production_secret: false,
+    )
+
+    assert_predicate $?, :success?, "docker entrypoint command failed: #{command_output}"
+  end
+
   test "docker entrypoint allows non-runtime production commands without secret key base" do
     command_output = run_command(
       "bin/docker-entrypoint ruby -e 'exit 0' 2>&1",

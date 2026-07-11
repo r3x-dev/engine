@@ -23,15 +23,16 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 
 - `bin/jobs-worker` and `bin/jobs-scheduler` set `R3X_RUNTIME_PROFILE=jobs`; this headless profile skips routes/web gems/helpers and ignores `lib/r3x/workflow/cli.rb`.
 - `bin/workflow` sets `R3X_RUNTIME_PROFILE=workflow_cli`; it is headless but keeps `lib/r3x/workflow/cli.rb`.
+- `bin/web` is the explicit web-only entrypoint. It disables Solid Queue in Puma and does not load workflow packs.
 - These profiles are command-owned internals, not deployment knobs.
-- Prefer separate web, worker, and scheduler processes in production. If `SOLID_QUEUE_IN_PUMA=true`, the web process also hosts Solid Queue and owns recurring scheduling; separate jobs pods must not also schedule recurring tasks.
+- Prefer separate web, worker, and scheduler processes in production. Plain `bin/rails server` defaults to the combined process, which loads workflow packs and owns Solid Queue scheduling. Use `bin/web` for an explicit web-only process; do not run a separate jobs scheduler with the combined process.
 
 ## Dashboard
 
 - The default local UI is the server-rendered dashboard at `/`; Mission Control Jobs remains at `/ops/jobs`.
 - Dashboard pages are DB-first and reconstructed from persisted Solid Queue recurring-task/job rows. Workflows with no persisted runtime artifacts are invisible by design.
 - Dashboard queue boundaries are `Dashboard::Run`, `Dashboard::RecurringTask`, and `Dashboard::DirectWorkflowEnqueuer`.
-- Web pods do not need workflow packs loaded for dashboard pages. `POST /workflows/:workflow_key/runs` may enqueue through `Dashboard::DirectWorkflowEnqueuer` without constantizing workflow classes.
+- Web-only pods do not load workflow packs. `POST /workflows/:workflow_key/runs` may enqueue through `Dashboard::DirectWorkflowEnqueuer` without constantizing workflow classes.
 - Logs are optional and read-only. `R3X_LOGS_PROVIDER=victorialogs` reads `R3X_VICTORIA_LOGS_URL`; missing config or query failures must not break main pages.
 - `R3X_LOG_FORMAT=json` emits structured logs with explicit levels for dashboard log views; `plain` is standard Rails text. Unsupported values raise on boot. Do not infer levels from message regexes.
 
@@ -52,6 +53,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Workflow packs are loaded explicitly by process entrypoints, not globally during Rails boot.
 - `R3x::Workflow::PackLoader` discovers `workflow.rb` files from `R3X_WORKFLOW_PATHS`, skips top-of-file `# r3x:disable ...`, and registers classes in `R3x::Workflow::Registry`.
 - `PackLoader.load!(rebuild_registry: true)` rebuilds registry state but still uses Ruby `require`; it is not same-process source reload.
+- Catalog-dependent entrypoints (`bin/jobs*`, `bin/workflow`, and default or combined Puma) require `R3X_WORKFLOW_PATHS` to resolve to existing directories with at least one `workflow.rb`; fail before scheduling so a broken or empty mount cannot sweep persisted tasks. An explicit web-only process has no catalog dependency.
 - `R3x::RecurringTasksConfig.schedule_all!` persists schedulable triggers as Solid Queue dynamic recurring tasks and sweeps stale ones. Trigger file names, constants, and supported types must stay aligned with `lib/r3x/triggers/*.rb`.
 - Already queued jobs persist concrete workflow class names. Renaming/removing a workflow can strand old queued jobs; clean up pending jobs/tasks or accept deserialization failures.
 - Workflow code can use `ctx.durable_set(name = :default, ttl: 90.days)` for best-effort dedup. Keep `ttl:` at or below `config/cache.yml` `store_options.max_age` when using `:solid_cache_store`.
