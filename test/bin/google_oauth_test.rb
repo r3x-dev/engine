@@ -63,6 +63,34 @@ class GoogleOAuthCLITest < ActiveSupport::TestCase
     end
   end
 
+  test "authorize requests consent and prints a returned refresh token" do
+    stub_token_exchange(refresh_token: "new-refresh-token")
+
+    output = with_oauth_credentials do
+      capture_io do
+        @cli.send(:authorize_project, project: "TESTPROJ", scope_aliases: "gmail.send")
+      end.first
+    end
+
+    assert_includes output, "access_type=offline"
+    assert_includes output, "prompt=consent"
+    assert_includes output, "new-refresh-token"
+  end
+
+  test "authorize aborts when token exchange does not return a refresh token" do
+    stub_token_exchange(refresh_token: nil)
+
+    error = assert_raises(SystemExit) do
+      with_oauth_credentials do
+        capture_io do
+          @cli.send(:authorize_project, project: "TESTPROJ", scope_aliases: "gmail.send")
+        end
+      end
+    end
+
+    assert_equal 1, error.status
+  end
+
   test "extract_code_from_url extracts code from redirect URL" do
     code = @cli.send(:extract_code_from_url, "http://localhost/?code=4/0AX4XfWh&scope=email")
 
@@ -136,5 +164,38 @@ class GoogleOAuthCLITest < ActiveSupport::TestCase
     ])
 
     assert_equal ["gmail.send", "https://www.googleapis.com/auth/custom.scope"], aliases
+  end
+
+  private
+
+  def stub_token_exchange(refresh_token:)
+    response = {
+      "access_token" => "access-token",
+      "expires_in"   => 3600,
+      "token_type"   => "Bearer",
+    }
+    response["refresh_token"] = refresh_token if refresh_token
+
+    stub_request(:post, "https://oauth2.googleapis.com/token")
+      .to_return(
+        status: 200,
+        body: MultiJSON.generate(response),
+        headers: { "Content-Type" => "application/json" },
+      )
+  end
+
+  def with_oauth_credentials
+    original_stdin = $stdin
+    original_client_id = ENV["GOOGLE_CLIENT_ID_TESTPROJ"]
+    original_client_secret = ENV["GOOGLE_CLIENT_SECRET_TESTPROJ"]
+    $stdin = StringIO.new("http://localhost/?code=authorization-code\n")
+    ENV["GOOGLE_CLIENT_ID_TESTPROJ"] = "client-id"
+    ENV["GOOGLE_CLIENT_SECRET_TESTPROJ"] = "client-secret"
+
+    yield
+  ensure
+    $stdin = original_stdin
+    ENV["GOOGLE_CLIENT_ID_TESTPROJ"] = original_client_id
+    ENV["GOOGLE_CLIENT_SECRET_TESTPROJ"] = original_client_secret
   end
 end

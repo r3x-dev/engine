@@ -55,9 +55,9 @@ Starts the interactive OAuth2 flow.
 
 1. Verifies `GOOGLE_CLIENT_ID_<PROJECT>` and `GOOGLE_CLIENT_SECRET_<PROJECT>` are set (fails fast if missing).
 2. Prompts for scope selection (or accepts `--scopes` directly).
-3. Generates an authorization URL and prints it.
+3. Generates an offline authorization URL with an explicit consent prompt and prints it.
 4. You open the URL in a browser, grant access, and copy the authorization `code` from the redirect URL.
-5. The CLI exchanges the code for a `refresh_token`.
+5. The CLI exchanges the code for a `refresh_token` and aborts if Google does not return one.
 6. Prints the refresh token. Store it as `GOOGLE_REFRESH_TOKEN_<PROJECT>` in your secret backend (e.g., Vault).
 
 **Scope selection**
