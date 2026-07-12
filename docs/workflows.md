@@ -338,7 +338,8 @@ Keep the distinction clear:
   for indexed log correlation in the dashboard. Orchestration jobs also tag lines with `r3x.workflow_key`
   where that broader workflow-level context is useful. Prefer logging through the existing Rails logger so
   those tags stay attached to emitted lines.
-- App logs are always emitted as structured JSON with explicit `level`, `message`, and `tags`.
+- App logs use `plain` format by default. Set `R3X_LOG_FORMAT=json` for structured `level`,
+  `message`, and `tags` fields and dashboard log correlation.
 - Dashboard run logs read the explicit `level` from structured log payloads. They do not infer levels
   from free-form message text.
 
