@@ -173,7 +173,7 @@ raises, the workflow fails instead of logging a false success.
 
 ## Example Workflow
 
-See [docs/workflows/example_multi_step_digest.md](workflows/example_multi_step_digest.md) for a
+See [example_multi_step_digest.md](workflows/example_multi_step_digest.md) for a
 full worked example that combines `step`, `with_cache`, `ctx.durable_set`, structured LLM output,
 and multiple `ctx.client.*` integrations in one workflow.
 

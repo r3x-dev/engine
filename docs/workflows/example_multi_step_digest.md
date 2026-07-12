@@ -179,42 +179,14 @@ bin/workflow list
 bin/workflow info example_island_digest
 ```
 
-## Test It With Minitest
+## Validate It Manually
 
-Workflow packs can carry their own tests next to the workflow:
-
-```text
-workflows/example_island_digest/
-  workflow.rb
-  test/
-    workflow_test.rb
-```
-
-Use Minitest and fake the `ctx.client.*` boundary so tests do not call real providers:
-
-```ruby
-#!/usr/bin/env ruby
-
-require "bundler/setup"
-require "minitest/autorun"
-require_relative "../../../config/environment"
-require_relative "../workflow"
-
-class ExampleIslandDigestTest < Minitest::Test
-  def test_declares_schedule_trigger
-    schedule = Workflows::ExampleIslandDigest.triggers.find(&:cron_schedulable?)
-
-    assert schedule
-    assert_equal "0 8 * * *", schedule.cron
-    assert_equal "Europe/Lisbon", schedule.timezone
-  end
-end
-```
-
-Run the test directly:
+Workflow packs stay as small scripts and are validated through the runtime rather than pack-local
+test suites. Inspect registration first, then run with fresh provider reads and dry-run delivery:
 
 ```bash
-ruby workflows/example_island_digest/test/workflow_test.rb
+bin/workflow info example_island_digest
+bin/workflow run --dry-run --skip-cache workflows/example_island_digest/workflow.rb
 ```
 
 ## Vault Parity
