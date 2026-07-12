@@ -22,8 +22,8 @@ code-first route.
 
 - 🧑‍💻 **Code-first, not UI-trapped** - workflow behavior lives in Ruby files that can be reviewed,
   tested, refactored, and replayed locally.
-- 🏠 **Local-first feedback loop** - run workflows with `bin/workflow`, use `--dry-run` for safe
-  delivery checks, and add Minitest coverage beside the workflow pack.
+- 🏠 **Local-first feedback loop** - run workflows with `bin/workflow` and use `--dry-run` for safe
+  delivery checks before explicitly enabling real side effects.
 - 🌿 **Git from day one** - workflow packs are just files and directories, so changes get normal
   branches, pull requests, diffs, history, and rollback.
 - 🤖 **Agent-first maintenance** - `AGENTS.md` and `docs/workflows.md` give coding agents the same
@@ -140,7 +140,7 @@ Recommended workflow loop:
 1. Create `workflows/<name>/workflow.rb`.
 2. Read [docs/workflows.md](docs/workflows.md) for the workflow writing rules.
 3. Run it locally with `bin/workflow run --dry-run workflows/<name>/workflow.rb`.
-4. Add a pack-local test under `workflows/<name>/test/` when the behavior matters.
+4. Inspect the dry-run output and repeat with `--skip-cache` when you need fresh provider data.
 5. Schedule it with `trigger :schedule` or run it manually from the dashboard.
 
 ## Agent-Friendly By Design
