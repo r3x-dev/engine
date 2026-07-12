@@ -135,6 +135,13 @@ that must boot Rails even when the Vault token is broken.
 
 ## Operations
 
+### Dashboard Access
+
+The dashboard intentionally has no application-level authentication. Keep it on a private network
+or place it behind a trusted authentication proxy such as TinyAuth. Authentication and access policy
+remain deployment concerns so the workflow engine does not grow a second user system. Mission
+Control Jobs keeps its own optional HTTP Basic authentication.
+
 Local checks from this repo:
 
 ```sh

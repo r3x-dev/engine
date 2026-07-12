@@ -35,6 +35,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Dashboard queue boundaries are `Dashboard::Run`, `Dashboard::RecurringTask`, and `Dashboard::DirectWorkflowEnqueuer`.
 - Web-only pods do not load workflow packs. `POST /workflows/:workflow_key/runs` may enqueue through `Dashboard::DirectWorkflowEnqueuer` without constantizing workflow classes.
 - Logs are optional and read-only. `R3X_LOGS_PROVIDER=victorialogs` reads `R3X_VICTORIA_LOGS_URL`; missing config or query failures must not break main pages.
+- Dashboard authentication is deployment-owned. Keep the web surface private or behind an authentication proxy; do not add an application user/auth system unless that product boundary changes explicitly.
 - `R3X_LOG_FORMAT=json` emits structured logs with explicit levels for dashboard log views; `plain` is standard Rails text. Unsupported values raise on boot. Do not infer levels from message regexes.
 
 ## Code Map
