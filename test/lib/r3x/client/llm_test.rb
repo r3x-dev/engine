@@ -177,6 +177,8 @@ module R3x
       end
 
       test "configures RubyLLM logger to Rails.logger lazily" do
+        R3x::GemLoader.require("ruby_llm")
+
         original_logger = RubyLLM.config.logger
         RubyLLM.configure { |config| config.logger = nil }
         RubyLLM.instance_variable_set(:@logger, nil)
