@@ -80,7 +80,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 
 - Prefer `httpx` for outbound HTTP in `R3x::Client` code. Do not add direct Faraday usage; existing Faraday is transitive.
 - For small integration clients, build the `httpx` client inside the class. Do not inject raw HTTP connections unless the production design needs that abstraction.
-- Do not use `HTTPX.with({})`; call `HTTPX.get/post/...` directly when there are no shared options.
+- Do not use `HTTPX.with({})`; call `HTTPX.get/post/...` directly when there are no shared options. For clients requiring shared options (such as authentication headers), configure them using `HTTPX.with(headers: ...)` and expose via a `connection` helper method.
 - For repeated workflow HTTP calls in one controlled scope, use `ctx.client.persistent_http(...) { |http| ... }`; keep persistence opt-in for measured hot paths.
 - Use `json:` for JSON request bodies and `response.json` for JSON responses. Prefer `MultiJSON` elsewhere.
 - Call `.raise_for_status` when a client should fail fast on transport 4xx/5xx. Do not hand-roll ordinary 2xx checks in thin clients.
