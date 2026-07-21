@@ -21,7 +21,8 @@ module R3x
       }.freeze
 
       def initialize(api_key_env: DEFAULT_API_KEY_ENV)
-        @api_key = R3x::Env.secure_fetch(api_key_env, prefix: "#{DEFAULT_API_KEY_ENV}_")
+        api_key = R3x::Env.secure_fetch(api_key_env, prefix: "#{DEFAULT_API_KEY_ENV}_")
+        @connection = HTTPX.with(headers: { "apikey" => api_key })
       end
 
       def parse(io_or_path, language: nil, engine: nil, filetype: nil, overlay: false)
@@ -36,11 +37,7 @@ module R3x
 
       private
 
-      attr_reader :api_key
-
-      def connection
-        @connection ||= HTTPX.with(headers: { "apikey" => api_key })
-      end
+      attr_reader :connection
 
       def detect_mime(io_or_path)
         if io_or_path.respond_to?(:read)

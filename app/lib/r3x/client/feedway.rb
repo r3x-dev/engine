@@ -10,7 +10,8 @@ module R3x
 
       def initialize(url_env: DEFAULT_URL_ENV, api_token_env: DEFAULT_API_TOKEN_ENV)
         @base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_").delete_suffix("/")
-        @api_token = R3x::Env.secure_fetch(api_token_env, prefix: "#{DEFAULT_API_TOKEN_ENV}_")
+        api_token = R3x::Env.secure_fetch(api_token_env, prefix: "#{DEFAULT_API_TOKEN_ENV}_")
+        @connection = HTTPX.with(headers: { "Authorization" => "Bearer #{api_token}" })
       end
 
       # POST /api/v1/entries
@@ -29,11 +30,7 @@ module R3x
 
       private
 
-      attr_reader :base_url, :api_token
-
-      def connection
-        @connection ||= HTTPX.with(headers: { "Authorization" => "Bearer #{api_token}" })
-      end
+      attr_reader :base_url, :connection
     end
   end
 end

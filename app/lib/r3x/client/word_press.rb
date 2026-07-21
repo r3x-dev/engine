@@ -11,8 +11,9 @@ module R3x
 
         @base_url = url.delete_suffix("/")
         @api_path = normalize_path(api_path).delete_suffix("/")
-        @user_agent = user_agent
-        @headers = headers.to_h
+        request_headers = headers.to_h
+        request_headers = request_headers.merge("User-Agent" => user_agent) if user_agent.present?
+        @connection = HTTPX.with(headers: request_headers)
       end
 
       # GET /wp-json/wp/v2/posts
@@ -43,20 +44,10 @@ module R3x
 
       private
 
-      attr_reader :base_url, :api_path, :headers, :user_agent
+      attr_reader :base_url, :api_path, :connection
 
       def normalize_path(path)
         "/#{path.to_s.delete_prefix("/")}"
-      end
-
-      def connection
-        @connection ||= HTTPX.with(headers: request_headers)
-      end
-
-      def request_headers
-        return headers if user_agent.blank?
-
-        headers.merge("User-Agent" => user_agent)
       end
     end
   end

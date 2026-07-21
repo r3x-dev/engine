@@ -9,7 +9,10 @@ module R3x
       DEFAULT_API_KEY_ENV = "APIFY_API_KEY"
 
       def initialize(api_key:)
-        @api_key = api_key
+        @connection = HTTPX.with(
+          timeout: { connect_timeout: 10, operation_timeout: 360 },
+          headers: { "Authorization" => "Bearer #{api_key}" },
+        )
       end
 
       def run_actor(actor_id, input: nil, **options)
@@ -38,14 +41,7 @@ module R3x
 
       private
 
-      attr_reader :api_key
-
-      def connection
-        @connection ||= HTTPX.with(
-          timeout: { connect_timeout: 10, operation_timeout: 360 },
-          headers: { "Authorization" => "Bearer #{api_key}" },
-        )
-      end
+      attr_reader :connection
     end
   end
 end
