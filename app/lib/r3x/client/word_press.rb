@@ -36,9 +36,9 @@ module R3x
       end
 
       def get(path, **params)
-        HTTPX.get("#{base_url}#{api_path}#{normalize_path(path)}", params:, headers: request_headers)
-             .raise_for_status
-             .json
+        connection.get("#{base_url}#{api_path}#{normalize_path(path)}", params:)
+                  .raise_for_status
+                  .json
       end
 
       private
@@ -47,6 +47,10 @@ module R3x
 
       def normalize_path(path)
         "/#{path.to_s.delete_prefix("/")}"
+      end
+
+      def connection
+        @connection ||= HTTPX.with(headers: request_headers)
       end
 
       def request_headers
