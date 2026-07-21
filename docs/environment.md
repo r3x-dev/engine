@@ -72,6 +72,10 @@ that show shape only.
 | `MINIFLUX_URL_*` | Optional variant | Miniflux explicit `url_env:` | Alternate Miniflux URL env names. | `MINIFLUX_URL_PERSONAL=https://miniflux.example` |
 | `MINIFLUX_API_KEY` | Required when Miniflux client is used | `R3x::Client::Miniflux`, `ctx.client.miniflux` | Miniflux API token. Custom names may start with this prefix. | `MINIFLUX_API_KEY=<token>` |
 | `MINIFLUX_API_KEY_*` | Optional variant | Miniflux explicit `api_key_env:` | Alternate Miniflux token env names. | `MINIFLUX_API_KEY_PERSONAL=<token>` |
+| `FEEDWAY_URL` | Required when Feedway client is used | `R3x::Client::Feedway`, `ctx.client.feedway` | Feedway base URL. Custom names may start with this prefix. | `FEEDWAY_URL=http://localhost:8080` |
+| `FEEDWAY_URL_*` | Optional variant | Feedway explicit `url_env:` | Alternate Feedway URL env names. | `FEEDWAY_URL_STAGING=https://feedway-staging.example` |
+| `FEEDWAY_API_TOKEN` | Required when Feedway client is used | `R3x::Client::Feedway`, `ctx.client.feedway` | Feedway API Bearer token. Custom names may start with this prefix. | `FEEDWAY_API_TOKEN=<token>` |
+| `FEEDWAY_API_TOKEN_*` | Optional variant | Feedway explicit `api_token_env:` | Alternate Feedway API token env names. | `FEEDWAY_API_TOKEN_STAGING=<token>` |
 | `PROMETHEUS_URL` | Required when Prometheus client is used | `R3x::Client::Prometheus`, `ctx.client.prometheus` | Prometheus base URL. Custom names may start with this prefix. | `PROMETHEUS_URL=http://prometheus.example:9090` |
 | `PROMETHEUS_URL_*` | Optional variant | Prometheus explicit `url_env:` | Alternate Prometheus URL env names. | `PROMETHEUS_URL_HOME=http://prometheus-home.example:9090` |
 | `DISCORD_WEBHOOK_URL` | Required when Discord client uses default env | `R3x::Client::Discord`, `ctx.client.discord` | Discord webhook URL. Custom names may start with this prefix. | `DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...` |

@@ -64,6 +64,13 @@ module R3x
           R3x::Client::Miniflux.new(url_env:, api_key_env:)
         end
 
+        def feedway(
+          url_env: R3x::Client::Feedway::DEFAULT_URL_ENV,
+          api_token_env: R3x::Client::Feedway::DEFAULT_API_TOKEN_ENV
+        )
+          R3x::Client::Feedway.new(url_env:, api_token_env:)
+        end
+
         def wordpress(url:, api_path: R3x::Client::WordPress::API_PATH, user_agent: nil, headers: {})
           R3x::Client::WordPress.new(url:, api_path:, user_agent:, headers:)
         end
