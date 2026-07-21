@@ -18,7 +18,8 @@ module R3x
 
       def initialize(url_env: DEFAULT_URL_ENV, api_key_env: DEFAULT_API_KEY_ENV)
         @base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_").delete_suffix("/")
-        @api_key = R3x::Env.secure_fetch(api_key_env, prefix: "#{DEFAULT_API_KEY_ENV}_")
+        api_key = R3x::Env.secure_fetch(api_key_env, prefix: "#{DEFAULT_API_KEY_ENV}_")
+        @connection = HTTPX.with(headers: { "X-Auth-Token" => api_key })
       end
 
       # GET /v1/entries
@@ -58,7 +59,7 @@ module R3x
 
       private
 
-      attr_reader :base_url, :api_key
+      attr_reader :base_url, :connection
 
       def get(path, **params)
         connection.get("#{base_url}#{path}", params: params.compact).raise_for_status.json
@@ -68,10 +69,6 @@ module R3x
         response = json.nil? ? connection.put("#{base_url}#{path}") : connection.put("#{base_url}#{path}", json:)
         response.raise_for_status
         true
-      end
-
-      def connection
-        @connection ||= HTTPX.with(headers: { "X-Auth-Token" => api_key })
       end
     end
   end

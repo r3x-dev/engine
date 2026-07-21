@@ -80,7 +80,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 
 - Prefer `httpx` for outbound HTTP in `R3x::Client` code. Do not add direct Faraday usage; existing Faraday is transitive.
 - For small integration clients, build the `httpx` client inside the class. Do not inject raw HTTP connections unless the production design needs that abstraction.
-- Do not use `HTTPX.with({})`; call `HTTPX.get/post/...` directly when there are no shared options. For clients requiring shared options (such as authentication headers), configure them using `HTTPX.with(headers: ...)` and expose via a `connection` helper method.
+- Do not use `HTTPX.with({})`; call `HTTPX.get/post/...` directly when there are no shared options. When a client needs shared options such as authentication headers, create `@connection = HTTPX.with(...)` in `initialize` and expose it with a private `attr_reader :connection`.
 - For repeated workflow HTTP calls in one controlled scope, use `ctx.client.persistent_http(...) { |http| ... }`; keep persistence opt-in for measured hot paths.
 - Use `json:` for JSON request bodies and `response.json` for JSON responses. Prefer `MultiJSON` elsewhere.
 - Call `.raise_for_status` when a client should fail fast on transport 4xx/5xx. Do not hand-roll ordinary 2xx checks in thin clients.
@@ -113,6 +113,8 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Framework code should avoid hardcoding concrete subtypes. Prefer polymorphism, explicit capability predicates, and object-owned methods.
 - Name methods around behavior, not subtype names, unless exact subtype identity is the real contract.
 - Use instance variables only for state needed across methods or object lifetime. Use locals or small helpers for one-method derived values.
+- When a constructor argument is used only to build another object, keep the argument local and store only the built object. For example, use an API token to build `@connection`; do not store `@api_token` solely for a later `connection` method.
+- Build cheap objects in `initialize` when doing so performs no I/O and changes no external state. Use memoized lazy initialization (`@object ||= ...`) only when construction is expensive, performs I/O, or the object may never be needed.
 - When multiple classes share a capability, extract a small concern with explicit predicates/required methods.
 - Keep production APIs small. Do not add methods, wrappers, adapters, keyword seams, or dependency injection just because they may help a test.
 
