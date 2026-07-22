@@ -49,7 +49,7 @@ module R3x
         end
       end
 
-      test "publish sends POST request with correct payload and headers" do
+      test "publish sends POST request with correct payload and headers in real mode" do
         stub_request(:post, "https://feedway.test/api/v1/entries")
           .with(
             body: '{"content_html":"<p>hello</p>","title":"My Title"}',
@@ -63,14 +63,31 @@ module R3x
             headers: { "Content-Type" => "application/json" },
           )
 
-        client = with_client_env do
-          Feedway.new
+        with_client_env do
+          with_env("R3X_FEEDWAY_DRY_RUN" => "false") do
+            client = Feedway.new
+            result = client.publish(content_html: "<p>hello</p>", title: "My Title")
+
+            assert_equal "created", result["result"]
+            assert_equal "sha256-v1:abc", result["id"]
+          end
+        end
+      end
+
+      test "publish returns dry_run result and logs intent when dry run is active" do
+        client = with_client_env { Feedway.new }
+
+        result = nil
+        output = capture_logged_output do
+          result = client.publish(content_html: "<p>hello</p>", title: "My Title")
         end
 
-        result = client.publish(content_html: "<p>hello</p>", title: "My Title")
-
-        assert_equal "created", result["result"]
-        assert_equal "sha256-v1:abc", result["id"]
+        assert_equal({ "mode" => "dry_run", "result" => "dry_run", "id" => "dry-run-feedway-id" }, result)
+        assert_includes output, "DRY-RUN"
+        assert_includes output, "action=publish"
+        assert_includes output, "content_length=12"
+        assert_includes output, "title="
+        assert_includes output, "My Title"
       end
 
       test "publish requires content_html" do
@@ -91,7 +108,10 @@ module R3x
         end
 
         assert_instance_of Feedway, client
-        assert_equal "https://feedway.test", client.send(:base_url)
+
+        result = client.publish(content_html: "<p>hello</p>")
+
+        assert_equal "dry_run", result["result"]
       end
 
       private
