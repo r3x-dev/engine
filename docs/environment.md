@@ -39,7 +39,7 @@ that show shape only.
 | `R3X_TIMEZONE` | Optional | Schedule triggers, dashboard helper | Default timezone for cron triggers and dashboard timestamp display when no trigger timezone is embedded. | `R3X_TIMEZONE=Atlantic/Madeira` |
 | `R3X_SKIP_CACHE` | Optional | Workflow CLI, workflow cache policy | Boolean. Bypasses `with_cache`; also required for production use of `with_cache`. | `R3X_SKIP_CACHE=true` |
 | `R3X_DRY_RUN` | Optional | `R3x::Policy` | Boolean global dry-run override. `true` forces dry-run; `false` disables it. In `development` and `test`, dry-run is the default, so set this to `false` for real delivery. | `R3X_DRY_RUN=false` |
-| `R3X_<FEATURE>_DRY_RUN` | Optional | `R3x::Policy` | Boolean per-feature dry-run override, for keys such as `GMAIL`, `HTTP`, `DISCORD`, and `MARKDOWNIFY`. | `R3X_DISCORD_DRY_RUN=true` |
+| `R3X_<FEATURE>_DRY_RUN` | Optional | `R3x::Policy` | Boolean per-feature dry-run override, for keys such as `GMAIL`, `HTTP`, `DISCORD`, `FEEDWAY`, and `MARKDOWNIFY`. | `R3X_DISCORD_DRY_RUN=true` |
 
 ## Logging And Dashboard
 
