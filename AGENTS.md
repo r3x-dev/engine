@@ -5,7 +5,9 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 ## Agent Workflow
 
 - Do not commit, push, open PRs, or merge unless the user explicitly asks.
-- Before finishing implementation work, run `bin/ci` and fix failures unless the user accepts a known failure.
+- During implementation and user-review iterations, do not automatically rerun validation after every edit. Run only focused checks when they are needed to develop or diagnose the change, such as a bug fix's red/green regression test. Do not run `bin/ci` or another full-suite validation unless the user explicitly asks; present the changes for review first.
+- Treat the user's request to commit the reviewed changes as approval and as the signal for full validation. Invoke the requested commit and let the pre-commit hook run `bin/ci` before the commit is created. Do not run `bin/ci` manually immediately before `git commit`, because that duplicates the hook; run it manually only when the hook is disabled or the user explicitly asks.
+- If the pre-commit validation fails, fix validation-only issues and retry the commit until it passes unless the user accepts the known failure. Return changes that alter behavior or scope for user review before retrying the full validation gate.
 - The pre-commit hook intentionally runs the full local `bin/ci` suite while it remains reasonably fast. Keep failures close to the change, use the same acceptance gate before a commit exists, and avoid making remote CI the first feedback loop. Do not narrow this hook to targeted lint or tests without an explicit project decision; revisit only when its runtime materially disrupts normal commits. This follows the local-CI reasoning in [DHH's write-up](https://world.hey.com/dhh/we-re-moving-continuous-integration-back-to-developer-machines-3ac6c611).
 - Use `git --no-pager` for agent-read Git output such as diff, show, log, and status details.
 - Keep this file and `docs/todo.md` synchronized when code changes alter architecture, workflow loading, trigger discovery, scheduling, validation contracts, env behavior, HTTP policy, or repo layout.
