@@ -5,6 +5,8 @@ module R3x
     # Client for the Feedway API.
     # See https://github.com/zewelor/feedway
     class Feedway
+      include R3x::Concerns::Logger
+
       DEFAULT_URL_ENV = "FEEDWAY_URL"
       DEFAULT_API_TOKEN_ENV = "FEEDWAY_API_TOKEN"
 
@@ -19,6 +21,13 @@ module R3x
       # Returns parsed response hash: { "result" => "created"/"deduplicated", "id" => "sha256-v1:..." }
       def publish(content_html:, title: nil)
         raise ArgumentError, "content_html is required" if content_html.blank?
+
+        if R3x::Policy.dry_run_for(:feedway)
+          title_preview = title.present? ? " title=#{title.to_s.inspect}" : ""
+          logger.info "[DRY-RUN] action=publish content_length=#{content_html.to_s.bytesize}#{title_preview}"
+
+          return { "mode" => "dry_run", "result" => "dry_run", "id" => "dry-run-feedway-id" }
+        end
 
         payload = { content_html: }
         payload[:title] = title if title.present?
