@@ -17,7 +17,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
-          persist-credentials: false
+          fetch-depth: 2
+          token: ${{ secrets.RENOVATE_FIX_TOKEN }}
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -43,18 +44,14 @@ jobs:
       - name: Refresh lockfile Ruby version
         run: bundle update --ruby
 
-      - name: Commit generated files
-        env:
-          RENOVATE_FIX_TOKEN: ${{ secrets.RENOVATE_FIX_TOKEN }}
-        run: |
-          if [ -z "$RENOVATE_FIX_TOKEN" ]; then
-            echo "RENOVATE_FIX_TOKEN secret is required to push the refreshed lockfile."
-            exit 1
-          fi
-
-          git config user.name "renovate-ruby-fix"
-          git config user.email "renovate-ruby-fix@users.noreply.github.com"
-          git add Dockerfile Gemfile.lock
-          git diff --cached --quiet && exit 0
-          git commit -m "Refresh Ruby lockfile"
-          git push "https://x-access-token:${RENOVATE_FIX_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
+      - name: Amend Renovate commit
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_author: ${{ github.event.head_commit.author.name }} <${{ github.event.head_commit.author.email }}>
+          commit_message: ${{ github.event.head_commit.message }}
+          commit_options: --amend --no-edit
+          commit_user_email: 29139614+renovate[bot]@users.noreply.github.com
+          commit_user_name: renovate[bot]
+          file_pattern: Dockerfile Gemfile.lock
+          push_options: --force-with-lease
+          skip_fetch: true
