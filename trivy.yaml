@@ -1,0 +1,10 @@
+scan:
+  skip-dirs:
+    - .bundle
+    - .git
+    - .opencode
+    - .ruby-lsp
+    - workflows/.ruby-lsp
+    - coverage
+    - tmp
+    - "tech-debt-audit-*"
