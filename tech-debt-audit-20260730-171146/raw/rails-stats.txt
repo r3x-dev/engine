@@ -1,0 +1,70 @@
+
+Directory: /home/omen/personal/r3x/engine/main
+
++-------------------------|------------|----------------+
+|                    Name | Total Deps | 1st Level Deps |
++-------------------------|------------|----------------+
+|                heroicon | 66         | 1              |
+|                   rails | 65         | 13             |
+|    mission_control-jobs | 54         | 9              |
+|             solid_queue | 50         | 6              |
+|             solid_cache | 47         | 3              |
+|            dotenv-rails | 43         | 2              |
+|  google-cloud-translate | 31         | 3              |
+|   rubocop-rails-omakase | 30         | 3              |
+|               propshaft | 28         | 3              |
+| google-apis-calendar_v3 | 25         | 1              |
+|    google-apis-gmail_v1 | 25         | 1              |
+|   google-apis-sheets_v4 | 25         | 1              |
+|              googleauth | 15         | 7              |
+|        rubocop-minitest | 15         | 3              |
+|   rubocop-thread_safety | 15         | 3              |
+|                ruby_llm | 14         | 9              |
+|                   debug | 11         | 2              |
+|                    mail | 8          | 5              |
+|                 webmock | 6          | 3              |
+|           bundler-audit | 2          | 2              |
+|                highline | 2          | 1              |
+|                bootsnap | 1          | 1              |
+|                brakeman | 1          | 1              |
+|                   httpx | 1          | 1              |
+|                   mocha | 1          | 1              |
+|                nokogiri | 1          | 1              |
+|                    puma | 1          | 1              |
+|                     rss | 1          | 1              |
+|           amazing_print | 0          | 0              |
+|              multi_json | 0          | 0              |
+|                      pg | 0          | 0              |
+|               retryable | 0          | 0              |
+|         ruby_llm-schema | 0          | 0              |
+|                 sqlite3 | 0          | 0              |
++-------------------------|------------|----------------+
+                           
+      Declared Gems   34   
+         Total Gems   189  
+  Unpinned Versions   29   
+        Github Refs   0    
+                           
++----------------------+---------+---------+---------+---------+---------+-----+-------+
+| Name                 | Files   | Lines   |     LOC | Classes | Methods | M/C | LOC/M |
++----------------------+---------+---------+---------+---------+---------+-----+-------+
+| Configuration        |      15 |     526 |     217 |       1 |       5 |   5 |    41 |
+| Controllers          |       7 |     123 |      93 |       7 |      11 |   1 |     6 |
+| Helpers              |       1 |     270 |     214 |       0 |      33 |   0 |     4 |
+| Integration Tests    |       6 |    1262 |    1022 |       7 |      15 |   2 |    66 |
+| Jobs                 |       8 |      87 |      66 |       8 |       4 |   0 |    14 |
+| Lib Tests            |      59 |    9373 |    7488 |      75 |     141 |   1 |    51 |
+| Libraries            |      32 |    1698 |    1296 |      20 |     172 |   8 |     5 |
+| Libs                 |      41 |    3130 |    2357 |      46 |     321 |   6 |     5 |
+| Models               |       4 |     483 |     383 |       5 |      44 |   8 |     6 |
+| Other Tests          |       7 |     695 |     530 |       7 |      50 |   7 |     8 |
+| Test Support         |       9 |     290 |     225 |       4 |      22 |   5 |     8 |
++----------------------+---------+---------+---------+---------+---------+-----+-------+
+| Code                 |     108 |    6317 |    4626 |      87 |     590 |   6 |     5 |
+| Tests                |      81 |   11620 |    9265 |      93 |     228 |   2 |    38 |
+| Total                |     189 |   17937 |   13891 |     180 |     818 |   4 |    14 |
++----------------------+---------+---------+---------+---------+---------+-----+-------+
+  Code LOC: 4626     Test LOC: 9265     Code to Test Ratio: 1:2.0  Files: 189
+
+  Polymorphic models count: 0 polymorphic associations
+  Schema Stats: 12 `create_table` calls in schema.rb

@@ -1,0 +1,121 @@
+warning: Couldn't find coverage info at coverage/.resultset.json.
+warning: Having no coverage metrics will make your SkunkScore worse.
+running flay smells
+[32m.[0m[32m.[0m[32m.[0m[32m.[0m
+running flog smells
+[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m
+running reek smells
+[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m
+running complexity
+[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m
+running attributes
+[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m
+running churn
+[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m
+running simple_cov
+[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m
++---------------------------------------------------------------+----------------+------------------+--------------+--------------+--------------+
+| file                                                          | skunk_score    | churn_times_cost | churn        | cost         | coverage     |
++---------------------------------------------------------------+----------------+------------------+--------------+--------------+--------------+
+| app/models/dashboard/run.rb                                   | 1375.08        | 233.76           | 17           | 13.75        | 0.0          |
+| app/lib/r3x/dashboard/workflow/summaries.rb                   | 971.24         | 165.11           | 17           | 9.71         | 0.0          |
+| app/lib/r3x/dashboard/logs.rb                                 | 831.56         | 174.63           | 21           | 8.32         | 0.0          |
+| app/helpers/r3x/dashboard/application_helper.rb               | 726.4          | 188.86           | 26           | 7.26         | 0.0          |
+| app/lib/r3x/dashboard/workflow/runs.rb                        | 624.96         | 93.74            | 15           | 6.25         | 0.0          |
+| app/lib/r3x/error_details.rb                                  | 616.24         | 6.16             | 1            | 6.16         | 0.0          |
+| lib/r3x/workflow/cli.rb                                       | 585.56         | 40.99            | 7            | 5.86         | 0.0          |
+| lib/r3x/recurring_tasks_config.rb                             | 559.48         | 123.09           | 22           | 5.59         | 0.0          |
+| app/lib/r3x/client/hashi_corp_vault.rb                        | 490.92         | 88.37            | 18           | 4.91         | 0.0          |
+| app/lib/r3x/client/hashi_corp_vault/auth/kubernetes.rb        | 474.0          | 47.4             | 10           | 4.74         | 0.0          |
+| lib/r3x/workflow/base.rb                                      | 447.32         | 129.72           | 29           | 4.47         | 0.0          |
+| app/lib/r3x/client/http.rb                                    | 445.04         | 75.66            | 17           | 4.45         | 0.0          |
+| lib/r3x/workflow/pack_loader.rb                               | 425.24         | 76.54            | 18           | 4.25         | 0.0          |
+| lib/r3x/workflow/durable_set.rb                               | 319.16         | 15.96            | 5            | 3.19         | 0.0          |
+| app/lib/r3x/dashboard/workflow/catalog.rb                     | 319.16         | 41.49            | 13           | 3.19         | 0.0          |
+| app/lib/r3x/dashboard/workflow/logical_run.rb                 | 286.84         | 2.87             | 1            | 2.87         | 0.0          |
+| app/lib/r3x/client/google_auth.rb                             | 281.76         | 30.99            | 11           | 2.82         | 0.0          |
+| app/lib/r3x/dashboard/workflow/run_counts.rb                  | 273.8          | 13.69            | 5            | 2.74         | 0.0          |
+| app/lib/r3x/client/google/gmail.rb                            | 268.08         | 53.62            | 20           | 2.68         | 0.0          |
+| lib/r3x/triggers/schedule.rb                                  | 249.08         | 19.93            | 8            | 2.49         | 0.0          |
+| lib/r3x/workflow/cache_key.rb                                 | 237.32         | 11.87            | 5            | 2.37         | 0.0          |
+| lib/r3x/workflow/context/client.rb                            | 229.04         | 61.84            | 27           | 2.29         | 0.0          |
+| app/models/dashboard/direct_workflow_enqueuer.rb              | 218.84         | 13.13            | 6            | 2.19         | 0.0          |
+| lib/r3x/env.rb                                                | 197.92         | 33.65            | 17           | 1.98         | 0.0          |
+| app/models/dashboard/recurring_task.rb                        | 192.36         | 15.39            | 8            | 1.92         | 0.0          |
+| app/lib/r3x/client/ocr.rb                                     | 191.96         | 30.71            | 16           | 1.92         | 0.0          |
+| app/lib/r3x/client/llm.rb                                     | 188.88         | 45.33            | 24           | 1.89         | 0.0          |
+| lib/r3x/workflow/executor.rb                                  | 178.44         | 12.49            | 7            | 1.78         | 0.0          |
+| lib/r3x/workflow.rb                                           | 177.52         | 28.4             | 16           | 1.78         | 0.0          |
+| app/lib/r3x/client/healthchecks_io.rb                         | 172.12         | 10.33            | 6            | 1.72         | 0.0          |
+| app/lib/r3x/client/you_tube_transcript.rb                     | 171.04         | 1.71             | 1            | 1.71         | 0.0          |
+| app/lib/r3x/client/miniflux.rb                                | 169.08         | 10.14            | 6            | 1.69         | 0.0          |
+| lib/r3x/validators/timezone.rb                                | 168.32         | 3.37             | 2            | 1.68         | 0.0          |
+| lib/r3x/workflow/dedup_key.rb                                 | 167.04         | 5.01             | 3            | 1.67         | 0.0          |
+| lib/r3x/triggers.rb                                           | 165.88         | 9.95             | 6            | 1.66         | 0.0          |
+| app/lib/r3x/dashboard/workflow/run_enqueuer.rb                | 160.16         | 14.41            | 9            | 1.6          | 0.0          |
+| app/lib/r3x/client/ocr/result.rb                              | 155.76         | 3.12             | 2            | 1.56         | 0.0          |
+| lib/r3x/log/json_formatter.rb                                 | 153.44         | 7.67             | 5            | 1.53         | 0.0          |
+| app/lib/r3x/client/google_sheets.rb                           | 149.76         | 10.48            | 7            | 1.5          | 0.0          |
+| lib/r3x/policy.rb                                             | 146.88         | 7.34             | 5            | 1.47         | 0.0          |
+| app/controllers/r3x/dashboard/workflow_runs_controller.rb     | 141.88         | 12.77            | 9            | 1.42         | 0.0          |
+| lib/r3x/validators/cron.rb                                    | 140.48         | 5.62             | 4            | 1.4          | 0.0          |
+| app/lib/r3x/dashboard/overview.rb                             | 138.88         | 15.28            | 11           | 1.39         | 0.0          |
+| app/lib/r3x/client/google/translate.rb                        | 128.48         | 12.85            | 10           | 1.28         | 0.0          |
+| app/lib/r3x/client/word_press.rb                              | 128.12         | 6.41             | 5            | 1.28         | 0.0          |
+| app/lib/r3x/client/victoria_logs.rb                           | 127.12         | 19.07            | 15           | 1.27         | 0.0          |
+| lib/r3x/workflow/entrypoint.rb                                | 126.32         | 3.79             | 3            | 1.26         | 0.0          |
+| app/lib/r3x/structured_logging.rb                             | 122.52         | 11.03            | 9            | 1.23         | 0.0          |
+| lib/r3x/configuration_error.rb                                | 122.2          | 2.44             | 2            | 1.22         | 0.0          |
+| lib/r3x/validators/url.rb                                     | 120.16         | 3.6              | 3            | 1.2          | 0.0          |
+| app/controllers/r3x/dashboard/workflows_controller.rb         | 112.12         | 8.97             | 8            | 1.12         | 0.0          |
+| app/lib/r3x/client/apify.rb                                   | 111.8          | 14.53            | 13           | 1.12         | 0.0          |
+| app/lib/r3x/client/hashi_corp_vault/config.rb                 | 110.8          | 5.54             | 5            | 1.11         | 0.0          |
+| app/lib/r3x/client/feedway.rb                                 | 105.4          | 3.16             | 3            | 1.05         | 0.0          |
+| app/lib/r3x/client/healthchecks_io/response.rb                | 94.16          | 1.88             | 2            | 0.94         | 0.0          |
+| app/lib/r3x/client/llm/classifier.rb                          | 86.52          | 3.46             | 4            | 0.87         | 0.0          |
+| app/lib/r3x/client/llm/provider_registry.rb                   | 80.96          | 2.43             | 3            | 0.81         | 0.0          |
+| app/lib/r3x/client/markdownify.rb                             | 80.04          | 5.6              | 7            | 0.8          | 0.0          |
+| app/lib/r3x/client/discord.rb                                 | 75.28          | 6.78             | 9            | 0.75         | 0.0          |
+| app/lib/r3x/client/prometheus/result.rb                       | 65.6           | 1.97             | 3            | 0.66         | 0.0          |
+| lib/r3x/log.rb                                                | 59.24          | 6.52             | 11           | 0.59         | 0.0          |
+| lib/r3x/trigger_manager.rb                                    | 58.48          | 1.75             | 3            | 0.58         | 0.0          |
+| app/lib/r3x/client/llm/provider_configuration.rb              | 57.12          | 1.14             | 2            | 0.57         | 0.0          |
+| app/controllers/r3x/dashboard/application_controller.rb       | 56.8           | 3.98             | 7            | 0.57         | 0.0          |
+| lib/r3x/triggers/base.rb                                      | 50.64          | 4.56             | 9            | 0.51         | 0.0          |
+| lib/r3x/dsl/validatable.rb                                    | 49.52          | 1.98             | 4            | 0.5          | 0.0          |
+| lib/r3x/workflow/registry.rb                                  | 49.48          | 1.98             | 4            | 0.49         | 0.0          |
+| app/lib/r3x/concerns/logger.rb                                | 46.84          | 2.81             | 6            | 0.47         | 0.0          |
+| lib/r3x/workflow/execution.rb                                 | 46.16          | 1.38             | 3            | 0.46         | 0.0          |
+| app/lib/r3x/dashboard/error_details.rb                        | 40.84          | 1.23             | 3            | 0.41         | 0.0          |
+| app/jobs/application_job.rb                                   | 40.8           | 4.9              | 12           | 0.41         | 0.0          |
+| lib/r3x/trigger_manager/execution.rb                          | 37.6           | 1.13             | 3            | 0.38         | 0.0          |
+| app/lib/r3x/client/prometheus.rb                              | 34.72          | 3.82             | 11           | 0.35         | 0.0          |
+| lib/r3x/triggers/concerns/cron_schedulable.rb                 | 34.4           | 1.38             | 4            | 0.34         | 0.0          |
+| app/lib/r3x/client/hashi_corp_vault/auth.rb                   | 31.88          | 0.96             | 3            | 0.32         | 0.0          |
+| app/controllers/r3x/dashboard/workflow_run_logs_controller.rb | 28.36          | 1.13             | 4            | 0.28         | 0.0          |
+| lib/r3x/workflow/boot.rb                                      | 26.56          | 0.8              | 3            | 0.27         | 0.0          |
+| lib/r3x/workflow/context.rb                                   | 26.16          | 2.62             | 10           | 0.26         | 0.0          |
+| app/lib/r3x/client/http/downloaded_file.rb                    | 24.8           | 0.25             | 1            | 0.25         | 0.0          |
+| app/controllers/r3x/dashboard/overview_controller.rb          | 22.64          | 0.45             | 2            | 0.23         | 0.0          |
+| lib/r3x/gem_loader.rb                                         | 22.28          | 0.45             | 2            | 0.22         | 0.0          |
+| app/lib/r3x/client/hashi_corp_vault/auth/token.rb             | 12.8           | 0.26             | 2            | 0.13         | 0.0          |
+| lib/r3x/workflow/llm_schema.rb                                | 12.8           | 0.38             | 3            | 0.13         | 0.0          |
+| lib/r3x/triggers/manual.rb                                    | 4.0            | 0.2              | 5            | 0.04         | 0.0          |
+| app/controllers/application_controller.rb                     | 0.0            | 0.0              | 2            | 0.0          | 0.0          |
+| app/controllers/r3x/web_controller.rb                         | 0.0            | 0.0              | 2            | 0.0          | 0.0          |
+| app/jobs/demo/dashboard/base_job.rb                           | 0.0            | 0.0              | 2            | 0.0          | 0.0          |
+| app/jobs/demo/dashboard/feed_watch_job.rb                     | 0.0            | 0.0              | 3            | 0.0          | 0.0          |
+| app/jobs/demo/dashboard/inventory_sync_job.rb                 | 0.0            | 0.0              | 2            | 0.0          | 0.0          |
+| app/jobs/demo/dashboard/invoice_dispatch_job.rb               | 0.0            | 0.0              | 2            | 0.0          | 0.0          |
+| app/jobs/demo/dashboard/monitoring_job.rb                     | 0.0            | 0.0              | 3            | 0.0          | 0.0          |
+| app/jobs/demo/dashboard/partner_export_job.rb                 | 0.0            | 0.0              | 2            | 0.0          | 0.0          |
+| app/jobs/demo/dashboard/retention_cleanup_job.rb              | 0.0            | 0.0              | 2            | 0.0          | 0.0          |
+| app/models/application_record.rb                              | 0.0            | 0.0              | 2            | 0.0          | 0.0          |
++---------------------------------------------------------------+----------------+------------------+--------------+--------------+--------------+
+
+SkunkScore Total: 17256.44
+Modules Analysed: 94
+SkunkScore Average: 183.58
+Worst SkunkScore: 1375.08 (app/models/dashboard/run.rb)
+
+Generated with Skunk v0.5.4

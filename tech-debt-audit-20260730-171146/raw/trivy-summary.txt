@@ -1,0 +1,3 @@
+Dockerfile	DS-0026	LOW	No HEALTHCHECK defined
+workflows/Dockerfile	DS-0002	HIGH	Image user should not be 'root'
+workflows/Dockerfile	DS-0026	LOW	No HEALTHCHECK defined

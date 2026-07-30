@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Ruby Critic - Home</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- StyleSheets -->
+    <link href="../../../assets/vendor/stylesheets/bootstrap.min.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../assets/vendor/stylesheets/font-awesome.min.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../assets/vendor/stylesheets/prettify.custom_theme.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../assets/stylesheets/application.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+  </head>
+
+  <body>
+    <header class="navbar navbar-default navbar-fixed-top">
+      <a href="#menu-toggle" class="btn btn-default hidden-lg visible-sm-* hidden-md visible-xs-* pull-left" id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></a>
+      <a href="../../../overview.html"><img src="../../../assets/images/logo.png" alt="Ruby Critic Logo" title="Ruby Critic Logo" width="55"><span class="logo">RUBYCRITIC</span></a>
+      
+    </header>
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <aside id="sidebar-wrapper">
+        <ul class="sidebar-nav">
+          <li class="sidebar-item">
+            <a href="../../../overview.html" class="project-nav-item overview-nav"><i class="fa fa-dashboard"></i>Overview</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../code_index.html" class="project-nav-item code-index-nav"><i class="fa fa-code"></i>Code</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../smells_index.html" class="project-nav-item smells-index-nav"><i class="fa fa-warning"></i>Smells</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../simple_cov_index.html" class="project-nav-item coverage-index-nav"><i class="fa fa-umbrella"></i>Coverage</a>
+          </li>
+        </ul>
+      </aside>
+      <!-- /#sidebar-wrapper -->
+      <div id="page-content-wrapper">
+        <div class="container-fluid">
+          <div class="row">
+  <!--Page Title -->
+  <div class="Page_Title">
+    <div class="file-time">
+      <span class="committed-at">
+        
+          Updated <time class='js-timeago' datetime='2026-06-20 08:59:34 +0100'>2026-06-20 08:59:34 +0100</time>
+        
+      </span>
+    </div>
+    <div>
+      <h3><small>app/lib/r3x /</small> error_details.rb</h3>
+    </div>
+  </div>
+  <!--End Page Title -->
+  <div class="Content_Wrapper">
+    <!-- code detail -->
+    <div class="code-top-detail clearfix row">
+      <div class="col-md-8">
+        <div class="row">
+          <div class="col-md-1">
+            <div class="rating c big">
+              C
+            </div>
+          </div>
+          <div class="code-statistics col-md-11">
+            <div class="col-md-3">
+              <div><span class="metric">136</span><small> lines of codes</small></div>
+              <div><span class="metric">15</span><small> methods</small></div>
+            </div>
+            <div class="col-md-3">
+              <div><span class="metric">10.3</span><small> complexity/method</small></div>
+              <div><span class="metric">1</span><small> churn</small></div>
+            </div>
+            <div class="col-md-3">
+              <div><span class="metric">154.06</span><small> complexity</small></div>
+              <div><span class="metric">0</span><small> duplications</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="code-tabs">
+          <ul class="nav nav-pills right-to-left">
+            <li><a href="#" id="toggle-code" class="toggle-button button">code</a></li>
+            <li class="active">
+              <a href="#" id="toggle-smells" class="toggle-button button">
+                6
+                smells
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <code class="prettyprint linenums lang-ruby file-code js-file-code"># frozen_string_literal: true
+
+module R3x
+  class ErrorDetails<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Irresponsible-Module.md" target="_blank"><b>IrresponsibleModule</b></a>        </span>      </div>      <span>R3x::ErrorDetails has no descriptive comment</span>          </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Instance-Variables.md" target="_blank"><b>TooManyInstanceVariables</b></a>        </span>      </div>      <span>R3x::ErrorDetails has at least 5 instance variables</span>          </div>  </li></ol>
+    ERROR_KEYS = %w[exception_class error_class error_message message error backtrace trace stack].freeze
+
+    attr_reader :error_class, :message, :backtrace
+
+    def initialize(error)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="http://docs.seattlerb.org/flog/" target="_blank"><b>HighComplexity</b></a>        </span>      </div>      <span>R3x::ErrorDetails#initialize has a flog score of 37</span>          </div>  </li></ol>
+      @error = error
+      @parsed_error = parse_error
+      @error_class = parsed_error[&quot;error_class&quot;].presence || parsed_error[&quot;exception_class&quot;].presence
+      @message = parsed_error[&quot;message&quot;].presence || parsed_error[&quot;error_message&quot;].presence || parsed_error[&quot;error&quot;].presence
+      @backtrace = Array(parsed_error[&quot;backtrace&quot;] || parsed_error[&quot;trace&quot;] || parsed_error[&quot;stack&quot;]).compact_blank.presence
+    end
+
+    def summary
+      message.presence || fallback_summary.presence || &quot;Unknown error&quot;
+    end
+
+    def body
+      return &quot;No error details recorded.&quot; if error.blank?
+
+      error.is_a?(Exception) ? exception_body : error.to_s
+    end
+
+    def details_visible?
+      body.present? &amp;&amp; summary != body
+    end
+
+    def structured
+      {
+        error_class:,
+        message:,
+        backtrace:,
+      }.compact_blank.presence
+    end
+
+    private
+
+    attr_reader :error, :parsed_error
+
+    def parse_error
+      case error
+      when Exception
+        {
+          &quot;error_class&quot; =&gt; error.class.name,
+          &quot;message&quot;     =&gt; error.message,
+          &quot;backtrace&quot;   =&gt; error.backtrace,
+        }
+      when Hash
+        error.stringify_keys
+      else
+        parse_error_text(error.to_s) || {}
+      end
+    end
+
+    def fallback_summary
+      case error
+      when Hash
+        error.inspect
+      else
+        first_line = error.to_s.lines.first.to_s.strip
+        extract_error_value(first_line, &quot;message&quot;) || extract_error_value(first_line, &quot;error_message&quot;) || first_line
+      end
+    end
+
+    def exception_body
+      lines = [&quot;#{error.class.name}: #{error.message}&quot;, *Array(error.backtrace)].compact_blank
+      lines.join(&quot;\n&quot;)
+    end
+
+    def parse_error_text(text)
+      return if text.blank?
+
+      parse_json_error_text(text) || parse_ruby_hash_error_text(text)
+    end
+
+    def parse_json_error_text(text)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::ErrorDetails#parse_json_error_text doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+      return unless text.lstrip.start_with?(&quot;{&quot;, &quot;[&quot;)
+
+      parsed = MultiJSON.parse(text)
+      parsed.is_a?(Hash) ? parsed.stringify_keys : nil
+    rescue MultiJSON::ParseError
+      nil
+    end
+
+    def parse_ruby_hash_error_text(text)
+      return unless text.include?(&quot;=&gt;&quot;)
+
+      ERROR_KEYS.index_with { |key| extract_ruby_hash_error_value(text, key) }
+        .merge(
+          &quot;backtrace&quot; =&gt; extract_ruby_hash_error_array(text, &quot;backtrace&quot;),
+          &quot;trace&quot;     =&gt; extract_ruby_hash_error_array(text, &quot;trace&quot;),
+          &quot;stack&quot;     =&gt; extract_ruby_hash_error_array(text, &quot;stack&quot;),
+        ).compact_blank
+    end
+
+    def extract_error_value(text, key)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Data-Clump.md" target="_blank"><b>DataClump</b></a>        </span>      </div>      <span>R3x::ErrorDetails takes parameters ['key', 'text'] to 3 methods</span>              <span>Locations:</span>                  <a href="error_details.html#L99" class="js-smell-location">0</a>                  <a href="error_details.html#L105" class="js-smell-location">1</a>                  <a href="error_details.html#L116" class="js-smell-location">2</a>                  </div>  </li></ol>
+      pattern = /&quot;#{Regexp.escape(key)}&quot;\s*(?:=&gt;|:)\s*&quot;([^&quot;]+)&quot;/
+      match = text.match(pattern)
+      match &amp;&amp; unescape_error_string(match[1])
+    end
+
+    def extract_ruby_hash_error_value(text, key)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Data-Clump.md" target="_blank"><b>DataClump</b></a>        </span>      </div>      <span>R3x::ErrorDetails takes parameters ['key', 'text'] to 3 methods</span>              <span>Locations:</span>                  <a href="error_details.html#L99" class="js-smell-location">0</a>                  <a href="error_details.html#L105" class="js-smell-location">1</a>                  <a href="error_details.html#L116" class="js-smell-location">2</a>                  </div>  </li></ol>
+      pattern = /
+        &quot;#{Regexp.escape(key)}&quot;\s*(?:=&gt;|:)\s*&quot;(?&lt;value&gt;.*?)&quot;\s*
+        (?=,\s*&quot;(?:#{ERROR_KEYS.join(&quot;|&quot;)})&quot;\s*(?:=&gt;|:)|\s*}\z)
+      /mx
+      match = text.match(pattern)
+      return unless match
+
+      unescape_error_string(match[:value])
+    end
+
+    def extract_ruby_hash_error_array(text, key)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Data-Clump.md" target="_blank"><b>DataClump</b></a>        </span>      </div>      <span>R3x::ErrorDetails takes parameters ['key', 'text'] to 3 methods</span>              <span>Locations:</span>                  <a href="error_details.html#L99" class="js-smell-location">0</a>                  <a href="error_details.html#L105" class="js-smell-location">1</a>                  <a href="error_details.html#L116" class="js-smell-location">2</a>                  </div>  </li></ol>
+      pattern = /
+        &quot;#{Regexp.escape(key)}&quot;\s*(?:=&gt;|:)\s*\[(?&lt;value&gt;.*?)\]\s*
+        (?=,\s*&quot;(?:#{ERROR_KEYS.join(&quot;|&quot;)})&quot;\s*(?:=&gt;|:)|\s*}\z)
+      /mx
+      match = text.match(pattern)
+      return [] unless match
+
+      match[:value]
+        .scan(/&quot;((?:[^&quot;\\]|\\.)*)&quot;/)
+        .flatten
+        .map { |value| unescape_error_string(value) }
+    end
+
+    def unescape_error_string(value)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::ErrorDetails#unescape_error_string doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+      MultiJSON.parse(%(&quot;#{value}&quot;))
+    rescue MultiJSON::ParseError
+      value.to_s.gsub(&#39;\&quot;&#39;, &#39;&quot;&#39;).gsub(&quot;\\\\&quot;, &quot;\\&quot;)
+    end
+  end
+end
+</code>
+  </div>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScripts -->
+    <script src="../../../assets/vendor/javascripts/jquery.min.js"></script>
+    <script src="../../../assets/vendor/javascripts/jquery.tablesorter.min.js"></script>
+    <script src="../../../assets/vendor/javascripts/jquery.scrollTo.min.js"></script>
+    <script src="../../../assets/vendor/javascripts/jquery.timeago.js"></script>
+    <script src="../../../assets/vendor/javascripts/highcharts.src-4.0.1.js"></script>
+    <script src="../../../assets/vendor/javascripts/prettify.js"></script>
+    <script src="../../../assets/vendor/javascripts/bootstrap.min.js"></script>
+    <script src="../../../assets/javascripts/application.js"></script>
+    <script src="../../../assets/vendor/javascripts/jquery.filtertable.min.js"></script>
+  </body>
+</html>

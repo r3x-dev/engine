@@ -1,0 +1,4 @@
+`bundle outdated` failed with status: 4608
+stderr: Your Ruby version is 4.0.6, but your Gemfile specified 4.0.5
+stdout: 
+Try running `bundle install`.

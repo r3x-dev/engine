@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Ruby Critic - Home</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- StyleSheets -->
+    <link href="../../../assets/vendor/stylesheets/bootstrap.min.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../assets/vendor/stylesheets/font-awesome.min.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../assets/vendor/stylesheets/prettify.custom_theme.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../assets/stylesheets/application.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+  </head>
+
+  <body>
+    <header class="navbar navbar-default navbar-fixed-top">
+      <a href="#menu-toggle" class="btn btn-default hidden-lg visible-sm-* hidden-md visible-xs-* pull-left" id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></a>
+      <a href="../../../overview.html"><img src="../../../assets/images/logo.png" alt="Ruby Critic Logo" title="Ruby Critic Logo" width="55"><span class="logo">RUBYCRITIC</span></a>
+      
+    </header>
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <aside id="sidebar-wrapper">
+        <ul class="sidebar-nav">
+          <li class="sidebar-item">
+            <a href="../../../overview.html" class="project-nav-item overview-nav"><i class="fa fa-dashboard"></i>Overview</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../code_index.html" class="project-nav-item code-index-nav"><i class="fa fa-code"></i>Code</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../smells_index.html" class="project-nav-item smells-index-nav"><i class="fa fa-warning"></i>Smells</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../simple_cov_index.html" class="project-nav-item coverage-index-nav"><i class="fa fa-umbrella"></i>Coverage</a>
+          </li>
+        </ul>
+      </aside>
+      <!-- /#sidebar-wrapper -->
+      <div id="page-content-wrapper">
+        <div class="container-fluid">
+          <div class="row">
+  <!--Page Title -->
+  <div class="Page_Title">
+    <div class="file-time">
+      <span class="committed-at">
+        
+          Updated <time class='js-timeago' datetime='2026-06-19 20:02:37 +0100'>2026-06-19 20:02:37 +0100</time>
+        
+      </span>
+    </div>
+    <div>
+      <h3><small>lib/r3x/workflow /</small> executor.rb</h3>
+    </div>
+  </div>
+  <!--End Page Title -->
+  <div class="Content_Wrapper">
+    <!-- code detail -->
+    <div class="code-top-detail clearfix row">
+      <div class="col-md-8">
+        <div class="row">
+          <div class="col-md-1">
+            <div class="rating a big">
+              A
+            </div>
+          </div>
+          <div class="code-statistics col-md-11">
+            <div class="col-md-3">
+              <div><span class="metric">53</span><small> lines of codes</small></div>
+              <div><span class="metric">6</span><small> methods</small></div>
+            </div>
+            <div class="col-md-3">
+              <div><span class="metric">7.4</span><small> complexity/method</small></div>
+              <div><span class="metric">7</span><small> churn</small></div>
+            </div>
+            <div class="col-md-3">
+              <div><span class="metric">44.61</span><small> complexity</small></div>
+              <div><span class="metric">0</span><small> duplications</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="code-tabs">
+          <ul class="nav nav-pills right-to-left">
+            <li><a href="#" id="toggle-code" class="toggle-button button">code</a></li>
+            <li class="active">
+              <a href="#" id="toggle-smells" class="toggle-button button">
+                4
+                smells
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <code class="prettyprint linenums lang-ruby file-code js-file-code"># frozen_string_literal: true
+
+module R3x
+  module Workflow
+    class Executor<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Irresponsible-Module.md" target="_blank"><b>IrresponsibleModule</b></a>        </span>      </div>      <span>R3x::Workflow::Executor has no descriptive comment</span>          </div>  </li></ol>
+      def self.build_context(...)
+        new(...).build_context
+      end
+
+      def initialize(workflow_class:, trigger_key:, trigger_payload: nil, active_job_id: nil)
+        @workflow_class = workflow_class
+        @trigger_key = trigger_key
+        @trigger_payload = trigger_payload
+        @active_job_id = active_job_id
+      end
+
+      def build_context
+        trigger = resolve_trigger
+
+        Context.new(
+          trigger: TriggerManager::Execution.new(
+            trigger:,
+            workflow_key: workflow_class.workflow_key,<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Workflow::Executor#build_context calls 'workflow_class.workflow_key' 2 times</span>              <span>Locations:</span>                  <a href="executor.html#L23" class="js-smell-location">0</a>                  <a href="executor.html#L26" class="js-smell-location">1</a>                  </div>  </li></ol>
+            payload: trigger_payload,
+          ),
+          workflow_key: workflow_class.workflow_key,<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Workflow::Executor#build_context calls 'workflow_class.workflow_key' 2 times</span>              <span>Locations:</span>                  <a href="executor.html#L23" class="js-smell-location">0</a>                  <a href="executor.html#L26" class="js-smell-location">1</a>                  </div>  </li></ol>
+          trigger_key: trigger.unique_key,
+          active_job_id:,
+          workflow_class:,
+        )
+      end
+
+      private
+
+      attr_reader :workflow_class, :trigger_key, :trigger_payload, :active_job_id
+
+      def resolve_trigger
+        return manual_trigger if trigger_key.nil?<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Nil-Check.md" target="_blank"><b>NilCheck</b></a>        </span>      </div>      <span>R3x::Workflow::Executor#resolve_trigger performs a nil-check</span>          </div>  </li></ol>
+        return manual_trigger if manual_trigger.unique_key == trigger_key
+
+        workflow_class.triggers_by_key[trigger_key] || unknown_trigger!
+      end
+
+      def manual_trigger
+        workflow_class.triggers.find(&amp;:manual?) || Triggers::Manual.new
+      end
+
+      def unknown_trigger!<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Missing-Safe-Method.md" target="_blank"><b>MissingSafeMethod</b></a>        </span>      </div>      <span>R3x::Workflow::Executor has missing safe method 'unknown_trigger!'</span>          </div>  </li></ol>
+        raise ArgumentError, &quot;Unknown trigger key &#39;#{trigger_key}&#39; for workflow &#39;#{workflow_class.workflow_key}&#39;&quot;
+      end
+    end
+  end
+end
+</code>
+  </div>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScripts -->
+    <script src="../../../assets/vendor/javascripts/jquery.min.js"></script>
+    <script src="../../../assets/vendor/javascripts/jquery.tablesorter.min.js"></script>
+    <script src="../../../assets/vendor/javascripts/jquery.scrollTo.min.js"></script>
+    <script src="../../../assets/vendor/javascripts/jquery.timeago.js"></script>
+    <script src="../../../assets/vendor/javascripts/highcharts.src-4.0.1.js"></script>
+    <script src="../../../assets/vendor/javascripts/prettify.js"></script>
+    <script src="../../../assets/vendor/javascripts/bootstrap.min.js"></script>
+    <script src="../../../assets/javascripts/application.js"></script>
+    <script src="../../../assets/vendor/javascripts/jquery.filtertable.min.js"></script>
+  </body>
+</html>

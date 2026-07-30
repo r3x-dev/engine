@@ -1,0 +1,19 @@
+files=94
+complexity_gt_50=22
+complexity_method_gt_10=20
+top_by_total_complexity
+ 343.77  per_method= 11.9  churn=17  app/models/dashboard/run.rb
+ 242.81  per_method=  7.4  churn=17  app/lib/r3x/dashboard/workflow/summaries.rb
+ 182.89  per_method= 10.2  churn=21  app/lib/r3x/dashboard/logs.rb
+ 181.60  per_method=  5.5  churn=26  app/helpers/r3x/dashboard/application_helper.rb
+ 156.24  per_method=  9.2  churn=15  app/lib/r3x/dashboard/workflow/runs.rb
+ 154.06  per_method= 10.3  churn= 1  app/lib/r3x/error_details.rb
+ 146.39  per_method= 13.3  churn= 7  lib/r3x/workflow/cli.rb
+ 139.87  per_method= 28.0  churn=22  lib/r3x/recurring_tasks_config.rb
+ 111.83  per_method= 12.4  churn=29  lib/r3x/workflow/base.rb
+ 111.26  per_method=  8.6  churn=17  app/lib/r3x/client/http.rb
+ 106.31  per_method= 17.7  churn=18  lib/r3x/workflow/pack_loader.rb
+  97.73  per_method=  4.2  churn=18  app/lib/r3x/client/hashi_corp_vault.rb
+  93.50  per_method= 10.4  churn=10  app/lib/r3x/client/hashi_corp_vault/auth/kubernetes.rb
+  79.79  per_method=  5.0  churn=13  app/lib/r3x/dashboard/workflow/catalog.rb
+  71.71  per_method= 10.2  churn= 1  app/lib/r3x/dashboard/workflow/logical_run.rb

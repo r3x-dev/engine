@@ -1,0 +1,12 @@
+-rw-rw-r-- 1 omen omen  1305 Jul 11 18:24 .env.example
+-rw-rw-r-- 1 omen omen  3686 May 24 09:50 Dockerfile
+-rw-rw-r-- 1 omen omen 10919 Jul 11 18:28 README.md
+-rwxrwxr-x 1 omen omen  1194 Jul 11 18:24 bin/setup
+
+.github/workflows:
+total 12
+drwxrwxr-x 1 omen omen   64 Jun 28 08:41 .
+drwxrwxr-x 1 omen omen   56 Apr 27 07:54 ..
+-rw-rw-r-- 1 omen omen 5993 Jul 10 08:30 ci.yml
+-rw-rw-r-- 1 omen omen 1771 Jun 20 10:24 renovate-ruby-lockfile.yml
+compose files:

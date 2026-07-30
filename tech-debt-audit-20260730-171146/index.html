@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tech Debt Audit — r3x engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oxygen:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  /* Palette from the FastRuby.io styleguide — https://fastruby.github.io/styleguide */
+  :root {
+    --green: #00d242;
+    --green-dark: #00a836;
+    --yellow: #fdca31;
+    --red: #ff0000;
+    --black: #222222;
+    --grey-medium: #323235;
+    --grey-light: #dadada;
+    --grey-lighter: #eaeaea;
+    --white: #f8f8f8;
+    --ink: #222222;
+    --muted: #5b5b60;
+    --line: #dadada;
+    --bg: #f8f8f8;
+    --card: #ffffff;
+    --pass: #00a836;
+    --warn: #b7791f;
+    --fail: #ff0000;
+    --shadow: 0 1px 3px rgba(34,34,34,.10), 0 1px 2px rgba(34,34,34,.06);
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    font-family: "Oxygen", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 300;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  a { color: var(--green-dark); }
+  header.masthead {
+    background: var(--black);
+    color: #fff;
+    padding: 40px 24px;
+    border-bottom: 5px solid var(--green);
+  }
+  header.masthead .wrap { max-width: 1040px; margin: 0 auto; }
+  header.masthead h1 { margin: 0 0 10px; font-size: 2.625rem; font-weight: 700; line-height: 1.1; }
+  header.masthead .meta { opacity: .92; font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 20px; }
+  header.masthead .meta .k { color: var(--green); font-weight: 700; }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 24px; }
+  section { margin-bottom: 32px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    box-shadow: var(--shadow);
+  }
+  h2 {
+    font-size: 1.375rem;
+    font-weight: 700;
+    margin: 0 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--grey-lighter);
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  h2 .num {
+    color: #fff; background: var(--green); font-weight: 700;
+    font-size: .85rem; padding: 2px 9px; border-radius: 999px; letter-spacing: .02em;
+  }
+  h2 .tool { font-size: .8rem; font-weight: 300; margin-left: auto; }
+  h3 { font-size: 1rem; font-weight: 700; margin: 22px 0 10px; text-transform: uppercase; letter-spacing: .03em; }
+  h3 a { text-decoration: none; }
+  h3 a::after { content: " ↗"; font-size: .75em; color: var(--muted); }
+  p { font-weight: 300; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 12px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 380px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--grey-lighter); }
+  th { background: var(--white); font-weight: 700; }
+  tr:hover td { background: var(--white); }
+  code { background: var(--grey-lighter); padding: 1px 6px; border-radius: 4px; font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre { background: var(--black); color: var(--white); padding: 16px; border-radius: var(--radius); overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .badge.pass { background: var(--green); color: var(--black); }
+  .badge.warn { background: var(--yellow); color: var(--black); }
+  .badge.fail { background: var(--red); color: #fff; }
+  .score-grid { display: flex; flex-wrap: wrap; gap: 16px; margin: 20px 0; }
+  .score-hero {
+    flex: 0 0 180px; text-align: center; background: var(--black); color: #fff;
+    border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
+  }
+  .score-hero .big { font-size: 3.25rem; font-weight: 700; line-height: 1; color: var(--green); }
+  /* Score color reflects severity: <50 poor, 50-74 needs work, 75+ good */
+  .score-hero .big.low { color: #ff4d4d; }
+  .score-hero .big.mid { color: var(--yellow); }
+  .score-hero .big.high { color: var(--green); }
+  .score-hero .lbl { opacity: .85; font-size: 13px; margin-top: 6px; }
+  .score-table { flex: 1 1 420px; }
+  .bar { height: 8px; background: var(--grey-lighter); border-radius: 999px; overflow: hidden; min-width: 80px; }
+  .bar > span { display: block; height: 100%; background: var(--green); }
+  .shot { margin: 16px 0; }
+  .shot img { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .shot .cap { font-size: 12.5px; color: var(--muted); margin-top: 6px; text-align: center; }
+  .recs { counter-reset: rec; }
+  .rec {
+    display: flex; gap: 16px; align-items: flex-start; padding: 18px;
+    border: 1px solid var(--line); border-left: 4px solid var(--green); border-radius: var(--radius);
+    margin-bottom: 14px; background: var(--card);
+  }
+  .rec .rank {
+    flex: 0 0 40px; height: 40px; border-radius: 50%; background: var(--green); color: var(--black);
+    font-weight: 700; font-size: 20px; display: flex; align-items: center; justify-content: center;
+  }
+  .rec h4 { margin: 0 0 6px; font-size: 16px; font-weight: 700; }
+  .rec p { margin: 0; color: var(--muted); font-size: 14px; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; }
+  .toc a { font-size: 13px; text-decoration: none; color: var(--black); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; background: #fff; }
+  .toc a:hover { background: var(--green); border-color: var(--green); }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 30px 24px; border-top: 1px solid var(--line); }
+  footer a { color: var(--green-dark); }
+  .muted { color: var(--muted); }
+  .empty { color: var(--pass); font-weight: 400; }
+  .flag { color: var(--red); font-weight: 400; }
+  @media (max-width: 640px) {
+    header.masthead { padding: 28px 18px; }
+    header.masthead h1 { font-size: 1.9rem; }
+    main { padding: 20px 14px; }
+    .card { padding: 18px 16px; }
+    .score-hero { flex: 1 1 100%; }
+    h2 .tool { margin-left: 0; flex-basis: 100%; }
+  }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <h1>Tech Debt Audit Report</h1>
+    <div class="meta">
+      <span><span class="k">Project:</span> r3x engine</span>
+      <span><span class="k">Date:</span> 2026-07-30</span>
+      <span><span class="k">Directory:</span> /home/omen/personal/r3x/engine/main</span>
+      <span><span class="k">Auditor:</span> Claude Code</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ============ EXECUTIVE SUMMARY ============ -->
+  <section id="summary">
+    <div class="card">
+      <h2><span class="num">01</span>Executive Summary</h2>
+      <p>The repository scores 50/100 under the audit rubric: the application dependency scan and Brakeman scan are clean, dependency freshness is excellent, and all 630 tests pass. Generated environments for Ruby LSP, OpenCode, local Bundler caches, and audit output are explicitly outside the application scan boundary. The score is pulled down mainly by an unmeasured coverage category and one very-high-complexity scheduling method. Production error alerting is deployment-owned through Prometheus, while the development setup, CI, documentation, and 1:2.0 code-to-test ratio are notable strengths.</p>
+      <div class="score-grid">
+        <div class="score-hero">
+          <div class="big mid">50</div>
+          <div class="lbl">Health Score / 100</div>
+        </div>
+        <div class="score-table">
+          <div class="table-wrap">
+          <table>
+            <thead><tr><th>Category</th><th>Score</th><th></th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Security</td><td>15/20</td><td><div class="bar"><span style="width:75%"></span></div></td><td><span class="badge warn">Warning</span></td></tr>
+              <tr><td>Dependencies</td><td>20/20</td><td><div class="bar"><span style="width:100%"></span></div></td><td><span class="badge pass">Pass</span></td></tr>
+              <tr><td>Complexity</td><td>0/20</td><td><div class="bar"><span style="width:0%"></span></div></td><td><span class="badge fail">Fail</span></td></tr>
+              <tr><td>Coverage</td><td>0/20</td><td><div class="bar"><span style="width:0%"></span></div></td><td><span class="badge fail">Fail</span></td></tr>
+              <tr><td>Maintainability</td><td>15/20</td><td><div class="bar"><span style="width:75%"></span></div></td><td><span class="badge warn">Warning</span></td></tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+      <nav class="toc">
+        <a href="#security">Security</a>
+        <a href="#freshness">Dependencies</a>
+        <a href="#coverage">Coverage</a>
+        <a href="#complexity">Complexity</a>
+        <a href="#skunk">Skunk</a>
+        <a href="#exceptions">Exception Tracking</a>
+        <a href="#performance">Performance</a>
+        <a href="#framework">Framework &amp; Stats</a>
+        <a href="#recommendations">Recommendations</a>
+      </nav>
+    </div>
+  </section>
+
+  <!-- ============ SECURITY ============ -->
+  <section id="security">
+    <div class="card">
+      <h2><span class="num">02</span>Security</h2>
+      <h3>Ruby Dependencies — <a href="https://github.com/rubysec/bundler-audit">bundler-audit</a></h3>
+      <p class="empty">No vulnerabilities found in the main <code>Gemfile.lock</code>. The advisory database was updated to commit <code>99b6a95</code> with 1,221 advisories before scanning.</p>
+      <h3>Static Analysis — <a href="https://github.com/presidentbeef/brakeman">Brakeman</a></h3>
+      <p class="empty">No warnings found. Brakeman 8.0.5 scanned Rails 8.1.3.1 with 0 errors and 0 security warnings.</p>
+      <h3>Memory Leaks — <a href="https://github.com/rubymem/bundler-leak">bundler-leak</a></h3>
+      <p class="empty">No known memory-leaking gems found after updating a database containing 14 advisories.</p>
+      <h3>Filesystem &amp; Secrets — <a href="https://github.com/aquasecurity/trivy">Trivy</a></h3>
+      <p class="empty">The corrected Trivy 0.72.0 application scan found no dependency vulnerabilities and no secrets. The repository-local <code>trivy.yaml</code> automatically excludes <code>.bundle</code>, <code>.ruby-lsp</code>, <code>workflows/.ruby-lsp</code>, <code>.opencode</code>, Git history, coverage/tmp output, and audit reports because those directories contain caches or tool-managed environments rather than application dependencies.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Target</th><th>Finding</th><th>Severity</th><th>Action / interpretation</th></tr></thead>
+          <tbody>
+            <tr><td><code>Gemfile.lock</code></td><td>No vulnerabilities</td><td>—</td><td>Main runtime dependency set is clean.</td></tr>
+            <tr><td><code>Dockerfile</code></td><td>No <code>HEALTHCHECK</code></td><td>Low</td><td>Deployment-owned health checks may make an image-level check redundant; verify the deployment contract.</td></tr>
+            <tr><td><code>workflows/Dockerfile</code></td><td>Root user and no <code>HEALTHCHECK</code></td><td>High / Low</td><td>Not a runnable service image: <code>FROM scratch</code> plus <code>COPY . /</code> packages workflow files. These checks are inapplicable.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">A broad first pass was retained as <code>raw/trivy-broad.*</code> for provenance only. It included local caches and tool-managed lockfiles and is not used for findings or scoring.</p>
+      <h3>JavaScript Dependencies — <a href="https://docs.npmjs.com/cli/commands/npm-audit">npm/yarn audit</a></h3>
+      <p class="muted">No root <code>package.json</code> exists, so a project-level npm/yarn audit was not applicable. The hidden <code>.opencode</code> environment is editor/agent tooling and is excluded from the application audit.</p>
+    </div>
+  </section>
+
+  <!-- ============ DEPENDENCY FRESHNESS ============ -->
+  <section id="freshness">
+    <div class="card">
+      <h2><span class="num">03</span>Dependency Freshness</h2>
+      <h3>Outdated Report — <a href="https://github.com/fastruby/next_rails">next_rails</a></h3>
+      <p>The isolated <code>next_rails</code> executable selected Ruby 4.0.6 and rejected the project's exact Ruby 4.0.5 constraint. The project-Bundler fallback completed successfully and found 1 outdated gem among 157 locked gems (about 0.6%).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Gem</th><th>Installed</th><th>Newest</th><th>Gap</th></tr></thead>
+          <tbody><tr><td><code>googleapis-common-protos</code></td><td>1.9.0</td><td>1.10.0</td><td>1 minor release</td></tr></tbody>
+        </table>
+      </div>
+      <h3>Freshness Metric — <a href="https://github.com/jaredbeck/libyear-bundler">libyear-bundler</a></h3>
+      <p class="empty">The dependency set is only 0.9 libyears behind across two releases.</p>
+      <pre>googleapis-common-protos  1.9.0 → 1.10.0  0.7 libyears
+ruby                     4.0.5 → 4.0.6   0.2 libyears
+Total releases behind: 2 (0 major, 1 minor, 1 patch)</pre>
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section id="coverage">
+    <div class="card">
+      <h2><span class="num">04</span>Test Coverage<span class="tool"><a href="https://github.com/simplecov-ruby/simplecov">SimpleCov ↗</a></span></h2>
+      <p class="empty">The fresh Minitest run passed: 630 runs, 1,866 assertions, 0 failures, 0 errors, and 0 skips.</p>
+      <p class="flag"><code>COVERAGE=true</code> produced no <code>coverage/.resultset.json</code> or <code>.last_run.json</code> because SimpleCov is not configured in the application test helper. The rubric therefore assigns no coverage points; this is a measurement gap, not evidence that coverage is 0%.</p>
+    </div>
+  </section>
+
+  <!-- ============ COMPLEXITY ============ -->
+  <section id="complexity">
+    <div class="card">
+      <h2><span class="num">05</span>Code Complexity<span class="tool"><a href="https://github.com/whitesmith/rubycritic">RubyCritic ↗</a></span></h2>
+      <p>RubyCritic 5.0.0 scored the 94 analyzed <code>app/</code> and <code>lib/</code> modules at <strong>88.53/100</strong>. The stricter audit rubric assigns 0 complexity points because 22 files have aggregate Flog complexity above 50 and at least one method exceeds 50.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Total complexity</th><th>Per method</th><th>Churn</th></tr></thead>
+          <tbody>
+            <tr><td><code>app/models/dashboard/run.rb</code></td><td>343.77</td><td>11.9</td><td>17</td></tr>
+            <tr><td><code>app/lib/r3x/dashboard/workflow/summaries.rb</code></td><td>242.81</td><td>7.4</td><td>17</td></tr>
+            <tr><td><code>app/lib/r3x/dashboard/logs.rb</code></td><td>182.89</td><td>10.2</td><td>21</td></tr>
+            <tr><td><code>app/helpers/r3x/dashboard/application_helper.rb</code></td><td>181.60</td><td>5.5</td><td>26</td></tr>
+            <tr><td><code>lib/r3x/recurring_tasks_config.rb</code></td><td>139.87</td><td>28.0</td><td>22</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="flag"><code>R3x::RecurringTasksConfig#schedule_all!</code> is the standout method hotspot with a Flog score of 101 and approximately 32 statements.</p>
+      <p class="muted">RubyCritic generated its full HTML report under <code>rubycritic/</code>. Screenshot capture was omitted because both the browser connector and headless Brave failed to render reliably in this environment.</p>
+    </div>
+  </section>
+
+  <!-- ============ SKUNK ============ -->
+  <section id="skunk">
+    <div class="card">
+      <h2><span class="num">06</span>Skunk Score<span class="tool"><a href="https://github.com/fastruby/skunk">Skunk ↗</a></span></h2>
+      <p class="flag">Skunk found no SimpleCov result and assigned every file 0.0% coverage, inflating all scores. Its total (17,256.44), average (183.58), and worst score (1,375.08) must not be interpreted as measured test risk.</p>
+      <p>The churn and structural-cost columns remain useful as prioritization signals:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Churn</th><th>Cost</th><th>Uncalibrated SkunkScore</th></tr></thead>
+          <tbody>
+            <tr><td><code>app/models/dashboard/run.rb</code></td><td>17</td><td>13.75</td><td>1,375.08</td></tr>
+            <tr><td><code>app/lib/r3x/dashboard/workflow/summaries.rb</code></td><td>17</td><td>9.71</td><td>971.24</td></tr>
+            <tr><td><code>app/lib/r3x/dashboard/logs.rb</code></td><td>21</td><td>8.32</td><td>831.56</td></tr>
+            <tr><td><code>app/helpers/r3x/dashboard/application_helper.rb</code></td><td>26</td><td>7.26</td><td>726.40</td></tr>
+            <tr><td><code>lib/r3x/recurring_tasks_config.rb</code></td><td>22</td><td>5.59</td><td>559.48</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ EXCEPTION TRACKING ============ -->
+  <section id="exceptions">
+    <div class="card">
+      <h2><span class="num">07</span>Exception Tracking</h2>
+      <p class="empty">Production error tracking and alerting is deployment-owned through Prometheus. No in-process exception-tracking gem is expected for this architecture.</p>
+    </div>
+  </section>
+
+  <!-- ============ PERFORMANCE MONITORING ============ -->
+  <section id="performance">
+    <div class="card">
+      <h2><span class="num">08</span>Performance Monitoring</h2>
+      <p class="empty">Prometheus provides deployment-owned operational monitoring and alerting. No in-process APM gem is expected; request tracing and profiler-level latency analysis were outside this repository audit.</p>
+    </div>
+  </section>
+
+  <!-- ============ FRAMEWORK HEALTH & STATS ============ -->
+  <section id="framework">
+    <div class="card">
+      <h2><span class="num">09</span>Framework Health &amp; Stats</h2>
+      <p>Ruby 4.0.5 and Rails 8.1.3.1 are current-generation releases, and Brakeman's EOL checks raised no warnings. The focused CLOC pass counted 408 files and 31,082 code lines across the repository, including 231 Ruby files with 16,428 code lines.</p>
+      <p class="empty">Development ergonomics are strong: <code>bin/setup</code>, a detailed README, <code>.env.example</code>, a production Dockerfile, and GitHub Actions workflows are present. No Compose file or SonarQube configuration was detected.</p>
+      <h3>Codebase Stats — <a href="https://rubygems.org/gems/rails_stats">rails_stats</a></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Application code</td><td>108 files / 4,626 LOC</td></tr>
+            <tr><td>Tests</td><td>81 files / 9,265 LOC</td></tr>
+            <tr><td>Code-to-test ratio</td><td>1:2.0</td></tr>
+            <tr><td>Classes / methods</td><td>87 / 590 in application code</td></tr>
+            <tr><td>Polymorphic associations</td><td>0</td></tr>
+            <tr><td>Schema tables</td><td>12 <code>create_table</code> calls</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Dependency Weight — <a href="https://rubygems.org/gems/bundler-stats">bundle-stats</a></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Declared gem</th><th>Total dependencies</th><th>First-level dependencies</th></tr></thead>
+          <tbody>
+            <tr><td><code>heroicon</code></td><td>66</td><td>1</td></tr>
+            <tr><td><code>rails</code></td><td>65</td><td>13</td></tr>
+            <tr><td><code>mission_control-jobs</code></td><td>54</td><td>9</td></tr>
+            <tr><td><code>solid_queue</code></td><td>50</td><td>6</td></tr>
+            <tr><td><code>solid_cache</code></td><td>47</td><td>3</td></tr>
+            <tr><td><code>dotenv-rails</code></td><td>43</td><td>2</td></tr>
+            <tr><td><code>google-cloud-translate</code></td><td>31</td><td>3</td></tr>
+            <tr><td><code>rubocop-rails-omakase</code></td><td>30</td><td>3</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">The largest trees mostly reflect intentional Rails, dashboard, queue, and cache architecture. Treat this as an inventory rather than an automatic removal list; optional Google clients are the clearest candidates to re-check if unused.</p>
+    </div>
+  </section>
+
+  <!-- ============ TOP 3 RECOMMENDATIONS ============ -->
+  <section id="recommendations">
+    <div class="card">
+      <h2><span class="num">10</span>Top 3 Recommended Actions</h2>
+      <p class="muted">The highest-impact actions to address high-priority issues, based on every report above.</p>
+      <div class="recs">
+        <div class="rec"><div class="rank">1</div><div><h4>Make coverage measurable</h4><p>Wire SimpleCov into <code>test/test_helper.rb</code> behind <code>COVERAGE=true</code>, publish the result in CI, and rerun Skunk. The current 0% values are synthetic and cannot prioritize risk reliably.</p></div></div>
+        <div class="rec"><div class="rank">2</div><div><h4>Split the worst complexity hotspot behind existing tests</h4><p>Use measured coverage plus churn to protect a small refactor of <code>R3x::RecurringTasksConfig#schedule_all!</code> (Flog 101 and approximately 32 statements), then reassess <code>Dashboard::Run</code> rather than starting a broad cleanup.</p></div></div>
+        <div class="rec"><div class="rank">3</div><div><h4>Resolve the remaining Docker policy interpretation</h4><p>Decide whether the production image needs its own <code>HEALTHCHECK</code> in addition to deployment probes, then document or suppress the inapplicable root-user/healthcheck checks for <code>workflows/Dockerfile</code>, which is a scratch packaging image rather than a runnable service.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ APPENDIX ============ -->
+  <section id="appendix">
+    <div class="card">
+      <h2><span class="num">11</span>Appendix — Tools Used</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>Purpose</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td><a href="https://github.com/rubysec/bundler-audit">bundler-audit</a></td><td>Known Ruby CVEs</td><td>Clean</td></tr>
+            <tr><td><a href="https://github.com/presidentbeef/brakeman">Brakeman</a></td><td>Rails static security analysis</td><td>0 warnings</td></tr>
+            <tr><td><a href="https://github.com/rubymem/bundler-leak">bundler-leak</a></td><td>Known gem memory leaks</td><td>Clean</td></tr>
+            <tr><td><a href="https://github.com/aquasecurity/trivy">Trivy</a></td><td>Vulnerabilities, secrets, and Dockerfile misconfiguration</td><td>Focused and broad scans retained</td></tr>
+            <tr><td><a href="https://github.com/fastruby/next_rails">next_rails</a></td><td>Outdated dependency report</td><td>Ruby patch mismatch; project-Bundler fallback used</td></tr>
+            <tr><td><a href="https://github.com/jaredbeck/libyear-bundler">libyear-bundler</a></td><td>Dependency age</td><td>0.9 libyears via exact-Ruby fallback</td></tr>
+            <tr><td><a href="https://bundler.io/man/bundle-outdated.1.html">bundle outdated</a></td><td>Freshness fallback</td><td>1 of 157 gems outdated</td></tr>
+            <tr><td><a href="https://github.com/simplecov-ruby/simplecov">SimpleCov</a></td><td>Coverage measurement</td><td>Not configured; no result emitted</td></tr>
+            <tr><td><a href="https://github.com/whitesmith/rubycritic">RubyCritic</a></td><td>Complexity, smells, and churn</td><td>88.53/100</td></tr>
+            <tr><td><a href="https://github.com/fastruby/skunk">Skunk</a></td><td>Complexity plus coverage risk</td><td>Run, but uncalibrated without coverage</td></tr>
+            <tr><td><a href="https://rubygems.org/gems/rails_stats">rails_stats</a></td><td>Application and test metrics</td><td>1:2.0 code-to-test ratio</td></tr>
+            <tr><td><a href="https://rubygems.org/gems/bundler-stats">bundle-stats</a></td><td>Dependency weight via rails_stats</td><td>189 total gems</td></tr>
+            <tr><td><a href="https://github.com/AlDanial/cloc">CLOC</a></td><td>Language and line counts</td><td>Focused and broad counts retained</td></tr>
+            <tr><td>Headless Brave</td><td>RubyCritic screenshots</td><td>Attempted; browser failed to exit/render reliably</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">No SonarQube configuration was found. The first sandboxed test attempt failed before test execution because HTTPX could not call <code>getifaddrs</code>; the identical rerun outside the sandbox passed. The local <code>mise</code> gem backend currently resolves its Ruby dependency to 4.0.6, while this repository intentionally pins 4.0.5; raw failures and exact-Ruby fallbacks are preserved. Trivy's <code>workflows/Dockerfile</code> root-user warning is a false positive for a scratch packaging image. The durable repository-local <code>trivy.yaml</code> excludes <code>.bundle</code>, <code>.ruby-lsp</code>, <code>workflows/.ruby-lsp</code>, <code>.opencode</code>, Git history, coverage/tmp output, and audit directories; this boundary survives skill upgrades. <code>brakeman</code> and <code>bundler-audit</code> remain managed by the project Gemfile; duplicate <code>mise</code> entries were removed. No root JavaScript project exists, so npm audit was not run.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Technical debt analysis generated by Claude using
+  <a href="https://www.fastruby.io">FastRuby.io</a>'s free and open source
+  <a href="https://github.com/fastruby/tech-debt-skill">tech debt audit skill</a>.
+</footer>
+</body>
+</html>

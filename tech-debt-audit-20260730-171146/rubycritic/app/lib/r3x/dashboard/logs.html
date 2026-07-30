@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Ruby Critic - Home</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- StyleSheets -->
+    <link href="../../../../assets/vendor/stylesheets/bootstrap.min.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../../assets/vendor/stylesheets/font-awesome.min.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../../assets/vendor/stylesheets/prettify.custom_theme.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../../assets/stylesheets/application.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+  </head>
+
+  <body>
+    <header class="navbar navbar-default navbar-fixed-top">
+      <a href="#menu-toggle" class="btn btn-default hidden-lg visible-sm-* hidden-md visible-xs-* pull-left" id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></a>
+      <a href="../../../../overview.html"><img src="../../../../assets/images/logo.png" alt="Ruby Critic Logo" title="Ruby Critic Logo" width="55"><span class="logo">RUBYCRITIC</span></a>
+      
+    </header>
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <aside id="sidebar-wrapper">
+        <ul class="sidebar-nav">
+          <li class="sidebar-item">
+            <a href="../../../../overview.html" class="project-nav-item overview-nav"><i class="fa fa-dashboard"></i>Overview</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../../code_index.html" class="project-nav-item code-index-nav"><i class="fa fa-code"></i>Code</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../../smells_index.html" class="project-nav-item smells-index-nav"><i class="fa fa-warning"></i>Smells</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../../simple_cov_index.html" class="project-nav-item coverage-index-nav"><i class="fa fa-umbrella"></i>Coverage</a>
+          </li>
+        </ul>
+      </aside>
+      <!-- /#sidebar-wrapper -->
+      <div id="page-content-wrapper">
+        <div class="container-fluid">
+          <div class="row">
+  <!--Page Title -->
+  <div class="Page_Title">
+    <div class="file-time">
+      <span class="committed-at">
+        
+          Updated <time class='js-timeago' datetime='2026-06-20 09:08:12 +0100'>2026-06-20 09:08:12 +0100</time>
+        
+      </span>
+    </div>
+    <div>
+      <h3><small>app/lib/r3x/dashboard /</small> logs.rb</h3>
+    </div>
+  </div>
+  <!--End Page Title -->
+  <div class="Content_Wrapper">
+    <!-- code detail -->
+    <div class="code-top-detail clearfix row">
+      <div class="col-md-8">
+        <div class="row">
+          <div class="col-md-1">
+            <div class="rating d big">
+              D
+            </div>
+          </div>
+          <div class="code-statistics col-md-11">
+            <div class="col-md-3">
+              <div><span class="metric">224</span><small> lines of codes</small></div>
+              <div><span class="metric">18</span><small> methods</small></div>
+            </div>
+            <div class="col-md-3">
+              <div><span class="metric">10.2</span><small> complexity/method</small></div>
+              <div><span class="metric">21</span><small> churn</small></div>
+            </div>
+            <div class="col-md-3">
+              <div><span class="metric">182.89</span><small> complexity</small></div>
+              <div><span class="metric">46</span><small> duplications</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="code-tabs">
+          <ul class="nav nav-pills right-to-left">
+            <li><a href="#" id="toggle-code" class="toggle-button button">code</a></li>
+            <li class="active">
+              <a href="#" id="toggle-smells" class="toggle-button button">
+                22
+                smells
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <code class="prettyprint linenums lang-ruby file-code js-file-code"># frozen_string_literal: true
+
+module R3x
+  module Dashboard
+    module Logs<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Irresponsible-Module.md" target="_blank"><b>IrresponsibleModule</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs has no descriptive comment</span>          </div>  </li></ol>
+      extend self
+
+      RUN_LOG_LIMIT = 150
+      HIDDEN_TAG_PREFIXES = %w[r3x.].freeze
+      PROVIDERS = {
+        &quot;victorialogs&quot; =&gt; R3x::Client::VictoriaLogs,
+      }.freeze
+
+      def enabled?
+        provider_name.present?
+      end
+
+      def configured?
+        provider_class&amp;.configured? || false
+      end
+
+      def run_logs(run)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="http://docs.seattlerb.org/flog/" target="_blank"><b>HighComplexity</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#run_logs has a flog score of 26</span>          </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Statements.md" target="_blank"><b>TooManyStatements</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#run_logs has approx 6 statements</span>          </div>  </li></ol>
+        active_job_id = run[:active_job_id].presence
+        return unavailable_logs unless enabled?
+        return unavailable_logs if provider_class.present? &amp;&amp; !configured?
+        return error_logs(provider_name, &quot;This run does not have an Active Job id yet.&quot;) if active_job_id.blank?
+
+        tag = R3x::Log.tag(R3x::Log::RUN_ACTIVE_JOB_ID_TAG, active_job_id)
+        query_logs(
+          build_query(%(tags:&quot;#{tag}&quot;)),
+          start_at: run[:enqueued_at] || 1.hour.ago,
+          end_at: run[:finished_at] || Time.current,
+          limit: RUN_LOG_LIMIT,
+          context: { class_name: run[:class_name] },
+        )
+      end
+
+      private
+
+      def provider_name<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#provider_name doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        R3x::Env.fetch(&quot;R3X_LOGS_PROVIDER&quot;)
+      end
+
+      def build_query(filter)
+        &quot;(#{filter}) | fields _time, kubernetes.pod_name, kubernetes.container_name, &quot; \
+          &quot;_msg, level, tags, error_class, error_message, backtrace, exception_class, error, trace, stack&quot;
+      end
+
+      def error_logs(provider, error)
+        {
+          configured: true,
+          entries: [],
+          error:,
+          provider:,
+        }
+      end
+
+      def query_logs(query, start_at:, end_at:, limit:, context: {})<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Long-Parameter-List.md" target="_blank"><b>LongParameterList</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#query_logs has 5 parameters</span>          </div>  </li></ol>
+        raw_entries = logs_client.query(query:, start_at:, end_at:, limit:)
+
+        {
+          configured: true,
+          entries: raw_entries.filter_map { |entry| normalize_entry(entry, context:) },
+          error: nil,
+          provider: provider_name,
+        }
+      rescue =&gt; e<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Uncommunicative-Variable-Name.md" target="_blank"><b>UncommunicativeVariableName</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#query_logs has the variable name 'e'</span>          </div>  </li></ol>
+        error_logs(provider_name, e.message)
+      end
+
+      def logs_client
+        provider_class&amp;.new || raise(ArgumentError, &quot;Unsupported logs provider: #{provider_name}&quot;)
+      end
+
+      def provider_class
+        PROVIDERS[provider_name]
+      end
+
+      def normalize_entry(entry, context: {})
+        payload = parse_message_payload(entry, context:)
+
+        {
+          backtrace: payload[:backtrace],<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_entry refers to 'payload' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L83" class="js-smell-location">0</a>                  <a href="logs.html#L85" class="js-smell-location">1</a>                  <a href="logs.html#L86" class="js-smell-location">2</a>                  <a href="logs.html#L87" class="js-smell-location">3</a>                  <a href="logs.html#L88" class="js-smell-location">4</a>                  <a href="logs.html#L90" class="js-smell-location">5</a>                  </div>  </li></ol>
+          container_name: entry[&quot;kubernetes.container_name&quot;],
+          error_class: payload[:error_class],<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_entry refers to 'payload' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L83" class="js-smell-location">0</a>                  <a href="logs.html#L85" class="js-smell-location">1</a>                  <a href="logs.html#L86" class="js-smell-location">2</a>                  <a href="logs.html#L87" class="js-smell-location">3</a>                  <a href="logs.html#L88" class="js-smell-location">4</a>                  <a href="logs.html#L90" class="js-smell-location">5</a>                  </div>  </li></ol>
+          error_message: payload[:error_message],<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_entry refers to 'payload' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L83" class="js-smell-location">0</a>                  <a href="logs.html#L85" class="js-smell-location">1</a>                  <a href="logs.html#L86" class="js-smell-location">2</a>                  <a href="logs.html#L87" class="js-smell-location">3</a>                  <a href="logs.html#L88" class="js-smell-location">4</a>                  <a href="logs.html#L90" class="js-smell-location">5</a>                  </div>  </li></ol>
+          level: payload.fetch(:level),<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_entry refers to 'payload' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L83" class="js-smell-location">0</a>                  <a href="logs.html#L85" class="js-smell-location">1</a>                  <a href="logs.html#L86" class="js-smell-location">2</a>                  <a href="logs.html#L87" class="js-smell-location">3</a>                  <a href="logs.html#L88" class="js-smell-location">4</a>                  <a href="logs.html#L90" class="js-smell-location">5</a>                  </div>  </li></ol>
+          message: payload.fetch(:message),<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_entry refers to 'payload' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L83" class="js-smell-location">0</a>                  <a href="logs.html#L85" class="js-smell-location">1</a>                  <a href="logs.html#L86" class="js-smell-location">2</a>                  <a href="logs.html#L87" class="js-smell-location">3</a>                  <a href="logs.html#L88" class="js-smell-location">4</a>                  <a href="logs.html#L90" class="js-smell-location">5</a>                  </div>  </li></ol>
+          pod_name: entry[&quot;kubernetes.pod_name&quot;],
+          tags: payload.fetch(:tags),<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_entry refers to 'payload' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L83" class="js-smell-location">0</a>                  <a href="logs.html#L85" class="js-smell-location">1</a>                  <a href="logs.html#L86" class="js-smell-location">2</a>                  <a href="logs.html#L87" class="js-smell-location">3</a>                  <a href="logs.html#L88" class="js-smell-location">4</a>                  <a href="logs.html#L90" class="js-smell-location">5</a>                  </div>  </li></ol>
+          time: parse_time(entry[&quot;_time&quot;]),
+        }
+      rescue
+        nil
+      end
+
+      def parse_message_payload(entry, context: {})<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="http://docs.seattlerb.org/flog/" target="_blank"><b>HighComplexity</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#parse_message_payload has a flog score of 47</span>          </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Statements.md" target="_blank"><b>TooManyStatements</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#parse_message_payload has approx 13 statements</span>          </div>  </li></ol>
+        if entry.key?(&quot;level&quot;)
+          message, tags = extract_message_and_tags(entry[&quot;_msg&quot;], tags: normalize_array_field(entry[&quot;tags&quot;]), context:)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#parse_message_payload calls 'entry["_msg"]' 3 times</span>              <span>Locations:</span>                  <a href="logs.html#L99" class="js-smell-location">0</a>                  <a href="logs.html#L112" class="js-smell-location">1</a>                  <a href="logs.html#L138" class="js-smell-location">2</a>                  </div>  </li></ol>
+          error = normalize_error_fields(entry)
+
+          return {<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="http://docs.seattlerb.org/flay/" target="_blank"><b>DuplicateCode</b></a>        </span>      </div>      <span>Similar code found in 2 nodes</span>              <span>Locations:</span>                  <a href="logs.html#L102" class="js-smell-location">0</a>                  <a href="logs.html#L129" class="js-smell-location">1</a>                  </div>  </li></ol>
+            backtrace: error&amp;.fetch(:backtrace, nil),
+            error_class: error&amp;.fetch(:error_class, nil),
+            error_message: error&amp;.fetch(:message, nil),
+            level: normalize_level(entry[&quot;level&quot;]),
+            message:,
+            tags:,
+          }
+        end
+
+        raw_message = entry[&quot;_msg&quot;]<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#parse_message_payload calls 'entry["_msg"]' 3 times</span>              <span>Locations:</span>                  <a href="logs.html#L99" class="js-smell-location">0</a>                  <a href="logs.html#L112" class="js-smell-location">1</a>                  <a href="logs.html#L138" class="js-smell-location">2</a>                  </div>  </li></ol>
+        payload = MultiJSON.parse(raw_message.to_s)
+        raise ArgumentError, &quot;Expected log payload to decode to a hash, got #{payload.class}&quot; unless payload.is_a?(Hash)
+
+        unless payload.key?(&quot;level&quot;) &amp;&amp; payload.key?(&quot;message&quot;)
+          message, tags = extract_message_and_tags(raw_message, context:)
+
+          return {
+            level: &quot;unknown&quot;,
+            message:,
+            tags:,
+          }
+        end
+
+        message, tags = extract_message_and_tags(payload[&quot;message&quot;], tags: payload[&quot;tags&quot;], context:)
+        error = normalize_error_fields(payload)
+
+        {<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="http://docs.seattlerb.org/flay/" target="_blank"><b>DuplicateCode</b></a>        </span>      </div>      <span>Similar code found in 2 nodes</span>              <span>Locations:</span>                  <a href="logs.html#L102" class="js-smell-location">0</a>                  <a href="logs.html#L129" class="js-smell-location">1</a>                  </div>  </li></ol>
+          backtrace: error&amp;.fetch(:backtrace, nil),
+          error_class: error&amp;.fetch(:error_class, nil),
+          error_message: error&amp;.fetch(:message, nil),
+          level: normalize_level(payload[&quot;level&quot;]),
+          message:,
+          tags:,
+        }
+      rescue MultiJSON::ParseError
+        message, tags = extract_message_and_tags(entry[&quot;_msg&quot;], context:)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#parse_message_payload calls 'entry["_msg"]' 3 times</span>              <span>Locations:</span>                  <a href="logs.html#L99" class="js-smell-location">0</a>                  <a href="logs.html#L112" class="js-smell-location">1</a>                  <a href="logs.html#L138" class="js-smell-location">2</a>                  </div>  </li></ol>
+
+        {
+          level: &quot;unknown&quot;,
+          message:,
+          tags:,
+        }
+      end
+
+      def normalize_level(value)
+        level = value.to_s.downcase<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_level refers to 'value' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L148" class="js-smell-location">0</a>                  <a href="logs.html#L151" class="js-smell-location">1</a>                  </div>  </li></ol>
+        return level if %w[debug info warn error fatal unknown].include?(level)
+
+        raise ArgumentError, &quot;Unsupported log level: #{value.inspect}&quot;<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_level refers to 'value' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L148" class="js-smell-location">0</a>                  <a href="logs.html#L151" class="js-smell-location">1</a>                  </div>  </li></ol>
+      end
+
+      def extract_message_and_tags(message, tags: nil, context: {})<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Statements.md" target="_blank"><b>TooManyStatements</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#extract_message_and_tags has approx 10 statements</span>          </div>  </li></ol>
+        visible_tags = Array(tags).map(&amp;:to_s).reject { |tag| hidden_tag?(tag, context:) }<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#extract_message_and_tags calls 'hidden_tag?(tag, context:)' 2 times</span>              <span>Locations:</span>                  <a href="logs.html#L155" class="js-smell-location">0</a>                  <a href="logs.html#L161" class="js-smell-location">1</a>                  </div>  </li></ol>
+        message = message.to_s
+        match = message.match(R3x::Log::TAG_PATTERN)
+        return [message, visible_tags] unless match
+
+        raw_tags = match[0].scan(/\[([^\]]+)\]/).flatten<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#extract_message_and_tags calls 'match[0]' 2 times</span>              <span>Locations:</span>                  <a href="logs.html#L160" class="js-smell-location">0</a>                  <a href="logs.html#L162" class="js-smell-location">1</a>                  </div>  </li></ol>
+        visible_tags = (visible_tags + raw_tags.reject { |tag| hidden_tag?(tag, context:) }).uniq<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#extract_message_and_tags calls 'hidden_tag?(tag, context:)' 2 times</span>              <span>Locations:</span>                  <a href="logs.html#L155" class="js-smell-location">0</a>                  <a href="logs.html#L161" class="js-smell-location">1</a>                  </div>  </li></ol>
+        stripped_message = message.delete_prefix(match[0]).strip<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#extract_message_and_tags calls 'match[0]' 2 times</span>              <span>Locations:</span>                  <a href="logs.html#L160" class="js-smell-location">0</a>                  <a href="logs.html#L162" class="js-smell-location">1</a>                  </div>  </li></ol>
+
+        [stripped_message.presence || message, visible_tags]
+      end
+
+      def hidden_tag?(tag, context: {})<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#hidden_tag? doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        return true if HIDDEN_TAG_PREFIXES.any? { |prefix| tag.start_with?(prefix) }
+        return true if context[:class_name].present? &amp;&amp; tag == context[:class_name]<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#hidden_tag? calls 'context[:class_name]' 2 times</span>          </div>  </li></ol>
+
+        false
+      end
+
+      def parse_time(value)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#parse_time doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        return if value.blank?
+
+        Time.zone.parse(value)
+      rescue ArgumentError
+        nil
+      end
+
+      def normalize_array_field(value)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Statements.md" target="_blank"><b>TooManyStatements</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_array_field has approx 7 statements</span>          </div>  </li></ol>
+        case value
+        when nil<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Nil-Check.md" target="_blank"><b>NilCheck</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_array_field performs a nil-check</span>          </div>  </li></ol>
+          []
+        when Array
+          value.compact_blank
+        when String
+          parsed = MultiJSON.parse(value)
+          parsed.is_a?(Array) ? parsed.compact_blank : [value]<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_array_field refers to 'parsed' more than self (maybe move it to another class?)</span>          </div>  </li></ol>
+        else
+          Array(value).compact_blank
+        end
+      rescue MultiJSON::ParseError
+        [value]
+      end
+
+      def normalize_error_fields(fields)
+        raw_error = {
+          &quot;error_class&quot;     =&gt; fields[&quot;error_class&quot;],<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_error_fields refers to 'fields' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L200" class="js-smell-location">0</a>                  <a href="logs.html#L201" class="js-smell-location">1</a>                  <a href="logs.html#L202" class="js-smell-location">2</a>                  <a href="logs.html#L203" class="js-smell-location">3</a>                  <a href="logs.html#L204" class="js-smell-location">4</a>                  <a href="logs.html#L205" class="js-smell-location">5</a>                  <a href="logs.html#L206" class="js-smell-location">6</a>                  </div>  </li></ol>
+          &quot;exception_class&quot; =&gt; fields[&quot;exception_class&quot;],<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_error_fields refers to 'fields' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L200" class="js-smell-location">0</a>                  <a href="logs.html#L201" class="js-smell-location">1</a>                  <a href="logs.html#L202" class="js-smell-location">2</a>                  <a href="logs.html#L203" class="js-smell-location">3</a>                  <a href="logs.html#L204" class="js-smell-location">4</a>                  <a href="logs.html#L205" class="js-smell-location">5</a>                  <a href="logs.html#L206" class="js-smell-location">6</a>                  </div>  </li></ol>
+          &quot;error_message&quot;   =&gt; fields[&quot;error_message&quot;],<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_error_fields refers to 'fields' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L200" class="js-smell-location">0</a>                  <a href="logs.html#L201" class="js-smell-location">1</a>                  <a href="logs.html#L202" class="js-smell-location">2</a>                  <a href="logs.html#L203" class="js-smell-location">3</a>                  <a href="logs.html#L204" class="js-smell-location">4</a>                  <a href="logs.html#L205" class="js-smell-location">5</a>                  <a href="logs.html#L206" class="js-smell-location">6</a>                  </div>  </li></ol>
+          &quot;error&quot;           =&gt; fields[&quot;error&quot;],<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_error_fields refers to 'fields' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L200" class="js-smell-location">0</a>                  <a href="logs.html#L201" class="js-smell-location">1</a>                  <a href="logs.html#L202" class="js-smell-location">2</a>                  <a href="logs.html#L203" class="js-smell-location">3</a>                  <a href="logs.html#L204" class="js-smell-location">4</a>                  <a href="logs.html#L205" class="js-smell-location">5</a>                  <a href="logs.html#L206" class="js-smell-location">6</a>                  </div>  </li></ol>
+          &quot;backtrace&quot;       =&gt; normalize_array_field(fields[&quot;backtrace&quot;]).presence,<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_error_fields refers to 'fields' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L200" class="js-smell-location">0</a>                  <a href="logs.html#L201" class="js-smell-location">1</a>                  <a href="logs.html#L202" class="js-smell-location">2</a>                  <a href="logs.html#L203" class="js-smell-location">3</a>                  <a href="logs.html#L204" class="js-smell-location">4</a>                  <a href="logs.html#L205" class="js-smell-location">5</a>                  <a href="logs.html#L206" class="js-smell-location">6</a>                  </div>  </li></ol>
+          &quot;trace&quot;           =&gt; normalize_array_field(fields[&quot;trace&quot;]).presence,<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_error_fields refers to 'fields' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L200" class="js-smell-location">0</a>                  <a href="logs.html#L201" class="js-smell-location">1</a>                  <a href="logs.html#L202" class="js-smell-location">2</a>                  <a href="logs.html#L203" class="js-smell-location">3</a>                  <a href="logs.html#L204" class="js-smell-location">4</a>                  <a href="logs.html#L205" class="js-smell-location">5</a>                  <a href="logs.html#L206" class="js-smell-location">6</a>                  </div>  </li></ol>
+          &quot;stack&quot;           =&gt; normalize_array_field(fields[&quot;stack&quot;]).presence,<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::Logs#normalize_error_fields refers to 'fields' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="logs.html#L200" class="js-smell-location">0</a>                  <a href="logs.html#L201" class="js-smell-location">1</a>                  <a href="logs.html#L202" class="js-smell-location">2</a>                  <a href="logs.html#L203" class="js-smell-location">3</a>                  <a href="logs.html#L204" class="js-smell-location">4</a>                  <a href="logs.html#L205" class="js-smell-location">5</a>                  <a href="logs.html#L206" class="js-smell-location">6</a>                  </div>  </li></ol>
+        }.compact_blank
+
+        return if raw_error.blank?
+
+        R3x::ErrorDetails.new(raw_error).structured
+      end
+
+      def unavailable_logs
+        {
+          configured: false,
+          entries: [],
+          error: nil,
+          provider: nil,
+        }
+      end
+    end
+  end
+end
+</code>
+  </div>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScripts -->
+    <script src="../../../../assets/vendor/javascripts/jquery.min.js"></script>
+    <script src="../../../../assets/vendor/javascripts/jquery.tablesorter.min.js"></script>
+    <script src="../../../../assets/vendor/javascripts/jquery.scrollTo.min.js"></script>
+    <script src="../../../../assets/vendor/javascripts/jquery.timeago.js"></script>
+    <script src="../../../../assets/vendor/javascripts/highcharts.src-4.0.1.js"></script>
+    <script src="../../../../assets/vendor/javascripts/prettify.js"></script>
+    <script src="../../../../assets/vendor/javascripts/bootstrap.min.js"></script>
+    <script src="../../../../assets/javascripts/application.js"></script>
+    <script src="../../../../assets/vendor/javascripts/jquery.filtertable.min.js"></script>
+  </body>
+</html>

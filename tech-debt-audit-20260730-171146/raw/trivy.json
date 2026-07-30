@@ -1,0 +1,3385 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.72.0"
+  },
+  "ReportID": "019fb3f5-e44b-7d74-8ce1-260569038f13",
+  "CreatedAt": "2026-07-30T17:57:44.267884716+01:00",
+  "ArtifactID": "sha256:e9099253221f9dd26cb3a80acda9a27f39af819133763573d3bfa5593043c953",
+  "ArtifactName": ".",
+  "ArtifactType": "repository",
+  "Metadata": {
+    "RepoURL": "git@github.com:r3x-dev/engine.git",
+    "Branch": "main",
+    "Commit": "57596d36c95de657cd6f0be62ca07f3e4c4164e7",
+    "CommitMsg": "Update dependencies in Gemfile.lock\n\n- Update bundled dependencies including grpc, google-cloud-errors, msgpack, rbs, and rubocop-rails\n- Refresh checksums for modified gems",
+    "Author": "zewelor \u003czewelor@gmail.com\u003e",
+    "Committer": "zewelor \u003czewelor@gmail.com\u003e"
+  },
+  "Results": [
+    {
+      "Target": "Gemfile.lock",
+      "Class": "lang-pkgs",
+      "Type": "bundler",
+      "Packages": [
+        {
+          "ID": "amazing_print@2.0.0",
+          "Name": "amazing_print",
+          "Identifier": {
+            "PURL": "pkg:gem/amazing_print@2.0.0",
+            "UID": "c72328ab095feebc"
+          },
+          "Version": "2.0.0",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 80,
+              "EndLine": 80
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "bootsnap@1.24.6",
+          "Name": "bootsnap",
+          "Identifier": {
+            "PURL": "pkg:gem/bootsnap@1.24.6",
+            "UID": "855826363fad9541"
+          },
+          "Version": "1.24.6",
+          "Relationship": "direct",
+          "DependsOn": [
+            "msgpack@1.8.4"
+          ],
+          "Locations": [
+            {
+              "StartLine": 84,
+              "EndLine": 84
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "brakeman@8.0.5",
+          "Name": "brakeman",
+          "Identifier": {
+            "PURL": "pkg:gem/brakeman@8.0.5",
+            "UID": "af5e733ce81ee57"
+          },
+          "Version": "8.0.5",
+          "Relationship": "direct",
+          "DependsOn": [
+            "racc@1.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 86,
+              "EndLine": 86
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "bundler-audit@0.9.3",
+          "Name": "bundler-audit",
+          "Identifier": {
+            "PURL": "pkg:gem/bundler-audit@0.9.3",
+            "UID": "f7fac98ac0997c3d"
+          },
+          "Version": "0.9.3",
+          "Relationship": "direct",
+          "DependsOn": [
+            "thor@1.5.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 89,
+              "EndLine": 89
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "debug@1.11.1",
+          "Name": "debug",
+          "Identifier": {
+            "PURL": "pkg:gem/debug@1.11.1",
+            "UID": "aecad2125841c74f"
+          },
+          "Version": "1.11.1",
+          "Relationship": "direct",
+          "DependsOn": [
+            "irb@1.18.0",
+            "reline@0.6.3"
+          ],
+          "Locations": [
+            {
+              "StartLine": 99,
+              "EndLine": 99
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "dotenv-rails@3.2.0",
+          "Name": "dotenv-rails",
+          "Identifier": {
+            "PURL": "pkg:gem/dotenv-rails@3.2.0",
+            "UID": "80e75a3996995f9f"
+          },
+          "Version": "3.2.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "dotenv@3.2.0",
+            "railties@8.1.3.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 104,
+              "EndLine": 104
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-apis-calendar_v3@0.57.0",
+          "Name": "google-apis-calendar_v3",
+          "Identifier": {
+            "PURL": "pkg:gem/google-apis-calendar_v3@0.57.0",
+            "UID": "731dcf58844aa395"
+          },
+          "Version": "0.57.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "google-apis-core@1.2.5"
+          ],
+          "Locations": [
+            {
+              "StartLine": 140,
+              "EndLine": 140
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-apis-gmail_v1@0.52.0",
+          "Name": "google-apis-gmail_v1",
+          "Identifier": {
+            "PURL": "pkg:gem/google-apis-gmail_v1@0.52.0",
+            "UID": "825da53fa4f3bad9"
+          },
+          "Version": "0.52.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "google-apis-core@1.2.5"
+          ],
+          "Locations": [
+            {
+              "StartLine": 151,
+              "EndLine": 151
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-apis-sheets_v4@0.48.0",
+          "Name": "google-apis-sheets_v4",
+          "Identifier": {
+            "PURL": "pkg:gem/google-apis-sheets_v4@0.48.0",
+            "UID": "efed0c1ad1732860"
+          },
+          "Version": "0.48.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "google-apis-core@1.2.5"
+          ],
+          "Locations": [
+            {
+              "StartLine": 153,
+              "EndLine": 153
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-cloud-translate@3.9.0",
+          "Name": "google-cloud-translate",
+          "Identifier": {
+            "PURL": "pkg:gem/google-cloud-translate@3.9.0",
+            "UID": "7b218b106f6a2115"
+          },
+          "Version": "3.9.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "google-cloud-core@1.9.0",
+            "google-cloud-translate-v2@1.2.0",
+            "google-cloud-translate-v3@1.10.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 165,
+              "EndLine": 165
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "googleauth@1.17.3",
+          "Name": "googleauth",
+          "Identifier": {
+            "PURL": "pkg:gem/googleauth@1.17.3",
+            "UID": "8090ca6da7eb43f"
+          },
+          "Version": "1.17.3",
+          "Relationship": "direct",
+          "DependsOn": [
+            "faraday@2.14.3",
+            "google-cloud-env@2.4.0",
+            "google-logging-utils@0.2.0",
+            "jwt@3.2.0",
+            "os@1.1.4",
+            "pstore@0.2.1",
+            "signet@0.22.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 212,
+              "EndLine": 212
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "heroicon@1.0.0",
+          "Name": "heroicon",
+          "Identifier": {
+            "PURL": "pkg:gem/heroicon@1.0.0",
+            "UID": "4a2a61f5c59aa775"
+          },
+          "Version": "1.0.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "rails@8.1.3.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 246,
+              "EndLine": 246
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "highline@3.1.2",
+          "Name": "highline",
+          "Identifier": {
+            "PURL": "pkg:gem/highline@3.1.2",
+            "UID": "1aeb2c45a3588c16"
+          },
+          "Version": "3.1.2",
+          "Relationship": "direct",
+          "DependsOn": [
+            "reline@0.6.3"
+          ],
+          "Locations": [
+            {
+              "StartLine": 248,
+              "EndLine": 248
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "httpx@1.8.1",
+          "Name": "httpx",
+          "Identifier": {
+            "PURL": "pkg:gem/httpx@1.8.1",
+            "UID": "b793f622b305d6a6"
+          },
+          "Version": "1.8.1",
+          "Relationship": "direct",
+          "DependsOn": [
+            "http-2@1.2.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 251,
+              "EndLine": 251
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "mail@2.9.1",
+          "Name": "mail",
+          "Identifier": {
+            "PURL": "pkg:gem/mail@2.9.1",
+            "UID": "87bbf361a19bf7fb"
+          },
+          "Version": "2.9.1",
+          "Relationship": "direct",
+          "DependsOn": [
+            "logger@1.7.0",
+            "mini_mime@1.1.5",
+            "net-imap@0.6.6",
+            "net-pop@0.1.2",
+            "net-smtp@0.5.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 274,
+              "EndLine": 274
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "mission_control-jobs@1.1.0",
+          "Name": "mission_control-jobs",
+          "Identifier": {
+            "PURL": "pkg:gem/mission_control-jobs@1.1.0",
+            "UID": "cb0b32f18f9279d"
+          },
+          "Version": "1.1.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "actioncable@8.1.3.1",
+            "actionpack@8.1.3.1",
+            "activejob@8.1.3.1",
+            "activerecord@8.1.3.1",
+            "importmap-rails@2.2.3",
+            "irb@1.18.0",
+            "railties@8.1.3.1",
+            "stimulus-rails@1.3.4",
+            "turbo-rails@2.0.23"
+          ],
+          "Locations": [
+            {
+              "StartLine": 285,
+              "EndLine": 285
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "mocha@3.1.0",
+          "Name": "mocha",
+          "Identifier": {
+            "PURL": "pkg:gem/mocha@3.1.0",
+            "UID": "6da5506c2425782a"
+          },
+          "Version": "3.1.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "ruby2_keywords@0.0.5"
+          ],
+          "Locations": [
+            {
+              "StartLine": 295,
+              "EndLine": 295
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "multi_json@1.21.1",
+          "Name": "multi_json",
+          "Identifier": {
+            "PURL": "pkg:gem/multi_json@1.21.1",
+            "UID": "560ddfeccc1323b0"
+          },
+          "Version": "1.21.1",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 298,
+              "EndLine": 298
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "nokogiri@1.19.4",
+          "Name": "nokogiri",
+          "Identifier": {
+            "PURL": "pkg:gem/nokogiri@1.19.4",
+            "UID": "14ddaf3ea251b6e"
+          },
+          "Version": "1.19.4",
+          "Relationship": "direct",
+          "DependsOn": [
+            "racc@1.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 326,
+              "EndLine": 326
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "pg@1.6.3",
+          "Name": "pg",
+          "Identifier": {
+            "PURL": "pkg:gem/pg@1.6.3",
+            "UID": "693b949d669de81f"
+          },
+          "Version": "1.6.3",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 339,
+              "EndLine": 339
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "propshaft@1.3.2",
+          "Name": "propshaft",
+          "Identifier": {
+            "PURL": "pkg:gem/propshaft@1.3.2",
+            "UID": "9a403d6ee9d70a"
+          },
+          "Version": "1.3.2",
+          "Relationship": "direct",
+          "DependsOn": [
+            "actionpack@8.1.3.1",
+            "activesupport@8.1.3.1",
+            "rack@3.2.6"
+          ],
+          "Locations": [
+            {
+              "StartLine": 344,
+              "EndLine": 344
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "puma@8.0.2",
+          "Name": "puma",
+          "Identifier": {
+            "PURL": "pkg:gem/puma@8.0.2",
+            "UID": "bdec49d51c4be80f"
+          },
+          "Version": "8.0.2",
+          "Relationship": "direct",
+          "DependsOn": [
+            "nio4r@2.7.5"
+          ],
+          "Locations": [
+            {
+              "StartLine": 350,
+              "EndLine": 350
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rails@8.1.3.1",
+          "Name": "rails",
+          "Identifier": {
+            "PURL": "pkg:gem/rails@8.1.3.1",
+            "UID": "fc2f39d609cb1ebe"
+          },
+          "Version": "8.1.3.1",
+          "Relationship": "direct",
+          "DependsOn": [
+            "actioncable@8.1.3.1",
+            "actionmailbox@8.1.3.1",
+            "actionmailer@8.1.3.1",
+            "actionpack@8.1.3.1",
+            "actiontext@8.1.3.1",
+            "actionview@8.1.3.1",
+            "activejob@8.1.3.1",
+            "activemodel@8.1.3.1",
+            "activerecord@8.1.3.1",
+            "activestorage@8.1.3.1",
+            "activesupport@8.1.3.1",
+            "railties@8.1.3.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 362,
+              "EndLine": 362
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "retryable@3.0.5",
+          "Name": "retryable",
+          "Identifier": {
+            "PURL": "pkg:gem/retryable@3.0.5",
+            "UID": "14a219b661a93080"
+          },
+          "Version": "3.0.5",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 411,
+              "EndLine": 411
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rss@0.3.3",
+          "Name": "rss",
+          "Identifier": {
+            "PURL": "pkg:gem/rss@0.3.3",
+            "UID": "c53b050fcbadfc2a"
+          },
+          "Version": "0.3.3",
+          "Relationship": "direct",
+          "DependsOn": [
+            "rexml@3.4.4"
+          ],
+          "Locations": [
+            {
+              "StartLine": 413,
+              "EndLine": 413
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rubocop-minitest@0.40.0",
+          "Name": "rubocop-minitest",
+          "Identifier": {
+            "PURL": "pkg:gem/rubocop-minitest@0.40.0",
+            "UID": "ec4a6477933d873c"
+          },
+          "Version": "0.40.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "lint_roller@1.1.0",
+            "rubocop@1.88.2",
+            "rubocop-ast@1.50.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 429,
+              "EndLine": 429
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rubocop-rails-omakase@1.1.0",
+          "Name": "rubocop-rails-omakase",
+          "Identifier": {
+            "PURL": "pkg:gem/rubocop-rails-omakase@1.1.0",
+            "UID": "fba9fe0b99fce2dd"
+          },
+          "Version": "1.1.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "rubocop@1.88.2",
+            "rubocop-performance@1.26.1",
+            "rubocop-rails@2.36.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 443,
+              "EndLine": 443
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rubocop-thread_safety@0.7.3",
+          "Name": "rubocop-thread_safety",
+          "Identifier": {
+            "PURL": "pkg:gem/rubocop-thread_safety@0.7.3",
+            "UID": "e7cc8652ca288762"
+          },
+          "Version": "0.7.3",
+          "Relationship": "direct",
+          "DependsOn": [
+            "lint_roller@1.1.0",
+            "rubocop@1.88.2",
+            "rubocop-ast@1.50.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 447,
+              "EndLine": 447
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "ruby_llm@1.16.0",
+          "Name": "ruby_llm",
+          "Identifier": {
+            "PURL": "pkg:gem/ruby_llm@1.16.0",
+            "UID": "7ab856f98d8a0f65"
+          },
+          "Version": "1.16.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "base64@0.3.0",
+            "event_stream_parser@1.0.0",
+            "faraday@2.14.3",
+            "faraday-multipart@1.2.0",
+            "faraday-net_http@3.4.4",
+            "faraday-retry@2.4.0",
+            "marcel@1.2.1",
+            "ruby_llm-schema@0.4.0",
+            "zeitwerk@2.8.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 453,
+              "EndLine": 453
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "ruby_llm-schema@0.4.0",
+          "Name": "ruby_llm-schema",
+          "Identifier": {
+            "PURL": "pkg:gem/ruby_llm-schema@0.4.0",
+            "UID": "d4417eceb102631d"
+          },
+          "Version": "0.4.0",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 463,
+              "EndLine": 463
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "solid_cache@1.0.10",
+          "Name": "solid_cache",
+          "Identifier": {
+            "PURL": "pkg:gem/solid_cache@1.0.10",
+            "UID": "9a71fa8fa07715a3"
+          },
+          "Version": "1.0.10",
+          "Relationship": "direct",
+          "DependsOn": [
+            "activejob@8.1.3.1",
+            "activerecord@8.1.3.1",
+            "railties@8.1.3.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 469,
+              "EndLine": 469
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "solid_queue@1.5.1",
+          "Name": "solid_queue",
+          "Identifier": {
+            "PURL": "pkg:gem/solid_queue@1.5.1",
+            "UID": "d0aca771ee2b759c"
+          },
+          "Version": "1.5.1",
+          "Relationship": "direct",
+          "DependsOn": [
+            "activejob@8.1.3.1",
+            "activerecord@8.1.3.1",
+            "concurrent-ruby@1.3.8",
+            "fugit@1.13.0",
+            "railties@8.1.3.1",
+            "thor@1.5.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 473,
+              "EndLine": 473
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "sqlite3@2.9.5",
+          "Name": "sqlite3",
+          "Identifier": {
+            "PURL": "pkg:gem/sqlite3@2.9.5",
+            "UID": "61bdf8bede4b50ed"
+          },
+          "Version": "2.9.5",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 487,
+              "EndLine": 487
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "webmock@3.26.2",
+          "Name": "webmock",
+          "Identifier": {
+            "PURL": "pkg:gem/webmock@3.26.2",
+            "UID": "36a5d6bb3fd163ad"
+          },
+          "Version": "3.26.2",
+          "Relationship": "direct",
+          "DependsOn": [
+            "addressable@2.9.0",
+            "crack@1.0.1",
+            "hashdiff@1.2.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 505,
+              "EndLine": 505
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "action_text-trix@2.1.19",
+          "Name": "action_text-trix",
+          "Identifier": {
+            "PURL": "pkg:gem/action_text-trix@2.1.19",
+            "UID": "ef9df73bc24a8f98"
+          },
+          "Version": "2.1.19",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "railties@8.1.3.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 4,
+              "EndLine": 4
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "actioncable@8.1.3.1",
+          "Name": "actioncable",
+          "Identifier": {
+            "PURL": "pkg:gem/actioncable@8.1.3.1",
+            "UID": "7c020cd9cf61f796"
+          },
+          "Version": "8.1.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "actionpack@8.1.3.1",
+            "activesupport@8.1.3.1",
+            "nio4r@2.7.5",
+            "websocket-driver@0.8.2",
+            "zeitwerk@2.8.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 6,
+              "EndLine": 6
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "actionmailbox@8.1.3.1",
+          "Name": "actionmailbox",
+          "Identifier": {
+            "PURL": "pkg:gem/actionmailbox@8.1.3.1",
+            "UID": "de708d843e0fe973"
+          },
+          "Version": "8.1.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "actionpack@8.1.3.1",
+            "activejob@8.1.3.1",
+            "activerecord@8.1.3.1",
+            "activestorage@8.1.3.1",
+            "activesupport@8.1.3.1",
+            "mail@2.9.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 12,
+              "EndLine": 12
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "actionmailer@8.1.3.1",
+          "Name": "actionmailer",
+          "Identifier": {
+            "PURL": "pkg:gem/actionmailer@8.1.3.1",
+            "UID": "33deaaf62fed054e"
+          },
+          "Version": "8.1.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "actionpack@8.1.3.1",
+            "actionview@8.1.3.1",
+            "activejob@8.1.3.1",
+            "activesupport@8.1.3.1",
+            "mail@2.9.1",
+            "rails-dom-testing@2.3.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 19,
+              "EndLine": 19
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "actionpack@8.1.3.1",
+          "Name": "actionpack",
+          "Identifier": {
+            "PURL": "pkg:gem/actionpack@8.1.3.1",
+            "UID": "2c18faee216c42a"
+          },
+          "Version": "8.1.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "actionview@8.1.3.1",
+            "activesupport@8.1.3.1",
+            "nokogiri@1.19.4",
+            "rack@3.2.6",
+            "rack-session@2.1.2",
+            "rack-test@2.2.0",
+            "rails-dom-testing@2.3.0",
+            "rails-html-sanitizer@1.7.1",
+            "useragent@0.16.11"
+          ],
+          "Locations": [
+            {
+              "StartLine": 26,
+              "EndLine": 26
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "actiontext@8.1.3.1",
+          "Name": "actiontext",
+          "Identifier": {
+            "PURL": "pkg:gem/actiontext@8.1.3.1",
+            "UID": "fd0335f453219dd8"
+          },
+          "Version": "8.1.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "action_text-trix@2.1.19",
+            "actionpack@8.1.3.1",
+            "activerecord@8.1.3.1",
+            "activestorage@8.1.3.1",
+            "activesupport@8.1.3.1",
+            "globalid@1.4.0",
+            "nokogiri@1.19.4"
+          ],
+          "Locations": [
+            {
+              "StartLine": 36,
+              "EndLine": 36
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "actionview@8.1.3.1",
+          "Name": "actionview",
+          "Identifier": {
+            "PURL": "pkg:gem/actionview@8.1.3.1",
+            "UID": "c15f24ab9eec3e7f"
+          },
+          "Version": "8.1.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "activesupport@8.1.3.1",
+            "builder@3.3.0",
+            "erubi@1.13.1",
+            "rails-dom-testing@2.3.0",
+            "rails-html-sanitizer@1.7.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 44,
+              "EndLine": 44
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "activejob@8.1.3.1",
+          "Name": "activejob",
+          "Identifier": {
+            "PURL": "pkg:gem/activejob@8.1.3.1",
+            "UID": "33b39b88c371efdb"
+          },
+          "Version": "8.1.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "activesupport@8.1.3.1",
+            "globalid@1.4.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 50,
+              "EndLine": 50
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "activemodel@8.1.3.1",
+          "Name": "activemodel",
+          "Identifier": {
+            "PURL": "pkg:gem/activemodel@8.1.3.1",
+            "UID": "e24fc636988684be"
+          },
+          "Version": "8.1.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "activesupport@8.1.3.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 53,
+              "EndLine": 53
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "activerecord@8.1.3.1",
+          "Name": "activerecord",
+          "Identifier": {
+            "PURL": "pkg:gem/activerecord@8.1.3.1",
+            "UID": "37640d5a75b90075"
+          },
+          "Version": "8.1.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "activemodel@8.1.3.1",
+            "activesupport@8.1.3.1",
+            "timeout@0.6.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 55,
+              "EndLine": 55
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "activestorage@8.1.3.1",
+          "Name": "activestorage",
+          "Identifier": {
+            "PURL": "pkg:gem/activestorage@8.1.3.1",
+            "UID": "7db402f0d1ffa286"
+          },
+          "Version": "8.1.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "actionpack@8.1.3.1",
+            "activejob@8.1.3.1",
+            "activerecord@8.1.3.1",
+            "activesupport@8.1.3.1",
+            "marcel@1.2.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 59,
+              "EndLine": 59
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "activesupport@8.1.3.1",
+          "Name": "activesupport",
+          "Identifier": {
+            "PURL": "pkg:gem/activesupport@8.1.3.1",
+            "UID": "5c818321ceff1662"
+          },
+          "Version": "8.1.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "base64@0.3.0",
+            "bigdecimal@4.1.2",
+            "concurrent-ruby@1.3.8",
+            "connection_pool@3.0.2",
+            "drb@2.2.3",
+            "i18n@1.15.2",
+            "json@2.21.1",
+            "logger@1.7.0",
+            "minitest@6.0.6",
+            "securerandom@0.4.1",
+            "tzinfo@2.0.6",
+            "uri@1.1.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 65,
+              "EndLine": 65
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "addressable@2.9.0",
+          "Name": "addressable",
+          "Identifier": {
+            "PURL": "pkg:gem/addressable@2.9.0",
+            "UID": "1bb839cd74089811"
+          },
+          "Version": "2.9.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "public_suffix@7.0.5"
+          ],
+          "Locations": [
+            {
+              "StartLine": 78,
+              "EndLine": 78
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "ast@2.4.3",
+          "Name": "ast",
+          "Identifier": {
+            "PURL": "pkg:gem/ast@2.4.3",
+            "UID": "9cce4c7b90b4f497"
+          },
+          "Version": "2.4.3",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 81,
+              "EndLine": 81
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "base64@0.3.0",
+          "Name": "base64",
+          "Identifier": {
+            "PURL": "pkg:gem/base64@0.3.0",
+            "UID": "6f487ed26e9f51ca"
+          },
+          "Version": "0.3.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 82,
+              "EndLine": 82
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "bigdecimal@4.1.2",
+          "Name": "bigdecimal",
+          "Identifier": {
+            "PURL": "pkg:gem/bigdecimal@4.1.2",
+            "UID": "618356461ba7bb87"
+          },
+          "Version": "4.1.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 83,
+              "EndLine": 83
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "builder@3.3.0",
+          "Name": "builder",
+          "Identifier": {
+            "PURL": "pkg:gem/builder@3.3.0",
+            "UID": "902781453579985e"
+          },
+          "Version": "3.3.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 88,
+              "EndLine": 88
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "concurrent-ruby@1.3.8",
+          "Name": "concurrent-ruby",
+          "Identifier": {
+            "PURL": "pkg:gem/concurrent-ruby@1.3.8",
+            "UID": "d6262a8cfb3178e4"
+          },
+          "Version": "1.3.8",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 92,
+              "EndLine": 92
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "connection_pool@3.0.2",
+          "Name": "connection_pool",
+          "Identifier": {
+            "PURL": "pkg:gem/connection_pool@3.0.2",
+            "UID": "e905640cacb6cfc2"
+          },
+          "Version": "3.0.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 93,
+              "EndLine": 93
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "crack@1.0.1",
+          "Name": "crack",
+          "Identifier": {
+            "PURL": "pkg:gem/crack@1.0.1",
+            "UID": "8d735dc81c6efe8a"
+          },
+          "Version": "1.0.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "bigdecimal@4.1.2",
+            "rexml@3.4.4"
+          ],
+          "Locations": [
+            {
+              "StartLine": 94,
+              "EndLine": 94
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "crass@1.0.7",
+          "Name": "crass",
+          "Identifier": {
+            "PURL": "pkg:gem/crass@1.0.7",
+            "UID": "6d94cd695f9874db"
+          },
+          "Version": "1.0.7",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 97,
+              "EndLine": 97
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "date@3.5.1",
+          "Name": "date",
+          "Identifier": {
+            "PURL": "pkg:gem/date@3.5.1",
+            "UID": "abc95287d53ec1f1"
+          },
+          "Version": "3.5.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 98,
+              "EndLine": 98
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "declarative@0.0.20",
+          "Name": "declarative",
+          "Identifier": {
+            "PURL": "pkg:gem/declarative@0.0.20",
+            "UID": "c7efd4e134d9956d"
+          },
+          "Version": "0.0.20",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 102,
+              "EndLine": 102
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "dotenv@3.2.0",
+          "Name": "dotenv",
+          "Identifier": {
+            "PURL": "pkg:gem/dotenv@3.2.0",
+            "UID": "44ff01c1a38ed60b"
+          },
+          "Version": "3.2.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 103,
+              "EndLine": 103
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "drb@2.2.3",
+          "Name": "drb",
+          "Identifier": {
+            "PURL": "pkg:gem/drb@2.2.3",
+            "UID": "402926f55e2dcb90"
+          },
+          "Version": "2.2.3",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 107,
+              "EndLine": 107
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "erb@6.0.6",
+          "Name": "erb",
+          "Identifier": {
+            "PURL": "pkg:gem/erb@6.0.6",
+            "UID": "34a96cc94848e2ea"
+          },
+          "Version": "6.0.6",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 108,
+              "EndLine": 108
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "erubi@1.13.1",
+          "Name": "erubi",
+          "Identifier": {
+            "PURL": "pkg:gem/erubi@1.13.1",
+            "UID": "c991eb687e405312"
+          },
+          "Version": "1.13.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 109,
+              "EndLine": 109
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "et-orbi@1.4.0",
+          "Name": "et-orbi",
+          "Identifier": {
+            "PURL": "pkg:gem/et-orbi@1.4.0",
+            "UID": "41bd4f915e46f894"
+          },
+          "Version": "1.4.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "tzinfo@2.0.6"
+          ],
+          "Locations": [
+            {
+              "StartLine": 110,
+              "EndLine": 110
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "event_stream_parser@1.0.0",
+          "Name": "event_stream_parser",
+          "Identifier": {
+            "PURL": "pkg:gem/event_stream_parser@1.0.0",
+            "UID": "417895338ea3a4c8"
+          },
+          "Version": "1.0.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 112,
+              "EndLine": 112
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "faraday@2.14.3",
+          "Name": "faraday",
+          "Identifier": {
+            "PURL": "pkg:gem/faraday@2.14.3",
+            "UID": "eaa70ab4f3f79931"
+          },
+          "Version": "2.14.3",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "faraday-net_http@3.4.4",
+            "json@2.21.1",
+            "logger@1.7.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 113,
+              "EndLine": 113
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "faraday-follow_redirects@0.5.0",
+          "Name": "faraday-follow_redirects",
+          "Identifier": {
+            "PURL": "pkg:gem/faraday-follow_redirects@0.5.0",
+            "UID": "69f5d3eca40c013b"
+          },
+          "Version": "0.5.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "faraday@2.14.3"
+          ],
+          "Locations": [
+            {
+              "StartLine": 117,
+              "EndLine": 117
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "faraday-multipart@1.2.0",
+          "Name": "faraday-multipart",
+          "Identifier": {
+            "PURL": "pkg:gem/faraday-multipart@1.2.0",
+            "UID": "c96424f04dc76bd3"
+          },
+          "Version": "1.2.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "multipart-post@2.4.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 119,
+              "EndLine": 119
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "faraday-net_http@3.4.4",
+          "Name": "faraday-net_http",
+          "Identifier": {
+            "PURL": "pkg:gem/faraday-net_http@3.4.4",
+            "UID": "269fee9381b103be"
+          },
+          "Version": "3.4.4",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "net-http@0.9.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 121,
+              "EndLine": 121
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "faraday-retry@2.4.0",
+          "Name": "faraday-retry",
+          "Identifier": {
+            "PURL": "pkg:gem/faraday-retry@2.4.0",
+            "UID": "fd2c77ddcf195593"
+          },
+          "Version": "2.4.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "faraday@2.14.3"
+          ],
+          "Locations": [
+            {
+              "StartLine": 123,
+              "EndLine": 123
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "fugit@1.13.0",
+          "Name": "fugit",
+          "Identifier": {
+            "PURL": "pkg:gem/fugit@1.13.0",
+            "UID": "1791b23addf4caee"
+          },
+          "Version": "1.13.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "et-orbi@1.4.0",
+            "raabro@1.5.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 125,
+              "EndLine": 125
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "gapic-common@1.3.0",
+          "Name": "gapic-common",
+          "Identifier": {
+            "PURL": "pkg:gem/gapic-common@1.3.0",
+            "UID": "ed17d6391f32c0be"
+          },
+          "Version": "1.3.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "faraday@2.14.3",
+            "faraday-retry@2.4.0",
+            "google-cloud-env@2.4.0",
+            "google-logging-utils@0.2.0",
+            "google-protobuf@4.35.1",
+            "googleapis-common-protos@1.9.0",
+            "googleapis-common-protos-types@1.23.0",
+            "googleauth@1.17.3",
+            "grpc@1.83.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 128,
+              "EndLine": 128
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "globalid@1.4.0",
+          "Name": "globalid",
+          "Identifier": {
+            "PURL": "pkg:gem/globalid@1.4.0",
+            "UID": "e8433ce0fcc62aa4"
+          },
+          "Version": "1.4.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "activesupport@8.1.3.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 138,
+              "EndLine": 138
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-apis-core@1.2.5",
+          "Name": "google-apis-core",
+          "Identifier": {
+            "PURL": "pkg:gem/google-apis-core@1.2.5",
+            "UID": "c1ca8cfa8a773102"
+          },
+          "Version": "1.2.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "addressable@2.9.0",
+            "faraday@2.14.3",
+            "faraday-follow_redirects@0.5.0",
+            "googleauth@1.17.3",
+            "mini_mime@1.1.5",
+            "multi_json@1.21.1",
+            "representable@3.2.0",
+            "retriable@4.2.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 142,
+              "EndLine": 142
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-cloud-core@1.9.0",
+          "Name": "google-cloud-core",
+          "Identifier": {
+            "PURL": "pkg:gem/google-cloud-core@1.9.0",
+            "UID": "63c533bc8e33f2b1"
+          },
+          "Version": "1.9.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "google-cloud-env@2.4.0",
+            "google-cloud-errors@1.7.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 155,
+              "EndLine": 155
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-cloud-env@2.4.0",
+          "Name": "google-cloud-env",
+          "Identifier": {
+            "PURL": "pkg:gem/google-cloud-env@2.4.0",
+            "UID": "c4985606e4835440"
+          },
+          "Version": "2.4.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "base64@0.3.0",
+            "faraday@2.14.3"
+          ],
+          "Locations": [
+            {
+              "StartLine": 158,
+              "EndLine": 158
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-cloud-errors@1.7.0",
+          "Name": "google-cloud-errors",
+          "Identifier": {
+            "PURL": "pkg:gem/google-cloud-errors@1.7.0",
+            "UID": "8afa5e147b2dc108"
+          },
+          "Version": "1.7.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 161,
+              "EndLine": 161
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-cloud-location@1.5.0",
+          "Name": "google-cloud-location",
+          "Identifier": {
+            "PURL": "pkg:gem/google-cloud-location@1.5.0",
+            "UID": "9bab6d9616be680f"
+          },
+          "Version": "1.5.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "gapic-common@1.3.0",
+            "google-cloud-errors@1.7.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 162,
+              "EndLine": 162
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-cloud-translate-v2@1.2.0",
+          "Name": "google-cloud-translate-v2",
+          "Identifier": {
+            "PURL": "pkg:gem/google-cloud-translate-v2@1.2.0",
+            "UID": "5670f3555138180f"
+          },
+          "Version": "1.2.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "faraday@2.14.3",
+            "google-cloud-core@1.9.0",
+            "googleapis-common-protos@1.9.0",
+            "googleapis-common-protos-types@1.23.0",
+            "googleauth@1.17.3"
+          ],
+          "Locations": [
+            {
+              "StartLine": 169,
+              "EndLine": 169
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-cloud-translate-v3@1.10.0",
+          "Name": "google-cloud-translate-v3",
+          "Identifier": {
+            "PURL": "pkg:gem/google-cloud-translate-v3@1.10.0",
+            "UID": "14be9ae47a7a6f47"
+          },
+          "Version": "1.10.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "gapic-common@1.3.0",
+            "google-cloud-errors@1.7.0",
+            "google-cloud-location@1.5.0",
+            "google-iam-v1@1.7.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 175,
+              "EndLine": 175
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-iam-v1@1.7.0",
+          "Name": "google-iam-v1",
+          "Identifier": {
+            "PURL": "pkg:gem/google-iam-v1@1.7.0",
+            "UID": "d41d439235fc013f"
+          },
+          "Version": "1.7.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "gapic-common@1.3.0",
+            "google-cloud-errors@1.7.0",
+            "grpc-google-iam-v1@1.12.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 180,
+              "EndLine": 180
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-logging-utils@0.2.0",
+          "Name": "google-logging-utils",
+          "Identifier": {
+            "PURL": "pkg:gem/google-logging-utils@0.2.0",
+            "UID": "9a3df6ad12613961"
+          },
+          "Version": "0.2.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 184,
+              "EndLine": 184
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "google-protobuf@4.35.1",
+          "Name": "google-protobuf",
+          "Identifier": {
+            "PURL": "pkg:gem/google-protobuf@4.35.1",
+            "UID": "61ac46eb9886acd7"
+          },
+          "Version": "4.35.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "bigdecimal@4.1.2",
+            "rake@13.4.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 203,
+              "EndLine": 203
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "googleapis-common-protos@1.9.0",
+          "Name": "googleapis-common-protos",
+          "Identifier": {
+            "PURL": "pkg:gem/googleapis-common-protos@1.9.0",
+            "UID": "5dfd39376d281a73"
+          },
+          "Version": "1.9.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "google-protobuf@4.35.1",
+            "googleapis-common-protos-types@1.23.0",
+            "grpc@1.83.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 206,
+              "EndLine": 206
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "googleapis-common-protos-types@1.23.0",
+          "Name": "googleapis-common-protos-types",
+          "Identifier": {
+            "PURL": "pkg:gem/googleapis-common-protos-types@1.23.0",
+            "UID": "e42d11b5e3872235"
+          },
+          "Version": "1.23.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "google-protobuf@4.35.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 210,
+              "EndLine": 210
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "grpc@1.83.0",
+          "Name": "grpc",
+          "Identifier": {
+            "PURL": "pkg:gem/grpc@1.83.0",
+            "UID": "8eed21eaeb4fec7d"
+          },
+          "Version": "1.83.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "google-protobuf@4.35.1",
+            "googleapis-common-protos-types@1.23.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 238,
+              "EndLine": 238
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "grpc-google-iam-v1@1.12.0",
+          "Name": "grpc-google-iam-v1",
+          "Identifier": {
+            "PURL": "pkg:gem/grpc-google-iam-v1@1.12.0",
+            "UID": "ae91c28f59eb2899"
+          },
+          "Version": "1.12.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "google-protobuf@4.35.1",
+            "googleapis-common-protos@1.9.0",
+            "grpc@1.83.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 241,
+              "EndLine": 241
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "hashdiff@1.2.1",
+          "Name": "hashdiff",
+          "Identifier": {
+            "PURL": "pkg:gem/hashdiff@1.2.1",
+            "UID": "3b4ac77c7da2030f"
+          },
+          "Version": "1.2.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 245,
+              "EndLine": 245
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "http-2@1.2.1",
+          "Name": "http-2",
+          "Identifier": {
+            "PURL": "pkg:gem/http-2@1.2.1",
+            "UID": "159fbb8f4792884a"
+          },
+          "Version": "1.2.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 250,
+              "EndLine": 250
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "i18n@1.15.2",
+          "Name": "i18n",
+          "Identifier": {
+            "PURL": "pkg:gem/i18n@1.15.2",
+            "UID": "944652c6161eb65d"
+          },
+          "Version": "1.15.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "concurrent-ruby@1.3.8"
+          ],
+          "Locations": [
+            {
+              "StartLine": 253,
+              "EndLine": 253
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "importmap-rails@2.2.3",
+          "Name": "importmap-rails",
+          "Identifier": {
+            "PURL": "pkg:gem/importmap-rails@2.2.3",
+            "UID": "a011e0c5a3fc03c4"
+          },
+          "Version": "2.2.3",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "actionpack@8.1.3.1",
+            "activesupport@8.1.3.1",
+            "railties@8.1.3.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 255,
+              "EndLine": 255
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "io-console@0.8.2",
+          "Name": "io-console",
+          "Identifier": {
+            "PURL": "pkg:gem/io-console@0.8.2",
+            "UID": "754873f210d6dc53"
+          },
+          "Version": "0.8.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 259,
+              "EndLine": 259
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "irb@1.18.0",
+          "Name": "irb",
+          "Identifier": {
+            "PURL": "pkg:gem/irb@1.18.0",
+            "UID": "eae10c72c5ddeb3d"
+          },
+          "Version": "1.18.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "pp@0.6.4",
+            "prism@1.9.0",
+            "rdoc@8.0.0",
+            "reline@0.6.3"
+          ],
+          "Locations": [
+            {
+              "StartLine": 260,
+              "EndLine": 260
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "json@2.21.1",
+          "Name": "json",
+          "Identifier": {
+            "PURL": "pkg:gem/json@2.21.1",
+            "UID": "8f7a8264e676149c"
+          },
+          "Version": "2.21.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 265,
+              "EndLine": 265
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "jwt@3.2.0",
+          "Name": "jwt",
+          "Identifier": {
+            "PURL": "pkg:gem/jwt@3.2.0",
+            "UID": "c05bd0ef675aff91"
+          },
+          "Version": "3.2.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "base64@0.3.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 266,
+              "EndLine": 266
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "language_server-protocol@3.17.0.6",
+          "Name": "language_server-protocol",
+          "Identifier": {
+            "PURL": "pkg:gem/language_server-protocol@3.17.0.6",
+            "UID": "a4963b09154390a"
+          },
+          "Version": "3.17.0.6",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 268,
+              "EndLine": 268
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "lint_roller@1.1.0",
+          "Name": "lint_roller",
+          "Identifier": {
+            "PURL": "pkg:gem/lint_roller@1.1.0",
+            "UID": "f6ae1b649887a9a2"
+          },
+          "Version": "1.1.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 269,
+              "EndLine": 269
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "logger@1.7.0",
+          "Name": "logger",
+          "Identifier": {
+            "PURL": "pkg:gem/logger@1.7.0",
+            "UID": "7a78046c05d61e02"
+          },
+          "Version": "1.7.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 270,
+              "EndLine": 270
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "loofah@2.25.2",
+          "Name": "loofah",
+          "Identifier": {
+            "PURL": "pkg:gem/loofah@2.25.2",
+            "UID": "9a6094b296ebaedc"
+          },
+          "Version": "2.25.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "crass@1.0.7",
+            "nokogiri@1.19.4"
+          ],
+          "Locations": [
+            {
+              "StartLine": 271,
+              "EndLine": 271
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "marcel@1.2.1",
+          "Name": "marcel",
+          "Identifier": {
+            "PURL": "pkg:gem/marcel@1.2.1",
+            "UID": "45c86aa7a8c5eb2f"
+          },
+          "Version": "1.2.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 280,
+              "EndLine": 280
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "mini_mime@1.1.5",
+          "Name": "mini_mime",
+          "Identifier": {
+            "PURL": "pkg:gem/mini_mime@1.1.5",
+            "UID": "9605c765434aaac3"
+          },
+          "Version": "1.1.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 281,
+              "EndLine": 281
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "minitest@6.0.6",
+          "Name": "minitest",
+          "Identifier": {
+            "PURL": "pkg:gem/minitest@6.0.6",
+            "UID": "b71197c05e4a0fb"
+          },
+          "Version": "6.0.6",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "drb@2.2.3",
+            "prism@1.9.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 282,
+              "EndLine": 282
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "msgpack@1.8.4",
+          "Name": "msgpack",
+          "Identifier": {
+            "PURL": "pkg:gem/msgpack@1.8.4",
+            "UID": "f1a49cf90f7407d5"
+          },
+          "Version": "1.8.4",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 297,
+              "EndLine": 297
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "multipart-post@2.4.1",
+          "Name": "multipart-post",
+          "Identifier": {
+            "PURL": "pkg:gem/multipart-post@2.4.1",
+            "UID": "b9c0fa219f5dc584"
+          },
+          "Version": "2.4.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 299,
+              "EndLine": 299
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "net-http@0.9.1",
+          "Name": "net-http",
+          "Identifier": {
+            "PURL": "pkg:gem/net-http@0.9.1",
+            "UID": "3e63a7e16c9cac79"
+          },
+          "Version": "0.9.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "uri@1.1.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 300,
+              "EndLine": 300
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "net-imap@0.6.6",
+          "Name": "net-imap",
+          "Identifier": {
+            "PURL": "pkg:gem/net-imap@0.6.6",
+            "UID": "f8857916d936f525"
+          },
+          "Version": "0.6.6",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "date@3.5.1",
+            "net-protocol@0.2.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 302,
+              "EndLine": 302
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "net-pop@0.1.2",
+          "Name": "net-pop",
+          "Identifier": {
+            "PURL": "pkg:gem/net-pop@0.1.2",
+            "UID": "1f992b0273f0ed36"
+          },
+          "Version": "0.1.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "net-protocol@0.2.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 305,
+              "EndLine": 305
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "net-protocol@0.2.2",
+          "Name": "net-protocol",
+          "Identifier": {
+            "PURL": "pkg:gem/net-protocol@0.2.2",
+            "UID": "78d61621d6321437"
+          },
+          "Version": "0.2.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "timeout@0.6.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 307,
+              "EndLine": 307
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "net-smtp@0.5.1",
+          "Name": "net-smtp",
+          "Identifier": {
+            "PURL": "pkg:gem/net-smtp@0.5.1",
+            "UID": "44a827f8957ec68"
+          },
+          "Version": "0.5.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "net-protocol@0.2.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 309,
+              "EndLine": 309
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "nio4r@2.7.5",
+          "Name": "nio4r",
+          "Identifier": {
+            "PURL": "pkg:gem/nio4r@2.7.5",
+            "UID": "b1aca99029024a49"
+          },
+          "Version": "2.7.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 311,
+              "EndLine": 311
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "os@1.1.4",
+          "Name": "os",
+          "Identifier": {
+            "PURL": "pkg:gem/os@1.1.4",
+            "UID": "750b823d6512d43b"
+          },
+          "Version": "1.1.4",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 328,
+              "EndLine": 328
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "parallel@2.1.0",
+          "Name": "parallel",
+          "Identifier": {
+            "PURL": "pkg:gem/parallel@2.1.0",
+            "UID": "5709876e88721ddb"
+          },
+          "Version": "2.1.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 329,
+              "EndLine": 329
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "parser@3.3.12.0",
+          "Name": "parser",
+          "Identifier": {
+            "PURL": "pkg:gem/parser@3.3.12.0",
+            "UID": "db4701ce22d9866f"
+          },
+          "Version": "3.3.12.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "ast@2.4.3",
+            "racc@1.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 330,
+              "EndLine": 330
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "pp@0.6.4",
+          "Name": "pp",
+          "Identifier": {
+            "PURL": "pkg:gem/pp@0.6.4",
+            "UID": "7c3aded2db24cf5"
+          },
+          "Version": "0.6.4",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "prettyprint@0.2.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 340,
+              "EndLine": 340
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "prettyprint@0.2.0",
+          "Name": "prettyprint",
+          "Identifier": {
+            "PURL": "pkg:gem/prettyprint@0.2.0",
+            "UID": "6429e4fafc71515a"
+          },
+          "Version": "0.2.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 342,
+              "EndLine": 342
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "prism@1.9.0",
+          "Name": "prism",
+          "Identifier": {
+            "PURL": "pkg:gem/prism@1.9.0",
+            "UID": "ab5d276176916bc6"
+          },
+          "Version": "1.9.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 343,
+              "EndLine": 343
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "pstore@0.2.1",
+          "Name": "pstore",
+          "Identifier": {
+            "PURL": "pkg:gem/pstore@0.2.1",
+            "UID": "e7f1d7cdebda1d20"
+          },
+          "Version": "0.2.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 348,
+              "EndLine": 348
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "public_suffix@7.0.5",
+          "Name": "public_suffix",
+          "Identifier": {
+            "PURL": "pkg:gem/public_suffix@7.0.5",
+            "UID": "94c92d92fa0659da"
+          },
+          "Version": "7.0.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 349,
+              "EndLine": 349
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "raabro@1.5.0",
+          "Name": "raabro",
+          "Identifier": {
+            "PURL": "pkg:gem/raabro@1.5.0",
+            "UID": "2b6165a595d0c496"
+          },
+          "Version": "1.5.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 352,
+              "EndLine": 352
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "racc@1.8.1",
+          "Name": "racc",
+          "Identifier": {
+            "PURL": "pkg:gem/racc@1.8.1",
+            "UID": "8e26b56e8f259cd0"
+          },
+          "Version": "1.8.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 353,
+              "EndLine": 353
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rack@3.2.6",
+          "Name": "rack",
+          "Identifier": {
+            "PURL": "pkg:gem/rack@3.2.6",
+            "UID": "ff864c70253be310"
+          },
+          "Version": "3.2.6",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 354,
+              "EndLine": 354
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rack-session@2.1.2",
+          "Name": "rack-session",
+          "Identifier": {
+            "PURL": "pkg:gem/rack-session@2.1.2",
+            "UID": "2f6197a2bc48e15d"
+          },
+          "Version": "2.1.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "base64@0.3.0",
+            "rack@3.2.6"
+          ],
+          "Locations": [
+            {
+              "StartLine": 355,
+              "EndLine": 355
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rack-test@2.2.0",
+          "Name": "rack-test",
+          "Identifier": {
+            "PURL": "pkg:gem/rack-test@2.2.0",
+            "UID": "a28081beed8aff0f"
+          },
+          "Version": "2.2.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "rack@3.2.6"
+          ],
+          "Locations": [
+            {
+              "StartLine": 358,
+              "EndLine": 358
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rackup@2.3.1",
+          "Name": "rackup",
+          "Identifier": {
+            "PURL": "pkg:gem/rackup@2.3.1",
+            "UID": "8c02275e688fe9e2"
+          },
+          "Version": "2.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "rack@3.2.6"
+          ],
+          "Locations": [
+            {
+              "StartLine": 360,
+              "EndLine": 360
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rails-dom-testing@2.3.0",
+          "Name": "rails-dom-testing",
+          "Identifier": {
+            "PURL": "pkg:gem/rails-dom-testing@2.3.0",
+            "UID": "149882b20ae5b0d1"
+          },
+          "Version": "2.3.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "activesupport@8.1.3.1",
+            "minitest@6.0.6",
+            "nokogiri@1.19.4"
+          ],
+          "Locations": [
+            {
+              "StartLine": 376,
+              "EndLine": 376
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rails-html-sanitizer@1.7.1",
+          "Name": "rails-html-sanitizer",
+          "Identifier": {
+            "PURL": "pkg:gem/rails-html-sanitizer@1.7.1",
+            "UID": "d9700e6f989caa5d"
+          },
+          "Version": "1.7.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "loofah@2.25.2",
+            "nokogiri@1.19.4"
+          ],
+          "Locations": [
+            {
+              "StartLine": 380,
+              "EndLine": 380
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "railties@8.1.3.1",
+          "Name": "railties",
+          "Identifier": {
+            "PURL": "pkg:gem/railties@8.1.3.1",
+            "UID": "4aa79626d90acb4d"
+          },
+          "Version": "8.1.3.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "actionpack@8.1.3.1",
+            "activesupport@8.1.3.1",
+            "irb@1.18.0",
+            "rackup@2.3.1",
+            "rake@13.4.2",
+            "thor@1.5.0",
+            "tsort@0.2.0",
+            "zeitwerk@2.8.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 383,
+              "EndLine": 383
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rainbow@3.1.1",
+          "Name": "rainbow",
+          "Identifier": {
+            "PURL": "pkg:gem/rainbow@3.1.1",
+            "UID": "485fcb11dbc468cf"
+          },
+          "Version": "3.1.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 392,
+              "EndLine": 392
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rake@13.4.2",
+          "Name": "rake",
+          "Identifier": {
+            "PURL": "pkg:gem/rake@13.4.2",
+            "UID": "84bb333535fe25ee"
+          },
+          "Version": "13.4.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 393,
+              "EndLine": 393
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rbs@4.1.1",
+          "Name": "rbs",
+          "Identifier": {
+            "PURL": "pkg:gem/rbs@4.1.1",
+            "UID": "1d81a445b2977be2"
+          },
+          "Version": "4.1.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "logger@1.7.0",
+            "prism@1.9.0",
+            "tsort@0.2.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 394,
+              "EndLine": 394
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rdoc@8.0.0",
+          "Name": "rdoc",
+          "Identifier": {
+            "PURL": "pkg:gem/rdoc@8.0.0",
+            "UID": "84ac944767a36a51"
+          },
+          "Version": "8.0.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "erb@6.0.6",
+            "prism@1.9.0",
+            "rbs@4.1.1",
+            "tsort@0.2.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 398,
+              "EndLine": 398
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "regexp_parser@2.12.0",
+          "Name": "regexp_parser",
+          "Identifier": {
+            "PURL": "pkg:gem/regexp_parser@2.12.0",
+            "UID": "26f4f8d971600e54"
+          },
+          "Version": "2.12.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 403,
+              "EndLine": 403
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "reline@0.6.3",
+          "Name": "reline",
+          "Identifier": {
+            "PURL": "pkg:gem/reline@0.6.3",
+            "UID": "349734026cc9309b"
+          },
+          "Version": "0.6.3",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "io-console@0.8.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 404,
+              "EndLine": 404
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "representable@3.2.0",
+          "Name": "representable",
+          "Identifier": {
+            "PURL": "pkg:gem/representable@3.2.0",
+            "UID": "7cbb92089e13aac3"
+          },
+          "Version": "3.2.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "declarative@0.0.20",
+            "trailblazer-option@0.1.2",
+            "uber@0.1.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 406,
+              "EndLine": 406
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "retriable@4.2.0",
+          "Name": "retriable",
+          "Identifier": {
+            "PURL": "pkg:gem/retriable@4.2.0",
+            "UID": "397aaa6bf6dad51c"
+          },
+          "Version": "4.2.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 410,
+              "EndLine": 410
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rexml@3.4.4",
+          "Name": "rexml",
+          "Identifier": {
+            "PURL": "pkg:gem/rexml@3.4.4",
+            "UID": "9d0d5e9ebadd3c36"
+          },
+          "Version": "3.4.4",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 412,
+              "EndLine": 412
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rubocop@1.88.2",
+          "Name": "rubocop",
+          "Identifier": {
+            "PURL": "pkg:gem/rubocop@1.88.2",
+            "UID": "48c3342fd9867573"
+          },
+          "Version": "1.88.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "json@2.21.1",
+            "language_server-protocol@3.17.0.6",
+            "lint_roller@1.1.0",
+            "parallel@2.1.0",
+            "parser@3.3.12.0",
+            "rainbow@3.1.1",
+            "regexp_parser@2.12.0",
+            "rubocop-ast@1.50.0",
+            "ruby-progressbar@1.13.0",
+            "unicode-display_width@3.2.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 415,
+              "EndLine": 415
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rubocop-ast@1.50.0",
+          "Name": "rubocop-ast",
+          "Identifier": {
+            "PURL": "pkg:gem/rubocop-ast@1.50.0",
+            "UID": "2ffe81f59df2dd1"
+          },
+          "Version": "1.50.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "parser@3.3.12.0",
+            "prism@1.9.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 426,
+              "EndLine": 426
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rubocop-performance@1.26.1",
+          "Name": "rubocop-performance",
+          "Identifier": {
+            "PURL": "pkg:gem/rubocop-performance@1.26.1",
+            "UID": "40aebc3dee2a4f09"
+          },
+          "Version": "1.26.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "lint_roller@1.1.0",
+            "rubocop@1.88.2",
+            "rubocop-ast@1.50.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 433,
+              "EndLine": 433
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "rubocop-rails@2.36.0",
+          "Name": "rubocop-rails",
+          "Identifier": {
+            "PURL": "pkg:gem/rubocop-rails@2.36.0",
+            "UID": "ee9064cac76f7a0"
+          },
+          "Version": "2.36.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "activesupport@8.1.3.1",
+            "lint_roller@1.1.0",
+            "rack@3.2.6",
+            "rubocop@1.88.2",
+            "rubocop-ast@1.50.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 437,
+              "EndLine": 437
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "ruby-progressbar@1.13.0",
+          "Name": "ruby-progressbar",
+          "Identifier": {
+            "PURL": "pkg:gem/ruby-progressbar@1.13.0",
+            "UID": "20044499e168b6d4"
+          },
+          "Version": "1.13.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 451,
+              "EndLine": 451
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "ruby2_keywords@0.0.5",
+          "Name": "ruby2_keywords",
+          "Identifier": {
+            "PURL": "pkg:gem/ruby2_keywords@0.0.5",
+            "UID": "e7b4b0e9cb32dc5b"
+          },
+          "Version": "0.0.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 452,
+              "EndLine": 452
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "securerandom@0.4.1",
+          "Name": "securerandom",
+          "Identifier": {
+            "PURL": "pkg:gem/securerandom@0.4.1",
+            "UID": "6cd54afa468beae3"
+          },
+          "Version": "0.4.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 464,
+              "EndLine": 464
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "signet@0.22.0",
+          "Name": "signet",
+          "Identifier": {
+            "PURL": "pkg:gem/signet@0.22.0",
+            "UID": "9492e3089d2ec8e8"
+          },
+          "Version": "0.22.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "addressable@2.9.0",
+            "faraday@2.14.3",
+            "jwt@3.2.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 465,
+              "EndLine": 465
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "stimulus-rails@1.3.4",
+          "Name": "stimulus-rails",
+          "Identifier": {
+            "PURL": "pkg:gem/stimulus-rails@1.3.4",
+            "UID": "7c5966ce86f67299"
+          },
+          "Version": "1.3.4",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "railties@8.1.3.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 488,
+              "EndLine": 488
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "thor@1.5.0",
+          "Name": "thor",
+          "Identifier": {
+            "PURL": "pkg:gem/thor@1.5.0",
+            "UID": "17df1372181e6692"
+          },
+          "Version": "1.5.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 490,
+              "EndLine": 490
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "timeout@0.6.1",
+          "Name": "timeout",
+          "Identifier": {
+            "PURL": "pkg:gem/timeout@0.6.1",
+            "UID": "2cf6bdb26107d38b"
+          },
+          "Version": "0.6.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 491,
+              "EndLine": 491
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "trailblazer-option@0.1.2",
+          "Name": "trailblazer-option",
+          "Identifier": {
+            "PURL": "pkg:gem/trailblazer-option@0.1.2",
+            "UID": "d7b932d49991399f"
+          },
+          "Version": "0.1.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 492,
+              "EndLine": 492
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "tsort@0.2.0",
+          "Name": "tsort",
+          "Identifier": {
+            "PURL": "pkg:gem/tsort@0.2.0",
+            "UID": "e41b6bad1536137c"
+          },
+          "Version": "0.2.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 493,
+              "EndLine": 493
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "turbo-rails@2.0.23",
+          "Name": "turbo-rails",
+          "Identifier": {
+            "PURL": "pkg:gem/turbo-rails@2.0.23",
+            "UID": "2387248c217edc70"
+          },
+          "Version": "2.0.23",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "actionpack@8.1.3.1",
+            "railties@8.1.3.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 494,
+              "EndLine": 494
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "tzinfo@2.0.6",
+          "Name": "tzinfo",
+          "Identifier": {
+            "PURL": "pkg:gem/tzinfo@2.0.6",
+            "UID": "a8e9dbd093100640"
+          },
+          "Version": "2.0.6",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "concurrent-ruby@1.3.8"
+          ],
+          "Locations": [
+            {
+              "StartLine": 497,
+              "EndLine": 497
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "uber@0.1.0",
+          "Name": "uber",
+          "Identifier": {
+            "PURL": "pkg:gem/uber@0.1.0",
+            "UID": "c3edf86a938f2901"
+          },
+          "Version": "0.1.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 499,
+              "EndLine": 499
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "unicode-display_width@3.2.0",
+          "Name": "unicode-display_width",
+          "Identifier": {
+            "PURL": "pkg:gem/unicode-display_width@3.2.0",
+            "UID": "10c8ba59b687dd2a"
+          },
+          "Version": "3.2.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "unicode-emoji@4.2.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 500,
+              "EndLine": 500
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "unicode-emoji@4.2.0",
+          "Name": "unicode-emoji",
+          "Identifier": {
+            "PURL": "pkg:gem/unicode-emoji@4.2.0",
+            "UID": "f06d6ecae41f14d3"
+          },
+          "Version": "4.2.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 502,
+              "EndLine": 502
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "uri@1.1.1",
+          "Name": "uri",
+          "Identifier": {
+            "PURL": "pkg:gem/uri@1.1.1",
+            "UID": "e81932ab6546ebac"
+          },
+          "Version": "1.1.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 503,
+              "EndLine": 503
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "useragent@0.16.11",
+          "Name": "useragent",
+          "Identifier": {
+            "PURL": "pkg:gem/useragent@0.16.11",
+            "UID": "8918ba6302a8334c"
+          },
+          "Version": "0.16.11",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 504,
+              "EndLine": 504
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "websocket-driver@0.8.2",
+          "Name": "websocket-driver",
+          "Identifier": {
+            "PURL": "pkg:gem/websocket-driver@0.8.2",
+            "UID": "47bd04d9f8bdf8b2"
+          },
+          "Version": "0.8.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "base64@0.3.0",
+            "websocket-extensions@0.1.5"
+          ],
+          "Locations": [
+            {
+              "StartLine": 509,
+              "EndLine": 509
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "websocket-extensions@0.1.5",
+          "Name": "websocket-extensions",
+          "Identifier": {
+            "PURL": "pkg:gem/websocket-extensions@0.1.5",
+            "UID": "5351f0ffa482f736"
+          },
+          "Version": "0.1.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 512,
+              "EndLine": 512
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        },
+        {
+          "ID": "zeitwerk@2.8.2",
+          "Name": "zeitwerk",
+          "Identifier": {
+            "PURL": "pkg:gem/zeitwerk@2.8.2",
+            "UID": "85a9060860e8a07d"
+          },
+          "Version": "2.8.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 513,
+              "EndLine": 513
+            }
+          ],
+          "AnalyzedBy": "bundler"
+        }
+      ]
+    },
+    {
+      "Target": "Dockerfile",
+      "Class": "config",
+      "Type": "dockerfile",
+      "MisconfSummary": {
+        "Successes": 26,
+        "Failures": 1
+      },
+      "Misconfigurations": [
+        {
+          "Type": "Dockerfile Security Check",
+          "ID": "DS-0026",
+          "Title": "No HEALTHCHECK defined",
+          "Description": "You should add HEALTHCHECK instruction in your docker container images to perform the health check on running containers.",
+          "Message": "Add HEALTHCHECK instruction in your Dockerfile",
+          "Namespace": "builtin.dockerfile.DS026",
+          "Query": "data.builtin.dockerfile.DS026.deny",
+          "Resolution": "Add HEALTHCHECK instruction in Dockerfile",
+          "Severity": "LOW",
+          "PrimaryURL": "https://avd.aquasec.com/misconfig/ds-0026",
+          "References": [
+            "https://blog.aquasec.com/docker-security-best-practices",
+            "https://avd.aquasec.com/misconfig/ds-0026"
+          ],
+          "Status": "FAIL",
+          "CauseMetadata": {
+            "Provider": "Dockerfile",
+            "Service": "general"
+          }
+        }
+      ]
+    },
+    {
+      "Target": "workflows/Dockerfile",
+      "Class": "config",
+      "Type": "dockerfile",
+      "MisconfSummary": {
+        "Successes": 25,
+        "Failures": 2
+      },
+      "Misconfigurations": [
+        {
+          "Type": "Dockerfile Security Check",
+          "ID": "DS-0002",
+          "Title": "Image user should not be 'root'",
+          "Description": "Running containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile.",
+          "Message": "Specify at least 1 USER command in Dockerfile with non-root user as argument",
+          "Namespace": "builtin.dockerfile.DS002",
+          "Query": "data.builtin.dockerfile.DS002.deny",
+          "Resolution": "Add 'USER \u003cnon root user name\u003e' line to the Dockerfile",
+          "Severity": "HIGH",
+          "PrimaryURL": "https://avd.aquasec.com/misconfig/ds-0002",
+          "References": [
+            "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/",
+            "https://avd.aquasec.com/misconfig/ds-0002"
+          ],
+          "Status": "FAIL",
+          "CauseMetadata": {
+            "Provider": "Dockerfile",
+            "Service": "general"
+          }
+        },
+        {
+          "Type": "Dockerfile Security Check",
+          "ID": "DS-0026",
+          "Title": "No HEALTHCHECK defined",
+          "Description": "You should add HEALTHCHECK instruction in your docker container images to perform the health check on running containers.",
+          "Message": "Add HEALTHCHECK instruction in your Dockerfile",
+          "Namespace": "builtin.dockerfile.DS026",
+          "Query": "data.builtin.dockerfile.DS026.deny",
+          "Resolution": "Add HEALTHCHECK instruction in Dockerfile",
+          "Severity": "LOW",
+          "PrimaryURL": "https://avd.aquasec.com/misconfig/ds-0026",
+          "References": [
+            "https://blog.aquasec.com/docker-security-best-practices",
+            "https://avd.aquasec.com/misconfig/ds-0026"
+          ],
+          "Status": "FAIL",
+          "CauseMetadata": {
+            "Provider": "Dockerfile",
+            "Service": "general"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Ruby Critic - Home</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- StyleSheets -->
+    <link href="../../../../assets/vendor/stylesheets/bootstrap.min.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../../assets/vendor/stylesheets/font-awesome.min.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../../assets/vendor/stylesheets/prettify.custom_theme.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../../assets/stylesheets/application.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+  </head>
+
+  <body>
+    <header class="navbar navbar-default navbar-fixed-top">
+      <a href="#menu-toggle" class="btn btn-default hidden-lg visible-sm-* hidden-md visible-xs-* pull-left" id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></a>
+      <a href="../../../../overview.html"><img src="../../../../assets/images/logo.png" alt="Ruby Critic Logo" title="Ruby Critic Logo" width="55"><span class="logo">RUBYCRITIC</span></a>
+      
+    </header>
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <aside id="sidebar-wrapper">
+        <ul class="sidebar-nav">
+          <li class="sidebar-item">
+            <a href="../../../../overview.html" class="project-nav-item overview-nav"><i class="fa fa-dashboard"></i>Overview</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../../code_index.html" class="project-nav-item code-index-nav"><i class="fa fa-code"></i>Code</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../../smells_index.html" class="project-nav-item smells-index-nav"><i class="fa fa-warning"></i>Smells</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../../simple_cov_index.html" class="project-nav-item coverage-index-nav"><i class="fa fa-umbrella"></i>Coverage</a>
+          </li>
+        </ul>
+      </aside>
+      <!-- /#sidebar-wrapper -->
+      <div id="page-content-wrapper">
+        <div class="container-fluid">
+          <div class="row">
+  <!--Page Title -->
+  <div class="Page_Title">
+    <div class="file-time">
+      <span class="committed-at">
+        
+          Updated <time class='js-timeago' datetime='2026-06-28 09:55:55 +0100'>2026-06-28 09:55:55 +0100</time>
+        
+      </span>
+    </div>
+    <div>
+      <h3><small>app/lib/r3x/client /</small> llm.rb</h3>
+    </div>
+  </div>
+  <!--End Page Title -->
+  <div class="Content_Wrapper">
+    <!-- code detail -->
+    <div class="code-top-detail clearfix row">
+      <div class="col-md-8">
+        <div class="row">
+          <div class="col-md-1">
+            <div class="rating a big">
+              A
+            </div>
+          </div>
+          <div class="code-statistics col-md-11">
+            <div class="col-md-3">
+              <div><span class="metric">88</span><small> lines of codes</small></div>
+              <div><span class="metric">7</span><small> methods</small></div>
+            </div>
+            <div class="col-md-3">
+              <div><span class="metric">6.7</span><small> complexity/method</small></div>
+              <div><span class="metric">24</span><small> churn</small></div>
+            </div>
+            <div class="col-md-3">
+              <div><span class="metric">47.22</span><small> complexity</small></div>
+              <div><span class="metric">0</span><small> duplications</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="code-tabs">
+          <ul class="nav nav-pills right-to-left">
+            <li><a href="#" id="toggle-code" class="toggle-button button">code</a></li>
+            <li class="active">
+              <a href="#" id="toggle-smells" class="toggle-button button">
+                6
+                smells
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <code class="prettyprint linenums lang-ruby file-code js-file-code"># frozen_string_literal: true
+
+module R3x
+  module Client
+    class Llm<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Irresponsible-Module.md" target="_blank"><b>IrresponsibleModule</b></a>        </span>      </div>      <span>R3x::Client::Llm has no descriptive comment</span>          </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Constants.md" target="_blank"><b>TooManyConstants</b></a>        </span>      </div>      <span>R3x::Client::Llm has 6 constants</span>          </div>  </li></ol>
+      include R3x::Concerns::Logger
+
+      MAX_RETRIES = 3
+      RETRY_INTERVAL = 60.0
+      RETRY_BACKOFF_FACTOR = 2
+      DEFAULT_CHAT_OPTIONS = {}.freeze
+      CHAT_OPTIONS_BY_PROVIDER = {} # rubocop:disable Style/MutableConstant
+      CHAT_OPTIONS_BY_PROVIDER_MUTEX = Mutex.new
+
+      class &lt;&lt; self
+        def chat_options_for(provider)
+          CHAT_OPTIONS_BY_PROVIDER_MUTEX.synchronize do
+            CHAT_OPTIONS_BY_PROVIDER.fetch(provider) { CHAT_OPTIONS_BY_PROVIDER[provider] = build_chat_options_for(provider) }
+          end
+        end
+
+        private
+
+        def build_chat_options_for(provider)
+          provider_class = RubyLLM::Provider.providers.fetch(provider)
+
+          if provider_class.assume_models_exist?
+            { provider:, assume_model_exists: true }.freeze
+          else
+            DEFAULT_CHAT_OPTIONS
+          end
+        end
+      end
+
+      def initialize(
+        api_key:,
+        config_api_key_attr:,
+        max_retries: MAX_RETRIES,
+        retry_interval: RETRY_INTERVAL,
+        retry_backoff_factor: RETRY_BACKOFF_FACTOR
+      )
+        R3x::GemLoader.require(&quot;ruby_llm&quot;)
+
+        # Configure RubyLLM with the our logger from R3x::Concerns::Logger
+        RubyLLM.configure { |c| c.logger = logger }<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Uncommunicative-Variable-Name.md" target="_blank"><b>UncommunicativeVariableName</b></a>        </span>      </div>      <span>R3x::Client::Llm#initialize has the variable name 'c'</span>          </div>  </li></ol>
+
+        ProviderRegistry.register!
+
+        inferred_provider = config_api_key_attr.delete_suffix(&quot;_api_key&quot;).to_sym
+        raise ArgumentError, &quot;Unsupported LLM provider: #{inferred_provider}&quot; unless RubyLLM::Provider.providers.key?(inferred_provider)
+
+        @chat_options = self.class.chat_options_for(inferred_provider)
+
+        @llm_context = RubyLLM.context do |config|
+          config.public_send(:&quot;#{config_api_key_attr}=&quot;, api_key)
+          config.max_retries = max_retries
+          config.retry_interval = retry_interval
+          config.retry_backoff_factor = retry_backoff_factor
+        end
+      end
+
+      def analyze_image(image_bytes, prompt:, model:, schema: nil)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Data-Clump.md" target="_blank"><b>DataClump</b></a>        </span>      </div>      <span>R3x::Client::Llm takes parameters ['model', 'prompt', 'schema'] to 3 methods</span>              <span>Locations:</span>                  <a href="llm.html#L62" class="js-smell-location">0</a>                  <a href="llm.html#L68" class="js-smell-location">1</a>                  <a href="llm.html#L80" class="js-smell-location">2</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Long-Parameter-List.md" target="_blank"><b>LongParameterList</b></a>        </span>      </div>      <span>R3x::Client::Llm#analyze_image has 4 parameters</span>          </div>  </li></ol>
+        image = StringIO.new(image_bytes).tap { it.set_encoding(Encoding::BINARY) }
+
+        ask_model(model:, prompt:, schema:, attachments: [image]).content
+      end
+
+      def message(model:, prompt:, schema: nil)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Data-Clump.md" target="_blank"><b>DataClump</b></a>        </span>      </div>      <span>R3x::Client::Llm takes parameters ['model', 'prompt', 'schema'] to 3 methods</span>              <span>Locations:</span>                  <a href="llm.html#L62" class="js-smell-location">0</a>                  <a href="llm.html#L68" class="js-smell-location">1</a>                  <a href="llm.html#L80" class="js-smell-location">2</a>                  </div>  </li></ol>
+        ask_model(model:, prompt:, schema:)
+      end
+
+      def classify(...)
+        Classifier.new(method(:message)).classify(...)
+      end
+
+      private
+
+      attr_reader :llm_context, :chat_options
+
+      def ask_model(model:, prompt:, schema:, attachments: nil)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Data-Clump.md" target="_blank"><b>DataClump</b></a>        </span>      </div>      <span>R3x::Client::Llm takes parameters ['model', 'prompt', 'schema'] to 3 methods</span>              <span>Locations:</span>                  <a href="llm.html#L62" class="js-smell-location">0</a>                  <a href="llm.html#L68" class="js-smell-location">1</a>                  <a href="llm.html#L80" class="js-smell-location">2</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Long-Parameter-List.md" target="_blank"><b>LongParameterList</b></a>        </span>      </div>      <span>R3x::Client::Llm#ask_model has 4 parameters</span>          </div>  </li></ol>
+        conversation = llm_context.chat(**chat_options.merge(model:))
+        conversation = conversation.with_schema(schema) if schema
+
+        conversation.ask(prompt, with: attachments)
+      end
+    end
+  end
+end
+</code>
+  </div>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScripts -->
+    <script src="../../../../assets/vendor/javascripts/jquery.min.js"></script>
+    <script src="../../../../assets/vendor/javascripts/jquery.tablesorter.min.js"></script>
+    <script src="../../../../assets/vendor/javascripts/jquery.scrollTo.min.js"></script>
+    <script src="../../../../assets/vendor/javascripts/jquery.timeago.js"></script>
+    <script src="../../../../assets/vendor/javascripts/highcharts.src-4.0.1.js"></script>
+    <script src="../../../../assets/vendor/javascripts/prettify.js"></script>
+    <script src="../../../../assets/vendor/javascripts/bootstrap.min.js"></script>
+    <script src="../../../../assets/javascripts/application.js"></script>
+    <script src="../../../../assets/vendor/javascripts/jquery.filtertable.min.js"></script>
+  </body>
+</html>

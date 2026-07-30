@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Ruby Critic - Home</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- StyleSheets -->
+    <link href="../../../../assets/vendor/stylesheets/bootstrap.min.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../../assets/vendor/stylesheets/font-awesome.min.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../../assets/vendor/stylesheets/prettify.custom_theme.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../../assets/stylesheets/application.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+  </head>
+
+  <body>
+    <header class="navbar navbar-default navbar-fixed-top">
+      <a href="#menu-toggle" class="btn btn-default hidden-lg visible-sm-* hidden-md visible-xs-* pull-left" id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></a>
+      <a href="../../../../overview.html"><img src="../../../../assets/images/logo.png" alt="Ruby Critic Logo" title="Ruby Critic Logo" width="55"><span class="logo">RUBYCRITIC</span></a>
+      
+    </header>
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <aside id="sidebar-wrapper">
+        <ul class="sidebar-nav">
+          <li class="sidebar-item">
+            <a href="../../../../overview.html" class="project-nav-item overview-nav"><i class="fa fa-dashboard"></i>Overview</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../../code_index.html" class="project-nav-item code-index-nav"><i class="fa fa-code"></i>Code</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../../smells_index.html" class="project-nav-item smells-index-nav"><i class="fa fa-warning"></i>Smells</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../../simple_cov_index.html" class="project-nav-item coverage-index-nav"><i class="fa fa-umbrella"></i>Coverage</a>
+          </li>
+        </ul>
+      </aside>
+      <!-- /#sidebar-wrapper -->
+      <div id="page-content-wrapper">
+        <div class="container-fluid">
+          <div class="row">
+  <!--Page Title -->
+  <div class="Page_Title">
+    <div class="file-time">
+      <span class="committed-at">
+        
+          Updated <time class='js-timeago' datetime='2026-06-20 08:09:53 +0100'>2026-06-20 08:09:53 +0100</time>
+        
+      </span>
+    </div>
+    <div>
+      <h3><small>app/helpers/r3x/dashboard /</small> application_helper.rb</h3>
+    </div>
+  </div>
+  <!--End Page Title -->
+  <div class="Content_Wrapper">
+    <!-- code detail -->
+    <div class="code-top-detail clearfix row">
+      <div class="col-md-8">
+        <div class="row">
+          <div class="col-md-1">
+            <div class="rating c big">
+              C
+            </div>
+          </div>
+          <div class="code-statistics col-md-11">
+            <div class="col-md-3">
+              <div><span class="metric">270</span><small> lines of codes</small></div>
+              <div><span class="metric">33</span><small> methods</small></div>
+            </div>
+            <div class="col-md-3">
+              <div><span class="metric">5.5</span><small> complexity/method</small></div>
+              <div><span class="metric">26</span><small> churn</small></div>
+            </div>
+            <div class="col-md-3">
+              <div><span class="metric">181.6</span><small> complexity</small></div>
+              <div><span class="metric">0</span><small> duplications</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="code-tabs">
+          <ul class="nav nav-pills right-to-left">
+            <li><a href="#" id="toggle-code" class="toggle-button button">code</a></li>
+            <li class="active">
+              <a href="#" id="toggle-smells" class="toggle-button button">
+                35
+                smells
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <code class="prettyprint linenums lang-ruby file-code js-file-code"># frozen_string_literal: true
+
+module R3x
+  module Dashboard
+    module ApplicationHelper<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Irresponsible-Module.md" target="_blank"><b>IrresponsibleModule</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper has no descriptive comment</span>          </div>  </li></ol>
+      TONE_BY_STATUS = {
+        &quot;blocked&quot;   =&gt; &quot;warn&quot;,
+        &quot;failed&quot;    =&gt; &quot;danger&quot;,
+        &quot;finished&quot;  =&gt; &quot;ok&quot;,
+        &quot;healthy&quot;   =&gt; &quot;ok&quot;,
+        &quot;idle&quot;      =&gt; &quot;muted&quot;,
+        &quot;queued&quot;    =&gt; &quot;info&quot;,
+        &quot;running&quot;   =&gt; &quot;info&quot;,
+        &quot;scheduled&quot; =&gt; &quot;info&quot;,
+        &quot;sleeping&quot;  =&gt; &quot;info&quot;,
+      }.freeze
+
+      def dashboard_health_label(health)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_health_label doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        health.fetch(:label)
+      end
+
+      def dashboard_status_label(status)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_status_label doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        status.to_s.humanize
+      end
+
+      def dashboard_tone_for(value)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_tone_for doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        TONE_BY_STATUS.fetch(value, &quot;muted&quot;)
+      end
+
+      def dashboard_pill(label, tone, title: nil, class_name: nil)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Long-Parameter-List.md" target="_blank"><b>LongParameterList</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_pill has 4 parameters</span>          </div>  </li></ol>
+        classes = [&quot;pill&quot;, tone, class_name].compact.join(&quot; &quot;)
+        options = { class: classes }
+        options[:title] = title if title.present?
+
+        content_tag(:span, label, options)
+      end
+
+      def dashboard_status_pill(status, error: nil)
+        dashboard_pill(
+          dashboard_status_label(status),
+          dashboard_tone_for(status),
+          title: error.present? ? dashboard_error_summary(error) : nil,
+        )
+      end
+
+      def dashboard_health_pill(health)
+        dashboard_pill(
+          dashboard_health_label(health),
+          dashboard_tone_for(health[:status]),
+          title: health[:detail].present? ? dashboard_error_summary(health[:detail]) : nil,<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_health_pill calls 'health[:detail]' 2 times</span>          </div>  </li></ol>
+        )
+      end
+
+      def dashboard_optional_timestamp(time, fallback:)
+        time.present? ? dashboard_timestamp(time) : fallback
+      end
+
+      def dashboard_timestamp(time)
+        return content_tag(:span, &quot;Never&quot;, class: &quot;muted&quot;) if time.blank?
+
+        displayed_time = dashboard_display_time(time)
+        formatted_time = dashboard_timestamp_text(displayed_time)
+
+        time_tag(displayed_time, formatted_time, datetime: displayed_time.iso8601, title: formatted_time)
+      end
+
+      def dashboard_log_time(time)
+        return content_tag(:span, &quot;--:--:--&quot;, class: &quot;muted&quot;) if time.blank?
+
+        displayed_time = dashboard_display_time(time)
+
+        time_tag(
+          displayed_time,
+          displayed_time.strftime(&quot;%H:%M:%S&quot;),
+          datetime: displayed_time.iso8601,
+          title: displayed_time.strftime(&quot;%Y-%m-%d %H:%M:%S %Z&quot;),
+        )
+      end
+
+      def dashboard_log_level_label(level)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_log_level_label doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        level.to_s.upcase
+      end
+
+      def dashboard_log_level_tone(level)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_log_level_tone doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        case level.to_s
+        when &quot;info&quot;
+          &quot;info&quot;
+        when &quot;warn&quot;
+          &quot;warn&quot;
+        when &quot;error&quot;, &quot;fatal&quot;
+          &quot;danger&quot;
+        else
+          &quot;muted&quot;
+        end
+      end
+
+      def dashboard_log_state_empty_message(refreshable:, empty_message:)
+        return &quot;Waiting for first log line...&quot; if refreshable<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Control-Parameter.md" target="_blank"><b>ControlParameter</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_log_state_empty_message is controlled by argument 'refreshable'</span>          </div>  </li></ol>
+
+        empty_message
+      end
+
+      def dashboard_duration(start_time, end_time = nil)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Statements.md" target="_blank"><b>TooManyStatements</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_duration has approx 6 statements</span>          </div>  </li></ol>
+        return content_tag(:span, &quot;Unknown&quot;, class: &quot;muted&quot;) if start_time.blank?
+
+        finish_time = end_time || Time.current<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Control-Parameter.md" target="_blank"><b>ControlParameter</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_duration is controlled by argument 'end_time'</span>          </div>  </li></ol>
+        total_seconds = [(finish_time - start_time).to_i, 0].max
+
+        hours, remainder = total_seconds.divmod(3600)
+        minutes, seconds = remainder.divmod(60)
+
+        format(&quot;%02d:%02d:%02d&quot;, hours, minutes, seconds)
+      end
+
+      def dashboard_trigger_label(trigger_entry)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_label doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        mode = trigger_entry.fetch(:mode)
+        cron = trigger_entry[:cron]
+
+        return &quot;Schedule: #{cron}&quot; if cron.present?
+
+        { &quot;manual&quot; =&gt; &quot;Manual&quot;, &quot;observed&quot; =&gt; &quot;Observed trigger&quot; }.fetch(mode.to_s, mode.to_s.humanize)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_label calls 'mode.to_s' 2 times</span>          </div>  </li></ol>
+      end
+
+      def dashboard_trigger_kind(trigger_entry)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_kind doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        {
+          &quot;manual&quot;    =&gt; &quot;Manual&quot;,
+          &quot;observed&quot;  =&gt; &quot;Observed&quot;,
+          &quot;schedule&quot;  =&gt; &quot;Schedule&quot;,
+          &quot;scheduled&quot; =&gt; &quot;Schedule&quot;,
+        }.fetch(trigger_entry.fetch(:mode).to_s, trigger_entry.fetch(:mode).to_s.humanize)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_kind calls 'trigger_entry.fetch(:mode)' 2 times</span>          </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_kind calls 'trigger_entry.fetch(:mode).to_s' 2 times</span>          </div>  </li></ol>
+      end
+
+      def dashboard_trigger_details(trigger_entry)
+        visible_details = if trigger_entry[:cron].present?<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_details calls 'trigger_entry[:cron]' 2 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L134" class="js-smell-location">0</a>                  <a href="application_helper.html#L135" class="js-smell-location">1</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_details refers to 'trigger_entry' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L134" class="js-smell-location">0</a>                  <a href="application_helper.html#L135" class="js-smell-location">1</a>                  <a href="application_helper.html#L137" class="js-smell-location">2</a>                  <a href="application_helper.html#L139" class="js-smell-location">3</a>                  <a href="application_helper.html#L141" class="js-smell-location">4</a>                  </div>  </li></ol>
+          dashboard_schedule_trigger_label(trigger_entry[:cron])<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_details calls 'trigger_entry[:cron]' 2 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L134" class="js-smell-location">0</a>                  <a href="application_helper.html#L135" class="js-smell-location">1</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_details refers to 'trigger_entry' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L134" class="js-smell-location">0</a>                  <a href="application_helper.html#L135" class="js-smell-location">1</a>                  <a href="application_helper.html#L137" class="js-smell-location">2</a>                  <a href="application_helper.html#L139" class="js-smell-location">3</a>                  <a href="application_helper.html#L141" class="js-smell-location">4</a>                  </div>  </li></ol>
+        else
+          dashboard_trigger_key_label(trigger_entry[:unique_key])<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_details calls 'trigger_entry[:unique_key]' 3 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L137" class="js-smell-location">0</a>                  <a href="application_helper.html#L139" class="js-smell-location">1</a>                  <a href="application_helper.html#L141" class="js-smell-location">2</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_details refers to 'trigger_entry' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L134" class="js-smell-location">0</a>                  <a href="application_helper.html#L135" class="js-smell-location">1</a>                  <a href="application_helper.html#L137" class="js-smell-location">2</a>                  <a href="application_helper.html#L139" class="js-smell-location">3</a>                  <a href="application_helper.html#L141" class="js-smell-location">4</a>                  </div>  </li></ol>
+        end
+        return visible_details if trigger_entry[:unique_key].blank?<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_details calls 'trigger_entry[:unique_key]' 3 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L137" class="js-smell-location">0</a>                  <a href="application_helper.html#L139" class="js-smell-location">1</a>                  <a href="application_helper.html#L141" class="js-smell-location">2</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_details refers to 'trigger_entry' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L134" class="js-smell-location">0</a>                  <a href="application_helper.html#L135" class="js-smell-location">1</a>                  <a href="application_helper.html#L137" class="js-smell-location">2</a>                  <a href="application_helper.html#L139" class="js-smell-location">3</a>                  <a href="application_helper.html#L141" class="js-smell-location">4</a>                  </div>  </li></ol>
+
+        content_tag(:span, visible_details, title: trigger_entry[:unique_key])<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_details calls 'trigger_entry[:unique_key]' 3 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L137" class="js-smell-location">0</a>                  <a href="application_helper.html#L139" class="js-smell-location">1</a>                  <a href="application_helper.html#L141" class="js-smell-location">2</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_details refers to 'trigger_entry' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L134" class="js-smell-location">0</a>                  <a href="application_helper.html#L135" class="js-smell-location">1</a>                  <a href="application_helper.html#L137" class="js-smell-location">2</a>                  <a href="application_helper.html#L139" class="js-smell-location">3</a>                  <a href="application_helper.html#L141" class="js-smell-location">4</a>                  </div>  </li></ol>
+      end
+
+      def dashboard_trigger_key_label(trigger_key)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_trigger_key_label doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        return &quot;manual/default&quot; if trigger_key.blank?
+
+        _type, details = trigger_key.to_s.split(&quot;:&quot;, 2)
+        details.presence || trigger_key
+      end
+
+      def dashboard_run_trigger_label(run)
+        return &quot;manual/default&quot; if run[:trigger_key].blank?<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_run_trigger_label calls 'run[:trigger_key]' 2 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L152" class="js-smell-location">0</a>                  <a href="application_helper.html#L157" class="js-smell-location">1</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_run_trigger_label refers to 'run' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L152" class="js-smell-location">0</a>                  <a href="application_helper.html#L154" class="js-smell-location">1</a>                  <a href="application_helper.html#L155" class="js-smell-location">2</a>                  <a href="application_helper.html#L157" class="js-smell-location">3</a>                  </div>  </li></ol>
+
+        if run[:trigger_schedule].present?<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_run_trigger_label calls 'run[:trigger_schedule]' 2 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L154" class="js-smell-location">0</a>                  <a href="application_helper.html#L155" class="js-smell-location">1</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_run_trigger_label refers to 'run' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L152" class="js-smell-location">0</a>                  <a href="application_helper.html#L154" class="js-smell-location">1</a>                  <a href="application_helper.html#L155" class="js-smell-location">2</a>                  <a href="application_helper.html#L157" class="js-smell-location">3</a>                  </div>  </li></ol>
+          dashboard_schedule_trigger_label(run[:trigger_schedule])<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_run_trigger_label calls 'run[:trigger_schedule]' 2 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L154" class="js-smell-location">0</a>                  <a href="application_helper.html#L155" class="js-smell-location">1</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_run_trigger_label refers to 'run' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L152" class="js-smell-location">0</a>                  <a href="application_helper.html#L154" class="js-smell-location">1</a>                  <a href="application_helper.html#L155" class="js-smell-location">2</a>                  <a href="application_helper.html#L157" class="js-smell-location">3</a>                  </div>  </li></ol>
+        else
+          dashboard_trigger_key_label(run[:trigger_key])<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_run_trigger_label calls 'run[:trigger_key]' 2 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L152" class="js-smell-location">0</a>                  <a href="application_helper.html#L157" class="js-smell-location">1</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_run_trigger_label refers to 'run' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L152" class="js-smell-location">0</a>                  <a href="application_helper.html#L154" class="js-smell-location">1</a>                  <a href="application_helper.html#L155" class="js-smell-location">2</a>                  <a href="application_helper.html#L157" class="js-smell-location">3</a>                  </div>  </li></ol>
+        end
+      end
+
+      def dashboard_workflow_link(run)
+        return run.fetch(:workflow_title) unless run[:known_workflow]<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_link calls 'run.fetch(:workflow_title)' 2 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L162" class="js-smell-location">0</a>                  <a href="application_helper.html#L164" class="js-smell-location">1</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_link refers to 'run' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L162" class="js-smell-location">0</a>                  <a href="application_helper.html#L164" class="js-smell-location">1</a>                  </div>  </li></ol>
+
+        link_to run.fetch(:workflow_title), workflow_path(run.fetch(:workflow_key))<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_link calls 'run.fetch(:workflow_title)' 2 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L162" class="js-smell-location">0</a>                  <a href="application_helper.html#L164" class="js-smell-location">1</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_link refers to 'run' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L162" class="js-smell-location">0</a>                  <a href="application_helper.html#L164" class="js-smell-location">1</a>                  </div>  </li></ol>
+      end
+
+      def dashboard_error_summary(text)
+        truncate(dashboard_error_details(text).summary, length: 160, separator: &quot; &quot;)
+      end
+
+      def dashboard_error_body(text)
+        dashboard_error_details(text).body
+      end
+
+      def dashboard_error_details_visible?(text)
+        body = dashboard_error_body(text)
+        body.present? &amp;&amp; dashboard_error_summary(text) != body
+      end
+
+      def dashboard_structured_error(text)
+        dashboard_error_details(text).structured
+      end
+
+      def dashboard_icon(name)
+        icon_name, variant = {
+          alert: [&quot;exclamation-triangle&quot;, :outline],
+          history: [&quot;clock&quot;, :outline],
+          launch: [&quot;play&quot;, :solid],
+          logs: [&quot;document-text&quot;, :outline],
+          tune: [&quot;cog-6-tooth&quot;, :outline],
+          workflow: [&quot;queue-list&quot;, :outline],
+        }.fetch(name)
+
+        icon_html = Heroicon::Icon.render(name: icon_name, variant:, options: { class: &quot;icon&quot; }, path_options: {})
+        content_tag(:span, raw(icon_html), class: &quot;icon&quot;)
+      end
+
+      def dashboard_icon_label(name, text)
+        safe_join([dashboard_icon(name), content_tag(:span, text)], &quot; &quot;)
+      end
+
+      def dashboard_run_filter_path(status:, workflow_key: nil)
+        params = {}
+        params[:workflow] = workflow_key if workflow_key.present?<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_run_filter_path refers to 'params' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L204" class="js-smell-location">0</a>                  <a href="application_helper.html#L205" class="js-smell-location">1</a>                  </div>  </li></ol>
+        params[:status] = status if status.present?<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Feature-Envy.md" target="_blank"><b>FeatureEnvy</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_run_filter_path refers to 'params' more than self (maybe move it to another class?)</span>              <span>Locations:</span>                  <a href="application_helper.html#L204" class="js-smell-location">0</a>                  <a href="application_helper.html#L205" class="js-smell-location">1</a>                  </div>  </li></ol>
+
+        workflow_runs_path(params)
+      end
+
+      def dashboard_workflow_sort_aria(sort_key, active_sort:, active_direction:)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_sort_aria doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        return &quot;none&quot; unless active_sort == sort_key.to_s<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Control-Parameter.md" target="_blank"><b>ControlParameter</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_sort_aria is controlled by argument 'active_sort'</span>          </div>  </li></ol>
+
+        (active_direction == &quot;desc&quot;) ? &quot;descending&quot; : &quot;ascending&quot;<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Control-Parameter.md" target="_blank"><b>ControlParameter</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_sort_aria is controlled by argument 'active_direction'</span>          </div>  </li></ol>
+      end
+
+      def dashboard_workflow_sort_link(label, sort_key, active_sort:, active_direction:)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Long-Parameter-List.md" target="_blank"><b>LongParameterList</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_sort_link has 4 parameters</span>          </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Statements.md" target="_blank"><b>TooManyStatements</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_sort_link has approx 9 statements</span>          </div>  </li></ol>
+        sort_key = sort_key.to_s
+        next_direction = if active_sort == sort_key<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_sort_link calls 'active_sort == sort_key' 2 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L218" class="js-smell-location">0</a>                  <a href="application_helper.html#L224" class="js-smell-location">1</a>                  </div>  </li></ol>
+          (active_direction == &quot;desc&quot;) ? &quot;asc&quot; : &quot;desc&quot;<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Control-Parameter.md" target="_blank"><b>ControlParameter</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_sort_link is controlled by argument 'active_direction'</span>              <span>Locations:</span>                  <a href="application_helper.html#L219" class="js-smell-location">0</a>                  <a href="application_helper.html#L234" class="js-smell-location">1</a>                  <a href="application_helper.html#L235" class="js-smell-location">2</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_sort_link calls 'active_direction == "desc"' 2 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L219" class="js-smell-location">0</a>                  <a href="application_helper.html#L235" class="js-smell-location">1</a>                  </div>  </li></ol>
+        else
+          Workflow::Summaries.default_direction_for(sort_key)
+        end
+
+        active = active_sort == sort_key<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_sort_link calls 'active_sort == sort_key' 2 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L218" class="js-smell-location">0</a>                  <a href="application_helper.html#L224" class="js-smell-location">1</a>                  </div>  </li></ol>
+
+        path = workflows_path(sort: sort_key, direction: next_direction, anchor: &quot;workflows-catalog&quot;)
+        link_to path, class: &quot;sort-link#{&quot; active&quot; if active}&quot; do
+          safe_join(
+            [
+              content_tag(:span, label, class: &quot;sort-label&quot;),
+              content_tag(:span, class: &quot;sort-carets&quot;, &quot;aria-hidden&quot;: &quot;true&quot;) do
+                safe_join(
+                  [
+                    content_tag(:span, &quot;&quot;, class: &quot;sort-caret sort-caret-up#{&quot; active&quot; if active &amp;&amp; active_direction == &quot;asc&quot;}&quot;),<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Control-Parameter.md" target="_blank"><b>ControlParameter</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_sort_link is controlled by argument 'active_direction'</span>              <span>Locations:</span>                  <a href="application_helper.html#L219" class="js-smell-location">0</a>                  <a href="application_helper.html#L234" class="js-smell-location">1</a>                  <a href="application_helper.html#L235" class="js-smell-location">2</a>                  </div>  </li></ol>
+                    content_tag(:span, &quot;&quot;, class: &quot;sort-caret sort-caret-down#{&quot; active&quot; if active &amp;&amp; active_direction == &quot;desc&quot;}&quot;),<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Control-Parameter.md" target="_blank"><b>ControlParameter</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_sort_link is controlled by argument 'active_direction'</span>              <span>Locations:</span>                  <a href="application_helper.html#L219" class="js-smell-location">0</a>                  <a href="application_helper.html#L234" class="js-smell-location">1</a>                  <a href="application_helper.html#L235" class="js-smell-location">2</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_workflow_sort_link calls 'active_direction == "desc"' 2 times</span>              <span>Locations:</span>                  <a href="application_helper.html#L219" class="js-smell-location">0</a>                  <a href="application_helper.html#L235" class="js-smell-location">1</a>                  </div>  </li></ol>
+                  ],
+                )
+              end,
+            ],
+          )
+        end
+      end
+
+      private
+
+      def dashboard_display_time(time)
+        time.in_time_zone(dashboard_time_zone_name)
+      end
+
+      def dashboard_timestamp_text(time)
+        dashboard_display_time(time).strftime(&quot;%d.%m.%Y %H:%M:%S %Z&quot;)
+      end
+
+      def dashboard_schedule_trigger_label(schedule)
+        %(schedule:&quot;#{schedule}&quot;)
+      end
+
+      def dashboard_time_zone_name
+        @dashboard_time_zone_name ||= begin
+          timezone_name = R3x::Env.fetch(&quot;R3X_TIMEZONE&quot;)
+          timezone_name.present? ? R3x::Validators::Timezone.normalize(timezone_name) : Time.zone.tzinfo.identifier
+        end
+      end
+
+      def dashboard_error_details(text)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Dashboard::ApplicationHelper#dashboard_error_details doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        ErrorDetails.new(text)
+      end
+    end
+  end
+end
+</code>
+  </div>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScripts -->
+    <script src="../../../../assets/vendor/javascripts/jquery.min.js"></script>
+    <script src="../../../../assets/vendor/javascripts/jquery.tablesorter.min.js"></script>
+    <script src="../../../../assets/vendor/javascripts/jquery.scrollTo.min.js"></script>
+    <script src="../../../../assets/vendor/javascripts/jquery.timeago.js"></script>
+    <script src="../../../../assets/vendor/javascripts/highcharts.src-4.0.1.js"></script>
+    <script src="../../../../assets/vendor/javascripts/prettify.js"></script>
+    <script src="../../../../assets/vendor/javascripts/bootstrap.min.js"></script>
+    <script src="../../../../assets/javascripts/application.js"></script>
+    <script src="../../../../assets/vendor/javascripts/jquery.filtertable.min.js"></script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+/home/omen/.local/share/mise/installs/ruby/4.0.6/lib/ruby/gems/4.0.0/gems/bundler-4.0.3/lib/bundler/definition.rb:497:in 'Bundler::Definition#validate_ruby!': Your Ruby version is 4.0.6, but your Gemfile specified 4.0.5 (Bundler::RubyVersionMismatch)
+	from /home/omen/.local/share/mise/installs/ruby/4.0.6/lib/ruby/gems/4.0.0/gems/bundler-4.0.3/lib/bundler/definition.rb:472:in 'Bundler::Definition#validate_runtime!'
+	from /home/omen/.local/share/mise/installs/ruby/4.0.6/lib/ruby/gems/4.0.0/gems/bundler-4.0.3/lib/bundler.rb:159:in 'Bundler.setup'
+	from /home/omen/.local/share/mise/installs/ruby/4.0.6/lib/ruby/gems/4.0.0/gems/bundler-4.0.3/lib/bundler/setup.rb:32:in 'block in <top (required)>'
+	from /home/omen/.local/share/mise/installs/ruby/4.0.6/lib/ruby/gems/4.0.0/gems/bundler-4.0.3/lib/bundler/ui/shell.rb:177:in 'Bundler::UI::Shell#with_level'
+	from /home/omen/.local/share/mise/installs/ruby/4.0.6/lib/ruby/gems/4.0.0/gems/bundler-4.0.3/lib/bundler/ui/shell.rb:122:in 'Bundler::UI::Shell#silence'
+	from /home/omen/.local/share/mise/installs/ruby/4.0.6/lib/ruby/gems/4.0.0/gems/bundler-4.0.3/lib/bundler/setup.rb:32:in '<top (required)>'
+	from /home/omen/.local/share/mise/installs/gem-next-rails/1.6.0/libexec/gems/next_rails-1.6.0/exe/bundle_report:4:in 'Kernel#require'
+	from /home/omen/.local/share/mise/installs/gem-next-rails/1.6.0/libexec/gems/next_rails-1.6.0/exe/bundle_report:4:in '<top (required)>'
+	from /home/omen/.local/share/mise/installs/ruby/4.0.6/lib/ruby/4.0.0/rubygems.rb:305:in 'Kernel#load'
+	from /home/omen/.local/share/mise/installs/ruby/4.0.6/lib/ruby/4.0.0/rubygems.rb:305:in 'Gem.activate_and_load_bin_path'
+	from /home/omen/.local/share/mise/installs/gem-next-rails/1.6.0/libexec/bin/bundle_report:25:in '<main>'

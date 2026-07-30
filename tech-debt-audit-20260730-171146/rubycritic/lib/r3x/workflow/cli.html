@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Ruby Critic - Home</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- StyleSheets -->
+    <link href="../../../assets/vendor/stylesheets/bootstrap.min.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../assets/vendor/stylesheets/font-awesome.min.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../assets/vendor/stylesheets/prettify.custom_theme.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../../../assets/stylesheets/application.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+  </head>
+
+  <body>
+    <header class="navbar navbar-default navbar-fixed-top">
+      <a href="#menu-toggle" class="btn btn-default hidden-lg visible-sm-* hidden-md visible-xs-* pull-left" id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></a>
+      <a href="../../../overview.html"><img src="../../../assets/images/logo.png" alt="Ruby Critic Logo" title="Ruby Critic Logo" width="55"><span class="logo">RUBYCRITIC</span></a>
+      
+    </header>
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <aside id="sidebar-wrapper">
+        <ul class="sidebar-nav">
+          <li class="sidebar-item">
+            <a href="../../../overview.html" class="project-nav-item overview-nav"><i class="fa fa-dashboard"></i>Overview</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../code_index.html" class="project-nav-item code-index-nav"><i class="fa fa-code"></i>Code</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../smells_index.html" class="project-nav-item smells-index-nav"><i class="fa fa-warning"></i>Smells</a>
+          </li>
+          <li class="sidebar-item">
+            <a href="../../../simple_cov_index.html" class="project-nav-item coverage-index-nav"><i class="fa fa-umbrella"></i>Coverage</a>
+          </li>
+        </ul>
+      </aside>
+      <!-- /#sidebar-wrapper -->
+      <div id="page-content-wrapper">
+        <div class="container-fluid">
+          <div class="row">
+  <!--Page Title -->
+  <div class="Page_Title">
+    <div class="file-time">
+      <span class="committed-at">
+        
+          Updated <time class='js-timeago' datetime='2026-06-28 18:08:39 +0100'>2026-06-28 18:08:39 +0100</time>
+        
+      </span>
+    </div>
+    <div>
+      <h3><small>lib/r3x/workflow /</small> cli.rb</h3>
+    </div>
+  </div>
+  <!--End Page Title -->
+  <div class="Content_Wrapper">
+    <!-- code detail -->
+    <div class="code-top-detail clearfix row">
+      <div class="col-md-8">
+        <div class="row">
+          <div class="col-md-1">
+            <div class="rating c big">
+              C
+            </div>
+          </div>
+          <div class="code-statistics col-md-11">
+            <div class="col-md-3">
+              <div><span class="metric">152</span><small> lines of codes</small></div>
+              <div><span class="metric">11</span><small> methods</small></div>
+            </div>
+            <div class="col-md-3">
+              <div><span class="metric">13.3</span><small> complexity/method</small></div>
+              <div><span class="metric">7</span><small> churn</small></div>
+            </div>
+            <div class="col-md-3">
+              <div><span class="metric">146.39</span><small> complexity</small></div>
+              <div><span class="metric">0</span><small> duplications</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="code-tabs">
+          <ul class="nav nav-pills right-to-left">
+            <li><a href="#" id="toggle-code" class="toggle-button button">code</a></li>
+            <li class="active">
+              <a href="#" id="toggle-smells" class="toggle-button button">
+                24
+                smells
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <code class="prettyprint linenums lang-ruby file-code js-file-code"># frozen_string_literal: true
+
+module R3x
+  module Workflow
+    class Cli<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Irresponsible-Module.md" target="_blank"><b>IrresponsibleModule</b></a>        </span>      </div>      <span>R3x::Workflow::Cli has no descriptive comment</span>          </div>  </li></ol>
+      def initialize(stdout: $stdout, pack_loader: PackLoader, registry: Registry)
+        @stdout = stdout
+        @pack_loader = pack_loader
+        @registry = registry
+      end
+
+      def run(path, dry_run: nil, skip_cache: false, wait: true)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Boolean-Parameter.md" target="_blank"><b>BooleanParameter</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#run has boolean parameter 'skip_cache'</span>          </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Boolean-Parameter.md" target="_blank"><b>BooleanParameter</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#run has boolean parameter 'wait'</span>          </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Long-Parameter-List.md" target="_blank"><b>LongParameterList</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#run has 4 parameters</span>          </div>  </li></ol>
+        with_run_env(dry_run:, skip_cache:) do
+          stdout.puts run_message(path, dry_run_explicit: dry_run == true)
+          run_workflow(load_workflow(path), wait:)
+        end
+      end
+
+      def list<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Statements.md" target="_blank"><b>TooManyStatements</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#list has approx 8 statements</span>          </div>  </li></ol>
+        pack_loader.load!
+        workflows = registry.all
+
+        if workflows.empty?
+          stdout.puts &quot;No workflows found.&quot;
+          return workflows
+        end
+
+        stdout.puts &quot;Available workflows:&quot;
+        workflows.each { |workflow| stdout.puts &quot;  #{workflow.workflow_key}  (triggers: #{trigger_types_for(workflow)})&quot; }
+
+        workflows
+      end
+
+      def info(key)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Statements.md" target="_blank"><b>TooManyStatements</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#info has approx 8 statements</span>          </div>  </li></ol>
+        pack_loader.load!
+        workflow_class = registry.fetch(key)
+
+        stdout.puts &quot;Workflow: #{key}&quot;
+        stdout.puts &quot;  Class:    #{workflow_class}&quot;
+        stdout.puts &quot;  Triggers:&quot;
+        workflow_class.triggers.each { |trigger| stdout.puts &quot;    #{trigger.type}  key=#{trigger.unique_key}&quot; }
+
+        workflow_class
+      end
+
+      private
+
+      attr_reader :pack_loader, :registry, :stdout
+
+      def run_workflow(workflow_class, wait:)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Statements.md" target="_blank"><b>TooManyStatements</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#run_workflow has approx 8 statements</span>          </div>  </li></ol>
+        workflow = workflow_class.new
+
+        loop do
+          return workflow.perform
+        rescue ActiveJob::Continuation::Interrupt
+          # Isolated Continuable steps interrupt so a queue adapter can persist progress
+          # and resume the job later. The local CLI runs in-process, so it carries that
+          # serialized continuation forward itself.
+          max_resumptions = workflow.class.max_resumptions<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#run_workflow calls 'workflow.class' 2 times</span>              <span>Locations:</span>                  <a href="cli.html#L59" class="js-smell-location">0</a>                  <a href="cli.html#L66" class="js-smell-location">1</a>                  </div>  </li></ol>
+
+          if max_resumptions &amp;&amp; workflow.resumptions &gt;= max_resumptions
+            raise ActiveJob::Continuation::ResumeLimitError, &quot;Job was resumed a maximum of #{max_resumptions} times&quot;
+          end
+
+          sleep resume_delay_for(workflow) if wait<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Control-Parameter.md" target="_blank"><b>ControlParameter</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#run_workflow is controlled by argument 'wait'</span>          </div>  </li></ol>
+          workflow = workflow.class.deserialize(workflow.serialize).tap { it.resumptions += 1 }<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#run_workflow calls 'workflow.class' 2 times</span>              <span>Locations:</span>                  <a href="cli.html#L59" class="js-smell-location">0</a>                  <a href="cli.html#L66" class="js-smell-location">1</a>                  </div>  </li></ol>
+        end
+      end
+
+      def resume_delay_for(workflow)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#resume_delay_for doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        resume_options = workflow.class.resume_options
+
+        if resume_options[:wait_until]<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#resume_delay_for calls 'resume_options[:wait_until]' 2 times</span>              <span>Locations:</span>                  <a href="cli.html#L73" class="js-smell-location">0</a>                  <a href="cli.html#L74" class="js-smell-location">1</a>                  </div>  </li></ol>
+          return [resume_options[:wait_until].to_f - Time.current.to_f, 0].max<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#resume_delay_for calls 'resume_options[:wait_until]' 2 times</span>              <span>Locations:</span>                  <a href="cli.html#L73" class="js-smell-location">0</a>                  <a href="cli.html#L74" class="js-smell-location">1</a>                  </div>  </li></ol>
+        end
+
+        return 0 unless resume_options[:wait]<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#resume_delay_for calls 'resume_options[:wait]' 2 times</span>              <span>Locations:</span>                  <a href="cli.html#L77" class="js-smell-location">0</a>                  <a href="cli.html#L81" class="js-smell-location">1</a>                  </div>  </li></ol>
+
+        workflow.send(
+          :determine_delay,
+          seconds_or_duration_or_algorithm: resume_options[:wait],<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#resume_delay_for calls 'resume_options[:wait]' 2 times</span>              <span>Locations:</span>                  <a href="cli.html#L77" class="js-smell-location">0</a>                  <a href="cli.html#L81" class="js-smell-location">1</a>                  </div>  </li></ol>
+          executions: workflow.resumptions + 1,
+          jitter: 0,
+        )
+      end
+
+      def load_workflow(path)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Statements.md" target="_blank"><b>TooManyStatements</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#load_workflow has approx 9 statements</span>          </div>  </li></ol>
+        full_path = workflow_file_path(path)
+        require full_path
+
+        dir_name = File.basename(File.dirname(full_path))
+        class_name = &quot;Workflows::#{dir_name.camelize}&quot;
+        workflow = class_name.safe_constantize
+
+        workflow ||= ObjectSpace.each_object(Class).find do |klass|
+          klass &lt; R3x::Workflow::Base &amp;&amp;
+            klass.name.present? &amp;&amp;<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#load_workflow calls 'klass.name' 2 times</span>              <span>Locations:</span>                  <a href="cli.html#L97" class="js-smell-location">0</a>                  <a href="cli.html#L98" class="js-smell-location">1</a>                  </div>  </li></ol>
+            Object.const_source_location(klass.name)&amp;.first == full_path<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#load_workflow calls 'klass.name' 2 times</span>              <span>Locations:</span>                  <a href="cli.html#L97" class="js-smell-location">0</a>                  <a href="cli.html#L98" class="js-smell-location">1</a>                  </div>  </li></ol>
+        end
+
+        raise ArgumentError, &quot;No workflow class found in #{path}&quot; unless workflow
+
+        workflow
+      end
+
+      def run_message(path, dry_run_explicit: false)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Boolean-Parameter.md" target="_blank"><b>BooleanParameter</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#run_message has boolean parameter 'dry_run_explicit'</span>          </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Statements.md" target="_blank"><b>TooManyStatements</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#run_message has approx 8 statements</span>          </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#run_message doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        mode_notes = []
+        policy_dry_run = R3x::Policy.dry_run_for(:workflow)
+        mode_notes &lt;&lt; &quot;dry run&quot; if policy_dry_run
+        mode_notes &lt;&lt; &quot;skip cache&quot; if R3x::Policy.skip_cache?
+
+        message = if mode_notes.any?
+          &quot;Running with #{mode_notes.join(&quot; + &quot;)}: #{path}&quot;
+        else
+          &quot;Running: #{path}&quot;
+        end
+
+        message += &quot; (--dry-run is redundant in this environment)&quot; if dry_run_explicit &amp;&amp; policy_dry_run<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Control-Parameter.md" target="_blank"><b>ControlParameter</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#run_message is controlled by argument 'dry_run_explicit'</span>          </div>  </li></ol>
+
+        message
+      end
+
+      def trigger_types_for(workflow)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#trigger_types_for doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        workflow.triggers.map(&amp;:type).uniq.join(&quot;, &quot;)
+      end
+
+      def workflow_file_path(path)
+        full_path = File.expand_path(path)
+        raise ArgumentError, &quot;Workflow file not found: #{path}&quot; unless File.exist?(full_path)
+        raise ArgumentError, &quot;Not a file: #{path}&quot; unless File.file?(full_path)
+
+        full_path
+      end
+
+      def with_run_env(dry_run:, skip_cache:)<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Too-Many-Statements.md" target="_blank"><b>TooManyStatements</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#with_run_env has approx 10 statements</span>          </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Utility-Function.md" target="_blank"><b>UtilityFunction</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#with_run_env doesn't depend on instance state (maybe move it to another class?)</span>          </div>  </li></ol>
+        overrides = {}
+        overrides[&quot;R3X_DRY_RUN&quot;] = dry_run.to_s unless dry_run.nil?<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Nil-Check.md" target="_blank"><b>NilCheck</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#with_run_env performs a nil-check</span>              <span>Locations:</span>                  <a href="cli.html#L137" class="js-smell-location">0</a>                  <a href="cli.html#L147" class="js-smell-location">1</a>                  </div>  </li></ol>
+        overrides[&quot;R3X_SKIP_CACHE&quot;] = &quot;true&quot; if skip_cache<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Control-Parameter.md" target="_blank"><b>ControlParameter</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#with_run_env is controlled by argument 'skip_cache'</span>          </div>  </li></ol>
+
+        originals = overrides.keys.each_with_object({}) { |key, memo| memo[key] = ENV[key] }
+
+        overrides.each { |key, value| ENV[key] = value }<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#with_run_env calls 'ENV[key] = value' 2 times</span>              <span>Locations:</span>                  <a href="cli.html#L142" class="js-smell-location">0</a>                  <a href="cli.html#L147" class="js-smell-location">1</a>                  </div>  </li></ol>
+
+        yield
+      ensure
+        originals&amp;.each do |key, value|
+          value.nil? ? ENV.delete(key) : ENV[key] = value<ol class="nocode errors smells">  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Duplicate-Method-Call.md" target="_blank"><b>DuplicateMethodCall</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#with_run_env calls 'ENV[key] = value' 2 times</span>              <span>Locations:</span>                  <a href="cli.html#L142" class="js-smell-location">0</a>                  <a href="cli.html#L147" class="js-smell-location">1</a>                  </div>  </li>  <li>    <div class="description">      <div class="heading">        <span>          <i class="fa fa-warning" aria-hidden="true"></i>          <a href="https://github.com/troessner/reek/blob/master/docs/Nil-Check.md" target="_blank"><b>NilCheck</b></a>        </span>      </div>      <span>R3x::Workflow::Cli#with_run_env performs a nil-check</span>              <span>Locations:</span>                  <a href="cli.html#L137" class="js-smell-location">0</a>                  <a href="cli.html#L147" class="js-smell-location">1</a>                  </div>  </li></ol>
+        end
+      end
+    end
+  end
+end
+</code>
+  </div>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScripts -->
+    <script src="../../../assets/vendor/javascripts/jquery.min.js"></script>
+    <script src="../../../assets/vendor/javascripts/jquery.tablesorter.min.js"></script>
+    <script src="../../../assets/vendor/javascripts/jquery.scrollTo.min.js"></script>
+    <script src="../../../assets/vendor/javascripts/jquery.timeago.js"></script>
+    <script src="../../../assets/vendor/javascripts/highcharts.src-4.0.1.js"></script>
+    <script src="../../../assets/vendor/javascripts/prettify.js"></script>
+    <script src="../../../assets/vendor/javascripts/bootstrap.min.js"></script>
+    <script src="../../../assets/javascripts/application.js"></script>
+    <script src="../../../assets/vendor/javascripts/jquery.filtertable.min.js"></script>
+  </body>
+</html>
