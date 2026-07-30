@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tech Debt Audit — {{PROJECT_NAME}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oxygen:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  /* Palette from the FastRuby.io styleguide — https://fastruby.github.io/styleguide */
+  :root {
+    --green: #00d242;
+    --green-dark: #00a836;
+    --yellow: #fdca31;
+    --red: #ff0000;
+    --black: #222222;
+    --grey-medium: #323235;
+    --grey-light: #dadada;
+    --grey-lighter: #eaeaea;
+    --white: #f8f8f8;
+    --ink: #222222;
+    --muted: #5b5b60;
+    --line: #dadada;
+    --bg: #f8f8f8;
+    --card: #ffffff;
+    --pass: #00a836;
+    --warn: #b7791f;
+    --fail: #ff0000;
+    --shadow: 0 1px 3px rgba(34,34,34,.10), 0 1px 2px rgba(34,34,34,.06);
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    font-family: "Oxygen", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 300;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  a { color: var(--green-dark); }
+  header.masthead {
+    background: var(--black);
+    color: #fff;
+    padding: 40px 24px;
+    border-bottom: 5px solid var(--green);
+  }
+  header.masthead .wrap { max-width: 1040px; margin: 0 auto; }
+  header.masthead h1 { margin: 0 0 10px; font-size: 2.625rem; font-weight: 700; line-height: 1.1; }
+  header.masthead .meta { opacity: .92; font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 20px; }
+  header.masthead .meta .k { color: var(--green); font-weight: 700; }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 24px; }
+  section { margin-bottom: 32px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    box-shadow: var(--shadow);
+  }
+  h2 {
+    font-size: 1.375rem;
+    font-weight: 700;
+    margin: 0 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--grey-lighter);
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  h2 .num {
+    color: #fff; background: var(--green); font-weight: 700;
+    font-size: .85rem; padding: 2px 9px; border-radius: 999px; letter-spacing: .02em;
+  }
+  h2 .tool { font-size: .8rem; font-weight: 300; margin-left: auto; }
+  h3 { font-size: 1rem; font-weight: 700; margin: 22px 0 10px; text-transform: uppercase; letter-spacing: .03em; }
+  h3 a { text-decoration: none; }
+  h3 a::after { content: " ↗"; font-size: .75em; color: var(--muted); }
+  p { font-weight: 300; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 12px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 380px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--grey-lighter); }
+  th { background: var(--white); font-weight: 700; }
+  tr:hover td { background: var(--white); }
+  code { background: var(--grey-lighter); padding: 1px 6px; border-radius: 4px; font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre { background: var(--black); color: var(--white); padding: 16px; border-radius: var(--radius); overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .badge.pass { background: var(--green); color: var(--black); }
+  .badge.warn { background: var(--yellow); color: var(--black); }
+  .badge.fail { background: var(--red); color: #fff; }
+  .score-grid { display: flex; flex-wrap: wrap; gap: 16px; margin: 20px 0; }
+  .score-hero {
+    flex: 0 0 180px; text-align: center; background: var(--black); color: #fff;
+    border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
+  }
+  .score-hero .big { font-size: 3.25rem; font-weight: 700; line-height: 1; color: var(--green); }
+  /* Score color reflects severity: <50 poor, 50-74 needs work, 75+ good */
+  .score-hero .big.low { color: #ff4d4d; }
+  .score-hero .big.mid { color: var(--yellow); }
+  .score-hero .big.high { color: var(--green); }
+  .score-hero .lbl { opacity: .85; font-size: 13px; margin-top: 6px; }
+  .score-table { flex: 1 1 420px; }
+  .bar { height: 8px; background: var(--grey-lighter); border-radius: 999px; overflow: hidden; min-width: 80px; }
+  .bar > span { display: block; height: 100%; background: var(--green); }
+  .shot { margin: 16px 0; }
+  .shot img { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .shot .cap { font-size: 12.5px; color: var(--muted); margin-top: 6px; text-align: center; }
+  .recs { counter-reset: rec; }
+  .rec {
+    display: flex; gap: 16px; align-items: flex-start; padding: 18px;
+    border: 1px solid var(--line); border-left: 4px solid var(--green); border-radius: var(--radius);
+    margin-bottom: 14px; background: var(--card);
+  }
+  .rec .rank {
+    flex: 0 0 40px; height: 40px; border-radius: 50%; background: var(--green); color: var(--black);
+    font-weight: 700; font-size: 20px; display: flex; align-items: center; justify-content: center;
+  }
+  .rec h4 { margin: 0 0 6px; font-size: 16px; font-weight: 700; }
+  .rec p { margin: 0; color: var(--muted); font-size: 14px; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; }
+  .toc a { font-size: 13px; text-decoration: none; color: var(--black); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; background: #fff; }
+  .toc a:hover { background: var(--green); border-color: var(--green); }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 30px 24px; border-top: 1px solid var(--line); }
+  footer a { color: var(--green-dark); }
+  .muted { color: var(--muted); }
+  .empty { color: var(--pass); font-weight: 400; }
+  .flag { color: var(--red); font-weight: 400; }
+  @media (max-width: 640px) {
+    header.masthead { padding: 28px 18px; }
+    header.masthead h1 { font-size: 1.9rem; }
+    main { padding: 20px 14px; }
+    .card { padding: 18px 16px; }
+    .score-hero { flex: 1 1 100%; }
+    h2 .tool { margin-left: 0; flex-basis: 100%; }
+  }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <h1>Tech Debt Audit Report</h1>
+    <div class="meta">
+      <span><span class="k">Project:</span> {{PROJECT_NAME}}</span>
+      <span><span class="k">Date:</span> {{DATE}}</span>
+      <span><span class="k">Directory:</span> {{DIRECTORY}}</span>
+      <span><span class="k">Auditor:</span> Claude Code</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ============ EXECUTIVE SUMMARY ============ -->
+  <section id="summary">
+    <div class="card">
+      <h2><span class="num">01</span>Executive Summary</h2>
+      <p>{{EXECUTIVE_SUMMARY}}</p>
+      <div class="score-grid">
+        <div class="score-hero">
+          <div class="big {{SCORE_CLASS}}">{{TOTAL_SCORE}}</div>
+          <div class="lbl">Health Score / 100</div>
+        </div>
+        <div class="score-table">
+          <div class="table-wrap">
+          <table>
+            <thead><tr><th>Category</th><th>Score</th><th></th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Security</td><td>{{SECURITY_SCORE}}/20</td><td><div class="bar"><span style="width:{{SECURITY_PCT}}%"></span></div></td><td>{{SECURITY_BADGE}}</td></tr>
+              <tr><td>Dependencies</td><td>{{DEPS_SCORE}}/20</td><td><div class="bar"><span style="width:{{DEPS_PCT}}%"></span></div></td><td>{{DEPS_BADGE}}</td></tr>
+              <tr><td>Complexity</td><td>{{COMPLEXITY_SCORE}}/20</td><td><div class="bar"><span style="width:{{COMPLEXITY_PCT}}%"></span></div></td><td>{{COMPLEXITY_BADGE}}</td></tr>
+              <tr><td>Coverage</td><td>{{COVERAGE_SCORE}}/20</td><td><div class="bar"><span style="width:{{COVERAGE_PCT}}%"></span></div></td><td>{{COVERAGE_BADGE}}</td></tr>
+              <tr><td>Maintainability</td><td>{{MAINTAIN_SCORE}}/20</td><td><div class="bar"><span style="width:{{MAINTAIN_PCT}}%"></span></div></td><td>{{MAINTAIN_BADGE}}</td></tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+      <nav class="toc">
+        <a href="#security">Security</a>
+        <a href="#freshness">Dependencies</a>
+        <a href="#coverage">Coverage</a>
+        <a href="#complexity">Complexity</a>
+        <a href="#skunk">Skunk</a>
+        <a href="#exceptions">Exception Tracking</a>
+        <a href="#performance">Performance</a>
+        <a href="#framework">Framework &amp; Stats</a>
+        <a href="#recommendations">Recommendations</a>
+      </nav>
+    </div>
+  </section>
+
+  <!-- ============ SECURITY ============ -->
+  <section id="security">
+    <div class="card">
+      <h2><span class="num">02</span>Security</h2>
+      <h3>Ruby Dependencies — <a href="https://github.com/rubysec/bundler-audit">bundler-audit</a></h3>
+      {{BUNDLER_AUDIT_CONTENT}}
+      <h3>Static Analysis — <a href="https://github.com/presidentbeef/brakeman">Brakeman</a></h3>
+      {{BRAKEMAN_CONTENT}}
+      <h3>Memory Leaks — <a href="https://github.com/rubymem/bundler-leak">bundler-leak</a></h3>
+      {{BUNDLER_LEAK_CONTENT}}
+      <h3>Filesystem &amp; Secrets — <a href="https://github.com/aquasecurity/trivy">Trivy</a></h3>
+      {{TRIVY_CONTENT}}
+      <h3>JavaScript Dependencies — <a href="https://docs.npmjs.com/cli/commands/npm-audit">npm/yarn audit</a></h3>
+      {{JS_AUDIT_CONTENT}}
+    </div>
+  </section>
+
+  <!-- ============ DEPENDENCY FRESHNESS ============ -->
+  <section id="freshness">
+    <div class="card">
+      <h2><span class="num">03</span>Dependency Freshness</h2>
+      <h3>Outdated Report — <a href="https://github.com/fastruby/next_rails">next_rails</a></h3>
+      {{OUTDATED_CONTENT}}
+      <h3>Freshness Metric — <a href="https://github.com/jaredbeck/libyear-bundler">libyear-bundler</a></h3>
+      {{LIBYEAR_CONTENT}}
+    </div>
+  </section>
+
+  <!-- ============ COVERAGE ============ -->
+  <section id="coverage">
+    <div class="card">
+      <h2><span class="num">04</span>Test Coverage<span class="tool"><a href="https://github.com/simplecov-ruby/simplecov">SimpleCov ↗</a></span></h2>
+      {{COVERAGE_CONTENT}}
+    </div>
+  </section>
+
+  <!-- ============ COMPLEXITY ============ -->
+  <section id="complexity">
+    <div class="card">
+      <h2><span class="num">05</span>Code Complexity<span class="tool"><a href="https://github.com/whitesmith/rubycritic">RubyCritic ↗</a></span></h2>
+      {{RUBYCRITIC_CONTENT}}
+      <div class="shot">
+        <img src="{{RUBYCRITIC_OVERVIEW_IMG}}" alt="RubyCritic overview: churn vs complexity">
+        <div class="cap">RubyCritic overview — churn vs. complexity scatter plot</div>
+      </div>
+      {{RUBYCRITIC_EXTRA_SHOTS}}
+    </div>
+  </section>
+
+  <!-- ============ SKUNK ============ -->
+  <section id="skunk">
+    <div class="card">
+      <h2><span class="num">06</span>Skunk Score<span class="tool"><a href="https://github.com/fastruby/skunk">Skunk ↗</a></span></h2>
+      {{SKUNK_CONTENT}}
+    </div>
+  </section>
+
+  <!-- ============ EXCEPTION TRACKING ============ -->
+  <section id="exceptions">
+    <div class="card">
+      <h2><span class="num">07</span>Exception Tracking</h2>
+      {{EXCEPTIONS_CONTENT}}
+    </div>
+  </section>
+
+  <!-- ============ PERFORMANCE MONITORING ============ -->
+  <section id="performance">
+    <div class="card">
+      <h2><span class="num">08</span>Performance Monitoring</h2>
+      {{PERFORMANCE_CONTENT}}
+    </div>
+  </section>
+
+  <!-- ============ FRAMEWORK HEALTH & STATS ============ -->
+  <section id="framework">
+    <div class="card">
+      <h2><span class="num">09</span>Framework Health &amp; Stats</h2>
+      {{FRAMEWORK_CONTENT}}
+      <h3>Codebase Stats — <a href="https://rubygems.org/gems/rails_stats">rails_stats</a></h3>
+      {{RAILS_STATS_CONTENT}}
+      <h3>Dependency Weight — <a href="https://rubygems.org/gems/bundler-stats">bundle-stats</a></h3>
+      {{BUNDLE_STATS_CONTENT}}
+    </div>
+  </section>
+
+  <!-- ============ TOP 3 RECOMMENDATIONS ============ -->
+  <section id="recommendations">
+    <div class="card">
+      <h2><span class="num">10</span>Top 3 Recommended Actions</h2>
+      <p class="muted">The highest-impact actions to address high-priority issues, based on every report above.</p>
+      <div class="recs">
+        <div class="rec"><div class="rank">1</div><div><h4>{{REC1_TITLE}}</h4><p>{{REC1_BODY}}</p></div></div>
+        <div class="rec"><div class="rank">2</div><div><h4>{{REC2_TITLE}}</h4><p>{{REC2_BODY}}</p></div></div>
+        <div class="rec"><div class="rank">3</div><div><h4>{{REC3_TITLE}}</h4><p>{{REC3_BODY}}</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ APPENDIX ============ -->
+  <section id="appendix">
+    <div class="card">
+      <h2><span class="num">11</span>Appendix — Tools Used</h2>
+      {{TOOLS_TABLE}}
+      {{APPENDIX_NOTES}}
+    </div>
+  </section>
+</main>
+
+<footer>
+  Technical debt analysis generated by Claude using
+  <a href="https://www.fastruby.io">FastRuby.io</a>'s free and open source
+  <a href="https://github.com/fastruby/tech-debt-skill">tech debt audit skill</a>.
+</footer>
+</body>
+</html>

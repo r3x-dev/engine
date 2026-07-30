@@ -59,6 +59,12 @@
       "sourceType": "local",
       "computedHash": "1a98c79c36d13098bfc84e9811fec9be31ead01d0dedf552ad7e160b58ae56b7"
     },
+    "tech-debt-audit": {
+      "source": "fastruby/tech-debt-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/tech-debt-audit/SKILL.md",
+      "computedHash": "09b1ad0cbeca7f9d2cd4850f0f547ff2efb693bb4d62badee260bef525ef916b"
+    },
     "workmux": {
       "source": "raine/workmux",
       "sourceType": "github",
