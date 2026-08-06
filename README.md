@@ -166,7 +166,7 @@ The default web surface is server-rendered and intentionally small:
 - `/` shows the workflow overview and recent runtime state
 - `/workflows` shows workflow health reconstructed from persisted queue data
 - `/workflow-runs` shows recent runs inside the Solid Queue retention window
-- `/ops/jobs` opens Mission Control Jobs for queue inspection and operational actions
+- `/ops/jobs` opens Flightdeck for queue inspection and operational actions
 
 If `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL` are configured, run pages can show
 indexed logs correlated by Active Job IDs. Set `R3X_LOG_FORMAT=json` when you want structured logs

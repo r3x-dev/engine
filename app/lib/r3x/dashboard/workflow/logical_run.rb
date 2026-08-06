@@ -17,7 +17,7 @@ module R3x
             enqueued_at: first_job.created_at,
             finished_at: (status == "finished") ? last_job.finished_at : nil,
             known_workflow:,
-            mission_control_path: "/ops/jobs",
+            flightdeck_path: "/ops/jobs",
             scheduled_at: last_job.scheduled_execution&.scheduled_at || last_job.scheduled_at,
             started_at: first_job.claimed_execution&.created_at || first_job.created_at,
             trigger_key:,

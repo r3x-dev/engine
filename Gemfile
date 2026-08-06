@@ -44,9 +44,8 @@ gem "solid_queue"
 gem "highline", require: false
 
 group :web do
-  # Active Job dashboard (requires propshaft for API-only apps)
-  gem "mission_control-jobs"
-  gem "propshaft"
+  # Solid Queue dashboard
+  gem "solid_queue-flightdeck"
   gem "heroicon"
 end
 

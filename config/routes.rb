@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  mount MissionControl::Jobs::Engine, at: "/ops/jobs"
+  mount Flightdeck::Engine, at: "/ops/jobs"
 
   scope module: "r3x/dashboard" do
     root "overview#index"

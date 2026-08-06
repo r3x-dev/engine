@@ -5,7 +5,7 @@ module R3x
     class ApplicationController < R3x::WebController
       layout "r3x/dashboard"
 
-      helper_method :finished_runs_retention_label, :logs_configured?, :mission_control_path
+      helper_method :finished_runs_retention_label, :flightdeck_path, :logs_configured?
 
       rescue_from KeyError, ActiveRecord::RecordNotFound, with: :render_not_found
 
@@ -21,7 +21,7 @@ module R3x
         parts.map { |unit, value| "#{value} #{unit.to_s.pluralize(value)}" }.to_sentence
       end
 
-      def mission_control_path
+      def flightdeck_path
         "/ops/jobs"
       end
 

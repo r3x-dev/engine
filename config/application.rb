@@ -66,7 +66,6 @@ module R3x
       end
     else
       config.api_only = true
-      config.mission_control.jobs.base_controller_class = "R3x::WebController"
       server { R3x::Workflow::Entrypoint.boot_server! }
     end
 

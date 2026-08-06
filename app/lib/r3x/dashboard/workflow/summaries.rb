@@ -68,7 +68,7 @@ module R3x
             health: health_for(last_run: last_run_summary),
             last_seen_at: last_seen_at_for(last_run: last_run_summary),
             last_run: last_run_summary,
-            mission_control_path: "/ops/jobs",
+            flightdeck_path: "/ops/jobs",
             next_trigger_at: trigger_entries.filter_map { |entry| entry[:next_trigger_at] }.min,
             run_now_available: manual_enqueue_options.present?,
             title: workflow_key.titleize,
