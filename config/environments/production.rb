@@ -87,10 +87,5 @@ Rails.application.configure do
     # Prevent health checks from clogging up the logs.
     config.silence_healthcheck_path = "/up"
 
-    # Intentionally uses ActiveModel::Type::Boolean instead of R3x::Env.fetch_boolean.
-    # A typo in this env var should fail-open (auth stays enabled) rather than crash
-    # the app on boot.
-    config.mission_control.jobs.http_basic_auth_enabled =
-      ActiveModel::Type::Boolean.new.cast(ENV.fetch("MISSION_CONTROL_AUTH_ENABLED", true))
   end
 end
