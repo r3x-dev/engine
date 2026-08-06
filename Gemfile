@@ -70,6 +70,7 @@ group :development, :test do
 
   gem "rubocop-minitest", require: false
   gem "rubocop-thread_safety", "~> 0.7.3", require: false
+  gem "rubydex", require: false
 
   # Auto-load environment variables from .env file
   gem "dotenv-rails", require: false
