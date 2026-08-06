@@ -49,7 +49,9 @@ that show shape only.
 | `R3X_LOGS_PROVIDER` | Optional | Dashboard logs | Enables indexed run-log queries. Current supported value is `victorialogs`. | `R3X_LOGS_PROVIDER=victorialogs` |
 | `R3X_VICTORIA_LOGS_URL` | Required when VictoriaLogs client/log provider is used | `R3x::Client::VictoriaLogs`, dashboard logs | VictoriaLogs base URL. Custom names may start with this prefix. | `R3X_VICTORIA_LOGS_URL=http://victoria-logs.example:9428` |
 | `R3X_VICTORIA_LOGS_URL_*` | Optional variant | `R3x::Client::VictoriaLogs` | Alternate VictoriaLogs URL env names accepted by explicit `url_env:`. | `R3X_VICTORIA_LOGS_URL_STAGING=http://victoria-logs-staging.example:9428` |
-| `MISSION_CONTROL_AUTH_ENABLED` | Optional | Production config | Boolean-ish Mission Control Jobs basic-auth toggle. Defaults to enabled in production. | `MISSION_CONTROL_AUTH_ENABLED=true` |
+| `FLIGHTDECK_AUTH_ENABLED` | Optional | Flightdeck dashboard | Toggle basic auth in production. Defaults to `true`. Set `false` if guarded upstream. | `FLIGHTDECK_AUTH_ENABLED=true` |
+| `FLIGHTDECK_USERNAME` | Optional | Flightdeck dashboard | Basic auth username for ops dashboard at `/ops/jobs`. | `FLIGHTDECK_USERNAME=admin` |
+| `FLIGHTDECK_PASSWORD` | Optional | Flightdeck dashboard | Basic auth password for ops dashboard at `/ops/jobs`. | `FLIGHTDECK_PASSWORD=secret` |
 
 ## Vault Bootstrap
 

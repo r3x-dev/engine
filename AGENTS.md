@@ -32,7 +32,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 
 ## Dashboard
 
-- The default local UI is the server-rendered dashboard at `/`; Mission Control Jobs remains at `/ops/jobs`.
+- The default local UI is the server-rendered dashboard at `/`; Flightdeck (Solid Queue dashboard) remains at `/ops/jobs`.
 - Dashboard pages are DB-first and reconstructed from persisted Solid Queue recurring-task/job rows. Workflows with no persisted runtime artifacts are invisible by design.
 - Dashboard queue boundaries are `Dashboard::Run`, `Dashboard::RecurringTask`, and `Dashboard::DirectWorkflowEnqueuer`.
 - Web-only pods do not load workflow packs. `POST /workflows/:workflow_key/runs` may enqueue through `Dashboard::DirectWorkflowEnqueuer` without constantizing workflow classes.

@@ -18,7 +18,7 @@ class JobsRuntimeProfileBootTest < ActiveSupport::TestCase
         workflow_entrypoint: defined?(R3x::Workflow::Entrypoint),
         registered_workflow: R3x::Workflow::Registry.fetch("test_workflow").name,
         routes_reloader_paths: Rails.application.routes_reloader.paths.map(&:to_s),
-        mission_control: defined?(MissionControl),
+        flightdeck: defined?(Flightdeck),
         web_controller: defined?(R3x::WebController),
         dashboard: defined?(R3x::Dashboard),
         workflow_cli: defined?(R3x::Workflow::Cli)
@@ -33,7 +33,7 @@ class JobsRuntimeProfileBootTest < ActiveSupport::TestCase
     assert_equal "constant", payload.fetch("workflow_entrypoint")
     assert_equal "Workflows::TestWorkflow", payload.fetch("registered_workflow")
     assert_not_includes payload.fetch("routes_reloader_paths"), Rails.root.join("config/routes.rb").to_s
-    assert_nil payload["mission_control"]
+    assert_nil payload["flightdeck"]
     assert_nil payload["web_controller"]
     assert_nil payload["dashboard"]
     assert_nil payload["workflow_cli"]

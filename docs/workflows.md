@@ -3,7 +3,7 @@
 These notes apply to workflow code in general.
 
 `bin/workflow` boots Rails through the internal `workflow_cli` runtime profile.
-That profile is headless: it skips the dashboard/Mission Control web stack,
+That profile is headless: it skips the dashboard/Flightdeck web stack,
 web-only gems, and app route registration, and it keeps
 `ActionController::Base.include_all_helpers = false` so framework eager-load
 does not scan app helpers. Unlike the slimmer `jobs` profile used by
