@@ -10,6 +10,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - If the pre-commit validation fails, fix validation-only issues and retry the commit until it passes unless the user accepts the known failure. Return changes that alter behavior or scope for user review before retrying the full validation gate.
 - The pre-commit hook intentionally runs the full local `bin/ci` suite while it remains reasonably fast. Keep failures close to the change, use the same acceptance gate before a commit exists, and avoid making remote CI the first feedback loop. Do not narrow this hook to targeted lint or tests without an explicit project decision; revisit only when its runtime materially disrupts normal commits. This follows the local-CI reasoning in [DHH's write-up](https://world.hey.com/dhh/we-re-moving-continuous-integration-back-to-developer-machines-3ac6c611).
 - Use `git --no-pager` for agent-read Git output such as diff, show, log, and status details.
+- When adding non-production/tooling files or patterns to `.dockerignore` that do not affect app runtime or CI test execution, keep `.github/workflows/ci.yml` `paths-ignore` synchronized so CI and Docker image builds are not needlessly triggered.
 - Keep this file and `docs/todo.md` synchronized when code changes alter architecture, workflow loading, trigger discovery, scheduling, validation contracts, env behavior, HTTP policy, or repo layout.
 
 ## Project Shape
