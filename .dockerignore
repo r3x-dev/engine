@@ -1,64 +1,43 @@
 # See https://docs.docker.com/engine/reference/builder/#dockerignore-file for more about ignoring files.
 
-# Ignore git metadata.
-/.git
-/.gitignore
+# Ignore all hidden files and directories, preserving required build files and directory keeps
+.*
+**/.*
+!.ruby-version
 
-# Ignore bundler config.
-/.bundle
+# Ignore logfiles, tempfiles, and storage
+*.log
+log/*
+tmp/*
+storage/*
+tmp/pids/*
+tmp/storage/*
 
-# Ignore all environment files.
-/.env*
+# Preserve required build files and directory keeps after the broad ignores above.
+!log/.keep
+!tmp/.keep
+!storage/.keep
+!tmp/pids/.keep
+!tmp/storage/.keep
 
-# Ignore all default key files.
-/config/master.key
-/config/credentials/*.key
+# Ignore development, CI, and Docker config/tooling
+/*.json
+/*.yml
+/*.yaml
+*.md
+docs/
+scratchpad/
+justfile
+Justfile
+LICENSE
+config/master.key
+config/credentials/*.key
+config/deploy*.yml
+config/bundler-audit.yml
+config/ci.rb
+test/
+/*.toml
 
-# Ignore all logfiles and tempfiles.
-/log/*
-/tmp/*
-!/log/.keep
-!/tmp/.keep
-
-# Ignore pidfiles, but keep the directory.
-/tmp/pids/*
-!/tmp/pids/.keep
-
-# Ignore storage (uploaded files in development and any SQLite databases).
-/storage/*
-!/storage/.keep
-/tmp/storage/*
-!/tmp/storage/.keep
-
-# Ignore CI service files.
-/.github
-
-# Ignore CI-only and local development tooling.
-/.githooks
-/.ruby-lsp
-/.rubocop.yml
-/justfile
-/opencode.json
-/config/bundler-audit.yml
-/config/ci.rb
-/test
-
-# Ignore Kamal files.
-/config/deploy*.yml
-/.kamal
-
-# Ignore development files
-/.devcontainer
-/.agents
-/.codex*
-/.vscode
-/docs
-/*.md
-
-# Ignore Docker-related files
-/.dockerignore
-/Dockerfile*
-/compose*.yml
-
-mise.toml
-.wtp.yml
+# Ignore Docker files
+.dockerignore
+Dockerfile*

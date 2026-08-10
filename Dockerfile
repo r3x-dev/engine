@@ -4,7 +4,6 @@
 # This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
 # docker build -t main .
 # docker run -d -p 80:80 -e SECRET_KEY_BASE=<random secret> --name main main
-# docker build --target ci -t main-ci .
 
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
 
@@ -57,27 +56,6 @@ COPY . .
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
-# CI image for containerized test/build checks.
-# It intentionally excludes the `development` group and keeps the `test` group.
-# Revisit this only if we start running development-only CI tooling inside the image:
-# `debug`, `bundler-audit`, `brakeman`, `rubocop-rails-omakase`,
-# `rubocop-minitest`, `rubocop-thread_safety`, `dotenv-rails`.
-FROM build-base AS ci
-
-ENV RAILS_ENV="test" \
-    BUNDLE_WITHOUT="development"
-
-RUN bundle install && \
-    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    bundle exec bootsnap precompile -j 1 --gemfile
-
-COPY . .
-
-RUN bundle exec bootsnap precompile -j 1 app/ lib/
-
-ARG GIT_CODE_VERSION=dev
-ENV GIT_CODE_VERSION="${GIT_CODE_VERSION}"
-
 # Final stage for app image
 FROM base AS production
 
@@ -85,7 +63,7 @@ ENV BUNDLE_WITHOUT="development:test"
 
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
+    useradd -l rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
 USER 1000:1000
 
 # Copy built artifacts: gems, application

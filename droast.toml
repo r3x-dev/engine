@@ -1,0 +1,2 @@
+# DF077 does not apply to the intentional COPY . with filtered Docker context.
+skip = ["DF077"]
