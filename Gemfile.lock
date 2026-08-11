@@ -432,22 +432,23 @@ GEM
       rubocop-ast (>= 1.44.0, < 2.0)
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
-    ruby_llm (1.16.0)
+    ruby_llm (1.8.2)
       base64
       event_stream_parser (~> 1)
       faraday (>= 1.10.0)
       faraday-multipart (>= 1)
       faraday-net_http (>= 1)
       faraday-retry (>= 1)
-      marcel (~> 1)
-      ruby_llm-schema (~> 0)
+      marcel (~> 1.0)
       zeitwerk (~> 2)
-    ruby_llm-schema (0.4.0)
+    ruby_llm-schema (1.0.0)
+      schematist (~> 1.0)
     rubydex (0.3.0)
     rubydex (0.3.0-aarch64-linux)
     rubydex (0.3.0-arm64-darwin)
     rubydex (0.3.0-x86_64-darwin)
     rubydex (0.3.0-x86_64-linux)
+    schematist (1.1.0)
     securerandom (0.4.1)
     signet (0.22.0)
       addressable (~> 2.8)
@@ -700,13 +701,14 @@ CHECKSUMS
   rubocop-thread_safety (0.7.3) sha256=067cdd52fbf5deffc18995437e45b5194236eaff4f71de3375a1f6052e48f431
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
   ruby2_keywords (0.0.5) sha256=ffd13740c573b7301cf7a2e61fc857b2a8e3d3aff32545d6f8300d8bae10e3ef
-  ruby_llm (1.16.0) sha256=26bd5310cf2ce55f74a60f8aae0b0d0327b586ff4532c84828103c3b2b905a18
-  ruby_llm-schema (0.4.0) sha256=e930f5a5316f9301bff3fb7fe572e44727d05bb8e50621001bbb49a47d63b8da
+  ruby_llm (1.8.2) sha256=5f3972e2aab41c64791fd83492f0c85fb449efc9574c3c8d8fdfb2d009f46f90
+  ruby_llm-schema (1.0.0) sha256=4cee959e71dcdf95476b1e5dc18b16c16d1fa5e79ed1df2157533a54d13de548
   rubydex (0.3.0) sha256=902ba4546c548de6a1908acee54cf3f5b998f01c87e2ad6fbd708011774df4e5
   rubydex (0.3.0-aarch64-linux) sha256=a7221b71b21c5a1cdda1fbac0946ee0411a2efd94c8115cf37e4e69461d88e73
   rubydex (0.3.0-arm64-darwin) sha256=19f685610216e4e7f488722ac90dfbc33113a384dd16db309cf939606f4c32dd
   rubydex (0.3.0-x86_64-darwin) sha256=59d20c98b0bf2226f5db5bee14cf57075aa93aa0c3fa0176f496a217691ff7b6
   rubydex (0.3.0-x86_64-linux) sha256=dfe4026591f226b4a1b53f82f86dc14fad2e7c221ee8a5be99a0a46bf2d58b04
+  schematist (1.1.0) sha256=905d8f0286830926e77e0d631bee325ee741c4b99640bc99735593b40ba73e7b
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   signet (0.22.0) sha256=b76d495ccb07ad35dbc89f3e920665a9d8ed717141955034005d7843dcfe4780
   solid_cache (1.0.10) sha256=bc05a2fb3ac78a6f43cbb5946679cf9db67dd30d22939ededc385cb93e120d41
