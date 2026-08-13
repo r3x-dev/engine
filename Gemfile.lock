@@ -448,6 +448,7 @@ GEM
     rubydex (0.3.0-arm64-darwin)
     rubydex (0.3.0-x86_64-darwin)
     rubydex (0.3.0-x86_64-linux)
+    schematist (1.1.0)
     securerandom (0.4.1)
     signet (0.22.0)
       addressable (~> 2.8)
@@ -535,8 +536,8 @@ DEPENDENCIES
   rubocop-rails-omakase
   rubocop-thread_safety (~> 0.7.3)
   ruby_llm
-  ruby_llm-schema
   rubydex
+  schematist
   solid_cache
   solid_queue
   solid_queue-flightdeck
@@ -707,6 +708,7 @@ CHECKSUMS
   rubydex (0.3.0-arm64-darwin) sha256=19f685610216e4e7f488722ac90dfbc33113a384dd16db309cf939606f4c32dd
   rubydex (0.3.0-x86_64-darwin) sha256=59d20c98b0bf2226f5db5bee14cf57075aa93aa0c3fa0176f496a217691ff7b6
   rubydex (0.3.0-x86_64-linux) sha256=dfe4026591f226b4a1b53f82f86dc14fad2e7c221ee8a5be99a0a46bf2d58b04
+  schematist (1.1.0) sha256=905d8f0286830926e77e0d631bee325ee741c4b99640bc99735593b40ba73e7b
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   signet (0.22.0) sha256=b76d495ccb07ad35dbc89f3e920665a9d8ed717141955034005d7843dcfe4780
   solid_cache (1.0.10) sha256=bc05a2fb3ac78a6f43cbb5946679cf9db67dd30d22939ededc385cb93e120d41

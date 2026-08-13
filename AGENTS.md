@@ -78,7 +78,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Put third-party API logic in a dedicated client under `app/lib/r3x/client/<provider>/...`; keep outputs thin.
 - Prefer env-name references such as `api_key_env:` or `project:` over raw secrets or parsed credential hashes. Resolve secrets lazily so dry-run paths avoid credential loading.
 - Lazy-load optional/heavy gems at the smallest practical boundary with `R3x::GemLoader.require(...)`; mark the gem `require: false` in `Gemfile`.
-- Prefer `R3x::Workflow::LlmSchema.define` for workflow-defined structured LLM output so workflows without schemas do not load the schema gem.
+- Prefer `R3x::Workflow::LlmSchema.define` for workflow-defined structured LLM output so workflows without schemas do not load the Schematist gem.
 
 ## HTTP & JSON
 

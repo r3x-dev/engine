@@ -5,12 +5,12 @@ require "test_helper"
 module R3x
   module Workflow
     class LlmSchemaTest < ActiveSupport::TestCase
-      test "define loads ruby_llm schema lazily and returns a schema class" do
+      test "define loads Schematist lazily and returns a schema class" do
         klass = LlmSchema.define do
           string :status
         end
 
-        assert_operator klass, :<, RubyLLM::Schema
+        assert_operator klass, :<, Schematist::Schema
         assert_equal [:status], klass.properties.keys
       end
     end
