@@ -11,7 +11,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - The pre-commit hook intentionally runs the full local `bin/ci` suite while it remains reasonably fast. Keep failures close to the change, use the same acceptance gate before a commit exists, and avoid making remote CI the first feedback loop. Do not narrow this hook to targeted lint or tests without an explicit project decision; revisit only when its runtime materially disrupts normal commits. This follows the local-CI reasoning in [DHH's write-up](https://world.hey.com/dhh/we-re-moving-continuous-integration-back-to-developer-machines-3ac6c611).
 - Use `git --no-pager` for agent-read Git output such as diff, show, log, and status details.
 - When adding non-production/tooling files or patterns to `.dockerignore` that do not affect app runtime or CI test execution, keep `.github/workflows/ci.yml` `paths-ignore` synchronized so CI and Docker image builds are not needlessly triggered.
-- Dockerfile validation uses the repo-local `droast.toml` for rule exceptions, `mise exec -- droast Dockerfile` locally, and the `docker_validate` CI job. Keep the action ref current; use `just show_dockerignore` to inspect the real Docker build context.
+- Dockerfile validation uses `mise exec -- droast Dockerfile` locally and the `docker_validate` CI job. Keep the action ref current; use `just show_dockerignore` to inspect the real Docker build context.
 - Keep this file and `docs/todo.md` synchronized when code changes alter architecture, workflow loading, trigger discovery, scheduling, validation contracts, env behavior, HTTP policy, or repo layout.
 
 ## Project Shape
