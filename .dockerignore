@@ -27,6 +27,8 @@ tmp/storage/*
 *.md
 docs/
 scratchpad/
+/workflows/
+/tech-debt*/
 justfile
 Justfile
 LICENSE
