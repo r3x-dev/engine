@@ -17,9 +17,13 @@ on:
       - "opencode.json"
       - "README.md"
       - "scratchpad/**"
+      - "tech-debt-audit-*/**"
   push:
     branches: [main, "renovate/**"]
     paths-ignore: *paths_ignore
+
+permissions:
+  contents: read
 
 env:
   OLD_VERSIONS_TO_KEEP: "10"

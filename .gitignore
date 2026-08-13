@@ -48,5 +48,6 @@
 /workflows
 /docs/mvp
 /.worktrees
+/tech-debt*
 
 /.antigravitycli/*.json
