@@ -6,9 +6,9 @@ module R3x
       extend self
 
       def define(&)
-        R3x::GemLoader.require("ruby_llm/schema")
+        R3x::GemLoader.require("schematist")
 
-        Class.new(RubyLLM::Schema, &)
+        Class.new(Schematist::Schema, &)
       end
     end
   end

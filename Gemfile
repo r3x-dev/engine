@@ -24,7 +24,7 @@ gem "rss", require: false
 
 # LLM integration
 gem "ruby_llm", require: false
-gem "ruby_llm-schema", require: false
+gem "schematist", require: false
 
 # Google Translate API
 gem "google-cloud-translate", require: false
