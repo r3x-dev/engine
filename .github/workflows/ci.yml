@@ -238,10 +238,10 @@ jobs:
           cache-from: type=gha,scope=docker-production
           cache-to: type=gha,mode=max,scope=docker-production
 
-      - name: Delete old images
-        uses: actions/delete-package-versions@v5
+      - name: Clean up old images
+        uses: dataaxiom/ghcr-cleanup-action@v1
         with:
-          package-name: ${{ github.event.repository.name }}
-          package-type: "container"
-          min-versions-to-keep: ${{ env.OLD_VERSIONS_TO_KEEP }}
-        continue-on-error: true
+          keep-n-tagged: ${{ env.OLD_VERSIONS_TO_KEEP }}
+          keep-n-untagged: ${{ env.OLD_VERSIONS_TO_KEEP }}
+          exclude-tags: stable
+          delete-partial-images: true
