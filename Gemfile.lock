@@ -159,7 +159,7 @@ GEM
       base64 (~> 0.2)
       faraday (>= 1.0, < 3.a)
     google-cloud-errors (1.7.0)
-    google-cloud-location (1.5.0)
+    google-cloud-location (1.5.1)
       gapic-common (~> 1.3)
       google-cloud-errors (~> 1.0)
     google-cloud-translate (3.9.1)
@@ -333,7 +333,7 @@ GEM
       nio4r (~> 2.0)
     raabro (1.5.0)
     racc (1.8.1)
-    rack (3.2.6)
+    rack (3.2.7)
     rack-session (2.1.2)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
@@ -595,7 +595,7 @@ CHECKSUMS
   google-cloud-core (1.9.0) sha256=ab55409f51488e8deefb6edcc1ce4771dfb5da2fe7b3bc075709a030c2b682a4
   google-cloud-env (2.4.0) sha256=01cb35ecee5d1c4d1cd4deaed8bb5bddc838e296bcc2a35c5d1ddd07ce40d28d
   google-cloud-errors (1.7.0) sha256=6e682f42d89aae08689f36f28495de629d756da076bafff0003bac7f8042ebb3
-  google-cloud-location (1.5.0) sha256=336f94609b1fb18fce1929048fac964f4d5a87d27c1e5444bfed3605469c7532
+  google-cloud-location (1.5.1) sha256=ab0c4d29b9616f93c07b3307dbaf07e373e47115bb81ee7067eda6e448b9a0ae
   google-cloud-translate (3.9.1) sha256=a8624fdd64f9ad5c188fb9ae27752734574fca9908f3df67bb62a74f499ac43e
   google-cloud-translate-v2 (1.2.0) sha256=718dfe18a2368650773daf5fcae17fdbc2875755bf1e8b5c25188e2bc1b01f26
   google-cloud-translate-v3 (1.10.1) sha256=3770fe0690ba2046ebac52906b94930e7e49bb7b5b09e6959f0c77260cbe5bb3
@@ -673,7 +673,7 @@ CHECKSUMS
   puma (8.0.2) sha256=c8ed871dfbbe66448ea9ffd46692342d9804d4071522b52b5331b7b6e7b686fb
   raabro (1.5.0) sha256=3f998a7bc84f9c84df3ab580634d2e0a5bda4f0841168d56035f529c9877440a
   racc (1.8.1) sha256=4a7f6929691dbec8b5209a0b373bc2614882b55fc5d2e447a21aaa691303d62f
-  rack (3.2.6) sha256=5ed78e1f73b2e25679bec7d45ee2d4483cc4146eb1be0264fc4d94cb5ef212c2
+  rack (3.2.7) sha256=93e13e1c24f93556671d85d2d79fa228c3485815c50d7e2f265b5330c6528fb7
   rack-session (2.1.2) sha256=595434f8c0c3473ae7d7ac56ecda6cc6dfd9d37c0b2b5255330aa1576967ffe8
   rack-test (2.2.0) sha256=005a36692c306ac0b4a9350355ee080fd09ddef1148a5f8b2ac636c720f5c463
   rackup (2.3.1) sha256=6c79c26753778e90983761d677a48937ee3192b3ffef6bc963c0950f94688868
