@@ -456,11 +456,11 @@ Keep the distinction clear:
 per `RubyLLM::Context` inside `R3x::Client::Llm`, so every workflow run gets an isolated copy.
 Processes that never call `ctx.client.llm` do not load the gem at all.
 
-The retry defaults are set in `app/lib/r3x/client/llm.rb` inside the `RubyLLM.context` block.
-Only `retry_interval` has a project-level override (the gem default is `0.1`); everything else uses the gem defaults.
+The retry defaults are set in `app/lib/r3x/client/llm.rb` inside the `RubyLLM.context` block. RubyLLM
+waits inside the current request between attempts, so these retries keep the worker occupied. Keep
+them for short request-level recovery only.
 
-This means the first retry waits 60 seconds, the second waits 120 seconds, then it gives up.
-The gem automatically retries on transient provider errors:
+The gem retries transient provider errors:
 
 - `RubyLLM::RateLimitError` (HTTP 429)
 - `RubyLLM::ServerError` (HTTP 500)
@@ -468,16 +468,20 @@ The gem automatically retries on transient provider errors:
 - `RubyLLM::OverloadedError` (HTTP 529)
 - Network timeouts and connection failures
 
+After request-level retries are exhausted, `R3x::Client::Llm` translates these failures to
+`R3x::Client::Llm::TransientError`. A workflow that expects a multi-minute outage should disable
+request-level retries with `max_retries: 0` and use bounded Active Job `retry_on` backoff. This
+returns the work to Solid Queue as a scheduled job instead of sleeping in a worker.
+
 ### Per-workflow override
 
-If a particular workflow needs different retry behavior, pass overrides directly to
-`ctx.client.llm(...)`:
+If a particular workflow needs different short request-level retry behavior, pass overrides
+directly to `ctx.client.llm(...)`:
 
 ```ruby
 response = ctx.client.llm(
   api_key_env: "GEMINI_API_KEY_MICHAL",
-  max_retries: 5,
-  retry_interval: 30.0
+  max_retries: 0
 ).message(
   model: "gemini-3-flash-preview",
   prompt: prompt
@@ -485,8 +489,8 @@ response = ctx.client.llm(
 ```
 
 Any option passed this way overrides the default for that single `R3x::Client::Llm`
-instance. The rest of the call stays the same -- the retry is handled transparently by
-`ruby_llm`.
+instance. Keep any enabled request-level retries short. Use workflow-level `retry_on` for
+longer backoff that should return work to Solid Queue.
 
 OpenAI-compatible provider aliases can carry their own RubyLLM routing defaults and are automatically resolved based on the API key environment variable name:
 

@@ -37,7 +37,10 @@ module R3x
 
         def ask(prompt, with: nil)
           ask_calls << { prompt:, with: }
-          Response.new(@contents.shift)
+          content = @contents.shift
+          raise content if content.is_a?(Exception)
+
+          Response.new(content)
         end
       end
 
@@ -67,6 +70,37 @@ module R3x
         assert_equal 5, context.config.max_retries
         assert_in_delta(30.0, context.config.retry_interval)
         assert_equal 4, context.config.retry_backoff_factor
+      end
+
+      test "translates transient provider errors" do
+        R3x::GemLoader.require("ruby_llm")
+        provider_error = RubyLLM::ServiceUnavailableError.new("high demand")
+        context = FakeLlmContext.new(FakeChat.new(provider_error))
+        RubyLLM.stubs(:context).returns(context)
+
+        llm = Llm.new(api_key: "test", config_api_key_attr: "gemini_api_key")
+
+        error = assert_raises(Llm::TransientError) do
+          llm.message(model: "gemini-1.5-flash", prompt: "hello")
+        end
+
+        assert_equal "high demand", error.message
+        assert_same provider_error, error.cause
+      end
+
+      test "does not translate permanent provider errors" do
+        R3x::GemLoader.require("ruby_llm")
+        provider_error = RubyLLM::BadRequestError.new("bad request")
+        context = FakeLlmContext.new(FakeChat.new(provider_error))
+        RubyLLM.stubs(:context).returns(context)
+
+        llm = Llm.new(api_key: "test", config_api_key_attr: "gemini_api_key")
+
+        error = assert_raises(RubyLLM::BadRequestError) do
+          llm.message(model: "gemini-1.5-flash", prompt: "hello")
+        end
+
+        assert_same provider_error, error
       end
 
       test "infers provider and assume_model_exists when provider is registered but has no statically registered models" do
