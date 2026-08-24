@@ -82,6 +82,16 @@ module R3x
         conversation = conversation.with_schema(schema) if schema
 
         conversation.ask(prompt, with: attachments)
+      rescue RubyLLM::RateLimitError,
+        RubyLLM::ServerError,
+        RubyLLM::ServiceUnavailableError,
+        RubyLLM::OverloadedError,
+        Faraday::TimeoutError,
+        Faraday::ConnectionFailed,
+        Faraday::RetriableResponse,
+        Timeout::Error,
+        Errno::ETIMEDOUT => error
+        raise TransientError, error.message
       end
     end
   end
