@@ -90,6 +90,42 @@ module R3x
       end
     end
 
+    test "validate_skip_cache! allows the override outside production" do
+      Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("development"))
+
+      with_env("R3X_SKIP_CACHE" => "true") do
+        assert_nil Policy.validate_skip_cache!
+      end
+    end
+
+    test "validate_skip_cache! allows unset override in production" do
+      Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("production"))
+
+      with_env("R3X_SKIP_CACHE" => nil) do
+        assert_nil Policy.validate_skip_cache!
+      end
+    end
+
+    test "validate_skip_cache! fails fast in production with the override enabled" do
+      Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("production"))
+
+      with_env("R3X_SKIP_CACHE" => "true") do
+        error = assert_raises(ArgumentError) do
+          Policy.validate_skip_cache!
+        end
+
+        assert_equal "R3X_SKIP_CACHE must not be enabled at production boot; use bin/workflow run --skip-cache for an explicit one-run override", error.message
+      end
+    end
+
+    test "skip_cache? allows a late explicit override in production" do
+      Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("production"))
+
+      with_env("R3X_SKIP_CACHE" => "true") do
+        assert_predicate Policy, :skip_cache?
+      end
+    end
+
     private
 
     def with_env(values)

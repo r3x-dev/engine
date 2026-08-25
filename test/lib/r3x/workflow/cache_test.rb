@@ -5,6 +5,8 @@ require "tmpdir"
 
 module R3x
   class WorkflowCacheTest < ActiveSupport::TestCase
+    include ActiveSupport::Testing::TimeHelpers
+
     test "with_cache reuses the cached result for identical block code" do
       workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
@@ -163,12 +165,13 @@ module R3x
 
       workflow = workflow_class.new
       Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("production"))
+      R3x::Workflow::CacheKey.stubs(:generate).raises("cache key generation should not run")
 
       error = assert_raises(RuntimeError) do
         workflow.with_cache { "cached" }
       end
 
-      assert_equal "with_cache is disabled in production, if you need to use it, please set R3X_SKIP_CACHE=true in the environment variables", error.message
+      assert_equal "Plain with_cache is development-only and disabled in production; use with_cache(key: <name>, ttl: <duration>) for periodic reuse that works in all environments", error.message
     end
 
     test "with_cache bypasses cache when skip-cache override is enabled" do
@@ -207,7 +210,7 @@ module R3x
       end
     end
 
-    test "with_cache bypasses production guard when skip-cache override is enabled" do
+    test "with_cache honors a late skip-cache override in production" do
       workflow_class = Class.new(R3x::Workflow::Base) do
         def self.name
           "Workflows::ProductionSkipCacheGuard"
@@ -232,7 +235,230 @@ module R3x
       ENV["R3X_SKIP_CACHE"] = original_skip_cache
     end
 
+    test "with_cache ttl reuses the cached result within the same period" do
+      workflow = ttl_counter_workflow
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        travel_to Time.utc(2026, 8, 25, 10, 0) do
+          first = workflow.cached
+          second = workflow.cached
+
+          assert_equal({ "calls" => 1 }, first)
+          assert_equal({ "calls" => 1 }, second)
+        end
+
+        assert_equal 1, workflow.calls
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "with_cache ttl keeps its key across workflow file edits" do
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      travel_to Time.utc(2026, 8, 25, 10, 0) do
+        Dir.mktmpdir do |dir|
+          path = File.join(dir, "workflow.rb")
+
+          write_stable_ttl_cache_workflow(path, "first")
+
+          assert_equal "first", load_stable_ttl_cache_workflow(path).new.run
+
+          write_stable_ttl_cache_workflow(path, "second")
+
+          assert_equal "first", load_stable_ttl_cache_workflow(path).new.run
+        end
+      end
+    ensure
+      remove_stable_ttl_cache_workflow
+      Rails.cache = original_cache
+    end
+
+    test "with_cache ttl recomputes after the period elapses" do
+      workflow = ttl_counter_workflow
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        travel_to Time.utc(2026, 8, 25, 10, 0) do
+          workflow.cached
+        end
+
+        travel_to Time.utc(2026, 8, 26, 12, 0) do
+          workflow.cached
+        end
+
+        assert_equal 2, workflow.calls
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "with_cache ttl works in production" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::ProductionTtlCache"
+        end
+
+        def cached
+          @calls ||= 0
+
+          with_cache(key: "expensive_fetch", ttl: 24.hours) do
+            @calls += 1
+            { "calls" => @calls }
+          end
+        end
+
+        attr_reader :calls
+      end
+
+      workflow = workflow_class.new
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("production"))
+      begin
+        first = workflow.cached
+        second = workflow.cached
+
+        assert_equal({ "calls" => 1 }, first)
+        assert_equal({ "calls" => 1 }, second)
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "with_cache ttl force refreshes the cached value" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::ForceTtlCacheTest"
+        end
+
+        def cached(force: false)
+          @calls ||= 0
+
+          with_cache(force:, key: "expensive_fetch", ttl: 24.hours) do
+            @calls += 1
+            { "calls" => @calls }
+          end
+        end
+
+        attr_reader :calls
+      end
+
+      workflow = workflow_class.new
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+
+      Rails.cache = cache
+      begin
+        travel_to Time.utc(2026, 8, 25, 10, 0) do
+          workflow.cached
+          workflow.cached(force: true)
+        end
+
+        assert_equal 2, workflow.calls
+      ensure
+        Rails.cache = original_cache
+      end
+    end
+
+    test "with_cache ttl bypasses cache when skip-cache override is enabled" do
+      workflow = ttl_counter_workflow
+      cache = ActiveSupport::Cache::MemoryStore.new
+      original_cache = Rails.cache
+      original_skip_cache = ENV["R3X_SKIP_CACHE"]
+
+      Rails.cache = cache
+      ENV["R3X_SKIP_CACHE"] = "true"
+
+      begin
+        travel_to Time.utc(2026, 8, 25, 10, 0) do
+          first = workflow.cached
+          second = workflow.cached
+
+          assert_equal({ "calls" => 1 }, first)
+          assert_equal({ "calls" => 2 }, second)
+        end
+      ensure
+        ENV["R3X_SKIP_CACHE"] = original_skip_cache
+        Rails.cache = original_cache
+      end
+    end
+
+    test "with_cache rejects invalid ttl values" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::InvalidTtlTest"
+        end
+      end
+      workflow = workflow_class.new
+
+      assert_raises(ArgumentError) { workflow.with_cache(key: "expensive_fetch", ttl: 0.hours) { "cached" } }
+      assert_raises(ArgumentError) { workflow.with_cache(key: "expensive_fetch", ttl: -1.hour) { "cached" } }
+      assert_raises(ArgumentError) { workflow.with_cache(key: "expensive_fetch", ttl: false) { "cached" } }
+      assert_raises(ArgumentError) { workflow.with_cache(key: "expensive_fetch", ttl: "3600") { "cached" } }
+    end
+
+    test "with_cache ttl requires a stable key" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::MissingTtlKeyTest"
+        end
+      end
+
+      error = assert_raises(ArgumentError) do
+        workflow_class.new.with_cache(ttl: 1.hour) { "cached" }
+      end
+
+      assert_equal "with_cache ttl requires a non-blank key", error.message
+    end
+
+    test "with_cache rejects ttl above configured Solid Cache max_age" do
+      workflow_class = Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::ExcessiveTtlTest"
+        end
+      end
+      workflow = workflow_class.new
+
+      Rails.application.config.stubs(:cache_store).returns(:solid_cache_store)
+      Rails.application.stubs(:config_for).with(:cache).returns({ store_options: { max_age: 90.days.to_i } })
+
+      error = assert_raises(ArgumentError) do
+        workflow.with_cache(key: "expensive_fetch", ttl: 91.days) { "cached" }
+      end
+
+      assert_equal "ttl can't exceed Solid Cache max_age configured in config/cache.yml", error.message
+    end
+
     private
+
+    def ttl_counter_workflow
+      Class.new(R3x::Workflow::Base) do
+        def self.name
+          "Workflows::TtlCacheTest"
+        end
+
+        def cached
+          @calls ||= 0
+
+          with_cache(key: "expensive_fetch", ttl: 24.hours) do
+            @calls += 1
+            { "calls" => @calls }
+          end
+        end
+
+        attr_reader :calls
+      end.new
+    end
 
     def write_fragile_cache_workflow(path, value)
       File.write(path, <<~RUBY)
@@ -258,14 +484,38 @@ module R3x
       RUBY
     end
 
+    def write_stable_ttl_cache_workflow(path, value)
+      File.write(path, <<~RUBY)
+        module Workflows
+          class StableTtlCacheWorkflow < R3x::Workflow::Base
+            def run
+              with_cache(key: "source", ttl: 1.hour) do
+                #{value.inspect}
+              end
+            end
+          end
+        end
+      RUBY
+    end
+
     def load_fragile_cache_workflow(path)
       remove_fragile_cache_workflow
       load path
       Workflows::FragileCacheWorkflow
     end
 
+    def load_stable_ttl_cache_workflow(path)
+      remove_stable_ttl_cache_workflow
+      load path
+      Workflows::StableTtlCacheWorkflow
+    end
+
     def remove_fragile_cache_workflow
       Workflows.send(:remove_const, :FragileCacheWorkflow) if defined?(Workflows::FragileCacheWorkflow)
+    end
+
+    def remove_stable_ttl_cache_workflow
+      Workflows.send(:remove_const, :StableTtlCacheWorkflow) if defined?(Workflows::StableTtlCacheWorkflow)
     end
   end
 end

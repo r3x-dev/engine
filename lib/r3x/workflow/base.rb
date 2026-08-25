@@ -50,15 +50,37 @@ module R3x
         end
       end
 
-      def with_cache(force: false, key: nil, &block)
+      def with_cache(force: false, key: nil, ttl: nil, &block)
         if R3x::Policy.skip_cache?
           logger.info "Skipping cache for #{self.class.name} due to policy"
 
           return yield
         end
 
+        # TTL keys survive workflow edits until the bucket changes; plain keys below rotate with the file digest.
+        unless ttl.nil?
+          R3x::Validators::CacheTtl.validate!(ttl, field_name: "with_cache ttl")
+          key = key.to_s.strip
+          if key.blank?
+            raise ArgumentError, "with_cache ttl requires a non-blank key"
+          end
+
+          cache_key = [
+            "r3x",
+            "workflow",
+            self.class.workflow_key,
+            "ttl",
+            key,
+            ttl.to_i,
+            Time.current.to_i / ttl.to_i,
+          ]
+
+          return Rails.cache.fetch(cache_key, force:, expires_in: ttl, &block)
+        end
+
         if Rails.env.production?
-          raise "with_cache is disabled in production, if you need to use it, please set R3X_SKIP_CACHE=true in the environment variables"
+          raise "Plain with_cache is development-only and disabled in production; " \
+            "use with_cache(key: <name>, ttl: <duration>) for periodic reuse that works in all environments"
         end
 
         cache_key = R3x::Workflow::CacheKey.generate(

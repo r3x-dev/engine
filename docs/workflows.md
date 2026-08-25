@@ -117,8 +117,16 @@ raises, the workflow fails instead of logging a false success.
   - Good for slow, noisy, or hard-to-reproduce API calls while iterating on a workflow.
   - `bin/workflow run --skip-cache <path>` bypasses all `with_cache` blocks for that run without
     editing the workflow.
-  - `R3X_SKIP_CACHE=true` does the same override at the env level.
-  - In production, `with_cache` still raises by default unless `R3X_SKIP_CACHE=true` is set.
+  - `R3X_SKIP_CACHE=true` does the same override at the env level in development; production boot
+    rejects this global environment switch. The explicit CLI option remains available in production.
+- Plain `with_cache` is development-only and raises in production.
+- A plain cached value is reused for at most one day (`R3x::Workflow::Base::CACHE_TTL`); any edit to
+  the workflow file rotates the cache key, so the next run recomputes immediately.
+- `with_cache(key:, ttl:)` provides best-effort reuse within each period and works in all
+  environments; see "Caching Policy" below. Use it for paid, rate-limited, or expensive external
+  fetches — retries and resumed executions then reuse the cached value instead of repeating the call.
+  `key:` is required and remains stable across workflow edits and deployments. The `ttl:` you pass
+  replaces the default one-day lifetime entirely; it is not combined with it.
   - Use `with_cache(force: true)` when you need to refresh a stale cached value.
   - Use `with_cache(key: "name")` when multiple cache blocks share the same source line or when a
     stable human-readable discriminator makes the cached boundary clearer.
@@ -209,7 +217,8 @@ bin/workflow run --dry-run workflows/porto_santo_news/workflow.rb
 - `--dry-run` explicitly enables dry-run for that run (`R3X_DRY_RUN=true`).
 - `--no-dry-run` explicitly disables dry-run for that run (`R3X_DRY_RUN=false`), even in
   `development`.
-- `--skip-cache` sets `R3X_SKIP_CACHE=true` for that run and bypasses `with_cache`.
+- `--skip-cache` sets `R3X_SKIP_CACHE=true` for that run and bypasses all `with_cache` caching,
+  including `ttl:` mode. It is an explicit one-run operator override and works in production.
 - `--skip-wait` fast-forwards through local Continuable waits when debugging isolated steps.
 - Use `--dry-run --skip-cache` together when you want a fresh, low-risk local run:
 
@@ -308,6 +317,46 @@ Keep the distinction clear:
   flags or conditions around it.
 - When a workflow suddenly sees a boolean or `nil` where an array should be, inspect the nearest
   `step` boundary first before blaming the external API.
+
+## Caching Policy
+
+Three tools with disjoint responsibilities:
+
+| Tool | Purpose | Works in production |
+| --- | --- | --- |
+| `with_cache` | Development iteration sugar: freeze an expensive or noisy boundary while iterating. The cached value is reused for at most one day (`Base::CACHE_TTL`), and any edit to the workflow file rotates the key so the next run recomputes immediately. | No (raises) |
+| `with_cache(key:, ttl:)` | Best-effort runtime reuse for a named boundary within each period. Use for paid, rate-limited, or expensive external fetches. | Yes |
+| `ctx.durable_set(name, ttl:)` | Cross-run dedup markers ("already processed"), not value caching. | Yes |
+
+Decision guide:
+
+- Should production reuse this result within a period? Use `with_cache(key:, ttl:)` — development
+  gets the same reuse for free.
+- Must production always execute fresh, but you need stability while iterating locally? Use plain
+  `with_cache`.
+- Remembering processed items across runs? Use `ctx.durable_set`.
+
+Anti-patterns:
+
+- Do not stack plain `with_cache` and `with_cache(key:, ttl:)` around the same boundary.
+- Do not use plain `with_cache` for paid API quotas; code outside `step` re-executes on every retry
+  and resume. Use `ttl:` mode to reduce repeated calls in production.
+
+How `ttl:` mode works: `key:` names a stable workflow boundary, and the runtime cache key adds the
+TTL plus a time bucket (`now / ttl`). Workflow source edits do not rotate that key. `Rails.cache.fetch`
+reuses the value while that bucket is present. Concurrent misses are not serialized, so overlapping
+workers may both execute the block. This is intentionally best-effort; use provider idempotency or a
+durable database-backed claim when duplicate upstream calls are unacceptable.
+
+The cache write uses `expires_in: ttl`, while the bucket determines freshness. When Solid Cache is
+configured, `ttl:` must not exceed its store-wide `max_age` in `config/cache.yml`, so normal cleanup
+cannot evict the current bucket before its advertised period ends. As with any cache, manual clearing
+or size-pressure eviction can still force recomputation. Buckets align to epoch windows, so two runs
+straddling a boundary can both recompute; this is expected.
+
+`R3X_SKIP_CACHE` / `bin/workflow run --skip-cache` bypass all workflow caching, including `ttl:`
+mode. The environment switch is development-only and production boot rejects it. The CLI option is
+an explicit one-run operator override and remains available in production.
 
 ## Schedule Timezones
 
