@@ -133,6 +133,16 @@ module R3x
         assert_nil ENV["R3X_SKIP_CACHE"]
       end
 
+      test "run supports explicit skip cache override in production" do
+        output = StringIO.new
+        Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new("production"))
+
+        Cli.new(stdout: output).run(@fixture_path.to_s, skip_cache: true)
+
+        assert_includes output.string, "Running with skip cache: #{@fixture_path}"
+        assert_nil ENV["R3X_SKIP_CACHE"]
+      end
+
       test "run accepts absolute paths" do
         output = StringIO.new
 

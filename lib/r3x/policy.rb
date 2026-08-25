@@ -11,6 +11,15 @@ module R3x
         R3x::Env.fetch_boolean("R3X_SKIP_CACHE") || false
       end
 
+      def validate_skip_cache!
+        if Rails.env.production? && skip_cache?
+          raise ArgumentError, "R3X_SKIP_CACHE must not be enabled at production boot; " \
+            "use bin/workflow run --skip-cache for an explicit one-run override"
+        end
+
+        nil
+      end
+
       def real_delivery_for?(key = nil, dry_run = nil)
         !dry_run_for(key, dry_run)
       end
