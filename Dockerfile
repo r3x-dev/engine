@@ -25,6 +25,7 @@ RUN apt-get update -qq && \
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
+    BUNDLE_VERSION="system" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
 # Shared build stage for installing gems
