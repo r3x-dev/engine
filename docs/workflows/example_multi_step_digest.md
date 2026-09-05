@@ -19,6 +19,7 @@ module Workflows
     DISCORD_WEBHOOK_ENV = "DISCORD_WEBHOOK_URL_EXAMPLE"
     GEMINI_API_KEY_ENV = "GEMINI_API_KEY_EXAMPLE"
     SENT_ITEMS_TTL = 30.days
+    SOURCE_TTL = 1.hour
 
     trigger :schedule, cron: "0 8 * * *", timezone: "Europe/Lisbon"
 
@@ -32,39 +33,57 @@ module Workflows
       end
     end
 
+    def serialize
+      super.merge("candidates" => @candidates)
+    end
+
+    def deserialize(job_data)
+      super
+      @candidates = job_data["candidates"]
+    end
+
     def run
       logger.info("Starting example integration digest")
 
-      rows = with_cache { read_source_rows }
-      candidates = collect_candidates(rows)
+      items = candidates
       sent_items = ctx.durable_set(:sent, ttl: SENT_ITEMS_TTL)
 
-      @delivered = []
       step :deliver_candidates, start: 0 do |step|
-        cursor = step.cursor || 0
+        cursor = step.cursor
 
-        candidates[cursor..].each_with_index do |candidate, offset|
+        items[cursor..].each_with_index do |candidate, offset|
           index = cursor + offset
           dedup_key = workflow_dedup_key(candidate.fetch("url"))
 
           if sent_items.include?(dedup_key)
             logger.debug { "Skipping already delivered item #{candidate.fetch('url')}" }
-            step.advance! from: index + 1
+            step.set! index + 1
             next
           end
 
-          delivered_item = deliver_candidate(candidate)
+          deliver_candidate(candidate)
           sent_items.add(dedup_key)
-          @delivered << delivered_item
 
-          step.advance! from: index + 1
+          step.set! index + 1
         end
       end
 
-      logger.info("Example integration digest delivered #{@delivered.size} items")
+      logger.info("Example integration digest completed")
     end
 
     private
+
+    def candidates
+      @candidates ||= begin
+        if continuation.started?
+          raise R3x::ConfigurationError, "Cannot resume without saved candidates; start a new run"
+        end
+
+        with_cache(key: "candidates", ttl: SOURCE_TTL) do
+          collect_candidates(read_source_rows)
+        end
+      end
+    end
 
     def read_source_rows
       ctx.client
@@ -144,11 +163,20 @@ end
 - `R3x::Workflow::Base` is an `ApplicationJob`, so you can use `ActiveJob::Continuable` and `step`
   directly in workflow code.
 - `step` is the resumable boundary. In the example, the workflow can resume from the next item in
-  the list instead of starting the whole digest again.
-- `with_cache` sits around the slow read-only fetch, not around delivery. That keeps local iteration
-  fast while leaving the side effects visible.
+  the saved list instead of starting the whole digest again. `set!(index + 1)` stores that next
+  position; `advance!(from: index)` would be equivalent.
+- `serialize` / `deserialize` preserve candidates and their content with the job's continuation.
+  Restoring the cursor never refetches the list. This example assumes a small source; for large
+  inputs, store an immutable run record and pass its ID instead of embedding all rows in the job.
+- `with_cache(key:, ttl:)` reduces repeated source reads across new runs. The saved candidates
+  preserve one run's input even when that cache disappears. See
+  [Stable Input Across Resumptions](../workflows.md#stable-input-across-resumptions) for persistence
+  timing, old queued payloads, and hard-kill limits.
 - `ctx.durable_set(:sent, ttl: ...)` is used for best-effort cross-run dedup. Add to it only after
-  the delivery side effect succeeds.
+  the delivery side effect succeeds. The Discord and Gmail calls here are separate effects: if
+  Discord succeeds and Gmail fails, retry can duplicate the Discord message. A hard kill before
+  recording success has the same risk. Production delivery requiring stronger guarantees needs
+  provider idempotency or persisted progress per destination.
 - `ctx.client.*` is the normal boundary for integrations. That keeps workflow code readable and
   lets clients encapsulate auth, retries, and provider-specific details.
 - `R3x::Workflow::LlmSchema.define` is the preferred way to get structured LLM output when the

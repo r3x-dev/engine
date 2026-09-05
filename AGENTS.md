@@ -68,6 +68,11 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 ## Workflow Work
 
 - If changing workflows or workflow framework code, read `docs/workflows.md` first.
+- For resumable workflows, preserve run input, ordering, and required intermediate results independently
+  of TTL cache. Continuable saves steps/cursors, not arbitrary variables or block results. Use explicit
+  job serialization for small JSON-compatible snapshots, or a durable run record for larger state.
+  Never apply saved indices to freshly fetched input. Review old queued payloads and manually simulate
+  resume after source changes and cache eviction; see docs/workflows.md "Stable Input Across Resumptions".
 - Use `bin/workflow list` and `bin/workflow info <key>` to inspect registered workflows.
 - `bin/workflow run <path>` always requires a path to `workflow.rb`; use `-d` for dry run and `--skip-cache` to bypass `with_cache`.
 - New code with external side effects should default to `dry_run: true` or equivalent safe mode. Real delivery must be explicit, e.g. `dry_run: false`.

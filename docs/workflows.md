@@ -46,13 +46,14 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
   deliberate delay instead of blocking a worker with `sleep`.
 - Do not assign the result of a `step` block to a variable and assume it is the block result.
 - Put data-fetching logic in a normal helper, then use `step` around the resumable work that consumes
-  that data.
+  that data. The helper must restore the same run input on resume; see
+  [Stable Input Across Resumptions](#stable-input-across-resumptions).
 - If you see `true.select` or `nil.select` in a workflow crash, check whether a `step` block was used
   as if it returned the fetched value.
 
   ```ruby
   # Good
-  raw_events = fetch_from_apify
+  raw_events = events_for_run
 
   step :process_events do |step|
     process_events(Array.wrap(raw_events), step)
@@ -63,6 +64,63 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
     fetch_from_apify
   end
   ```
+
+`events_for_run` above is a workflow-owned helper, not a framework API. It loads or restores saved
+input as described below. The [worked example](workflows/example_multi_step_digest.md) implements
+this pattern in its `candidates` helper.
+
+## Stable Input Across Resumptions
+
+A resumed job runs `run` again. Continuable restores completed step names and the current step's
+cursor; it does not automatically save local variables, arbitrary instance variables, or step block
+results. Code outside steps runs again, and completed steps are skipped.
+
+For example, a run fetches `[a, b, c]` and completes `process_event_0` for `a`. Before it resumes,
+the source changes to `[c, b, a]`. If the workflow fetches again, it skips index 0 (`c`) because
+`process_event_0` is already complete. It eventually processes `[a, b, a]`: `c` is lost and `a` is
+attempted twice. An offset cursor into a changing list has the same problem.
+
+For each resumable workflow, decide what belongs to one logical run:
+
+- Preserve the selected items, their order, and any content needed by later steps. A saved list of
+  IDs is enough only when reading those IDs later gives the intended content, or a fixed version.
+  Do not rebuild membership from a live query or a fresh API response on resume.
+- For a small, bounded JSON-compatible input, store it on the job and explicitly include it in
+  `serialize` / `deserialize`, calling `super` in both methods. Serialization must read the stored
+  value without fetching data: initial enqueue also serializes the job. Restore an empty list as
+  an empty list, not as a signal to fetch again.
+- For large inputs, durable results, or stronger recovery requirements, use an immutable run/batch
+  record and pass its ID. Do not put clients, credentials, or downloaded image bodies in job data.
+- Cursor positions and index-based step names require that fixed list. Naming steps after item IDs
+  alone does not preserve list membership or content. Define a cursor as the next item to process:
+  `step.set!(index + 1)` or `step.advance!(from: index)`, never `advance!(from: index + 1)`.
+- Persist intermediate results that later steps need using the same rule. A memoized instance
+  variable or an accumulator reset at the top of `run` does not survive deserialization on its own.
+
+TTL caching reduces upstream calls; it does not preserve a run's input. Expiry, bucket rollover,
+eviction, manual clearing, or `--skip-cache` can change the response. Cache the initial fetch when
+useful, then save the selected input independently. Cross-run dedup markers also do not reconstruct
+missing input or results.
+
+Explicit job attributes are persisted when Active Job serializes a retry or continuation. Merely
+assigning an instance variable or reaching a checkpoint does not synchronously write it to the
+database. A hard kill before serialization can lose that execution's input and progress. External
+delivery and saving progress are also separate operations: a crash between them can repeat delivery.
+Use provider idempotency or durable delivery state when that is unacceptable; never promise
+exactly-once delivery from `step` or `ctx.durable_set` alone.
+
+When adding saved input or changing step/cursor meaning, account for queued jobs from the previous
+code. Finish them on that code or cancel and restart them with explicit operator approval. Reject a
+resumed payload missing required input instead of silently fetching a replacement list.
+
+Before review, manually simulate interruption and JSON serialization/deserialization with external
+requests blocked. Change source order and membership, clear the cache, then verify the remaining
+original items and content are used. Include empty input and any old payload format affected by the
+change. Use fixture workflows for framework regression tests; keep user workflow packs under the
+existing manual verification policy.
+
+Rails references: [custom job serialization](https://api.rubyonrails.org/v8.1.3/classes/ActiveJob/Core.html)
+and [Continuable steps and cursors](https://api.rubyonrails.org/v8.1.3/classes/ActiveJob/Continuation.html).
 
 ## Conditions
 
@@ -335,6 +393,9 @@ Decision guide:
 - Must production always execute fresh, but you need stability while iterating locally? Use plain
   `with_cache`.
 - Remembering processed items across runs? Use `ctx.durable_set`.
+- Must resumptions use the same input or intermediate result? Save it with the run; see
+  [Stable Input Across Resumptions](#stable-input-across-resumptions). None of these cache tools
+  provides that contract.
 
 Anti-patterns:
 
