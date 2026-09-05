@@ -17,7 +17,7 @@ module R3x
         rows = GoogleSheets.new(
           spreadsheet_id: "spreadsheet-123",
           project: "TEST_APP",
-        ).read_rows(range: "Sheet1!A:B")
+        ).read_rows(range: "Sheet1!A:B", as_hashes: true)
 
         assert_equal(
           [
@@ -29,7 +29,7 @@ module R3x
         assert_equal ["spreadsheet-123", "Sheet1!A:B"], service.calls.first
       end
 
-      test "read_rows returns raw rows when headers are disabled" do
+      test "read_rows returns raw rows by default" do
         service = fake_service_with_rows([
           ["Name", "Email"],
           ["Ada", "ada@example.com"],
@@ -40,7 +40,7 @@ module R3x
         rows = GoogleSheets.new(
           spreadsheet_id: "spreadsheet-123",
           project: "TEST_APP",
-        ).read_rows(range: "Sheet1!A:B", headers: false)
+        ).read_rows(range: "Sheet1!A:B")
 
         assert_equal(
           [
@@ -51,9 +51,9 @@ module R3x
         )
       end
 
-      test "read_rows deduplicates headers and pads short rows" do
+      test "read_rows pads short rows" do
         service = fake_service_with_rows([
-          %w[Name Name Email],
+          %w[Name Surname Email],
           %w[Ada Lovelace],
         ])
 
@@ -62,11 +62,11 @@ module R3x
         rows = GoogleSheets.new(
           spreadsheet_id: "spreadsheet-123",
           project: "TEST_APP",
-        ).read_rows(range: "Sheet1!A:C")
+        ).read_rows(range: "Sheet1!A:C", as_hashes: true)
 
         assert_equal(
           [
-            { "Name" => "Ada", "Name_2" => "Lovelace", "Email" => nil },
+            { "Name" => "Ada", "Surname" => "Lovelace", "Email" => nil },
           ],
           rows,
         )
@@ -83,6 +83,54 @@ module R3x
         ).read_rows(range: "Sheet1!A:C")
 
         assert_equal [], rows
+      end
+
+      [[], [""], [nil], [" "], %w[Name Name], %w[Name Name Name_2]].each do |headers|
+        test "read_rows rejects invalid headers #{headers.inspect}" do
+          service = fake_service_with_rows([headers, ["value"]])
+          GoogleSheets.any_instance.stubs(:build_service).returns(service)
+          client = GoogleSheets.new(spreadsheet_id: "spreadsheet-123", project: "TEST_APP")
+
+          error = assert_raises(ArgumentError) { client.read_rows(range: "Sheet1!A:C", as_hashes: true) }
+
+          assert_includes error.message, "headers must be nonblank and unique"
+          assert_includes error.message, "as_hashes: false"
+        end
+      end
+
+      test "read_rows rejects data beyond the header row" do
+        service = fake_service_with_rows([
+          ["Name"],
+          ["Ada"],
+          %w[Linus second third],
+          [],
+        ])
+        GoogleSheets.any_instance.stubs(:build_service).returns(service)
+
+        client = GoogleSheets.new(spreadsheet_id: "spreadsheet-123", project: "TEST_APP")
+
+        error = assert_raises(ArgumentError) { client.read_rows(range: "Sheet1!A:C", as_hashes: true) }
+
+        assert_includes error.message, "more cells than headers"
+        assert_includes error.message, "as_hashes: false"
+      end
+
+      test "read_rows preserves original names including suffixes" do
+        service = fake_service_with_rows([%w[Name Name_2], %w[first second]])
+        GoogleSheets.any_instance.stubs(:build_service).returns(service)
+
+        rows = GoogleSheets.new(spreadsheet_id: "spreadsheet-123", project: "TEST_APP").read_rows(range: "Sheet1!A:B", as_hashes: true)
+
+        assert_equal [{ "Name" => "first", "Name_2" => "second" }], rows
+      end
+
+      test "raw rows allow blank duplicate and missing headers" do
+        raw_rows = [["Name", "Name", ""], %w[first second third fourth]]
+        service = fake_service_with_rows(raw_rows)
+        GoogleSheets.any_instance.stubs(:build_service).returns(service)
+        client = GoogleSheets.new(spreadsheet_id: "spreadsheet-123", project: "TEST_APP")
+
+        assert_equal raw_rows, client.read_rows(range: "Sheet1!A:D", as_hashes: false)
       end
 
       private

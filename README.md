@@ -56,7 +56,7 @@ module Workflows
       rows = ctx.client.google_sheets(
         spreadsheet_id: "spreadsheet-id",
         project: "EXAMPLE_PROJECT"
-      ).read_rows(range: "Approved!A:Z")
+      ).read_rows(range: "Approved!A:Z", as_hashes: true)
 
       step :deliver do
         ctx.client.discord(webhook_url_env: "DISCORD_WEBHOOK_URL_EXAMPLE")
