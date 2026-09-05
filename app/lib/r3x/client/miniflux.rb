@@ -8,6 +8,8 @@ module R3x
     # to the official Miniflux API documentation:
     # See https://miniflux.app/docs/api.html
     class Miniflux
+      include R3x::Concerns::Logger
+
       DEFAULT_URL_ENV = "MINIFLUX_URL"
       DEFAULT_API_KEY_ENV = "MINIFLUX_API_KEY"
 
@@ -66,6 +68,11 @@ module R3x
       end
 
       def put(path, json: nil)
+        if R3x::Policy.dry_run_for(:miniflux)
+          logger.info "[DRY-RUN] method=PUT path=#{path}"
+          return false
+        end
+
         response = json.nil? ? connection.put("#{base_url}#{path}") : connection.put("#{base_url}#{path}", json:)
         response.raise_for_status
         true

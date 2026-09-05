@@ -40,7 +40,7 @@ that show shape only.
 | `R3X_SKIP_CACHE` | Optional (development environment flag) | Workflow CLI, workflow cache policy | Boolean. Bypasses all workflow caching, including `with_cache(key:, ttl:)`. Production boot rejects this environment flag. `bin/workflow run --skip-cache` remains an explicit one-run operator override in production. | `R3X_SKIP_CACHE=true` |
 | `R3X_DRY_RUN` | Optional | `R3x::Policy` | Boolean global dry-run override. `true` forces dry-run; `false` disables it. In `development` and `test`, dry-run is the default, so set this to `false` for real delivery. | `R3X_DRY_RUN=false` |
 | `R3X_<FEATURE>_DRY_RUN` | Optional | `R3x::Policy` | Boolean per-feature dry-run override, for keys such as `GMAIL`, `HTTP`, `DISCORD`, `FEEDWAY`, and `MARKDOWNIFY`. | `R3X_DISCORD_DRY_RUN=true` |
-| `R3X_MINIFLUX_DRY_RUN` | Optional | Madeira digest confirmation | Boolean override for marking the edition's entries as read. Falls back to global dry-run and environment defaults. Confirmation also requires real Gmail delivery; the optional Feedway backup does not gate it. Currently enforced by this workflow; the shared Miniflux client's other callers have no write guard yet. | `R3X_MINIFLUX_DRY_RUN=true` |
+| `R3X_MINIFLUX_DRY_RUN` | Optional | Miniflux client writes, Madeira digest confirmation | Boolean override for all Miniflux writes (`update_entries`, `mark_category_entries_as_read`). Takes precedence over `R3X_DRY_RUN`, then falls back to environment defaults. Dry-run skips PUT and returns `false`; reads still call the API. Madeira confirmation also requires real Gmail delivery; the optional Feedway backup does not gate it. | `R3X_MINIFLUX_DRY_RUN=true` |
 
 ## Logging And Dashboard
 

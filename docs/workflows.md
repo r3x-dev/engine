@@ -157,6 +157,12 @@ and source acknowledgment in separate isolated steps so a later failure does not
 an already completed message. A completed dry-run step is not proof of actual delivery:
 save the required client's result and respect the source's own write policy.
 
+Miniflux enforces its write policy inside the client for both `update_entries` and
+`mark_category_entries_as_read`. Dry-run skips PUT, logs the action, and returns `false`;
+a successful write returns `true`, and HTTP failures raise. Reads still call the API.
+Do not treat a skipped write as acknowledgment. Madeira also checks its saved real Gmail
+result and the Miniflux policy before recording processed-entry markers.
+
 For transient required-delivery errors, declare bounded workflow-level `retry_on` and
 reuse the saved content. The Gmail client exposes `R3x::Client::Google::Gmail::TransientError`
 for API server, rate-limit, timeout, and transport errors; ordinary authorization/client

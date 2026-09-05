@@ -86,6 +86,8 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - `bin/workflow run <path>` always requires a path to `workflow.rb`; use `-d` for dry run and `--skip-cache` to bypass `with_cache`.
 - New code with external side effects should default to `dry_run: true` or equivalent safe mode. Real delivery must be explicit, e.g. `dry_run: false`.
 - App/runtime clients should resolve dry-run defaults through `R3x::Policy.dry_run_for(:key, dry_run)`: development/test default dry, production default real unless explicitly dry.
+- Miniflux guards both write methods in the client through `R3x::Policy.dry_run_for(:miniflux)`;
+  skipped writes return `false`, successful writes return `true`, and reads still call the API.
 - Scratchpad scripts also default to dry run unless the user explicitly asks for real delivery.
 - Keep request-level retries short because they sleep inside the worker. For multi-minute transient
   outages, disable client retries for that workflow and use bounded Active Job `retry_on` backoff so

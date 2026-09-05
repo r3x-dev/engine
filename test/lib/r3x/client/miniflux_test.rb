@@ -215,16 +215,19 @@ module R3x
       end
 
       test "mark_category_entries_as_read sends PUT request to category mark-all-as-read endpoint" do
-        stub_request(:put, "https://miniflux.test/v1/categories/12/mark-all-as-read")
+        request = stub_request(:put, "https://miniflux.test/v1/categories/12/mark-all-as-read")
           .with(headers: { "X-Auth-Token" => "api-key" })
           .to_return(status: 204)
 
         result = with_client_env do
-          Miniflux.new(url_env: "MINIFLUX_URL", api_key_env: "MINIFLUX_API_KEY")
-            .mark_category_entries_as_read(category_id: 12)
+          with_env("R3X_MINIFLUX_DRY_RUN" => "false") do
+            Miniflux.new(url_env: "MINIFLUX_URL", api_key_env: "MINIFLUX_API_KEY")
+              .mark_category_entries_as_read(category_id: 12)
+          end
         end
 
         assert result
+        assert_requested request, times: 1
       end
 
       test "update_entries sends selected ids and status" do
@@ -238,12 +241,73 @@ module R3x
           end
 
         result = with_client_env do
-          Miniflux.new(url_env: "MINIFLUX_URL", api_key_env: "MINIFLUX_API_KEY")
-            .update_entries(entry_ids: ["123", 456], status: "read")
+          with_env("R3X_MINIFLUX_DRY_RUN" => "false") do
+            Miniflux.new(url_env: "MINIFLUX_URL", api_key_env: "MINIFLUX_API_KEY")
+              .update_entries(entry_ids: ["123", 456], status: "read")
+          end
         end
 
         assert result
         assert_equal({ "entry_ids" => [123, 456], "status" => "read" }, delivered)
+      end
+
+      [[nil, nil], ["true", nil], %w[false true]].each do |global, miniflux|
+        test "dry run blocks both writes with global #{global.inspect} and Miniflux #{miniflux.inspect}" do
+          with_client_env do
+            with_env("R3X_DRY_RUN" => global, "R3X_MINIFLUX_DRY_RUN" => miniflux) do
+              client = Miniflux.new
+              output = capture_logged_output do
+                assert_not client.update_entries(entry_ids: [123], status: "read", starred: false)
+                assert_not client.mark_category_entries_as_read(category_id: 12)
+              end
+
+              assert_includes output, "DRY-RUN"
+              assert_not_requested :put, %r{https://miniflux.test/}
+            end
+          end
+        end
+      end
+
+      [["false", nil], %w[true false]].each do |global, miniflux|
+        test "write policy allows delivery with global #{global.inspect} and Miniflux #{miniflux.inspect}" do
+          request = stub_request(:put, "https://miniflux.test/v1/entries")
+                    .with(body: { entry_ids: [123], starred: false }.to_json)
+                    .to_return(status: 204)
+
+          with_client_env do
+            with_env("R3X_DRY_RUN" => global, "R3X_MINIFLUX_DRY_RUN" => miniflux) do
+              assert Miniflux.new.update_entries(entry_ids: [123], starred: false)
+            end
+          end
+
+          assert_requested request, times: 1
+        end
+      end
+
+      test "dry run still reads entries" do
+        request = stub_entries_request("/v1/entries", query: {
+          "status" => "unread", "limit" => "20", "order" => "published_at", "direction" => "desc"
+        })
+
+        with_client_env do
+          with_env("R3X_MINIFLUX_DRY_RUN" => "true") do
+            assert_equal 1, Miniflux.new.entries.fetch("total")
+          end
+        end
+
+        assert_requested request, times: 1
+      end
+
+      test "real writes propagate HTTP errors" do
+        stub_request(:put, "https://miniflux.test/v1/entries").to_return(status: 503)
+
+        with_client_env do
+          with_env("R3X_MINIFLUX_DRY_RUN" => "false") do
+            client = Miniflux.new
+
+            assert_raises(HTTPX::HTTPError) { client.update_entries(entry_ids: [123], status: "read") }
+          end
+        end
       end
 
       test "update_entries rejects empty ids" do
