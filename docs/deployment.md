@@ -75,6 +75,17 @@ already chooses the correct runtime profile. `workflow_cli` is only for the
 local/operator `bin/workflow` wrapper and is not something pods should set
 directly.
 
+## Database Preparation
+
+Prepare the database before starting a process that synchronizes recurring tasks.
+`bin/setup` does this for local development, and `bin/docker-entrypoint` runs
+`bin/rails db:prepare` before the runtime command. When starting a runtime command
+directly, run `bin/rails db:prepare` first for the same environment.
+
+Recurring-task synchronization errors propagate and abort startup. Missing databases
+or queue tables are errors at this stage, just like invalid SQL or missing database
+permissions; the process does not continue with scheduling silently skipped.
+
 ## Vault Secrets
 
 The built-in Vault loader is optional. It supports two auth modes.
