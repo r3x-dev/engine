@@ -16,6 +16,61 @@ module R3x
         TestDbCleanup.clear_runtime_tables!
       end
 
+      test "limits logical runs after grouping repeated fragments" do
+        older = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], active_job_id: "older-run",
+          created_at: 2.hours.ago, finished_at: 1.hour.ago
+        )
+        fragments = 55.times.map do |index|
+          DashboardJobRows.create_job!(
+            job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], active_job_id: "resumed-run",
+            created_at: (60 - index).minutes.ago, finished_at: (59 - index).minutes.ago
+          )
+        end
+
+        [{}, { workflow_key: "test_workflow" }, { status: "finished" }].each do |filters|
+          runs = Workflow::Runs.new(**filters, limit: 2).all
+
+          assert_equal [fragments.last.id, older.id], runs.map { |run| run[:job_id] }
+          assert_equal fragments.first.created_at, runs.first[:enqueued_at]
+        end
+      end
+
+      test "filters whole runs before limiting finished history" do
+        older = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], active_job_id: "older-finished-run",
+          created_at: 3.hours.ago, finished_at: 2.hours.ago
+        )
+        51.times do |index|
+          active_job_id = "sleeping-run-#{index}"
+          DashboardJobRows.create_job!(
+            job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], active_job_id:,
+            created_at: 1.hour.ago, finished_at: 30.minutes.ago
+          )
+          resumed = DashboardJobRows.create_job!(
+            job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], active_job_id:, created_at: 20.minutes.ago,
+          )
+          resumed.update!(arguments: resumed.arguments.merge("resumptions" => 1))
+        end
+
+        runs = Workflow::Runs.new(status: "finished", limit: 1).all
+
+        assert_equal [older.id], runs.map { |run| run[:job_id] }
+      end
+
+      test "history orders by activity rather than enqueue time before limiting" do
+        slow = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [],
+          created_at: 2.days.ago, finished_at: 1.minute.ago
+        )
+        DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [],
+          created_at: 1.hour.ago, finished_at: 30.minutes.ago
+        )
+
+        assert_equal slow.id, Workflow::Runs.new(limit: 1).all.first[:job_id]
+      end
+
       test "maps workflow jobs to workflow_key and finished status" do
         job = DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,
@@ -329,6 +384,63 @@ module R3x
         runs = Workflow::Runs.new(workflow_key: "test_workflow", status: "failed", limit: 10).all
 
         assert_equal [failed_job.id], runs.map { |run| run[:job_id] }
+      end
+
+      test "history includes long-running jobs that completed most recently" do
+        long_running_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: ["schedule:abc123"],
+          finished_at: 5.seconds.ago,
+          created_at: 2.days.ago,
+          updated_at: 5.seconds.ago,
+        )
+
+        12.times do |index|
+          finished_at = (20 - index).minutes.ago
+
+          DashboardJobRows.create_job!(
+            job_class_name: WORKFLOW_JOB_CLASS_NAME,
+            arguments: ["schedule:abc123"],
+            finished_at:,
+            created_at: finished_at - 30.seconds,
+            updated_at: finished_at,
+          )
+        end
+
+        runs = Workflow::Runs.new(limit: 10).all
+
+        assert_equal long_running_job.id, runs.first[:job_id]
+      end
+
+      test "history ignores unrelated non-workflow rows entirely" do
+        60.times do |index|
+          finished_at = (index + 1).minutes.ago
+
+          DashboardJobRows.create_job!(
+            job_class_name: "CleanupJob",
+            arguments: ["tmp/#{index}"],
+            finished_at:,
+            created_at: finished_at - 30.seconds,
+            updated_at: finished_at,
+          )
+        end
+
+        10.times do |index|
+          finished_at = (90 + index).minutes.ago
+
+          DashboardJobRows.create_job!(
+            job_class_name: WORKFLOW_JOB_CLASS_NAME,
+            arguments: ["schedule:abc123"],
+            finished_at:,
+            created_at: finished_at - 30.seconds,
+            updated_at: finished_at,
+          )
+        end
+
+        runs = Workflow::Runs.new(limit: 10).all
+
+        assert_equal 10, runs.size
+        assert runs.all? { |run| run[:class_name] == WORKFLOW_JOB_CLASS_NAME }
       end
 
       private

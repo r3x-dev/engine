@@ -5,7 +5,7 @@ module R3x
     module Workflow
       class LogicalRun
         def initialize(jobs:, workflow_key:, recurring_task: nil, known_workflow: true)
-          @jobs = jobs.sort_by(&:created_at)
+          @jobs = jobs.sort_by { |job| [job.created_at, job.id] }
           @workflow_key = workflow_key
           @recurring_task = recurring_task
           @known_workflow = known_workflow

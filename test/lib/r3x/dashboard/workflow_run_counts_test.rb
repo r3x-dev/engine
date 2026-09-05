@@ -182,63 +182,6 @@ module R3x
         assert_equal 1, Workflow::RunCounts.new.running_count
       end
 
-      test "recent run ids include long-running jobs that completed most recently" do
-        long_running_job = DashboardJobRows.create_job!(
-          job_class_name: WORKFLOW_JOB_CLASS_NAME,
-          arguments: ["schedule:abc123"],
-          finished_at: 5.seconds.ago,
-          created_at: 2.days.ago,
-          updated_at: 5.seconds.ago,
-        )
-
-        12.times do |index|
-          finished_at = (20 - index).minutes.ago
-
-          DashboardJobRows.create_job!(
-            job_class_name: WORKFLOW_JOB_CLASS_NAME,
-            arguments: ["schedule:abc123"],
-            finished_at:,
-            created_at: finished_at - 30.seconds,
-            updated_at: finished_at,
-          )
-        end
-
-        runs = Workflow::Runs.new(job_ids: Workflow::RunCounts.new.recent_run_ids(limit: 10), limit: 10).all
-
-        assert_equal long_running_job.id, runs.first[:job_id]
-      end
-
-      test "recent run ids ignore unrelated non-workflow rows entirely" do
-        60.times do |index|
-          finished_at = (index + 1).minutes.ago
-
-          DashboardJobRows.create_job!(
-            job_class_name: "CleanupJob",
-            arguments: ["tmp/#{index}"],
-            finished_at:,
-            created_at: finished_at - 30.seconds,
-            updated_at: finished_at,
-          )
-        end
-
-        10.times do |index|
-          finished_at = (90 + index).minutes.ago
-
-          DashboardJobRows.create_job!(
-            job_class_name: WORKFLOW_JOB_CLASS_NAME,
-            arguments: ["schedule:abc123"],
-            finished_at:,
-            created_at: finished_at - 30.seconds,
-            updated_at: finished_at,
-          )
-        end
-
-        runs = Workflow::Runs.new(job_ids: Workflow::RunCounts.new.recent_run_ids(limit: 10), limit: 10).all
-
-        assert_equal 10, runs.size
-        assert runs.all? { |run| run[:class_name] == WORKFLOW_JOB_CLASS_NAME }
-      end
-
       private
 
       def seed_runtime_catalog

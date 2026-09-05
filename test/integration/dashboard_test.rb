@@ -50,6 +50,27 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "/workflow-runs"
   end
 
+  test "dashboard pages render successfully with an empty database" do
+    clear_tables
+
+    ["/", "/workflows", "/workflow-runs"].each do |path|
+      get path
+
+      assert_response :success
+    end
+  end
+
+  test "workflow history propagates database errors instead of rendering empty results" do
+    error = ActiveRecord::StatementInvalid.new("Workflow history query failed")
+    Dashboard::Run.stubs(:dashboard_visible).raises(error)
+
+    raised = assert_raises(ActiveRecord::StatementInvalid) do
+      get "/workflow-runs"
+    end
+
+    assert_same error, raised
+  end
+
   test "root overview limits recent runs to 10" do
     11.times do |index|
       created_at = (index + 2).minutes.ago
@@ -67,6 +88,26 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal 10, css_select(".overview-recent-runs-table tbody tr").size
     assert_not_includes response.body, "Workflow shortcuts"
+  end
+
+  test "overview and history include older runs after many resumptions" do
+    15.times do |index|
+      DashboardJobRows.create_job!(
+        job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [@trigger], active_job_id: "resumed-overview",
+        created_at: (30 - index).seconds.ago, finished_at: (29 - index).seconds.ago
+      )
+    end
+
+    get "/"
+
+    assert_response :success
+    assert_equal 2, css_select(".overview-recent-runs-table tbody tr").size
+    assert_includes response.body, "/workflow-runs/#{@job.id}"
+
+    get "/workflow-runs"
+
+    assert_response :success
+    assert_includes response.body, "/workflow-runs/#{@job.id}"
   end
 
   test "root overview recent runs are ordered by observed activity, not enqueue time" do

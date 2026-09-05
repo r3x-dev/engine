@@ -54,11 +54,7 @@ module R3x
         end
 
         def recurring_tasks
-          @recurring_tasks ||= begin
-            ::Dashboard::RecurringTask.workflow_tasks.to_a
-          rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
-            []
-          end
+          @recurring_tasks ||= ::Dashboard::RecurringTask.workflow_tasks.to_a
         end
 
         def recurring_tasks_by_workflow_key
@@ -87,20 +83,16 @@ module R3x
         end
 
         def observed_workflow_class_names_to_keys
-          @observed_workflow_class_names_to_keys ||= begin
-            ::Dashboard::Run
-              .direct_workflows
-              .distinct
-              .pluck(:class_name)
-              .each_with_object({}) do |class_name, mapping|
-                workflow_key = workflow_key_from_class_name(class_name)
-                next if workflow_key.blank?
+          @observed_workflow_class_names_to_keys ||= ::Dashboard::Run
+            .direct_workflows
+            .distinct
+            .pluck(:class_name)
+            .each_with_object({}) do |class_name, mapping|
+              workflow_key = workflow_key_from_class_name(class_name)
+              next if workflow_key.blank?
 
-                mapping[class_name] = workflow_key
-              end
-          rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
-            {}
-          end
+              mapping[class_name] = workflow_key
+            end
         end
 
         def workflow_key_from_class_name(class_name)
