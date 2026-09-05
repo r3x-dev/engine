@@ -61,6 +61,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - `PackLoader.load!(rebuild_registry: true)` rebuilds registry state but still uses Ruby `require`; it is not same-process source reload.
 - Catalog-dependent entrypoints (`bin/jobs*`, `bin/workflow`, and default or combined Puma) require `R3X_WORKFLOW_PATHS` to resolve to existing directories with at least one `workflow.rb`; fail before scheduling so a broken or empty mount cannot sweep persisted tasks. An explicit web-only process has no catalog dependency.
 - `R3x::RecurringTasksConfig.schedule_all!` persists schedulable triggers as Solid Queue dynamic recurring tasks and sweeps stale ones. Trigger file names, constants, and supported types must stay aligned with `lib/r3x/triggers/*.rb`.
+- Scheduling entrypoints require a prepared database and propagate recurring-task synchronization errors. Database preparation belongs to `bin/setup`, `bin/rails db:prepare`, or the Docker entrypoint; do not silently skip scheduling when the database or queue tables are missing.
 - Already queued jobs persist concrete workflow class names. Renaming/removing a workflow can strand old queued jobs; clean up pending jobs/tasks or accept deserialization failures.
 - Workflow code can use `ctx.durable_set(name = :default, ttl: 90.days)` for best-effort dedup. Keep `ttl:` at or below `config/cache.yml` `store_options.max_age` when using `:solid_cache_store`.
 

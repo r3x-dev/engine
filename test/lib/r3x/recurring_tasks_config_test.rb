@@ -176,6 +176,28 @@ module R3x
       assert_equal first_count, second_count
     end
 
+    test "load_and_schedule! propagates SQL errors from recurring task synchronization" do
+      scheduling_error = ActiveRecord::StatementInvalid.new("Recurring task synchronization failed")
+      RecurringTasksConfig.stubs(:schedule_all!).raises(scheduling_error)
+
+      error = assert_raises(ActiveRecord::StatementInvalid) do
+        Workflow::Boot.load_and_schedule!
+      end
+
+      assert_same scheduling_error, error
+    end
+
+    test "load_and_schedule! requires the database to be prepared" do
+      scheduling_error = ActiveRecord::NoDatabaseError.new("Database has not been prepared")
+      RecurringTasksConfig.stubs(:schedule_all!).raises(scheduling_error)
+
+      error = assert_raises(ActiveRecord::NoDatabaseError) do
+        Workflow::Boot.load_and_schedule!
+      end
+
+      assert_same scheduling_error, error
+    end
+
     test "schedule_all! does not delete foreign dynamic tasks" do
       SolidQueue.schedule_recurring_task(
         "foreign_system:task",
