@@ -77,6 +77,11 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
   reservations separate; a busy item must remain unfinished and retry later. Cache reservations are
   best-effort, and deleting one without ownership checks can delete a newer attempt's reservation.
   See docs/workflows.md "Completion Markers And Processing Reservations".
+- For multiple destinations, distinguish required delivery from optional backups. Save input/content
+  and isolate required delivery from acknowledgment. Optional integration errors may be logged locally
+  without blocking confirmation or retrying delivery; see docs/workflows.md "Pipelines With Multiple Deliveries".
+- Bound optional calls with a short total timeout. Retry transient required-delivery errors
+  in the queue using client-owned exceptions and saved content; keep authentication/configuration errors fatal.
 - Use `bin/workflow list` and `bin/workflow info <key>` to inspect registered workflows.
 - `bin/workflow run <path>` always requires a path to `workflow.rb`; use `-d` for dry run and `--skip-cache` to bypass `with_cache`.
 - New code with external side effects should default to `dry_run: true` or equivalent safe mode. Real delivery must be explicit, e.g. `dry_run: false`.
