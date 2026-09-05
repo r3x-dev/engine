@@ -646,13 +646,21 @@ an explicit one-run operator override and remains available in production.
 
 ## LLM Retry
 
-`ruby_llm` has built-in automatic retry through its Faraday middleware. Defaults are applied
-per `RubyLLM::Context` inside `R3x::Client::Llm`, so every workflow run gets an isolated copy.
+`ruby_llm` has built-in automatic retry through its Faraday middleware. `R3x::Client::Llm`
+inherits the RubyLLM configuration through an isolated `RubyLLM::Context` for each client.
 Processes that never call `ctx.client.llm` do not load the gem at all.
 
-The retry defaults are set in `app/lib/r3x/client/llm.rb` inside the `RubyLLM.context` block. RubyLLM
-waits inside the current request between attempts, so these retries keep the worker occupied. Keep
-them for short request-level recovery only.
+RubyLLM owns the retry interval, backoff, and default attempt count; the R3X client does not
+redeclare them. It exposes only `max_retries:` as a per-client override. Omit it (or pass `nil`)
+to inherit the SDK setting. RubyLLM waits inside the current request between attempts, so
+these retries keep the worker occupied. Keep them for short request-level recovery only.
+
+RubyLLM 1.16.0 defaults to three retries (four attempts total), a 0.1-second base interval,
+and a backoff factor of 2. Nominal waits are 0.1/0.2/0.4 seconds plus jitter. The project's
+previous 60-second override and the `retry_interval:` / `retry_backoff_factor:` client
+options have been removed. These settings are not a deadline for the whole call:
+HTTP latency/timeouts and provider retry headers can add
+time. Workflows needing scheduled recovery should still set `max_retries: 0`.
 
 The gem retries transient provider errors:
 
@@ -667,10 +675,15 @@ After request-level retries are exhausted, `R3x::Client::Llm` translates these f
 request-level retries with `max_retries: 0` and use bounded Active Job `retry_on` backoff. This
 returns the work to Solid Queue as a scheduled job instead of sleeping in a worker.
 
+Camara, Madeira, Porto Santo News, and Summerhouse already use `max_retries: 0` with
+five workflow attempts and 3/6/12/24-minute queue waits. This handles prolonged provider
+overload without keeping a worker asleep. Request timeout is a separate SDK setting;
+slow generation alone is not a reason to resend a request that is still in progress.
+
 ### Per-workflow override
 
-If a particular workflow needs different short request-level retry behavior, pass overrides
-directly to `ctx.client.llm(...)`:
+To disable the SDK retries for a workflow that uses queued recovery, pass
+`max_retries: 0` to `ctx.client.llm(...)`:
 
 ```ruby
 response = ctx.client.llm(
@@ -682,9 +695,9 @@ response = ctx.client.llm(
 )
 ```
 
-Any option passed this way overrides the default for that single `R3x::Client::Llm`
-instance. Keep any enabled request-level retries short. Use workflow-level `retry_on` for
-longer backoff that should return work to Solid Queue.
+`max_retries:` changes only that `R3x::Client::Llm` instance, including when set to zero.
+It does not change the global RubyLLM configuration or other clients. Use workflow-level
+`retry_on` for longer backoff that should return work to Solid Queue.
 
 OpenAI-compatible provider aliases can carry their own RubyLLM routing defaults and are automatically resolved based on the API key environment variable name:
 

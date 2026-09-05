@@ -335,9 +335,9 @@ module R3x
           llm = ctx.client.llm(api_key_env: "OPENCODE_GO_API_KEY")
           context = llm.instance_variable_get(:@llm_context)
 
-          assert_equal R3x::Client::Llm::MAX_RETRIES, context.config.max_retries
-          assert_in_delta R3x::Client::Llm::RETRY_INTERVAL, context.config.retry_interval
-          assert_equal R3x::Client::Llm::RETRY_BACKOFF_FACTOR, context.config.retry_backoff_factor
+          assert_equal RubyLLM.config.max_retries, context.config.max_retries
+          assert_in_delta RubyLLM.config.retry_interval, context.config.retry_interval
+          assert_equal RubyLLM.config.retry_backoff_factor, context.config.retry_backoff_factor
         end
       end
 
