@@ -15,6 +15,26 @@ module R3x
         TestDbCleanup.clear_runtime_tables!
       end
 
+      [ActiveRecord::StatementInvalid, ActiveRecord::NoDatabaseError].each do |error_class|
+        test "propagates #{error_class} from recurring task queries" do
+          error = error_class.new("Recurring tasks query failed")
+          ::Dashboard::RecurringTask.stubs(:workflow_tasks).raises(error)
+
+          raised = assert_raises(error_class) { Workflow::Catalog.new.all }
+
+          assert_same error, raised
+        end
+
+        test "propagates #{error_class} from observed workflow queries" do
+          error = error_class.new("Observed workflows query failed")
+          ::Dashboard::Run.stubs(:direct_workflows).raises(error)
+
+          raised = assert_raises(error_class) { Workflow::Catalog.new.all }
+
+          assert_same error, raised
+        end
+      end
+
       test "collects workflow keys from recurring tasks and direct workflow runs" do
         SolidQueue::RecurringTask.create!(
           key: "workflow:scheduled_workflow:schedule:123",

@@ -5,6 +5,7 @@ module Dashboard
     include R3x::Concerns::Logger
 
     STATUSES = %w[blocked failed finished queued running sleeping scheduled].freeze
+    STATUS_PRIORITY = %w[running sleeping failed blocked queued scheduled finished].freeze
     LATEST_ACTIVITY_BUCKETS = [
       ["failed", :solid_queue_failed_executions, :created_at],
       ["finished", :solid_queue_jobs, :finished_at],
@@ -106,12 +107,15 @@ module Dashboard
         }
       end
 
-      def recent_ids(limit:, class_names:)
-        base_scope = dashboard_visible(class_names)
+      def recent_ids(limit:, class_names:, status: nil)
+        status = status.presence&.to_s
+        raise ArgumentError, "Unsupported status: #{status}" if status && !STATUSES.include?(status)
 
-        LATEST_ACTIVITY_BUCKETS.flat_map do |status, table_name, column_name|
-          latest_activity_status_scope(base_scope, status).order(Arel::Table.new(table_name)[column_name].desc).limit(limit).pluck(:id)
-        end.uniq
+        scope = with(dashboard_fragments: recent_fragments(class_names:), dashboard_runs: ranked_logical_runs)
+          .from("dashboard_runs AS #{quoted_table_name}")
+          .where(fragment_rank: 1)
+        scope = scope.where(status_priority: STATUS_PRIORITY.index(status)) if status
+        scope.order(recorded_at: :desc, id: :desc).limit(limit).pluck(:id)
       end
 
       def logical_count
@@ -142,8 +146,6 @@ module Dashboard
         return [] if ids.empty?
 
         with_execution_associations.where(id: ids).to_a
-      rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
-        []
       end
 
       def normalize_arguments(argument)
@@ -162,23 +164,8 @@ module Dashboard
       end
 
       def logical_status(statuses, resumptions: 0)
-        if statuses.include?("running")
-          "running"
-        elsif sleeping?(statuses, resumptions:)
-          "sleeping"
-        elsif statuses.include?("failed")
-          "failed"
-        elsif statuses.include?("blocked")
-          "blocked"
-        elsif statuses.include?("queued")
-          "queued"
-        elsif statuses.include?("scheduled")
-          "scheduled"
-        elsif statuses.include?("finished")
-          "finished"
-        else
-          "queued"
-        end
+        statuses = statuses + ["sleeping"] if sleeping?(statuses, resumptions:)
+        STATUS_PRIORITY.find { |status| statuses.include?(status) } || "queued"
       end
 
       def sleeping?(statuses, resumptions: 0)
@@ -190,6 +177,65 @@ module Dashboard
       end
 
       private
+
+      def recent_fragments(class_names:)
+        base_scope = dashboard_visible(class_names)
+
+        LATEST_ACTIVITY_BUCKETS.map do |bucket, table_name, column_name|
+          status = bucket.start_with?("queued") ? "queued" : bucket
+          latest_activity_status_scope(base_scope, bucket)
+            .left_joins(:ready_execution, :scheduled_execution)
+            .select(
+              "#{quoted_table_name}.id, #{quoted_table_name}.created_at",
+              "#{logical_key_sql} AS logical_key",
+              "#{recent_recorded_at_sql(status, table_name, column_name)} AS recorded_at",
+              "#{STATUS_PRIORITY.index(status)} AS status_priority",
+              "#{%w[queued scheduled].include?(status) ? 1 : 0} AS waiting",
+              "CASE WHEN #{resumptions_positive_sql} THEN 1 ELSE 0 END AS resumed",
+            )
+        end
+      end
+
+      def ranked_logical_runs
+        selection = Arel.sql(<<~SQL.squish, running: STATUS_PRIORITY.index("running"), sleeping: STATUS_PRIORITY.index("sleeping"))
+          id, recorded_at,
+          ROW_NUMBER() OVER (PARTITION BY logical_key ORDER BY created_at DESC, id DESC) AS fragment_rank,
+          CASE
+            WHEN MIN(status_priority) OVER (PARTITION BY logical_key) = :running
+              THEN :running
+            WHEN resumed = 1 AND MAX(waiting) OVER (PARTITION BY logical_key) = 1
+              THEN :sleeping
+            ELSE MIN(status_priority) OVER (PARTITION BY logical_key)
+          END AS status_priority
+        SQL
+
+        from("dashboard_fragments").select(selection)
+      end
+
+      def logical_key_sql
+        <<~SQL.squish
+          CASE WHEN #{quoted_table_name}.active_job_id IS NULL OR TRIM(#{quoted_table_name}.active_job_id) = ''
+            THEN 'job:' || #{quoted_table_name}.id
+            ELSE 'aj:' || #{quoted_table_name}.active_job_id
+          END
+        SQL
+      end
+
+      def recent_recorded_at_sql(status, table_name, column_name)
+        case status
+        when "sleeping"
+          "COALESCE(solid_queue_ready_executions.created_at, " \
+            "solid_queue_scheduled_executions.created_at, #{quoted_table_name}.updated_at)"
+        when "scheduled"
+          "COALESCE(solid_queue_scheduled_executions.scheduled_at, #{quoted_table_name}.scheduled_at, #{quoted_table_name}.created_at)"
+        when "failed", "finished", "running", "blocked", "queued"
+          fallback = %w[failed finished running].include?(status) ? "updated_at" : "created_at"
+          "COALESCE(#{connection.quote_table_name(table_name)}.#{connection.quote_column_name(column_name)}, " \
+            "#{quoted_table_name}.#{fallback})"
+        else
+          raise ArgumentError, "Unsupported status: #{status}"
+        end
+      end
 
       def normalize_hash(argument)
         normalized = argument.each_with_object({}) do |(key, value), hash|

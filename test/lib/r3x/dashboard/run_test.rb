@@ -13,6 +13,17 @@ class Dashboard::RunTest < ActiveSupport::TestCase
     TestDbCleanup.clear_runtime_tables!
   end
 
+  test "latest activity propagates database errors instead of hiding run history" do
+    error = ActiveRecord::StatementInvalid.new("Latest activity query failed")
+    Dashboard::Run.stubs(:dashboard_visible).raises(error)
+
+    raised = assert_raises(ActiveRecord::StatementInvalid) do
+      Dashboard::Run.latest_activity_candidates(class_names: [WORKFLOW_JOB_CLASS_NAME])
+    end
+
+    assert_same error, raised
+  end
+
   test "status and recorded_at resolve across dashboard-visible execution states" do
     failed_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,
@@ -139,6 +150,71 @@ class Dashboard::RunTest < ActiveSupport::TestCase
 
     assert_equal [sleeping_job.id], Dashboard::Run.for_status("sleeping").pluck(:id)
     assert_not_includes Dashboard::Run.for_status("scheduled").pluck(:id), sleeping_job.id
+
+    ordered_runs = runs.values.sort_by { |run| [run.recorded_at, run.id] }.reverse
+
+    assert_equal ordered_runs.map(&:id), Dashboard::Run.recent_ids(limit: 10, class_names: [WORKFLOW_JOB_CLASS_NAME])
+    Dashboard::Run::STATUSES.each do |status|
+      expected_ids = ordered_runs.select { |run| run.status == status }.map(&:id)
+
+      assert_equal expected_ids, Dashboard::Run.recent_ids(limit: 10, class_names: [WORKFLOW_JOB_CLASS_NAME], status:)
+    end
+  end
+
+  test "logical selection keeps blank job identities separate and breaks timestamp ties by id" do
+    created_at = 5.minutes.ago
+    finished_at = 1.minute.ago
+    jobs = [nil, "", " ", "same-run", "same-run"].map do |active_job_id|
+      DashboardJobRows.create_job!(
+        job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], active_job_id:, created_at:, finished_at:,
+      )
+    end
+
+    assert_equal [jobs.last.id, *jobs.first(3).reverse.map(&:id)],
+      Dashboard::Run.recent_ids(limit: 10, class_names: [WORKFLOW_JOB_CLASS_NAME])
+  end
+
+  test "logical selection preserves status precedence across mixed fragments" do
+    scenarios = [
+      %w[failed running running],
+      %w[failed sleeping sleeping],
+      %w[failed blocked failed],
+      %w[failed finished failed],
+      %w[queued finished sleeping],
+    ]
+    expected_ids_by_status = Hash.new { |hash, key| hash[key] = [] }
+    scenarios.each_with_index do |(first_status, last_status, expected_status), index|
+      active_job_id = "mixed-status-#{index}"
+      first = DashboardJobRows.create_job!(
+        job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], active_job_id:, created_at: 5.minutes.ago,
+      )
+      SolidQueue::FailedExecution.create!(job_id: first.id, error: "failure") if first_status == "failed"
+      last = DashboardJobRows.create_job!(
+        job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], active_job_id:, created_at: 2.minutes.ago,
+      )
+      last.update!(arguments: last.arguments.merge("resumptions" => 1))
+      case last_status
+      when "running"
+        claim_job!(last, claimed_at: 1.minute.ago)
+      when "finished"
+        last.update!(finished_at: 1.minute.ago)
+      when "blocked"
+        last.update!(concurrency_key: active_job_id)
+        SolidQueue::ReadyExecution.where(job_id: last.id).delete_all
+        SolidQueue::BlockedExecution.create!(
+          job_id: last.id, queue_name: "default", priority: 0, concurrency_key: active_job_id, expires_at: 1.hour.from_now,
+        )
+      when "sleeping"
+        # A queued continuation is sleeping until a worker claims it.
+      end
+      expected_ids_by_status[expected_status] << last.id
+    end
+
+    Dashboard::Run::STATUSES.each do |status|
+      ids = Dashboard::Run.recent_ids(limit: 10, class_names: [WORKFLOW_JOB_CLASS_NAME], status:)
+
+      assert_equal expected_ids_by_status[status].sort, ids.sort
+    end
   end
 
   test "workflow payload helpers parse serialized workflow arguments" do

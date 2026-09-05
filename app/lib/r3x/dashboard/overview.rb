@@ -42,9 +42,7 @@ module R3x
       end
 
       def recent_runs
-        @recent_runs ||= Workflow::Runs
-          .new(job_ids: run_counts.recent_run_ids(limit: RECENT_RUN_LIMIT), limit: RECENT_RUN_LIMIT)
-          .all
+        @recent_runs ||= Workflow::Runs.new(limit: RECENT_RUN_LIMIT).all
       end
 
       private

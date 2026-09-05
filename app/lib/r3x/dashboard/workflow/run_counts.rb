@@ -14,10 +14,6 @@ module R3x
           logical_run_count(recent_scopes(time_range:).flat_map(&:to_a).uniq(&:id))
         end
 
-        def recent_run_ids(limit:)
-          ::Dashboard::Run.recent_ids(limit:, class_names: direct_class_names)
-        end
-
         private
 
         def recent_scopes(time_range:)

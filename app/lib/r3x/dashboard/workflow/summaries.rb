@@ -211,11 +211,7 @@ module R3x
         end
 
         def recurring_tasks_by_workflow_key
-          @recurring_tasks_by_workflow_key ||= begin
-            ::Dashboard::RecurringTask.workflow_tasks.to_a.group_by(&:workflow_key)
-          rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
-            {}
-          end
+          @recurring_tasks_by_workflow_key ||= ::Dashboard::RecurringTask.workflow_tasks.to_a.group_by(&:workflow_key)
         end
 
         def catalog
@@ -273,8 +269,6 @@ module R3x
                 .to_a
                 .group_by(&:active_job_id)
             end
-          rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
-            {}
           end
         end
 
