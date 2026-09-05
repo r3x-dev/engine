@@ -122,6 +122,30 @@ existing manual verification policy.
 Rails references: [custom job serialization](https://api.rubyonrails.org/v8.1.3/classes/ActiveJob/Core.html)
 and [Continuable steps and cursors](https://api.rubyonrails.org/v8.1.3/classes/ActiveJob/Continuation.html).
 
+## Completion Markers And Processing Reservations
+
+A completion marker means all required work succeeded. Write it after delivery (or after deciding
+that an item needs no delivery), never before downloading, classifying, or sending. An ordinary
+`rescue` cannot clean up after a killed process, so a premature completion marker can suppress
+unfinished work for its entire retention period.
+
+When overlapping runs should defer the same item, use a separate, short-lived processing reservation.
+Check completion first. A busy reservation means wait and retry the unfinished step, not return
+success and advance the cursor. Keep queue waits and retry/resumption counts bounded, allowing for
+the reservation's expiry and normal workflow steps. Expiry permits recovery on a retry or later run;
+it does not automatically restart a failed queue job.
+
+`ctx.durable_set` can provide a best-effort reservation with `add?` and a short TTL. It has no owner
+token or conditional delete. Let such reservations expire naturally; deleting in `ensure` or
+`rescue` can remove a newer reservation acquired after the old one expired. This also means ordinary
+failures may wait for expiry before trying again. Do not assume cache markers provide exclusive
+access: eviction, concurrent acquisition, or work outliving the TTL can allow overlap.
+
+Choose a TTL with the actual HTTP timeouts/retries in mind. For stronger delivery guarantees, use
+provider idempotency or durable, owner-checked delivery state. Neither cache markers nor queue
+checkpoints make an external send atomic with recording its success. When correcting old marker
+semantics, preserve valid completion history and review known abandoned entries separately.
+
 ## Conditions
 
 Use `condition` for workflow-level preconditions that must be true before any work starts:
