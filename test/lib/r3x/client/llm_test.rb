@@ -50,26 +50,37 @@ module R3x
         assert_not_nil llm
       end
 
-      test "applies project-level retry_interval default" do
+      test "inherits RubyLLM retry configuration" do
+        R3x::GemLoader.require("ruby_llm")
+        config = RubyLLM.config
+        original_interval = config.retry_interval
+        config.retry_interval = 0.25
+
         llm = Llm.new(api_key: "test", config_api_key_attr: "gemini_api_key")
         context = llm.instance_variable_get(:@llm_context)
 
-        assert_in_delta(60.0, context.config.retry_interval)
+        assert_equal config.max_retries, context.config.max_retries
+        assert_in_delta config.retry_interval, context.config.retry_interval
+        assert_equal config.retry_backoff_factor, context.config.retry_backoff_factor
+      ensure
+        config.retry_interval = original_interval if config
       end
 
-      test "forwards per-workflow retry overrides" do
-        llm = Llm.new(
-          api_key: "test",
-          config_api_key_attr: "gemini_api_key",
-          max_retries: 5,
-          retry_interval: 30.0,
-          retry_backoff_factor: 4,
-        )
-        context = llm.instance_variable_get(:@llm_context)
+      [0, 5].each do |max_retries|
+        test "overrides max_retries #{max_retries} only for this client" do
+          R3x::GemLoader.require("ruby_llm")
+          default_max_retries = RubyLLM.config.max_retries
+          llm = Llm.new(api_key: "test", config_api_key_attr: "gemini_api_key", max_retries:)
+          other_llm = Llm.new(api_key: "other", config_api_key_attr: "gemini_api_key")
+          context = llm.instance_variable_get(:@llm_context)
+          other_context = other_llm.instance_variable_get(:@llm_context)
 
-        assert_equal 5, context.config.max_retries
-        assert_in_delta(30.0, context.config.retry_interval)
-        assert_equal 4, context.config.retry_backoff_factor
+          assert_equal max_retries, context.config.max_retries
+          assert_equal default_max_retries, RubyLLM.config.max_retries
+          assert_equal default_max_retries, other_context.config.max_retries
+          assert_in_delta RubyLLM.config.retry_interval, context.config.retry_interval
+          assert_equal RubyLLM.config.retry_backoff_factor, context.config.retry_backoff_factor
+        end
       end
 
       test "translates transient provider errors" do

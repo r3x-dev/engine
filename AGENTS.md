@@ -94,6 +94,8 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Keep request-level retries short because they sleep inside the worker. For multi-minute transient
   outages, disable client retries for that workflow and use bounded Active Job `retry_on` backoff so
   Solid Queue schedules the next attempt.
+- The LLM client inherits RubyLLM's retry settings. Only `max_retries:` is exposed locally;
+  use `max_retries: 0` with queued workflow retries. Do not duplicate SDK interval/backoff defaults.
 - Wrap paid, rate-limited, or expensive external fetches in `with_cache(key:, ttl:)` to reduce
   repeated calls across retries and resumes. TTL caching is best-effort: concurrent misses or cache
   eviction can recompute, so use provider idempotency or durable database claims when duplicate

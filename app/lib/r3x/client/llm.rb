@@ -5,9 +5,6 @@ module R3x
     class Llm
       include R3x::Concerns::Logger
 
-      MAX_RETRIES = 3
-      RETRY_INTERVAL = 60.0
-      RETRY_BACKOFF_FACTOR = 2
       DEFAULT_CHAT_OPTIONS = {}.freeze
       CHAT_OPTIONS_BY_PROVIDER = {} # rubocop:disable Style/MutableConstant
       CHAT_OPTIONS_BY_PROVIDER_MUTEX = Mutex.new
@@ -32,13 +29,7 @@ module R3x
         end
       end
 
-      def initialize(
-        api_key:,
-        config_api_key_attr:,
-        max_retries: MAX_RETRIES,
-        retry_interval: RETRY_INTERVAL,
-        retry_backoff_factor: RETRY_BACKOFF_FACTOR
-      )
+      def initialize(api_key:, config_api_key_attr:, max_retries: nil)
         R3x::GemLoader.require("ruby_llm")
 
         # Configure RubyLLM with the our logger from R3x::Concerns::Logger
@@ -53,9 +44,7 @@ module R3x
 
         @llm_context = RubyLLM.context do |config|
           config.public_send(:"#{config_api_key_attr}=", api_key)
-          config.max_retries = max_retries
-          config.retry_interval = retry_interval
-          config.retry_backoff_factor = retry_backoff_factor
+          config.max_retries = max_retries unless max_retries.nil?
         end
       end
 
