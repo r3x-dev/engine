@@ -23,10 +23,17 @@ module R3x
             return { "mode" => "dry_run" }
           end
 
-          result = build_service.send_user_message(
-            "me", # The user's email address. The special value `me` can be used to indicate the
-            ::Google::Apis::GmailV1::Message.new(raw: raw_message(to:, subject:, body:, html_body:, attachments:)),
-          )
+          service = build_service
+
+          begin
+            result = service.send_user_message(
+              "me", # The user's email address. The special value `me` can be used to indicate the
+              ::Google::Apis::GmailV1::Message.new(raw: raw_message(to:, subject:, body:, html_body:, attachments:)),
+            )
+          rescue ::Google::Apis::ServerError, ::Google::Apis::RateLimitError,
+            ::Google::Apis::TransmissionError, ::Google::Apis::RequestTimeOutError => error
+            raise TransientError, error.message
+          end
 
           {
             "mode"       => "real",

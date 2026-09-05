@@ -146,6 +146,42 @@ provider idempotency or durable, owner-checked delivery state. Neither cache mar
 checkpoints make an external send atomic with recording its success. When correcting old marker
 semantics, preserve valid completion history and review known abandoned entries separately.
 
+## Pipelines With Multiple Deliveries
+
+First decide which deliveries are required and which are optional for this workflow.
+Do not give every destination the same success/retry contract. In the Madeira digest,
+Gmail is required and Feedway is an optional backup.
+
+Save prepared input and final subject/text/HTML before delivery. Keep required delivery
+and source acknowledgment in separate isolated steps so a later failure does not resend
+an already completed message. A completed dry-run step is not proof of actual delivery:
+save the required client's result and respect the source's own write policy.
+
+For transient required-delivery errors, declare bounded workflow-level `retry_on` and
+reuse the saved content. The Gmail client exposes `R3x::Client::Google::Gmail::TransientError`
+for API server, rate-limit, timeout, and transport errors; ordinary authorization/client
+errors still propagate. Do not reference lazily loaded Google SDK error classes in the
+workflow declaration. Madeira allows five Gmail attempts with 3/6/12/24-minute queue waits.
+
+Optional copies can share the final phase with source acknowledgment. In Madeira that
+phase confirms Miniflux first, then attempts Feedway. Catch ordinary errors only around
+that optional integration, log them, and let the run finish. Do not make source confirmation
+depend on a backup or add separate retries/markers unless the product needs them.
+Give optional calls a short total request deadline: the Feedway client allows ten seconds.
+
+Bound saved input size and resumptions. An API page limit does not bound all pages; do not
+silently drop entries to fit a job snapshot. Use durable run storage for larger editions.
+Keep cross-run selection history separate from the current edition.
+
+Check required-delivery failure, acknowledgment retry, and optional-backup failure with
+external requests blocked. The first must retry only transient errors within its limit,
+then propagate; the second must not resend completed
+mail; the third must not fail the run. A hard kill between provider acceptance and saving
+progress, or a lost response after acceptance, can still duplicate that delivery.
+Review old attempted jobs before upgrading:
+Solid Queue can retain original arguments and reset execution counters on manual retry.
+An empty continuation or `executions == 0` is not a safe detector of undelivered old work.
+
 ## Conditions
 
 Use `condition` for workflow-level preconditions that must be true before any work starts:

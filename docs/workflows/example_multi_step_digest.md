@@ -177,6 +177,8 @@ end
   Discord succeeds and Gmail fails, retry can duplicate the Discord message. A hard kill before
   recording success has the same risk. Production delivery requiring stronger guarantees needs
   provider idempotency or persisted progress per destination.
+  This combined-delivery example is intentionally simplified; for a production pipeline use
+  [required delivery and optional backup semantics](../workflows.md#pipelines-with-multiple-deliveries).
 - `ctx.client.*` is the normal boundary for integrations. That keeps workflow code readable and
   lets clients encapsulate auth, retries, and provider-specific details.
 - `R3x::Workflow::LlmSchema.define` is the preferred way to get structured LLM output when the

@@ -92,7 +92,60 @@ module R3x
           end
         end
 
+        [[500, "backendError"], [503, "backendError"], [429, "rateLimitExceeded"],
+          [403, "userRateLimitExceeded"], [408, "requestTimeout"]].each do |status, reason|
+          test "deliver exposes transient Gmail error for #{status} #{reason}" do
+            with_real_delivery do
+              request = stub_request(:post, "https://gmail.googleapis.com/gmail/v1/users/me/messages/send")
+                        .to_return(status:, body: { error: { message: reason, errors: [{ reason: }] } }.to_json,
+                          headers: { "Content-Type" => "application/json" })
+
+              error = assert_raises(Gmail::TransientError) { deliver_message }
+
+              assert_kind_of ::Google::Apis::Error, error.cause
+              assert_equal status, error.cause.status_code
+              assert_requested request, times: 1
+            end
+          end
+        end
+
+        test "deliver exposes transient Gmail transport errors" do
+          with_real_delivery do
+            request = stub_request(:post, "https://gmail.googleapis.com/gmail/v1/users/me/messages/send").to_timeout
+
+            error = assert_raises(Gmail::TransientError) { deliver_message }
+
+            assert_kind_of ::Google::Apis::TransmissionError, error.cause
+            assert_requested request, times: 1
+          end
+        end
+
+        [400, 401, 403].each do |status|
+          test "deliver preserves permanent Gmail error for #{status}" do
+            with_real_delivery do
+              stub_request(:post, "https://gmail.googleapis.com/gmail/v1/users/me/messages/send")
+                .to_return(status:, body: { error: { message: "denied" } }.to_json,
+                  headers: { "Content-Type" => "application/json" })
+              error_class = status == 401 ? ::Google::Apis::AuthorizationError : ::Google::Apis::ClientError
+
+              error = assert_raises(error_class) { deliver_message }
+
+              assert_equal status, error.status_code
+            end
+          end
+        end
+
         private
+
+        def with_real_delivery(&)
+          R3x::Client::GoogleAuth.require_gmail!
+          R3x::Client::GoogleAuth.stubs(:from_env).returns("test-token")
+          with_env("R3X_GMAIL_DRY_RUN" => "false", &)
+        end
+
+        def deliver_message
+          Gmail.new(project: "TEST_APP").deliver(to: "recipient@example.com", subject: "Hello", body: "Body")
+        end
 
         def with_env(hash)
           old_values = {}
