@@ -266,6 +266,24 @@ raises, the workflow fails instead of logging a false success.
 - Prefer this for best-effort dedup across runs; prefer a real table only when you need permanent
   history or hard uniqueness guarantees.
 
+## Google Sheets Rows
+
+`ctx.client.google_sheets(...).read_rows(range:)` returns raw arrays by default,
+including the first row. Pass `as_hashes: true` to use that first row as headers and
+return one hash per data row. Headers must be nonblank and unique, and data rows
+cannot contain more cells than there are headers. Invalid input raises `ArgumentError`
+with a suggestion to fix the sheet or use `as_hashes: false`.
+
+Names are used unchanged: no duplicate suffixes or generated column names. Shorter
+rows are padded with `nil`; an empty sheet returns `[]`. Previously, duplicate names
+were suffixed automatically and extra values could be silently dropped. Fix those
+header rows before using hash mode.
+
+`as_hashes: false` returns the original rows unchanged, including duplicate/blank headers
+and irregular row lengths. Use it when column positions are the intended contract.
+The former `headers:` option is removed. Existing callers that expect hashes must
+pass `as_hashes: true` explicitly.
+
 ## Reusing HTTP Clients
 
 - `ctx.client.http` returns a new instance of the HTTP client (`R3x::Client::Http`) on every call.

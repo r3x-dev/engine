@@ -9,18 +9,18 @@ module R3x
         @service = build_service
       end
 
-      def read_rows(range:, headers: true)
+      def read_rows(range:, as_hashes: false)
         response = service.get_spreadsheet_values(spreadsheet_id, range)
         rows = response.values || []
         return [] if rows.empty?
 
-        return rows unless headers
+        return rows unless as_hashes
 
         header_row = rows.first
-        unique_headers = make_unique_headers(header_row)
+        validate_headers!(header_row)
         data_rows = rows.drop(1)
 
-        data_rows.map { |row| row_to_hash(unique_headers, row) }
+        data_rows.map { |row| row_to_hash(header_row, row) }
       end
 
       private
@@ -35,17 +35,18 @@ module R3x
         service
       end
 
-      def make_unique_headers(headers)
-        seen = Hash.new(0)
-        headers.map do |header|
-          seen[header] += 1
-          (seen[header] > 1) ? "#{header}_#{seen[header]}" : header
+      def validate_headers!(headers)
+        if headers.empty? || headers.any?(&:blank?) || headers.uniq.size != headers.size
+          raise ArgumentError, "Google Sheets headers must be nonblank and unique; fix the sheet or use as_hashes: false"
         end
       end
 
       def row_to_hash(headers, row)
-        padded_row = row + Array.new([0, headers.length - row.length].max, nil)
-        headers.zip(padded_row).to_h
+        if row.size > headers.size
+          raise ArgumentError, "Google Sheets row has more cells than headers; fix the sheet or use as_hashes: false"
+        end
+
+        headers.zip(row).to_h
       end
     end
   end

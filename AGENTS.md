@@ -53,6 +53,8 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - `workflows/`: user workflow packs. Do not write tests for workflows under this folder.
 - `test/fixtures/workflows/`: fixture workflows for framework tests.
 - Third-party Google constants must be referenced as `::Google`; `R3x::Client::Google` is a project namespace.
+- Google Sheets `read_rows` returns raw arrays by default. Use `as_hashes: true` for row hashes;
+  reject blank/duplicate headers or data beyond the header width instead of renaming columns.
 
 ## Workflow Runtime
 

@@ -88,7 +88,7 @@ module Workflows
     def read_source_rows
       ctx.client
         .google_sheets(spreadsheet_id: SPREADSHEET_ID, project: GOOGLE_PROJECT)
-        .read_rows(range: "Approved!A:Z")
+        .read_rows(range: "Approved!A:Z", as_hashes: true)
         .map { |row| row.to_h.transform_keys(&:to_s) }
     end
 
