@@ -73,6 +73,10 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
   job serialization for small JSON-compatible snapshots, or a durable run record for larger state.
   Never apply saved indices to freshly fetched input. Review old queued payloads and manually simulate
   resume after source changes and cache eviction; see docs/workflows.md "Stable Input Across Resumptions".
+- Write completion markers only after all required work succeeds. Keep temporary processing
+  reservations separate; a busy item must remain unfinished and retry later. Cache reservations are
+  best-effort, and deleting one without ownership checks can delete a newer attempt's reservation.
+  See docs/workflows.md "Completion Markers And Processing Reservations".
 - Use `bin/workflow list` and `bin/workflow info <key>` to inspect registered workflows.
 - `bin/workflow run <path>` always requires a path to `workflow.rb`; use `-d` for dry run and `--skip-cache` to bypass `with_cache`.
 - New code with external side effects should default to `dry_run: true` or equivalent safe mode. Real delivery must be explicit, e.g. `dry_run: false`.
