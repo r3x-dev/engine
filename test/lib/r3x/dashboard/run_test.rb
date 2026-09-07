@@ -24,6 +24,18 @@ class Dashboard::RunTest < ActiveSupport::TestCase
     assert_same error, raised
   end
 
+  test "recent ids skips the database when no workflow classes are visible" do
+    sql_events = []
+    subscriber = ->(event) { sql_events << event.payload[:sql] unless event.payload[:name] == "SCHEMA" }
+
+    ids = ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+      Dashboard::Run.recent_ids(limit: 10, class_names: [nil, " "])
+    end
+
+    assert_empty ids
+    assert_empty sql_events
+  end
+
   test "status and recorded_at resolve across dashboard-visible execution states" do
     failed_job = DashboardJobRows.create_job!(
       job_class_name: WORKFLOW_JOB_CLASS_NAME,

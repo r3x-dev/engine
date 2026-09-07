@@ -9,9 +9,15 @@ module R3x
         end
 
         def recent_activity_count(window:)
-          time_range = window.ago..Time.current
+          return 0 if direct_class_names.empty?
 
-          logical_run_count(recent_scopes(time_range:).flat_map(&:to_a).uniq(&:id))
+          time_range = window.ago..Time.current
+          recent_jobs = recent_scopes(time_range:).map { |scope| scope.select(:id) }
+          recent_activity_ids = ::Dashboard::Run.from("recent_activity").select(:id)
+
+          direct_runs.with(recent_activity: recent_jobs)
+            .where(id: recent_activity_ids)
+            .logical_count
         end
 
         private
@@ -27,13 +33,6 @@ module R3x
             direct_runs.for_status("blocked").where(solid_queue_blocked_executions: { created_at: time_range }),
             direct_runs.for_status("scheduled").where(solid_queue_scheduled_executions: { scheduled_at: time_range }),
           ]
-        end
-
-        def logical_run_count(jobs)
-          active_job_ids = jobs.map(&:active_job_id).compact_blank.uniq
-          blank_active_job_id_count = jobs.count { |job| job.active_job_id.blank? }
-
-          active_job_ids.size + blank_active_job_id_count
         end
 
         def direct_runs

@@ -16,6 +16,52 @@ module R3x
         TestDbCleanup.clear_runtime_tables!
       end
 
+      test "counts distinct activity without instantiating job rows" do
+        ["resumed-run", "resumed-run", nil, nil, "", "", " ", " "].each do |active_job_id|
+          DashboardJobRows.create_job!(
+            job_class_name: WORKFLOW_JOB_CLASS_NAME,
+            arguments: [],
+            active_job_id:,
+            created_at: 2.hours.ago,
+            finished_at: 1.hour.ago,
+          )
+        end
+        failed = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], active_job_id: "resumed-run", created_at: 30.minutes.ago,
+        )
+        SolidQueue::FailedExecution.create!(job_id: failed.id, error: "failure", created_at: 20.minutes.ago)
+        instantiated_rows = []
+        subscriber = ->(event) do
+          instantiated_rows << event.payload[:record_count] if event.payload[:class_name] == "Dashboard::Run"
+        end
+
+        ActiveSupport::Notifications.subscribed(subscriber, "instantiation.active_record") do
+          assert_equal 7, Workflow::RunCounts.new.recent_activity_count(window: 24.hours)
+        end
+
+        assert_empty instantiated_rows
+      end
+
+      test "recent activity skips run queries when the catalog has no workflow classes" do
+        counts = Workflow::RunCounts.new
+        counts.stubs(:direct_class_names).returns([])
+        ::Dashboard::Run.expects(:dashboard_visible).never
+
+        assert_equal 0, counts.recent_activity_count(window: 24.hours)
+      end
+
+      test "activity window includes its boundaries and excludes older and future activity" do
+        travel_to(Time.current.change(usec: 0)) do
+          [24.hours.ago - 1.second, 24.hours.ago, Time.current, 1.second.from_now].each do |finished_at|
+            DashboardJobRows.create_job!(
+              job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], created_at: 3.days.ago, finished_at:,
+            )
+          end
+
+          assert_equal 2, Workflow::RunCounts.new.recent_activity_count(window: 24.hours)
+        end
+      end
+
       test "counts running jobs and recent activity with dashboard visibility semantics" do
         DashboardJobRows.create_job!(
           job_class_name: WORKFLOW_JOB_CLASS_NAME,

@@ -38,6 +38,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Dashboard pages are DB-first and reconstructed from persisted Solid Queue recurring-task/job rows. Workflows with no persisted runtime artifacts are invisible by design.
 - Let dashboard database errors propagate to Rails error handling. Do not turn failed queries or a missing database/schema into empty collections; empty states require successful queries.
 - Overview and history share `Dashboard::Run.recent_ids`: filter and limit logical runs in SQL, then load their fragments. Preserve whole-run status precedence and order by the latest fragment's activity; break equal creation/activity timestamps with the job ID.
+- Activity counters aggregate in SQL with the same logical run key as history. Recent activity counts any matching fragment in the requested time window; it is independent of the history limit.
 - Dashboard queue boundaries are `Dashboard::Run`, `Dashboard::RecurringTask`, and `Dashboard::DirectWorkflowEnqueuer`.
 - Web-only pods do not load workflow packs. `POST /workflows/:workflow_key/runs` may enqueue through `Dashboard::DirectWorkflowEnqueuer` without constantizing workflow classes.
 - Logs are optional and read-only. `R3X_LOGS_PROVIDER=victorialogs` reads `R3X_VICTORIA_LOGS_URL`; missing config or query failures must not break main pages.

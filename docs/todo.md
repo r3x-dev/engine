@@ -5,6 +5,15 @@ and ordered by payoff. Completed work belongs in Git history rather than this fi
 
 There are no open app-quality items from the 2026-07-10 audit.
 
+## Current review backlog (local only)
+
+- Dashboard database errors and logical run selection: completed in `5823b08`.
+- D2, implemented and awaiting review: count recent activity in SQL using the existing activity scopes
+  and `Dashboard::Run.logical_count`, instead of loading every matching job into Ruby. Preserve
+  the 24-hour window, deduplication across fragments, and exclusion of future scheduled jobs.
+  No production slowdown has been measured; this is a small efficiency/simplification follow-up.
+- Deferred by choice: LLM instrumentation and Flightdeck branding changes.
+
 ## Workflow backlog
 
 - `madeira_weekly_news_digest`: persist the generated digest (e.g. via `with_cache(key:, ttl:)`) and

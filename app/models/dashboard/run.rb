@@ -111,7 +111,10 @@ module Dashboard
         status = status.presence&.to_s
         raise ArgumentError, "Unsupported status: #{status}" if status && !STATUSES.include?(status)
 
-        scope = with(dashboard_fragments: recent_fragments(class_names:), dashboard_runs: ranked_logical_runs)
+        visible_class_names = Array(class_names).compact_blank
+        return [] if visible_class_names.empty?
+
+        scope = with(dashboard_fragments: recent_fragments(class_names: visible_class_names), dashboard_runs: ranked_logical_runs)
           .from("dashboard_runs AS #{quoted_table_name}")
           .where(fragment_rank: 1)
         scope = scope.where(status_priority: STATUS_PRIORITY.index(status)) if status
@@ -119,13 +122,7 @@ module Dashboard
       end
 
       def logical_count
-        count(
-          "DISTINCT CASE " \
-            "WHEN #{quoted_table_name}.active_job_id IS NULL OR #{quoted_table_name}.active_job_id = '' " \
-            "THEN 'job:' || #{quoted_table_name}.id " \
-            "ELSE 'aj:' || #{quoted_table_name}.active_job_id " \
-            "END",
-        )
+        distinct.count(Arel.sql(logical_key_sql))
       end
 
       def resumptions_positive_sql
