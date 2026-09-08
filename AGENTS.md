@@ -82,6 +82,8 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
   reservations separate; a busy item must remain unfinished and retry later. Cache reservations are
   best-effort, and deleting one without ownership checks can delete a newer attempt's reservation.
   See docs/workflows.md "Completion Markers And Processing Reservations".
+- Acquire delivery reservations after preparation/classification and recheck completion after
+  acquisition, so preparation failures do not block retries behind their own reservation.
 - For multiple destinations, distinguish required delivery from optional backups. Save input/content
   and isolate required delivery from acknowledgment. Optional integration errors may be logged locally
   without blocking confirmation or retrying delivery; see docs/workflows.md "Pipelines With Multiple Deliveries".

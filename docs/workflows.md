@@ -135,6 +135,12 @@ success and advance the cursor. Keep queue waits and retry/resumption counts bou
 the reservation's expiry and normal workflow steps. Expiry permits recovery on a retry or later run;
 it does not automatically restart a failed queue job.
 
+For delivery reservations, acquire after preparation and classification, immediately before
+delivery, and recheck completion after acquisition. Camara follows this order so transient LLM
+failures do not leave a reservation blocking the next attempt. Its serialized event list still
+supplies retry input without fetching Apify again. Preparation can repeat on overlapping runs or
+delivery resumptions; this reservation only covers delivery.
+
 `ctx.durable_set` can provide a best-effort reservation with `add?` and a short TTL. It has no owner
 token or conditional delete. Let such reservations expire naturally; deleting in `ensure` or
 `rescue` can remove a newer reservation acquired after the old one expired. This also means ordinary
