@@ -1,0 +1,4 @@
+interface:
+  display_name: "DHH / 37signals Rails Style"
+  short_description: "Domain naming and readable Rails in the DHH style"
+  default_prompt: "Use $ce-dhh-rails-style for this Rails task, applying DHH/37signals naming and object design within the requested scope and existing project conventions."
