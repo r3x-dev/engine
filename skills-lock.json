@@ -2,21 +2,16 @@
   "version": 1,
   "skills": {
     "ce-dhh-rails-style": {
-      "source": "EveryInc/compound-engineering-plugin",
+      "source": "zewelor/agents-skills",
       "sourceType": "github",
-      "skillPath": "plugins/compound-engineering/skills/ce-dhh-rails-style/SKILL.md",
-      "computedHash": "49604154d82e6b43f6d49cb3b17a08be45544528a184aeba5d7728b2dd43d33c"
+      "skillPath": "skills/ce-dhh-rails-style/SKILL.md",
+      "computedHash": "e1eb7a2cb43023e97160f1d8beadb5e6a02596154148e41c0ba1696d6784f046"
     },
     "coordinator": {
       "source": "raine/workmux",
       "sourceType": "github",
       "skillPath": "skills/coordinator/SKILL.md",
       "computedHash": "1ede776a06bcb19abf7afef806a1fc81a7e509ea1f1335348287b4a7b2b20ccd"
-    },
-    "dhh-rails-style": {
-      "source": "EveryInc/compound-engineering-plugin",
-      "sourceType": "github",
-      "computedHash": "a074cffa30542487467f57d1a609376f3aac64842e30588e3fb84b35a4ed438a"
     },
     "merge": {
       "source": "raine/workmux",
@@ -55,7 +50,7 @@
       "computedHash": "c7e6a8a49a55d6fc72dd2038223732b5cc66a698fa2365323d65ab4dbc44e46c"
     },
     "ruby-resource-map": {
-      "source": ".agents/skills/ruby-resource-map",
+      "source": "./.agents/skills/ruby-resource-map",
       "sourceType": "local",
       "computedHash": "1a98c79c36d13098bfc84e9811fec9be31ead01d0dedf552ad7e160b58ae56b7"
     },
