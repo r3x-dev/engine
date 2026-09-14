@@ -66,7 +66,7 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 
   gem "rubocop-minitest", require: false
-  gem "rubocop-thread_safety", "~> 0.7.3", require: false
+  gem "rubocop-thread_safety", "~> 0.8.0", require: false
   gem "rubydex", require: false
 
   # Auto-load environment variables from .env file
