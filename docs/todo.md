@@ -7,6 +7,10 @@ There are no open app-quality items from the 2026-07-10 audit.
 
 ## Current review backlog (local only)
 
+- Implemented, awaiting review: engine lint guards for provider/dynamic ENV reads in clients,
+  external Google constants, and literal requires of autoloaded files. Workflow linting remains
+  a separate, deferred profile; keep autoload root configuration aligned with Rails.
+
 - Dashboard database errors and logical run selection: completed in `5823b08`.
 - D2, implemented and awaiting review: count recent activity in SQL using the existing activity scopes
   and `Dashboard::Run.logical_count`, instead of loading every matching job into Ruby. Preserve

@@ -73,6 +73,27 @@ R3x/PreferR3xEnv:
     - "app/**/*.rb"
     - "lib/**/*.rb"
 
+R3x/TopLevelGoogleConstants:
+  Enabled: true
+  Include:
+    - "app/lib/r3x/client/**/*.rb"
+
+R3x/NoRequireAutoloadedFile:
+  Enabled: true
+  Include:
+    - "app/**/*.rb"
+    - "lib/**/*.rb"
+  AutoloadPaths:
+    - "app/controllers"
+    - "app/helpers"
+    - "app/jobs"
+    - "app/lib"
+    - "app/models"
+    - "lib"
+  IgnoredPaths:
+    - "lib/assets"
+    - "lib/tasks"
+
 R3x/PreferHttpxResponseJson:
   Enabled: true
   Include:

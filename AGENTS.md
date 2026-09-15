@@ -14,6 +14,14 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Dockerfile validation uses `mise exec -- droast Dockerfile` locally and the `docker_validate` CI job. Keep the action ref current; use `just show_dockerignore` to inspect the real Docker build context.
 - Keep this file and `docs/todo.md` synchronized when code changes alter architecture, workflow loading, trigger discovery, scheduling, validation contracts, env behavior, HTTP policy, or repo layout.
 
+## Linting Contracts
+
+- When fixing a bug or enforcing a rule, consider whether an existing cop/check can prevent recurrence. Inspect its active configuration and tests before adding another control; prefer extending an existing cop when it owns the same contract.
+- Automate unambiguous, repeatable checks with actionable messages and tests for both violations and legitimate exceptions. Do not add a cop for every preference, change production APIs to satisfy tooling, or treat lint as proof of runtime semantics.
+- Prefer ordinary RuboCop AST cops for patterns visible in one file. Rubydex provides a project-wide index for relationships such as inheritance, mixins, and constant references across files; consider RuboCop's Rubydex integration only when a concrete rule needs those relationships. The installed gem alone does not prove that a cop uses the index. Do not add a separate `rdx lint` gate without a demonstrated gap. See [Rubydex structural checks](https://railsatscale.com/2026-09-08-introducing-rubydex-linter-structural-checks-for-ruby-projects/).
+- Engine code and user workflow packs have separate linting contracts. `workflows/**/*` is deliberately excluded from the engine configuration; a future workflow profile should select its own looser rules, sharing cop implementations only where the contracts agree.
+- `R3x/PreferR3xEnv` checks literal `R3X_*` reads in `app/` and `lib/`, plus provider/dynamic keys in integration clients. `R3x/TopLevelGoogleConstants` checks the external `Google::Apis`, `Google::Auth`, and `Google::Cloud` namespaces in clients; bare/other Google references still need review. `R3x/NoRequireAutoloadedFile` checks literal require targets from `app/` and `lib/` against configured autoload roots; keep its roots/ignored paths aligned with Rails configuration. Dynamic paths and bootstrap require calls still need review; document narrow exemptions at the call site.
+
 ## Project Shape
 
 - Framework/runtime code lives in the app and `lib/r3x/`; user workflow packs live under `workflows/`.

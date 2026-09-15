@@ -18,7 +18,8 @@ module R3x
     def self.format
       FORMAT_MUTEX.synchronize do
         @format ||= begin
-          require_relative "env" unless defined?(R3x::Env)
+          # Logging also boots before Rails autoloading is available.
+          require_relative "env" unless defined?(R3x::Env) # rubocop:disable R3x/NoRequireAutoloadedFile
 
           format = R3x::Env.fetch("R3X_LOG_FORMAT")
           case format
