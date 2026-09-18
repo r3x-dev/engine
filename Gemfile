@@ -80,4 +80,4 @@ end
 
 gem "retryable", "~> 3.0"
 
-gem "amazing_print", "~> 2.0"
+gem "amazing_print", "~> 3.0"
