@@ -12,16 +12,24 @@
   customManagers: [
     {
       customType: 'regex',
-      fileMatch: ['^\\.ruby-version$'],
-      matchStrings: ['^(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$'],
+      managerFilePatterns: [
+        '/^\\.ruby-version$/',
+      ],
+      matchStrings: [
+        '^(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$',
+      ],
       depNameTemplate: 'docker.io/library/ruby',
       datasourceTemplate: 'docker',
       versioningTemplate: 'docker',
     },
     {
       customType: 'regex',
-      fileMatch: ['^Dockerfile$'],
-      matchStrings: ['ARG RUBY_VERSION=(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$'],
+      managerFilePatterns: [
+        '/^Dockerfile$/',
+      ],
+      matchStrings: [
+        'ARG RUBY_VERSION=(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$',
+      ],
       depNameTemplate: 'docker.io/library/ruby',
       datasourceTemplate: 'docker',
       versioningTemplate: 'docker',
