@@ -661,7 +661,7 @@ redeclare them. It exposes only `max_retries:` as a per-client override. Omit it
 to inherit the SDK setting. RubyLLM waits inside the current request between attempts, so
 these retries keep the worker occupied. Keep them for short request-level recovery only.
 
-RubyLLM 2.0.0 defaults to three retries (four attempts total), a 0.1-second base interval,
+RubyLLM defaults to three retries (four attempts total), a 0.1-second base interval,
 and a backoff factor of 2. Nominal waits are 0.1/0.2/0.4 seconds plus jitter. The project's
 previous 60-second override and the `retry_interval:` / `retry_backoff_factor:` client
 options have been removed. These settings are not a deadline for the whole call:
