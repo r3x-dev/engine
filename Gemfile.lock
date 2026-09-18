@@ -110,7 +110,7 @@ GEM
     et-orbi (1.4.2)
       tzinfo
     event_stream_parser (1.0.0)
-    faraday (2.14.3)
+    faraday (2.14.4)
       faraday-net_http (>= 2.0, < 3.5)
       json
       logger
@@ -432,17 +432,17 @@ GEM
       rubocop-ast (>= 1.44.0, < 2.0)
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
-    ruby_llm (1.16.0)
+    ruby_llm (2.0.0)
       base64
       event_stream_parser (~> 1)
       faraday (>= 1.10.0)
       faraday-multipart (>= 1)
       faraday-net_http (>= 1)
       faraday-retry (>= 1)
-      marcel (~> 1)
-      ruby_llm-schema (~> 0)
+      json (< 3)
+      marcel (>= 1.0, < 3)
+      schematist (~> 1.1)
       zeitwerk (~> 2)
-    ruby_llm-schema (0.4.0)
     rubydex (0.4.1)
     rubydex (0.4.1-aarch64-linux)
     rubydex (0.4.1-arm64-darwin)
@@ -580,7 +580,7 @@ CHECKSUMS
   erubi (1.13.1) sha256=a082103b0885dbc5ecf1172fede897f9ebdb745a4b97a5e8dc63953db1ee4ad9
   et-orbi (1.4.2) sha256=bb555dae668419cb24caa2a293a170e58be6d4df1e017c51f5030bdc133cd20c
   event_stream_parser (1.0.0) sha256=a2683bab70126286f8184dc88f7968ffc4028f813161fb073ec90d171f7de3c8
-  faraday (2.14.3) sha256=1882247e6766615c8220b4392bf1d27f6ebb63d8e28267587cef1fb0bf37f278
+  faraday (2.14.4) sha256=9bb4408c44621b0dbaaaa39e5dbfc4dbe58cc6751b6eb94d16ae9e1f2f2fab6e
   faraday-follow_redirects (0.5.0) sha256=5cde93c894b30943a5d2b93c2fe9284216a6b756f7af406a1e55f211d97d10ad
   faraday-multipart (1.2.0) sha256=7d89a949693714176f612323ca13746a2ded204031a6ba528adee788694ef757
   faraday-net_http (3.4.4) sha256=0e78af151747ed1b00f33e25973b4bc220d7f16c00c39676817c8b12331eb588
@@ -701,8 +701,7 @@ CHECKSUMS
   rubocop-thread_safety (0.8.0) sha256=71fe5e7894fb9acfbd4c2dcd394feabc35bd690f75b0bc846e1504d9e31f9034
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
   ruby2_keywords (0.0.5) sha256=ffd13740c573b7301cf7a2e61fc857b2a8e3d3aff32545d6f8300d8bae10e3ef
-  ruby_llm (1.16.0) sha256=26bd5310cf2ce55f74a60f8aae0b0d0327b586ff4532c84828103c3b2b905a18
-  ruby_llm-schema (0.4.0) sha256=e930f5a5316f9301bff3fb7fe572e44727d05bb8e50621001bbb49a47d63b8da
+  ruby_llm (2.0.0) sha256=b3ea5978f544c1c1edf74636fe4ac1d24129127deb44e4c4e7c58df11a4b9e3b
   rubydex (0.4.1) sha256=9856af8bfbe656eed95449dd9e2c8239a74662b4bb8563e4b99221dbc065a34a
   rubydex (0.4.1-aarch64-linux) sha256=abc1c9eb22479f60dd015fa81373163c5a71f2700b76bced1282631686bd6271
   rubydex (0.4.1-arm64-darwin) sha256=d23720253876d88fb98954e5d3a1ef9696a269697acf50e3ab53cdfbb2b66b96
