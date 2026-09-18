@@ -6,7 +6,8 @@ on:
       - "renovate/docker.io-library-ruby-*"
 
 permissions:
-  contents: read
+  contents: write
+  actions: write
 
 jobs:
   refresh:
@@ -53,21 +54,11 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create Renovate GitHub App token
-        id: app-token
-        if: steps.changes.outputs.changed == 'true'
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ vars.RENOVATE_FIX_APP_ID }}
-          private-key: ${{ secrets.RENOVATE_FIX_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
-          permission-contents: write
-
       - name: Amend and push Renovate commit
+        id: push
         if: steps.changes.outputs.changed == 'true'
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           git config user.name "renovate[bot]"
@@ -78,5 +69,11 @@ jobs:
             exit 0
           fi
           git commit --amend --no-edit
-          gh auth setup-git --hostname github.com
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push --force-with-lease origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Dispatch CI for amended branch
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
