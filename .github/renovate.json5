@@ -3,6 +3,9 @@
   extends: [
     'config:recommended',
   ],
+  gitIgnoredAuthors: [
+    'renovate-ruby-fix@users.noreply.github.com',
+  ],
   'ruby-version': {
     enabled: false,
   },
