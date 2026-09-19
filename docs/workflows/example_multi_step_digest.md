@@ -148,7 +148,7 @@ module Workflows
         PROMPT
       )
 
-      response.content.fetch("items").first
+      response.parsed.fetch("items").first
     end
 
     def important?(summary)

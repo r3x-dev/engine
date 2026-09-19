@@ -13,7 +13,7 @@ module R3x
           schema = build_schema(all_categories.keys, include_reason:)
           prompt = build_prompt(text, all_categories, include_reason:)
 
-          message_method.call(model:, prompt:, schema:).content
+          message_method.call(model:, prompt:, schema:).parsed
         end
 
         private
