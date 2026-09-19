@@ -20,7 +20,13 @@ module R3x
       end
 
       class FakeChat
-        Response = Struct.new(:content)
+        Response = Struct.new(:content) do
+          def parsed
+            MultiJSON.parse(content) if content.is_a?(String) && content.start_with?("{", "[")
+          rescue StandardError
+            nil
+          end
+        end
 
         attr_reader :ask_calls, :schema_calls
 
@@ -129,7 +135,7 @@ module R3x
 
         result = llm.classify(text: "some text", model: "deepseek-chat", categories: { "billing" => "billing issues" })
 
-        assert_equal '{"category":"other"}', result
+        assert_equal({ "category" => "other" }, result)
         assert_equal(
           [
             { model: "deepseek-chat", provider: :opencode_go, assume_model_exists: true },
@@ -181,7 +187,7 @@ module R3x
         assert_equal [{ prompt: "hello", with: nil }], chat.ask_calls
       end
 
-      test "analyze_image asks with binary image attachment and returns response content" do
+      test "analyze_image asks with binary image attachment and returns response" do
         chat = FakeChat.new("image response")
         context = FakeLlmContext.new(chat)
         R3x::GemLoader.require("ruby_llm")
@@ -189,15 +195,27 @@ module R3x
 
         llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key")
 
-        assert_equal "image response", llm.analyze_image("bytes", prompt: "describe", model: "gemini-1.5-flash", schema: :schema)
+        assert_equal "image response", llm.analyze_image("bytes", prompt: "describe", model: "gemini-1.5-flash").content
 
         image = chat.ask_calls.sole.fetch(:with).sole
 
         assert_equal [{ model: "gemini-1.5-flash" }], context.chat_calls
-        assert_equal [:schema], chat.schema_calls
+        assert_equal [], chat.schema_calls
         assert_equal "describe", chat.ask_calls.sole.fetch(:prompt)
         assert_instance_of StringIO, image
         assert_equal Encoding::BINARY, image.external_encoding
+      end
+
+      test "analyze_image returns parsed response when schema is provided" do
+        chat = FakeChat.new('{"status":"OK"}')
+        context = FakeLlmContext.new(chat)
+        R3x::GemLoader.require("ruby_llm")
+        RubyLLM.stubs(:context).returns(context)
+
+        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key")
+
+        assert_equal({ "status" => "OK" }, llm.analyze_image("bytes", prompt: "check", model: "gemini-1.5-flash", schema: :schema).parsed)
+        assert_equal [:schema], chat.schema_calls
       end
 
       test "does not pin chat options to the first provider initialized in a process" do

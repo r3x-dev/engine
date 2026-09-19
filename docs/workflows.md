@@ -571,7 +571,7 @@ an explicit one-run operator override and remains available in production.
 - Keep provider-specific schema constants out of workflow packs; the helper owns the Schematist integration.
 - For nested JSON, define the shape with `array` and `object` blocks inside the helper block,
   then pass that schema to `message(...)`.
-- Read the parsed structured result from `response.content`; avoid manual JSON parsing when the
+- Read the parsed structured result from `response.parsed`; avoid manual JSON parsing when the
   schema already captures the shape.
 
   ```ruby
