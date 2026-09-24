@@ -716,7 +716,7 @@ response = ctx.client.llm(
 )
 ```
 
-The provider is dynamically inferred from the environment variable name prefix (e.g. `OPENCODE_GO` to `:opencode_go`), routing the request through the lazy registered custom provider adapter while allowing the workflow to choose the exact token env variant (such as `OPENCODE_GO_API_KEY`, `OPENCODE_GO_API_KEY_PROJECTA`, or `OPENCODE_GO_API_KEY_PROJECTB`). Dynamic providers use RubyLLM's provider-level model assumption hook, so workflows can pass provider-specific model IDs without maintaining a static model registry.
+The provider is dynamically inferred from the environment variable name prefix (e.g. `OPENCODE_GO` to `:opencode_go`), routing the request through the lazy registered custom provider adapter while allowing the workflow to choose the exact token env variant (such as `OPENCODE_GO_API_KEY`, `OPENCODE_GO_API_KEY_PROJECTA`, or `OPENCODE_GO_API_KEY_PROJECTB`). OpenCode Go uses RubyLLM's Chat Completions protocol. Dynamic providers use RubyLLM's provider-level model assumption hook, so workflows can pass provider-specific model IDs without maintaining a static model registry.
 
 ## Return Value
 
