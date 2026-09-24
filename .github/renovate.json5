@@ -38,7 +38,32 @@
   labels: [
     'dependencies',
   ],
+  timezone: 'Europe/Lisbon',
+  lockFileMaintenance: {
+    enabled: true,
+  },
   packageRules: [
+    {
+      description: 'Update in-range Bundler gems in Gemfile.lock',
+      matchManagers: [
+        'bundler',
+      ],
+      rangeStrategy: 'update-lockfile',
+    },
+    {
+      description: 'Group non-major Bundler updates overnight',
+      matchManagers: [
+        'bundler',
+      ],
+      matchUpdateTypes: [
+        'patch',
+        'minor',
+      ],
+      groupName: 'Ruby gems (non-major)',
+      schedule: [
+        '* 0-3 * * *',
+      ],
+    },
     {
       description: 'Auto-merge only patch updates for gems when tests pass',
       matchUpdateTypes: [
