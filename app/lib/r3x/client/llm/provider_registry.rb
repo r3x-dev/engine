@@ -22,7 +22,9 @@ module R3x
         end
 
         def opencode_go_provider_class
-          Class.new(RubyLLM::Providers::OpenAI) do
+          Class.new(RubyLLM::Provider) do
+            protocol :chat_completions, RubyLLM::Protocols::ChatCompletions
+
             def api_base
               "https://opencode.ai/zen/go/v1"
             end

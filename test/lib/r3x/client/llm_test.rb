@@ -159,6 +159,28 @@ module R3x
         assert_equal "opencode_go", chat.with_context(context).model.provider
       end
 
+      test "opencode go sends chat completions requests through RubyLLM" do
+        request = stub_request(:post, "https://opencode.ai/zen/go/v1/chat/completions")
+          .with(headers: { "Authorization" => "Bearer opencode-key" })
+          .to_return(
+            status: 200,
+            headers: { "Content-Type" => "application/json" },
+            body: MultiJSON.generate(
+              id: "chatcmpl-test",
+              object: "chat.completion",
+              created: 1,
+              model: "deepseek-chat",
+              choices: [{ index: 0, message: { role: "assistant", content: "hello back" }, finish_reason: "stop" }],
+              usage: { prompt_tokens: 2, completion_tokens: 2, total_tokens: 4 },
+            ),
+          )
+
+        llm = Llm.new(api_key: "opencode-key", config_api_key_attr: "opencode_go_api_key", max_retries: 0)
+
+        assert_equal "hello back", llm.message(model: "deepseek-chat", prompt: "hello").content
+        assert_requested request
+      end
+
       test "uses provider metadata instead of pinning opencode go to registered models" do
         llm = Llm.new(api_key: "opencode-key", config_api_key_attr: "opencode_go_api_key")
 
