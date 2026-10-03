@@ -98,19 +98,16 @@ bin/workflow run --dry-run workflows/<workflow_name>/workflow.rb
 bin/workflow run --skip-cache workflows/<workflow_name>/workflow.rb
 ```
 
-For an included workflow in this checkout:
-
-```bash
-bin/workflow info example_town_news
-bin/workflow run --dry-run workflows/example_town_news/workflow.rb
-```
-
 `bin/workflow run --dry-run` enables the global dry-run policy for side-effecting clients. In
 `development` and `test`, `bin/workflow run` defaults to dry-run, so side-effecting clients skip real
 delivery unless you opt out with `--no-dry-run` or `R3X_DRY_RUN=false`. Use `--skip-cache` when you
 want a fresh local run without changing workflow code.
 
 ## Build Your Workflow Catalog
+
+Workflow catalogs are user-owned and independent of the engine. Keep concrete workflow behavior,
+integration contracts, retry/recovery instructions, and backlog in each workflow's directory.
+Engine documentation covers framework contracts and general principles; its examples use placeholders.
 
 A workflow catalog can be as small as one directory:
 

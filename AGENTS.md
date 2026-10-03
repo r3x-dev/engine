@@ -13,6 +13,12 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - When adding non-production/tooling files or patterns to `.dockerignore` that do not affect app runtime or CI test execution, keep `.github/workflows/ci.yml` `paths-ignore` synchronized so CI and Docker image builds are not needlessly triggered.
 - Dockerfile validation uses `mise exec -- droast Dockerfile` locally and the `docker_validate` CI job. Keep the action ref current; use `just show_dockerignore` to inspect the real Docker build context.
 - Keep this file and `docs/todo.md` synchronized when code changes alter architecture, workflow loading, trigger discovery, scheduling, validation contracts, env behavior, HTTP policy, or repo layout.
+- Keep engine documentation and instructions independent of any user's workflow catalog.
+  `AGENTS.md`, `README.md`, and `docs/` describe framework/client contracts and general principles;
+  examples use fictional workflows and placeholder configuration. Store concrete workflow
+  behavior, workflow-owned provider response contracts, retry budgets, deployment/recovery notes, verification
+  results, and backlog in that workflow's directory. Never promote a workflow-specific rule
+  into an engine-wide policy; move misplaced notes to their owner when touching them.
 
 ## Linting Contracts
 
@@ -97,6 +103,12 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
   without blocking confirmation or retrying delivery; see docs/workflows.md "Pipelines With Multiple Deliveries".
 - Bound optional calls with a short total timeout. Retry transient required-delivery errors
   in the queue using client-owned exceptions and saved content; keep authentication/configuration errors fatal.
+- Before retrying a side effect, establish provider idempotency or an explicit response contract
+  that guarantees no required writes occurred. Ambiguous timeouts/lost responses need reconciliation,
+  not blanket retries. A later run can also repeat unfinished delivery; document that boundary locally.
+- Preserve accepted classification and delivery intent across resumptions. Recomputing them must
+  not convert unfinished required work into a completed skip. Validate provider success responses
+  and actual delivery results before recording success; a dry-run result is not delivery.
 - Use `bin/workflow list` and `bin/workflow info <key>` to inspect registered workflows.
 - `bin/workflow run <path>` always requires a path to `workflow.rb`; use `-d` for dry run and `--skip-cache` to bypass `with_cache`.
 - New code with external side effects should default to `dry_run: true` or equivalent safe mode. Real delivery must be explicit, e.g. `dry_run: false`.

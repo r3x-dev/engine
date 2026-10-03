@@ -1,11 +1,11 @@
 # Example Workflow: Multi-Step Integration
 
 This file is a worked example for people who want to build workflows in `r3x`.
-It is based on the real workflows in `workflows/` and shows the common pieces together:
+It uses fictional sources and placeholder configuration to show common pieces together:
 
-- HTTP fetching and HTML parsing, like `example_town_news`
+- HTTP fetching and HTML parsing
 - Google Sheets and Gmail delivery
-- Apify, OCR, LLM classification, and deduplication, like `community_events`
+- Apify, OCR, LLM classification, and deduplication
 - resumable loops with `step`
 
 The goal is to show the shape of a real workflow, not to provide production-ready secrets or URLs.
@@ -179,6 +179,9 @@ end
   provider idempotency or persisted progress per destination.
   This combined-delivery example is intentionally simplified; for a production pipeline use
   [required delivery and optional backup semantics](../workflows.md#pipelines-with-multiple-deliveries).
+  It also records a sent marker when a client skips delivery in dry-run. That can suppress a
+  later real run using the same cache. Before adapting it, check each required client's actual
+  delivery result and record completion only for real delivery; dry-run is not acknowledgment.
 - `ctx.client.*` is the normal boundary for integrations. That keeps workflow code readable and
   lets clients encapsulate auth, retries, and provider-specific details.
 - `R3x::Workflow::LlmSchema.define` is the preferred way to get structured LLM output when the

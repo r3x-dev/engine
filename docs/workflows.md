@@ -2,6 +2,17 @@
 
 These notes apply to workflow code in general.
 
+## Documentation Ownership
+
+The engine supports independently supplied workflow catalogs. Keep this guide, the engine README,
+and engine agent instructions about framework contracts and general writing principles. Examples
+use fictional workflows and placeholder configuration, without depending on an installed catalog.
+
+Keep a concrete workflow's behavior, integration response contracts, retry counts and delays,
+deployment and recovery instructions, verification evidence, and backlog in its own directory.
+Update its README or local agent instructions when those details change. Do not turn one workflow's
+delivery policy into a framework default or keep its operational backlog in the engine's TODO.
+
 `bin/workflow` boots Rails through the internal `workflow_cli` runtime profile.
 That profile is headless: it skips the dashboard/Flightdeck web stack,
 web-only gems, and app route registration, and it keeps
@@ -96,6 +107,9 @@ For each resumable workflow, decide what belongs to one logical run:
   `step.set!(index + 1)` or `step.advance!(from: index)`, never `advance!(from: index + 1)`.
 - Persist intermediate results that later steps need using the same rule. A memoized instance
   variable or an accumulator reset at the top of `run` does not survive deserialization on its own.
+- Preserve an accepted classification or delivery decision when it determines unfinished required
+  work. Reclassifying on resume can change a delivery into a skip. Simulate changed classifier output
+  as well as changed source data; TTL caching is not durable decision state.
 
 TTL caching reduces upstream calls; it does not preserve a run's input. Expiry, bucket rollover,
 eviction, manual clearing, or `--skip-cache` can change the response. Cache the initial fetch when
@@ -136,10 +150,16 @@ the reservation's expiry and normal workflow steps. Expiry permits recovery on a
 it does not automatically restart a failed queue job.
 
 For delivery reservations, acquire after preparation and classification, immediately before
-delivery, and recheck completion after acquisition. Camara follows this order so transient LLM
-failures do not leave a reservation blocking the next attempt. Its serialized event list still
-supplies retry input without fetching Apify again. Preparation can repeat on overlapping runs or
-delivery resumptions; this reservation only covers delivery.
+delivery, and recheck completion after acquisition. Preparation failures should not leave a
+delivery reservation blocking the next attempt. Restore saved input and accepted delivery intent
+on resumption; the reservation itself preserves neither.
+
+Retry side effects only with provider idempotency or a documented response that guarantees no
+required writes occurred. A lost response can follow successful writes. Propagate ambiguous
+failures for reconciliation rather than automatically repeating the request. Stopping retries in
+one job does not prevent a later run from selecting the same item; stronger protection requires
+durable delivery state or provider idempotency. Validate the provider's success envelope before
+recording success. Treat intentional dry-run skips according to the workflow's delivery contract.
 
 `ctx.durable_set` can provide a best-effort reservation with `add?` and a short TTL. It has no owner
 token or conditional delete. Let such reservations expire naturally; deleting in `ensure` or
@@ -155,31 +175,35 @@ semantics, preserve valid completion history and review known abandoned entries 
 ## Pipelines With Multiple Deliveries
 
 First decide which deliveries are required and which are optional for this workflow.
-Do not give every destination the same success/retry contract. In the Region digest,
-Gmail is required and Feedway is an optional backup.
+Do not give every destination the same success/retry contract. For example, a primary
+notification may be required while an archival copy is optional.
 
 Save prepared input and final subject/text/HTML before delivery. Keep required delivery
 and source acknowledgment in separate isolated steps so a later failure does not resend
 an already completed message. A completed dry-run step is not proof of actual delivery:
 save the required client's result and respect the source's own write policy.
 
-Miniflux enforces its write policy inside the client for both `update_entries` and
-`mark_category_entries_as_read`. Dry-run skips PUT, logs the action, and returns `false`;
-a successful write returns `true`, and HTTP failures raise. Reads still call the API.
-Do not treat a skipped write as acknowledgment. Region also checks its saved real Gmail
-result and the Miniflux policy before recording processed-entry markers.
+Respect each destination's independent write policy. Do not treat a skipped write as
+acknowledgment or a dry-run response as real delivery. Check the required client's actual
+delivery result before acknowledging the source or recording processed-item markers.
 
-For transient required-delivery errors, declare bounded workflow-level `retry_on` and
-reuse the saved content. The Gmail client exposes `R3x::Client::Google::Gmail::TransientError`
-for API server, rate-limit, timeout, and transport errors; ordinary authorization/client
-errors still propagate. Do not reference lazily loaded Google SDK error classes in the
-workflow declaration. Region allows five Gmail attempts with 3/6/12/24-minute queue waits.
+For safely retryable transient required-delivery errors, declare bounded workflow-level
+`retry_on` and reuse the saved content. Use client-owned exceptions rather than lazily loaded
+SDK error classes in the workflow declaration. Keep authorization/configuration errors fatal.
+Choose retry budgets and delays for that workflow and document them in its directory.
 
-Optional copies can share the final phase with source acknowledgment. In Region that
-phase confirms Miniflux first, then attempts Feedway. Catch ordinary errors only around
+Engine client contracts remain independent of any catalog. The Gmail client exposes
+`R3x::Client::Google::Gmail::TransientError` for server, rate-limit, timeout, and transport
+errors; ordinary authorization/client errors propagate. `deliver` returns a hash whose
+`mode` is `real` or `dry_run`, so callers must check actual delivery before marking completion.
+The Feedway client uses a ten-second total request timeout. These client capabilities do
+not choose which destination is required or set a workflow's retry policy.
+
+Optional copies can share the final phase with source acknowledgment. Confirm required work
+first, then attempt optional copies. Catch ordinary errors only around
 that optional integration, log them, and let the run finish. Do not make source confirmation
 depend on a backup or add separate retries/markers unless the product needs them.
-Give optional calls a short total request deadline: the Feedway client allows ten seconds.
+Give optional calls a short total request deadline appropriate to the workflow.
 
 Bound saved input size and resumptions. An API page limit does not bound all pages; do not
 silently drop entries to fit a job snapshot. Use durable run storage for larger editions.
@@ -346,13 +370,6 @@ bin/workflow run workflows/<workflow_name>/workflow.rb
 bin/workflow run --dry-run workflows/<workflow_name>/workflow.rb
 bin/workflow run --skip-cache workflows/<workflow_name>/workflow.rb
 bin/workflow run --skip-wait workflows/<workflow_name>/workflow.rb
-```
-
-For an included workflow in this checkout:
-
-```bash
-bin/workflow info example_town_news
-bin/workflow run --dry-run workflows/example_town_news/workflow.rb
 ```
 
 - `list` and `info` load workflow packs from `R3X_WORKFLOW_PATHS`.
@@ -681,10 +698,9 @@ After request-level retries are exhausted, `R3x::Client::Llm` translates these f
 request-level retries with `max_retries: 0` and use bounded Active Job `retry_on` backoff. This
 returns the work to Solid Queue as a scheduled job instead of sleeping in a worker.
 
-Camara, Region, Example Town News, and Workshop already use `max_retries: 0` with
-five workflow attempts and 3/6/12/24-minute queue waits. This handles prolonged provider
-overload without keeping a worker asleep. Request timeout is a separate SDK setting;
-slow generation alone is not a reason to resend a request that is still in progress.
+Choose bounded attempt counts and queue waits per workflow and document them locally.
+This handles prolonged provider overload without keeping a worker asleep. Request timeout is a
+separate SDK setting; slow generation alone is not a reason to resend a request that is still in progress.
 
 ### Per-workflow override
 

@@ -18,15 +18,12 @@ There are no open app-quality items from the 2026-07-10 audit.
   No production slowdown has been measured; this is a small efficiency/simplification follow-up.
 - Deferred by choice: LLM instrumentation and Flightdeck branding changes.
 
-## Workflow backlog
+## Documentation scope
 
-- `region_weekly_news_digest`: persist the generated digest (e.g. via `with_cache(key:, ttl:)`) and
-  move email/Feedway delivery into explicit steps so a failure after Gmail delivery does not resend
-  the digest on retry. Consider migrating the hand-rolled `Rails.cache` `last_confirmed_at` state.
-- `example_town_news`: claim items in `ctx.durable_set` before Discord delivery (delete on failure)
-  to close the narrow double-post window between delivering and marking processed.
-- `regional_weekly`: disabled (`# r3x:disable`). When revived, review its plain `with_cache` usage — it
-  is development-only; decide between removing it and switching to `with_cache(key:, ttl:)`.
+Keep this backlog about the engine. Concrete workflow behavior, integration contracts,
+retry/recovery instructions, verification evidence, and future work belong in each workflow's
+directory. Engine docs and agent instructions use general principles and fictional examples,
+so they remain valid for independently supplied catalogs.
 
 When future work changes architecture, workflow loading, trigger discovery,
 scheduling, validation contracts, env behavior, HTTP policy, or repo layout,

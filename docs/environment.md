@@ -40,7 +40,7 @@ that show shape only.
 | `R3X_SKIP_CACHE` | Optional (development environment flag) | Workflow CLI, workflow cache policy | Boolean. Bypasses all workflow caching, including `with_cache(key:, ttl:)`. Production boot rejects this environment flag. `bin/workflow run --skip-cache` remains an explicit one-run operator override in production. | `R3X_SKIP_CACHE=true` |
 | `R3X_DRY_RUN` | Optional | `R3x::Policy` | Boolean global dry-run override. `true` forces dry-run; `false` disables it. In `development` and `test`, dry-run is the default, so set this to `false` for real delivery. | `R3X_DRY_RUN=false` |
 | `R3X_<FEATURE>_DRY_RUN` | Optional | `R3x::Policy` | Boolean per-feature dry-run override, for keys such as `GMAIL`, `HTTP`, `DISCORD`, `FEEDWAY`, and `MARKDOWNIFY`. | `R3X_DISCORD_DRY_RUN=true` |
-| `R3X_MINIFLUX_DRY_RUN` | Optional | Miniflux client writes, Region digest confirmation | Boolean override for all Miniflux writes (`update_entries`, `mark_category_entries_as_read`). Takes precedence over `R3X_DRY_RUN`, then falls back to environment defaults. Dry-run skips PUT and returns `false`; reads still call the API. Region confirmation also requires real Gmail delivery; the optional Feedway backup does not gate it. | `R3X_MINIFLUX_DRY_RUN=true` |
+| `R3X_MINIFLUX_DRY_RUN` | Optional | Miniflux client writes | Boolean override for all Miniflux writes (`update_entries`, `mark_category_entries_as_read`). Takes precedence over `R3X_DRY_RUN`, then falls back to environment defaults. Dry-run skips PUT and returns `false`; reads still call the API. | `R3X_MINIFLUX_DRY_RUN=true` |
 
 ## Logging And Dashboard
 
@@ -94,7 +94,9 @@ that show shape only.
 | `GOOGLE_CLIENT_SECRET_*` | Required when Google OAuth clients are used | `R3x::Client::GoogleAuth` | OAuth client secret for the selected project suffix. | `GOOGLE_CLIENT_SECRET_MAIN=<client-secret>` |
 | `GOOGLE_REFRESH_TOKEN_*` | Required when Google OAuth clients are used | `R3x::Client::GoogleAuth`, `bin/google-oauth` | OAuth refresh token for the selected project suffix. | `GOOGLE_REFRESH_TOKEN_MAIN=<refresh-token>` |
 | `HEALTHCHECKS_IO_URL` | Required when Healthchecks.io client uses env endpoint | `R3x::Client::HealthchecksIO`, `ctx.client.healthchecks_io` | Healthchecks ping endpoint base. Pass `ping_endpoint:` to avoid env lookup. | `HEALTHCHECKS_IO_URL=https://hc.example/ping/` |
-| `FB_EVENTS_OCR_TOKEN_PXOPULSE` | Required by matching workflow | `workflows/community_events` | Workflow-specific token for OCR-backed Facebook events access. | `FB_EVENTS_OCR_TOKEN_PXOPULSE=<token>` |
+
+Document workflow-owned environment variables in the affected workflow's directory. This table
+covers engine and integration-client configuration, independent of the installed workflow catalog.
 
 ## Scratchpad And Local Scripts
 
