@@ -150,7 +150,7 @@ GEM
       retriable (>= 3.1, < 5.0)
     google-apis-gmail_v1 (0.53.0)
       google-apis-core (>= 0.15.0, < 2.a)
-    google-apis-sheets_v4 (0.48.0)
+    google-apis-sheets_v4 (0.49.0)
       google-apis-core (>= 0.15.0, < 2.a)
     google-cloud-core (1.9.0)
       google-cloud-env (>= 1.0, < 3.a)
@@ -385,7 +385,7 @@ GEM
     regexp_parser (2.13.1)
     reline (0.7.0)
       io-console (~> 0.5)
-    representable (3.3.0)
+    representable (3.3.1)
       declarative (< 0.1.0)
       trailblazer-option (>= 0.1.1, < 0.2.0)
       uber (< 0.2.0)
@@ -591,7 +591,7 @@ CHECKSUMS
   google-apis-calendar_v3 (0.57.0) sha256=85a1836d1b5e3745720c28f219d8f599564b9cdd4a72f97b8a4e61ce67498cb7
   google-apis-core (1.2.5) sha256=e21562b5627a0fc6a0c3165e429c3afed0f6a628eaa514e83f7204dda1adff69
   google-apis-gmail_v1 (0.53.0) sha256=8ac02850e636de42bd6f54f20565eab4bf089f4334ae6ee76ad7c051e92cd5a4
-  google-apis-sheets_v4 (0.48.0) sha256=ef76dfa6e8c9d322add2e3faeb2c320ffa82d2d1130aa31d78ad65f3da9ab7e3
+  google-apis-sheets_v4 (0.49.0) sha256=34d36b854b43c14c2fe4fffad2c99aaa8dc998615dd22c685984e691cdae6ce4
   google-cloud-core (1.9.0) sha256=ab55409f51488e8deefb6edcc1ce4771dfb5da2fe7b3bc075709a030c2b682a4
   google-cloud-env (2.4.0) sha256=01cb35ecee5d1c4d1cd4deaed8bb5bddc838e296bcc2a35c5d1ddd07ce40d28d
   google-cloud-errors (1.7.0) sha256=6e682f42d89aae08689f36f28495de629d756da076bafff0003bac7f8042ebb3
@@ -687,7 +687,7 @@ CHECKSUMS
   rdoc (8.0.0) sha256=03bf8c08a9639658855a0cfd77c0abca8325c227693f7f33f82957811348c469
   regexp_parser (2.13.1) sha256=5aedb6b7c35688f51e86eef17a15374dfd287c83f4ca644b2c5f3ec50a33b44b
   reline (0.7.0) sha256=5b012d8e55dbf9d450f12bde2cf7d15ff546ae80b3f8f3b30e570d431815583d
-  representable (3.3.0) sha256=22beca7d07104d8dfe30667eb267756c764c8bdc6c0f1481922502ecc4f0d8cf
+  representable (3.3.1) sha256=8a5fc8eef99f598147eee0390f606386268b429a840419fcfd3f7a8ccc40f566
   retriable (4.2.0) sha256=90c3b257472a1c02f2a3dfa64dd35a420f7a624cef1a5981e20fdac5730f8cdc
   retryable (3.0.5) sha256=c9f3dd6836bacf59c08b3f33548416debca7c0757e0c008d35df32ec9266d55f
   rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
