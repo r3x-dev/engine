@@ -21,7 +21,9 @@ module R3x
 
         def httpx_options(verify_ssl:, timeout:)
           opts = {}
-          opts[:timeout] = { operation_timeout: timeout } if timeout
+          # Apply the supplied timeout to reads, writes, and operations so shorter
+          # httpx defaults do not cause the request to time out earlier.
+          opts[:timeout] = { read_timeout: timeout, write_timeout: timeout, operation_timeout: timeout } if timeout
           opts[:ssl] = { verify_mode: OpenSSL::SSL::VERIFY_NONE } unless verify_ssl
           opts
         end
