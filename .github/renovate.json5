@@ -41,6 +41,9 @@
   timezone: 'Europe/Lisbon',
   lockFileMaintenance: {
     enabled: true,
+    automerge: true,
+    automergeType: 'branch',
+    automergeStrategy: 'squash',
   },
   packageRules: [
     {
