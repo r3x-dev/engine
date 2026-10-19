@@ -5,7 +5,7 @@ module R3x
     class Http
       class << self
         def with_persistence(verify_ssl: true, timeout: nil)
-          session = HTTPX.plugin(:persistent, close_on_fork: true)
+          session = HTTPX.plugin(:follow_redirects).plugin(:persistent, close_on_fork: true)
           opts = httpx_options(verify_ssl:, timeout:)
           session = session.with(**opts) if opts.any?
 
@@ -32,7 +32,8 @@ module R3x
       def initialize(verify_ssl: true, timeout: nil)
         # Keep option building private to this class while sharing it with the class-level persistence path.
         opts = self.class.send(:httpx_options, verify_ssl:, timeout:)
-        @client = opts.any? ? HTTPX.with(**opts) : HTTPX
+        @client = HTTPX.plugin(:follow_redirects)
+        @client = @client.with(**opts) if opts.any?
       end
 
       def get(url, params: {}, headers: {})

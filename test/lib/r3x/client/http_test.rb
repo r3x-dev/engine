@@ -27,6 +27,43 @@ module R3x
         assert_equal 200, response.status
       end
 
+      test "get follows relative redirects" do
+        stub_request(:get, "https://example.com/old")
+          .to_return(status: 301, headers: { "Location" => "/current" })
+        stub_request(:get, "https://example.com/current")
+          .to_return(status: 200, body: "current content")
+
+        response = Http.new.get("https://example.com/old")
+
+        assert_equal 200, response.status
+        assert_equal "current content", response.body.to_s
+      end
+
+      test "get does not forward authorization to another origin after a redirect" do
+        stub_request(:get, "https://example.com/old")
+          .with(headers: { "Authorization" => "Bearer token123" })
+          .to_return(status: 302, headers: { "Location" => "https://other.example.com/current" })
+        stub_request(:get, "https://other.example.com/current")
+          .with { |request| !request.headers.key?("Authorization") }
+          .to_return(status: 200, body: "public content")
+
+        response = Http.new.get("https://example.com/old", headers: { "Authorization" => "Bearer token123" })
+
+        assert_equal 200, response.status
+        assert_equal "public content", response.body.to_s
+      end
+
+      test "get raises when the redirect destination returns an error" do
+        stub_request(:get, "https://example.com/old")
+          .to_return(status: 301, headers: { "Location" => "/missing" })
+        stub_request(:get, "https://example.com/missing")
+          .to_return(status: 404, body: "not found")
+
+        assert_raises(HTTPX::HTTPError) do
+          Http.new.get("https://example.com/old")
+        end
+      end
+
       test "get passes headers" do
         stub_request(:get, "https://example.com/auth")
           .with(headers: { "Authorization" => "Bearer token123" })
@@ -124,6 +161,19 @@ module R3x
         assert_equal %w[first second], bodies
         assert_requested :get, "https://example.com/one"
         assert_requested :get, "https://example.com/two"
+      end
+
+      test "with_persistence follows relative redirects" do
+        stub_request(:get, "https://example.com/old")
+          .to_return(status: 301, headers: { "Location" => "/current" })
+        stub_request(:get, "https://example.com/current")
+          .to_return(status: 200, body: "current content")
+
+        body = Http.with_persistence do |http|
+          http.get("https://example.com/old").body.to_s
+        end
+
+        assert_equal "current content", body
       end
 
       test "download_file returns DownloadedFile with body and metadata" do

@@ -317,6 +317,8 @@ pass `as_hashes: true` explicitly.
 ## Reusing HTTP Clients
 
 - `ctx.client.http` returns a new instance of the HTTP client (`R3x::Client::Http`) on every call.
+- Ordinary and persistent clients follow redirects using HTTPX defaults: at most three hops,
+  no HTTPS-to-HTTP downgrade, and no forwarding `Authorization` to another origin.
 - When making requests in a loop, instantiate the client once outside the loop so timeout and SSL
   configuration is built once and the workflow code stays clear.
 - **Good:**

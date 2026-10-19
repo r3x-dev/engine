@@ -140,6 +140,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - For small integration clients, build the `httpx` client inside the class. Do not inject raw HTTP connections unless the production design needs that abstraction.
 - Do not use `HTTPX.with({})`; call `HTTPX.get/post/...` directly when there are no shared options. When a client needs shared options such as authentication headers, create `@connection = HTTPX.with(...)` in `initialize` and expose it with a private `attr_reader :connection`.
 - For repeated workflow HTTP calls in one controlled scope, use `ctx.client.persistent_http(...) { |http| ... }`; keep persistence opt-in for measured hot paths.
+- `R3x::Client::Http` follows redirects in ordinary and persistent sessions using HTTPX defaults: at most three hops, no HTTPS-to-HTTP downgrade, and no forwarding `Authorization` to another origin.
 - Use `json:` for JSON request bodies and `response.json` for JSON responses. Prefer `MultiJSON` elsewhere.
 - Call `.raise_for_status` when a client should fail fast on transport 4xx/5xx. Do not hand-roll ordinary 2xx checks in thin clients.
 - Manual provider-level error translation is fine after successful transport status, e.g. a `200` response with an error field.
