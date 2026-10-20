@@ -138,7 +138,7 @@ GEM
       activesupport (>= 6.1)
     google-apis-calendar_v3 (0.58.0)
       google-apis-core (>= 0.15.0, < 2.a)
-    google-apis-core (1.3.1)
+    google-apis-core (1.3.2)
       addressable (~> 2.9)
       faraday (~> 2.13)
       faraday-follow_redirects (~> 0.3)
@@ -208,7 +208,7 @@ GEM
       grpc (~> 1.41)
     googleapis-common-protos-types (1.23.0)
       google-protobuf (~> 4.26)
-    googleauth (1.17.5)
+    googleauth (1.17.6)
       faraday (>= 1.0, < 3.a)
       google-cloud-env (~> 2.2)
       google-logging-utils (~> 0.1)
@@ -467,14 +467,14 @@ GEM
     solid_queue-flightdeck (1.2.0)
       rails (>= 7.1)
       solid_queue (>= 1.0)
-    sqlite3 (2.10.0-aarch64-linux-gnu)
-    sqlite3 (2.10.0-aarch64-linux-musl)
-    sqlite3 (2.10.0-arm-linux-gnu)
-    sqlite3 (2.10.0-arm-linux-musl)
-    sqlite3 (2.10.0-arm64-darwin)
-    sqlite3 (2.10.0-x86_64-darwin)
-    sqlite3 (2.10.0-x86_64-linux-gnu)
-    sqlite3 (2.10.0-x86_64-linux-musl)
+    sqlite3 (2.10.1-aarch64-linux-gnu)
+    sqlite3 (2.10.1-aarch64-linux-musl)
+    sqlite3 (2.10.1-arm-linux-gnu)
+    sqlite3 (2.10.1-arm-linux-musl)
+    sqlite3 (2.10.1-arm64-darwin)
+    sqlite3 (2.10.1-x86_64-darwin)
+    sqlite3 (2.10.1-x86_64-linux-gnu)
+    sqlite3 (2.10.1-x86_64-linux-musl)
     thor (1.5.0)
     timeout (0.6.1)
     trailblazer-option (0.1.2)
@@ -587,7 +587,7 @@ CHECKSUMS
   gapic-common (1.5.1) sha256=bba5d3707c72bf95b00a2c1c6f7bcee5a701d7c221dfd3a024a8f63f15b43502
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   google-apis-calendar_v3 (0.58.0) sha256=227ef78164a0efc53ddcba4a09b690013893a16e6cbe560753d78396cc58a735
-  google-apis-core (1.3.1) sha256=20ce9ee1fde0be87fe30a135dfdbd4b9ee33ba32172794c1f2770e7a45361b2f
+  google-apis-core (1.3.2) sha256=dec616d1fee423b4337ca3a802efc61cff0739aa6a6de1ebd16ba30c1b7b6dd7
   google-apis-gmail_v1 (0.53.0) sha256=8ac02850e636de42bd6f54f20565eab4bf089f4334ae6ee76ad7c051e92cd5a4
   google-apis-sheets_v4 (0.49.0) sha256=34d36b854b43c14c2fe4fffad2c99aaa8dc998615dd22c685984e691cdae6ce4
   google-cloud-core (1.9.0) sha256=ab55409f51488e8deefb6edcc1ce4771dfb5da2fe7b3bc075709a030c2b682a4
@@ -608,7 +608,7 @@ CHECKSUMS
   google-protobuf (4.36.2-x86_64-linux-musl) sha256=0fa17686c896da96a60a705e56ddc7d4ff56413f52787c655bd4c9fb33ffe14f
   googleapis-common-protos (1.9.0) sha256=207be372d8d25e3876e1e1155d057e14f3c92f8f5428772864a8ce04a0b756e4
   googleapis-common-protos-types (1.23.0) sha256=992e740a523794d9fc5f29a504465d8fc737aaa16c930fe7228e3346860faf0a
-  googleauth (1.17.5) sha256=92498efc6883630a7e011ce4e667f887e314e588d584410ba18df49f1303f3d7
+  googleauth (1.17.6) sha256=d4fd30f99aeb28ae46ef521cf8ac50927a453b8c6600f8940437ac11ad90bdfc
   grpc (1.84.0) sha256=df2dd2d379fe3419a58af64f2fab514202437e28b7df5b441a16da542486a98f
   grpc (1.84.0-aarch64-linux-gnu) sha256=38bcb6998cca338718e39e2b89785964850f71444279a033c296ceb40406cfad
   grpc (1.84.0-aarch64-linux-musl) sha256=514fad5bc13ed336d424ac056d21803c27f4e2feaddf9eddfc94750bae03f40b
@@ -711,14 +711,14 @@ CHECKSUMS
   solid_cache (1.0.10) sha256=bc05a2fb3ac78a6f43cbb5946679cf9db67dd30d22939ededc385cb93e120d41
   solid_queue (1.7.0) sha256=6566b70b801d1c317c81bba7bcdd5677c019afac584a30374b4164002ca356d3
   solid_queue-flightdeck (1.2.0) sha256=d6f384a5962b4cd40ae92b64c25ba548e5d1282b544fe2655663f66df53fe234
-  sqlite3 (2.10.0-aarch64-linux-gnu) sha256=dafeea94182af2eb53a10797be359fa6ec4270532bd45255d1c2beb69f2eb743
-  sqlite3 (2.10.0-aarch64-linux-musl) sha256=ec4ffedded0bd8579629e14d0647cfee9092c0af0009c05d6404d90857b1cb8b
-  sqlite3 (2.10.0-arm-linux-gnu) sha256=bcf2e165f27fd28f46ba34eeba3503d557ea7f76f9dd40434ce719f2ba0d5cda
-  sqlite3 (2.10.0-arm-linux-musl) sha256=338510e64876c7d02d91733eeaee384806c58b3835d8a688d1bfdbf7e468c497
-  sqlite3 (2.10.0-arm64-darwin) sha256=f619f33adfd01a1827e8764a3da92b289c1a99d93707d021a242dccba6909c4e
-  sqlite3 (2.10.0-x86_64-darwin) sha256=67306588548e62095855a511285daf33389d7f4311c1c33a1addd23e2b90cec5
-  sqlite3 (2.10.0-x86_64-linux-gnu) sha256=295f48b240ba663efa2e3b6f38cbc0f19f5c8a2823a71fda3bf15531be5dd0e8
-  sqlite3 (2.10.0-x86_64-linux-musl) sha256=876dd86a15c7828075ff7612e3d0ab0eb2eba0d8485b13fd4000e8a335f86bc5
+  sqlite3 (2.10.1-aarch64-linux-gnu) sha256=48390cc2b809acd1280f5c9daaf3c2013833adb8a5ece9b0634f708651080ccd
+  sqlite3 (2.10.1-aarch64-linux-musl) sha256=db1bcddf98e4eeea80ca896f56aa3f9468364fa1ee8e042ddc6b628b5092fabb
+  sqlite3 (2.10.1-arm-linux-gnu) sha256=34a67a3fe84f705a0fad6f7aa4541579300644b9acdf414797e59929a6e3528b
+  sqlite3 (2.10.1-arm-linux-musl) sha256=e317adb8979b57dafd999b54410b4050296aa5d00caa664e3f75d876e2ae90e8
+  sqlite3 (2.10.1-arm64-darwin) sha256=45f74dad0a8ee57ae5fadfac39bf160d1f09fb0484a442223310d869cd957d92
+  sqlite3 (2.10.1-x86_64-darwin) sha256=00d1cd2e8ecff5ad9fffa0c97de59d4f85c5fc54eada2587d53ca0bd933b7a5d
+  sqlite3 (2.10.1-x86_64-linux-gnu) sha256=661ecede31e23a412059cd8c684ed84e332f64f167e4a90902cf99e8ea2c8718
+  sqlite3 (2.10.1-x86_64-linux-musl) sha256=67c7c5443a930157b4e148f0f4cb9ab998ee7ecfa8ce56879a6b56d1d742b2be
   thor (1.5.0) sha256=e3a9e55fe857e44859ce104a84675ab6e8cd59c650a49106a05f55f136425e73
   timeout (0.6.1) sha256=78f57368a7e7bbadec56971f78a3f5ecbcfb59b7fcbb0a3ed6ddc08a5094accb
   trailblazer-option (0.1.2) sha256=20e4f12ea4e1f718c8007e7944ca21a329eee4eed9e0fa5dde6e8ad8ac4344a3
