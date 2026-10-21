@@ -1,0 +1,5 @@
+tool_mode: cli
+context_files: false
+skip_tools:
+  - rails_query
+  - rails_read_logs

@@ -156,6 +156,22 @@ The workflow-specific knowledge lives in [docs/workflows.md](docs/workflows.md),
 points agents there before they edit workflow code. In practice, that means you can ask an agent to
 create or modify a workflow and it has a shared source of truth instead of guessing the local style.
 
+For structured Rails code inspection, `mise.toml` also provides the standalone
+[rails-ai-context CLI](https://github.com/crisnahine/rails-ai-context). It runs independently of the
+application's Gemfile; no MCP server or additional skill is needed:
+
+```bash
+mise install gem:rails-ai-context
+mise exec -- rails-ai-context tool schema --table solid_queue_jobs --no-boot
+mise exec -- rails-ai-context tool model_details --model Dashboard::Run --no-boot
+mise exec -- rails-ai-context tool search_code --pattern logical_key_sql --match-type trace --no-boot
+```
+
+`--no-boot` reads source without starting Rails. The tool's job catalog does not include workflow
+packs, and its static route discovery can misread the headless profile's route reset; read
+`config/routes.rb` directly when that happens. `.rails-ai-context.yml` disables context-file
+generation, SQL queries, and log reads. Existing project instructions and validation remain authoritative.
+
 ## Dashboard
 
 The default web surface is server-rendered and intentionally small:

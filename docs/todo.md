@@ -7,6 +7,10 @@ There are no open app-quality items from the 2026-07-10 audit.
 
 ## Current review backlog (local only)
 
+- Implemented, awaiting review: optional `rails-ai-context` CLI through `mise.toml`, with static
+  source inspection, context generation disabled, and tool selection, evidence-based configuration
+  changes, and workflow/route discovery limits in `AGENTS.md`.
+
 - Implemented, awaiting review: engine lint guards for provider/dynamic ENV reads in clients,
   external Google constants, and literal requires of autoloaded files. Workflow linting remains
   a separate, deferred profile; keep autoload root configuration aligned with Rails.

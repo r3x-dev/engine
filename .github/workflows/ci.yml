@@ -8,6 +8,7 @@ on:
       - ".codex*"
       - ".devcontainer/**"
       - ".githooks/**"
+      - ".rails-ai-context.yml"
       - ".vscode/**"
       - ".wtp.yml"
       - "docs/**"

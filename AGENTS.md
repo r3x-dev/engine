@@ -20,6 +20,30 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
   results, and backlog in that workflow's directory. Never promote a workflow-specific rule
   into an engine-wide policy; move misplaced notes to their owner when touching them.
 
+## Rails Code Context
+
+- `rails-ai-context` is an optional standalone CLI managed by `mise.toml`; configuration lives in `.rails-ai-context.yml`.
+- For structured schema/model context or method definitions and callers, use
+  `mise exec -- rails-ai-context tool <name> --no-boot`. Discover tools with `tool --list --no-boot`
+  and parameters with `tool <name> --help`. Prefer `rg` for simple text searches.
+- When a task needs context across Rails files, inspect the available tools and choose the
+  smallest relevant set. Built-in tools are available unless `skip_tools` disables them;
+  using another tool does not require a new YAML entry.
+- Extend `.rails-ai-context.yml` when a task demonstrates missing relevant paths or filtered
+  context that a documented option can address. Check the installed version's configuration
+  docs, keep one-off filters in command arguments, and verify the change with the same focused
+  query before and after. Retain project-wide settings only for recurring project needs.
+- Custom tools are application code, not YAML entries: establish a recurring gap in built-in
+  tools first, then follow the normal implementation/review workflow. Enable SQL or log tools
+  only when those data are needed for the current task and access is already authorized.
+- Static output describes source, not live database state or runtime behavior. Read the response
+  for errors and incomplete sections even when the command exits successfully.
+- `job_pattern` does not discover workflow packs. Use `docs/workflows.md` and the existing
+  workflow CLI for catalog/runtime questions. Static route discovery can misread the headless
+  route reset in `config/application.rb`; inspect `config/routes.rb` directly in that case.
+- Keep context generation disabled so the tool does not write agent instructions. Its generated
+  setup/test suggestions do not replace this project's commands or validation policy.
+
 ## Linting Contracts
 
 - When fixing a bug or enforcing a rule, consider whether an existing cop/check can prevent recurrence. Inspect its active configuration and tests before adding another control; prefer extending an existing cop when it owns the same contract.

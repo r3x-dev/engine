@@ -7,6 +7,7 @@ idiomatic_version_file_enable_tools = ["ruby"]
 "gem:libyear-bundler" = "0.9.3"
 "gem:next_rails" = "1.7.0"
 "gem:rails_stats" = "2.2.0"
+"gem:rails-ai-context" = "5.36.5"
 "gem:rubycritic" = "5.0.0"
 "gem:skunk" = "0.6.0"
 "github:AlDanial/cloc" = { version = "2.10", asset_pattern = "cloc-2.10.pl", bin = "cloc" }
