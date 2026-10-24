@@ -138,7 +138,7 @@ GEM
       activesupport (>= 6.1)
     google-apis-calendar_v3 (0.58.0)
       google-apis-core (>= 0.15.0, < 2.a)
-    google-apis-core (1.3.2)
+    google-apis-core (1.4.0)
       addressable (~> 2.9)
       faraday (~> 2.13)
       faraday-follow_redirects (~> 0.3)
@@ -149,7 +149,7 @@ GEM
       retriable (>= 3.1, < 5.0)
     google-apis-gmail_v1 (0.53.0)
       google-apis-core (>= 0.15.0, < 2.a)
-    google-apis-sheets_v4 (0.49.0)
+    google-apis-sheets_v4 (0.50.0)
       google-apis-core (>= 0.15.0, < 2.a)
     google-cloud-core (1.9.0)
       google-cloud-env (>= 1.0, < 3.a)
@@ -442,11 +442,11 @@ GEM
       marcel (>= 1.0, < 3)
       schematist (~> 1.1)
       zeitwerk (~> 2)
-    rubydex (0.4.1)
-    rubydex (0.4.1-aarch64-linux)
-    rubydex (0.4.1-arm64-darwin)
-    rubydex (0.4.1-x86_64-darwin)
-    rubydex (0.4.1-x86_64-linux)
+    rubydex (0.4.2)
+    rubydex (0.4.2-aarch64-linux)
+    rubydex (0.4.2-arm64-darwin)
+    rubydex (0.4.2-x86_64-darwin)
+    rubydex (0.4.2-x86_64-linux)
     schematist (1.1.0)
     securerandom (0.4.1)
     signet (0.22.1)
@@ -587,9 +587,9 @@ CHECKSUMS
   gapic-common (1.5.1) sha256=bba5d3707c72bf95b00a2c1c6f7bcee5a701d7c221dfd3a024a8f63f15b43502
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   google-apis-calendar_v3 (0.58.0) sha256=227ef78164a0efc53ddcba4a09b690013893a16e6cbe560753d78396cc58a735
-  google-apis-core (1.3.2) sha256=dec616d1fee423b4337ca3a802efc61cff0739aa6a6de1ebd16ba30c1b7b6dd7
+  google-apis-core (1.4.0) sha256=74e838a334926e79ce685d3ff9f418956cc23e48c5fd7cade779fea933e96582
   google-apis-gmail_v1 (0.53.0) sha256=8ac02850e636de42bd6f54f20565eab4bf089f4334ae6ee76ad7c051e92cd5a4
-  google-apis-sheets_v4 (0.49.0) sha256=34d36b854b43c14c2fe4fffad2c99aaa8dc998615dd22c685984e691cdae6ce4
+  google-apis-sheets_v4 (0.50.0) sha256=2b4e482183715cfd8048ae05828c82bf75d2d3357a97ed759e21a5ea784e070e
   google-cloud-core (1.9.0) sha256=ab55409f51488e8deefb6edcc1ce4771dfb5da2fe7b3bc075709a030c2b682a4
   google-cloud-env (2.4.1) sha256=987cc58afc50ce2903128ab4dcd442159be4457246b8137e41d49d5c3fc590dd
   google-cloud-errors (1.7.0) sha256=6e682f42d89aae08689f36f28495de629d756da076bafff0003bac7f8042ebb3
@@ -700,11 +700,11 @@ CHECKSUMS
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
   ruby2_keywords (0.0.5) sha256=ffd13740c573b7301cf7a2e61fc857b2a8e3d3aff32545d6f8300d8bae10e3ef
   ruby_llm (2.1.1) sha256=2a59a6c100d1f7a5c5df7f3c392392c4430220ed936a34fdd34dd15954cc3573
-  rubydex (0.4.1) sha256=9856af8bfbe656eed95449dd9e2c8239a74662b4bb8563e4b99221dbc065a34a
-  rubydex (0.4.1-aarch64-linux) sha256=abc1c9eb22479f60dd015fa81373163c5a71f2700b76bced1282631686bd6271
-  rubydex (0.4.1-arm64-darwin) sha256=d23720253876d88fb98954e5d3a1ef9696a269697acf50e3ab53cdfbb2b66b96
-  rubydex (0.4.1-x86_64-darwin) sha256=a9681db5bc9be6a62f226d96d6889b6b600d0b09e7576391702aafd29912145b
-  rubydex (0.4.1-x86_64-linux) sha256=4e2c8398c9fc585485b54edd28f5ecf76b5a02255e177b6f8402e9d2afffd51b
+  rubydex (0.4.2) sha256=e0188fceba57cff72d8c220d815408fee65dfd81c2a3086f3872a8553b2a4d1b
+  rubydex (0.4.2-aarch64-linux) sha256=65c767967c514517cc46fe8f8b35f37d0f9c7654b5372a570bbd012c4c1acfe7
+  rubydex (0.4.2-arm64-darwin) sha256=e988bcadab195e81b45f17ae7b56e086e8c34c25b9798a91535b00e854082d71
+  rubydex (0.4.2-x86_64-darwin) sha256=49d3b16c893ae012d92782e988514d41c486bd6b909bb37c06a8b8a57d3f93bd
+  rubydex (0.4.2-x86_64-linux) sha256=ec8522671fb16a5d0c87329568823c83a2edd4d8db587e47ed311b4fd1ae69aa
   schematist (1.1.0) sha256=905d8f0286830926e77e0d631bee325ee741c4b99640bc99735593b40ba73e7b
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   signet (0.22.1) sha256=6e73e9f2bdc2f038a5fdc8a89d248792b1b55e9ca50ee1ba458d8f1d9f0a2151
