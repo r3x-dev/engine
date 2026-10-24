@@ -12,7 +12,7 @@ idiomatic_version_file_enable_tools = ["ruby"]
 "gem:skunk" = "0.6.0"
 "github:AlDanial/cloc" = { version = "2.10", asset_pattern = "cloc-2.10.pl", bin = "cloc" }
 dprint = "latest"
-trivy = "0.76.0"
+trivy = "0.76.1"
 
 [env]
 RAILS_ENV = "development"
