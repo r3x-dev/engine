@@ -147,7 +147,7 @@ GEM
       multi_json (~> 1.11)
       representable (~> 3.0)
       retriable (>= 3.1, < 5.0)
-    google-apis-gmail_v1 (0.53.0)
+    google-apis-gmail_v1 (0.54.0)
       google-apis-core (>= 0.15.0, < 2.a)
     google-apis-sheets_v4 (0.50.0)
       google-apis-core (>= 0.15.0, < 2.a)
@@ -588,7 +588,7 @@ CHECKSUMS
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   google-apis-calendar_v3 (0.58.0) sha256=227ef78164a0efc53ddcba4a09b690013893a16e6cbe560753d78396cc58a735
   google-apis-core (1.4.0) sha256=74e838a334926e79ce685d3ff9f418956cc23e48c5fd7cade779fea933e96582
-  google-apis-gmail_v1 (0.53.0) sha256=8ac02850e636de42bd6f54f20565eab4bf089f4334ae6ee76ad7c051e92cd5a4
+  google-apis-gmail_v1 (0.54.0) sha256=e30b3a098d30015042b00e899d85e417b148771198c39124ddb982b5685f6155
   google-apis-sheets_v4 (0.50.0) sha256=2b4e482183715cfd8048ae05828c82bf75d2d3357a97ed759e21a5ea784e070e
   google-cloud-core (1.9.0) sha256=ab55409f51488e8deefb6edcc1ce4771dfb5da2fe7b3bc075709a030c2b682a4
   google-cloud-env (2.4.1) sha256=987cc58afc50ce2903128ab4dcd442159be4457246b8137e41d49d5c3fc590dd
