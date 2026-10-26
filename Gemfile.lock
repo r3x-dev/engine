@@ -81,7 +81,7 @@ GEM
     ast (2.4.3)
     base64 (0.3.0)
     bigdecimal (4.1.3)
-    bootsnap (1.26.0)
+    bootsnap (1.26.1)
       msgpack (~> 1.5)
     brakeman (8.1.0)
       racc
@@ -109,7 +109,7 @@ GEM
     erubi (1.13.1)
     et-orbi (1.4.2)
       tzinfo
-    faraday (2.15.0)
+    faraday (2.15.1)
       faraday-net_http (>= 2.0, < 3.6)
       json
       logger
@@ -124,7 +124,7 @@ GEM
     fugit (1.14.0)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
-    gapic-common (1.5.1)
+    gapic-common (1.6.0)
       faraday (>= 1.9, < 3.a)
       faraday-retry (>= 1.0, < 3.a)
       google-cloud-env (~> 2.2)
@@ -133,7 +133,7 @@ GEM
       googleapis-common-protos (~> 1.6)
       googleapis-common-protos-types (~> 1.15)
       googleauth (~> 1.12)
-      grpc (>= 1.83, < 2.a)
+      grpc (>= 1.84.1, < 2.a)
     globalid (1.4.0)
       activesupport (>= 6.1)
     google-apis-calendar_v3 (0.58.0)
@@ -202,11 +202,11 @@ GEM
     google-protobuf (4.36.2-x86_64-linux-musl)
       bigdecimal
       rake (~> 13.3)
-    googleapis-common-protos (1.9.0)
+    googleapis-common-protos (1.11.0)
       google-protobuf (~> 4.26)
       googleapis-common-protos-types (~> 1.21)
-      grpc (~> 1.41)
-    googleapis-common-protos-types (1.23.0)
+      grpc (>= 1.84.1, < 2.a)
+    googleapis-common-protos-types (1.24.0)
       google-protobuf (~> 4.26)
     googleauth (1.17.6)
       faraday (>= 1.0, < 3.a)
@@ -216,31 +216,31 @@ GEM
       os (>= 0.9, < 2.0)
       pstore (~> 0.1)
       signet (>= 0.16, < 2.a)
-    grpc (1.84.0)
+    grpc (1.85.0)
       google-protobuf (>= 3.25, < 5.0)
       googleapis-common-protos-types (~> 1.0)
-    grpc (1.84.0-aarch64-linux-gnu)
+    grpc (1.85.0-aarch64-linux-gnu)
       google-protobuf (>= 3.25, < 5.0)
       googleapis-common-protos-types (~> 1.0)
-    grpc (1.84.0-aarch64-linux-musl)
+    grpc (1.85.0-aarch64-linux-musl)
       google-protobuf (>= 3.25, < 5.0)
       googleapis-common-protos-types (~> 1.0)
-    grpc (1.84.0-arm64-darwin)
+    grpc (1.85.0-arm64-darwin)
       google-protobuf (>= 3.25, < 5.0)
       googleapis-common-protos-types (~> 1.0)
-    grpc (1.84.0-x86_64-darwin)
+    grpc (1.85.0-x86_64-darwin)
       google-protobuf (>= 3.25, < 5.0)
       googleapis-common-protos-types (~> 1.0)
-    grpc (1.84.0-x86_64-linux-gnu)
+    grpc (1.85.0-x86_64-linux-gnu)
       google-protobuf (>= 3.25, < 5.0)
       googleapis-common-protos-types (~> 1.0)
-    grpc (1.84.0-x86_64-linux-musl)
+    grpc (1.85.0-x86_64-linux-musl)
       google-protobuf (>= 3.25, < 5.0)
       googleapis-common-protos-types (~> 1.0)
-    grpc-google-iam-v1 (1.12.0)
+    grpc-google-iam-v1 (1.13.0)
       google-protobuf (>= 3.18, < 5.a)
-      googleapis-common-protos (~> 1.9.0)
-      grpc (~> 1.41)
+      googleapis-common-protos (~> 1.9)
+      grpc (>= 1.84.1, < 2.a)
     hashdiff (1.2.1)
     heroicon (1.0.0)
       rails (>= 5.2)
@@ -313,7 +313,7 @@ GEM
       racc (~> 1.4)
     os (1.1.4)
     parallel (2.3.0)
-    parser (3.3.12.0)
+    parser (3.3.13.0)
       ast (~> 2.4.1)
       racc
     pg (1.7.0)
@@ -327,7 +327,7 @@ GEM
       prettyprint
     prettyprint (0.2.1)
     prism (1.9.0)
-    pstore (0.2.1)
+    pstore (0.3.0)
     public_suffix (7.0.5)
     puma (8.0.2)
       nio4r (~> 2.0)
@@ -337,7 +337,7 @@ GEM
     rack-session (2.1.2)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
-    rack-test (2.2.0)
+    rack-test (2.3.0)
       rack (>= 1.3)
     rackup (2.3.1)
       rack (>= 3)
@@ -394,7 +394,7 @@ GEM
     rexml (3.4.4)
     rss (0.3.3)
       rexml
-    rubocop (1.92.0)
+    rubocop (1.92.1)
       json (>= 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
@@ -442,11 +442,11 @@ GEM
       marcel (>= 1.0, < 3)
       schematist (~> 1.1)
       zeitwerk (~> 2)
-    rubydex (0.4.2)
-    rubydex (0.4.2-aarch64-linux)
-    rubydex (0.4.2-arm64-darwin)
-    rubydex (0.4.2-x86_64-darwin)
-    rubydex (0.4.2-x86_64-linux)
+    rubydex (0.4.3)
+    rubydex (0.4.3-aarch64-linux)
+    rubydex (0.4.3-arm64-darwin)
+    rubydex (0.4.3-x86_64-darwin)
+    rubydex (0.4.3-x86_64-linux)
     schematist (1.1.0)
     securerandom (0.4.1)
     signet (0.22.1)
@@ -561,7 +561,7 @@ CHECKSUMS
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   bigdecimal (4.1.3) sha256=61ebe1e5e559bdc3cc6f2c0ee7f427321fc838f59611c294356eb04d6e21cf66
-  bootsnap (1.26.0) sha256=ca96237015e6cd74a02963d5821cf00ac5ea134653b323e8cd6d702a7718bf1b
+  bootsnap (1.26.1) sha256=5b5bd90f8f13ea338627c1d56ffbe2ea25e743ac48c2afec1a9bea3a06a264e2
   brakeman (8.1.0) sha256=cfa9e5214e4925842f4bc849a64f8a7e6c5d0425fe98eac8d7b7bc60fdc17e07
   builder (3.3.0) sha256=497918d2f9dca528fdca4b88d84e4ef4387256d984b8154e9d5d3fe5a9c8835f
   bundler-audit (0.9.3) sha256=81c8766c71e47d0d28a0f98c7eed028539f21a6ea3cd8f685eb6f42333c9b4e9
@@ -578,13 +578,13 @@ CHECKSUMS
   erb (6.0.7) sha256=c5ca6dc25b0ef974a44dc8f59fe847577122483b1968a38dec305c60bf91ee92
   erubi (1.13.1) sha256=a082103b0885dbc5ecf1172fede897f9ebdb745a4b97a5e8dc63953db1ee4ad9
   et-orbi (1.4.2) sha256=bb555dae668419cb24caa2a293a170e58be6d4df1e017c51f5030bdc133cd20c
-  faraday (2.15.0) sha256=3be0eff0187ed913a1b4f679e9fcfe845b542cdd4f75b76cd6181a4ae1335fff
+  faraday (2.15.1) sha256=8708154deda739c5e86cc42b74960e23e8491fce0eba9e11639a6a34b1ac288f
   faraday-follow_redirects (0.5.0) sha256=5cde93c894b30943a5d2b93c2fe9284216a6b756f7af406a1e55f211d97d10ad
   faraday-multipart (1.2.0) sha256=7d89a949693714176f612323ca13746a2ded204031a6ba528adee788694ef757
   faraday-net_http (3.5.0) sha256=2e7094c34e38754ee048cc3df47376f8657005d9375f8473bce1c3b526a22e36
   faraday-retry (2.4.0) sha256=7b79c48fb7e56526faf247b12d94a680071ff40c9fda7cf1ec1549439ad11ebe
   fugit (1.14.0) sha256=e311a9cc85a54bb67649df45060e721282a1e2c8ebad40e41874a3a7d576f37e
-  gapic-common (1.5.1) sha256=bba5d3707c72bf95b00a2c1c6f7bcee5a701d7c221dfd3a024a8f63f15b43502
+  gapic-common (1.6.0) sha256=d859a7549afd9b16f787db1e2560e6e1e79283f3eb32199b741f71686b2d8270
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   google-apis-calendar_v3 (0.58.0) sha256=227ef78164a0efc53ddcba4a09b690013893a16e6cbe560753d78396cc58a735
   google-apis-core (1.4.0) sha256=74e838a334926e79ce685d3ff9f418956cc23e48c5fd7cade779fea933e96582
@@ -606,17 +606,17 @@ CHECKSUMS
   google-protobuf (4.36.2-x86_64-darwin) sha256=8d1bd2a344f7f589703b202ad2ee4cca8ef731b4ced45782ef92d385967384ba
   google-protobuf (4.36.2-x86_64-linux-gnu) sha256=d25a820873e423f1d209ae8c672a4a28b019e2429debd0901d26670a0b4e14db
   google-protobuf (4.36.2-x86_64-linux-musl) sha256=0fa17686c896da96a60a705e56ddc7d4ff56413f52787c655bd4c9fb33ffe14f
-  googleapis-common-protos (1.9.0) sha256=207be372d8d25e3876e1e1155d057e14f3c92f8f5428772864a8ce04a0b756e4
-  googleapis-common-protos-types (1.23.0) sha256=992e740a523794d9fc5f29a504465d8fc737aaa16c930fe7228e3346860faf0a
+  googleapis-common-protos (1.11.0) sha256=fe3ceefd26c9a74a3036b632cb3af05d8a368de7b74636bc5cbe05423246acf3
+  googleapis-common-protos-types (1.24.0) sha256=f76599ac6eeddf9ed1cc909c2ff6c9f028c50f69cb1696f43101df6a1fe9f106
   googleauth (1.17.6) sha256=d4fd30f99aeb28ae46ef521cf8ac50927a453b8c6600f8940437ac11ad90bdfc
-  grpc (1.84.0) sha256=df2dd2d379fe3419a58af64f2fab514202437e28b7df5b441a16da542486a98f
-  grpc (1.84.0-aarch64-linux-gnu) sha256=38bcb6998cca338718e39e2b89785964850f71444279a033c296ceb40406cfad
-  grpc (1.84.0-aarch64-linux-musl) sha256=514fad5bc13ed336d424ac056d21803c27f4e2feaddf9eddfc94750bae03f40b
-  grpc (1.84.0-arm64-darwin) sha256=aee56ed688f44750832fbc50c17eb1c75ce1c0d38693dc08d4f37560e1646277
-  grpc (1.84.0-x86_64-darwin) sha256=deb0ba1f82af9200afd0a71301e2039306cd1a3ca3010c814fb67f57eed38642
-  grpc (1.84.0-x86_64-linux-gnu) sha256=3e9be3e4c4734a2a4977aa34446c604b1542a21fe67e4b7772be01602eac6bb3
-  grpc (1.84.0-x86_64-linux-musl) sha256=1ded8b5df0fafb16b195bf559470bf38b9a22bf74a820b892ebb931ca9f2d8ee
-  grpc-google-iam-v1 (1.12.0) sha256=a70ecad8987e340d5e22e7bf01be31256c84b29a3f78bebd385a4a110e1f2aef
+  grpc (1.85.0) sha256=790fb8073453a7a4e4ade9ab265b92d6e8129f60c8ddae06cc9e3cb18e3e2366
+  grpc (1.85.0-aarch64-linux-gnu) sha256=d38ea50e5b45ce7ee8416b522e5926d271a94f8a3346d886625efe0043c6e2bd
+  grpc (1.85.0-aarch64-linux-musl) sha256=a84380f5586ae7d6393f69543c07ff5c85758236f52ebdc02c675530d2154015
+  grpc (1.85.0-arm64-darwin) sha256=27441b9851dbb07b57442b54cfaa4c31a6f0446a409bf0d932c1d0f94fc243b7
+  grpc (1.85.0-x86_64-darwin) sha256=e451ef4d733408530db44028197e8d9449743fcaed2ef81801e537a3c03d1516
+  grpc (1.85.0-x86_64-linux-gnu) sha256=1623b7d7c9a7c8a2f4709ffa00ad98fb873a530cf7003de76fc9136adebcaa9d
+  grpc (1.85.0-x86_64-linux-musl) sha256=dfc3ffa78de52c9b491d580ca445e0a4f62fbbc88c5d9e0c24abcdb812133d7b
+  grpc-google-iam-v1 (1.13.0) sha256=2d0ccd3ca06c7d5894db5b5319b91a1cc397a8e9b65cb1a6459de6e27881ad62
   hashdiff (1.2.1) sha256=9c079dbc513dfc8833ab59c0c2d8f230fa28499cc5efb4b8dd276cf931457cd1
   heroicon (1.0.0) sha256=e63a535a630d6fd3d99c0179d722753c8cd3478df1277eca7a4215c135b6e9cb
   highline (3.1.2) sha256=67cbd34d19f6ef11a7ee1d82ffab5d36dfd5b3be861f450fc1716c7125f4bb4a
@@ -655,7 +655,7 @@ CHECKSUMS
   nokogiri (1.19.4-x86_64-linux-musl) sha256=17dfb7c1fa194ae02fbf7c51a7afc8d278045ab3fdacfd86f91d02d7b274470b
   os (1.1.4) sha256=57816d6a334e7bd6aed048f4b0308226c5fb027433b67d90a9ab435f35108d3f
   parallel (2.3.0) sha256=f75a3e904101ce6a1ccb6b8dc800cbafd42166d83330192438dcf29395167a6f
-  parser (3.3.12.0) sha256=21a6d7f755d5a24dfbdc6e6b772e4e879a52e7631a88bc5a3a134606052c9828
+  parser (3.3.13.0) sha256=e02f9b63c2fe05b0c68f692ba4df89b3cb113b663964f75d988fbebfd6c3deca
   pg (1.7.0) sha256=f7b536501284e883d4c9ef86dbde0313063e4aaafc23575b0017b0d572a26afb
   pg (1.7.0-aarch64-linux) sha256=101dd3a261000eb64b03ff41a5890674b735b626dbdce88652969b59fb0b1157
   pg (1.7.0-aarch64-linux-musl) sha256=5ca4d4619a1a39fb22de47350130956ece69cf0512858ee68dca926e46f65e4a
@@ -666,14 +666,14 @@ CHECKSUMS
   pp (0.6.4) sha256=dfcb0fce700c41456265922884f9fe195d7fbb0674a3578e6c0f69588e82b570
   prettyprint (0.2.1) sha256=d555d57ea6d7cf001d4774b693546a6bd88bec1e778ddffb5c60b68ceec4b7d4
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
-  pstore (0.2.1) sha256=03904d0f2c66579e96d1e6704cdabc0c88df7ea8ed8782d9f3569f6f6c702c1a
+  pstore (0.3.0) sha256=97888d57cdc8b99b3587dde5e1d01fc5ca4a9124dfeb2afb84e3dd982e78f829
   public_suffix (7.0.5) sha256=1a8bb08f1bbea19228d3bed6e5ed908d1cb4f7c2726d18bd9cadf60bc676f623
   puma (8.0.2) sha256=c8ed871dfbbe66448ea9ffd46692342d9804d4071522b52b5331b7b6e7b686fb
   raabro (1.5.0) sha256=3f998a7bc84f9c84df3ab580634d2e0a5bda4f0841168d56035f529c9877440a
   racc (1.8.1) sha256=4a7f6929691dbec8b5209a0b373bc2614882b55fc5d2e447a21aaa691303d62f
   rack (3.2.7) sha256=93e13e1c24f93556671d85d2d79fa228c3485815c50d7e2f265b5330c6528fb7
   rack-session (2.1.2) sha256=595434f8c0c3473ae7d7ac56ecda6cc6dfd9d37c0b2b5255330aa1576967ffe8
-  rack-test (2.2.0) sha256=005a36692c306ac0b4a9350355ee080fd09ddef1148a5f8b2ac636c720f5c463
+  rack-test (2.3.0) sha256=b118d177cc002c572fc1b6fd8d19c9ed5881a36e8d6f689f9e618f9f861241e8
   rackup (2.3.1) sha256=6c79c26753778e90983761d677a48937ee3192b3ffef6bc963c0950f94688868
   rails (8.1.4) sha256=5f3ecdf9a2a3b79b2e31b8fee3b64a00f7284d76e5631f87d0e58e665911a33b
   rails-dom-testing (2.3.0) sha256=8acc7953a7b911ca44588bf08737bc16719f431a1cc3091a292bca7317925c1d
@@ -690,7 +690,7 @@ CHECKSUMS
   retryable (3.0.5) sha256=c9f3dd6836bacf59c08b3f33548416debca7c0757e0c008d35df32ec9266d55f
   rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
   rss (0.3.3) sha256=37ef1ec4d691d67edbe92159079a4e89a0965e6a6b32246009ae3d734d12d1ab
-  rubocop (1.92.0) sha256=2af68041fb2e70bd9321d0479b49fad07f8008a3d0758c83347b4917128c56e0
+  rubocop (1.92.1) sha256=a905381a5344215a79abcfe80f6c94366447e6a55347c9a525b5a24990e33f62
   rubocop-ast (1.50.0) sha256=b9ca88300da0803ee222ad20cdb30494c0a784eed06fdc35d254b06d662788db
   rubocop-minitest (0.41.0) sha256=c15bfe00134a30c8a00ce670b07ecc80440455ba277b8682cf0d515c98ee7426
   rubocop-performance (1.27.0) sha256=eeeb1374d062a368ee1c787b70eb0b0cc4b184cb1f8565f424760946146d61ce
@@ -700,11 +700,11 @@ CHECKSUMS
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
   ruby2_keywords (0.0.5) sha256=ffd13740c573b7301cf7a2e61fc857b2a8e3d3aff32545d6f8300d8bae10e3ef
   ruby_llm (2.1.1) sha256=2a59a6c100d1f7a5c5df7f3c392392c4430220ed936a34fdd34dd15954cc3573
-  rubydex (0.4.2) sha256=e0188fceba57cff72d8c220d815408fee65dfd81c2a3086f3872a8553b2a4d1b
-  rubydex (0.4.2-aarch64-linux) sha256=65c767967c514517cc46fe8f8b35f37d0f9c7654b5372a570bbd012c4c1acfe7
-  rubydex (0.4.2-arm64-darwin) sha256=e988bcadab195e81b45f17ae7b56e086e8c34c25b9798a91535b00e854082d71
-  rubydex (0.4.2-x86_64-darwin) sha256=49d3b16c893ae012d92782e988514d41c486bd6b909bb37c06a8b8a57d3f93bd
-  rubydex (0.4.2-x86_64-linux) sha256=ec8522671fb16a5d0c87329568823c83a2edd4d8db587e47ed311b4fd1ae69aa
+  rubydex (0.4.3) sha256=2af3c35cb82de9db627b373efa9c6355e93924625ffab708e27dd9efbf08fad5
+  rubydex (0.4.3-aarch64-linux) sha256=e7f7368546c8ed034c12829988b17fb570d9ac4991c802c0d9f75a123b965fc9
+  rubydex (0.4.3-arm64-darwin) sha256=6d9735367e2c9e4caece42da2732fa7492c68507aa97a58afc41f58296013cdb
+  rubydex (0.4.3-x86_64-darwin) sha256=f70c6ee8988e20dbc29a69e2b283ebbd6483ea89bf10a806dd8696c3710af71b
+  rubydex (0.4.3-x86_64-linux) sha256=550138ee5a5c005066560321cfe003130a111468821d8ef7cf30826742b1c2f5
   schematist (1.1.0) sha256=905d8f0286830926e77e0d631bee325ee741c4b99640bc99735593b40ba73e7b
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   signet (0.22.1) sha256=6e73e9f2bdc2f038a5fdc8a89d248792b1b55e9ca50ee1ba458d8f1d9f0a2151
