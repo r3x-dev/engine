@@ -74,6 +74,64 @@ module R3x
         end
       end
 
+      test "publish sends an optional named feed in real mode" do
+        stub_request(:post, "https://feedway.test/api/v1/entries")
+          .with(
+            body: '{"content_html":"<p>hello</p>","title":"My Title","feed":"madeira-news"}',
+            headers: {
+              "Authorization" => "Bearer token-123",
+            },
+          )
+          .to_return(
+            status: 201,
+            body: MultiJSON.generate({ "result" => "created", "id" => "sha256-v1:abc" }),
+            headers: { "Content-Type" => "application/json" },
+          )
+
+        with_client_env do
+          with_env("R3X_FEEDWAY_DRY_RUN" => "false") do
+            result = Feedway.new.publish(
+              content_html: "<p>hello</p>",
+              title: "My Title",
+              feed: "madeira-news",
+            )
+
+            assert_equal "created", result["result"]
+            assert_equal "sha256-v1:abc", result["id"]
+          end
+        end
+      end
+
+      test "publish sends an explicitly blank feed and raises on a 422 response" do
+        stub_request(:post, "https://feedway.test/api/v1/entries")
+          .with(
+            body: '{"content_html":"<p>hello</p>","feed":""}',
+            headers: {
+              "Authorization" => "Bearer token-123",
+            },
+          )
+          .to_return(
+            status: 422,
+            body: MultiJSON.generate({ "error" => "feed must be a slug" }),
+            headers: { "Content-Type" => "application/json" },
+          )
+
+        with_client_env do
+          with_env("R3X_FEEDWAY_DRY_RUN" => "false") do
+            error = assert_raises(HTTPX::HTTPError) do
+              Feedway.new.publish(content_html: "<p>hello</p>", feed: "")
+            end
+
+            assert_requested(
+              :post,
+              "https://feedway.test/api/v1/entries",
+              body: '{"content_html":"<p>hello</p>","feed":""}',
+            )
+            assert_equal 422, error.response.status
+          end
+        end
+      end
+
       test "publish returns dry_run result and logs intent when dry run is active" do
         client = with_client_env { Feedway.new }
 

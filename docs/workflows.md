@@ -196,8 +196,10 @@ Engine client contracts remain independent of any catalog. The Gmail client expo
 `R3x::Client::Google::Gmail::TransientError` for server, rate-limit, timeout, and transport
 errors; ordinary authorization/client errors propagate. `deliver` returns a hash whose
 `mode` is `real` or `dry_run`, so callers must check actual delivery before marking completion.
-The Feedway client uses a ten-second total request timeout. These client capabilities do
-not choose which destination is required or set a workflow's retry policy.
+The Feedway client uses a ten-second total request timeout. `publish` accepts an optional
+`feed:` slug. Without it, entries are unassigned and visible only in the aggregate feed;
+the server has no named default feed. These client capabilities do not choose which
+destination is required or set a workflow's retry policy.
 
 Optional copies can share the final phase with source acknowledgment. Confirm required work
 first, then attempt optional copies. Catch ordinary errors only around

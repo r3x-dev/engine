@@ -18,8 +18,8 @@ module R3x
 
       # POST /api/v1/entries
       # Publishes a new entry (or returns deduplicated status for unchanged content).
-      # Returns parsed response hash: { "result" => "created"/"deduplicated", "id" => "sha256-v1:..." }
-      def publish(content_html:, title: nil)
+      # Returns parsed response hash with an opaque ID (UUIDv7 or legacy SHA).
+      def publish(content_html:, title: nil, feed: nil)
         raise ArgumentError, "content_html is required" if content_html.blank?
 
         if R3x::Policy.dry_run_for(:feedway)
@@ -31,6 +31,7 @@ module R3x
 
         payload = { content_html: }
         payload[:title] = title if title.present?
+        payload[:feed] = feed unless feed.nil?
 
         connection.post("#{base_url}/api/v1/entries", json: payload)
                   .raise_for_status
