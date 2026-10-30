@@ -32,6 +32,27 @@ module R3x
           assert_equal "gemini_api_key", config.config_api_key_attr
         end
 
+        test "accepts key and token env names with and without a suffix" do
+          %w[CLOUDFLARE_API_KEY CLOUDFLARE_API_KEY_TEST CLOUDFLARE_API_TOKEN CLOUDFLARE_API_TOKEN_TEST].each_with_index do |name, index|
+            ENV[name] = "credential-#{index}"
+
+            config = ProviderConfiguration.resolve(api_key_env: name)
+
+            assert_equal "credential-#{index}", config.api_key
+            assert_equal "cloudflare_api_key", config.config_api_key_attr
+          end
+        end
+
+        test "rejects incomplete credential env names" do
+          %w[GEMINI CLOUDFLARE_API_TOKENISH GEMINI_API_KEYTEST].each do |name|
+            ENV[name] = "credential"
+
+            assert_raises(ArgumentError) do
+              ProviderConfiguration.resolve(api_key_env: name)
+            end
+          end
+        end
+
         test "inferred resolution raises when provider is unknown" do
           ENV["UNKNOWN_SERVICE_API_KEY"] = "unknown-key"
 

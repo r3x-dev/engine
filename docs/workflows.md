@@ -738,6 +738,52 @@ response = ctx.client.llm(
 
 The provider is dynamically inferred from the environment variable name prefix (e.g. `OPENCODE_GO` to `:opencode_go`), routing the request through the lazy registered custom provider adapter while allowing the workflow to choose the exact token env variant (such as `OPENCODE_GO_API_KEY`, `OPENCODE_GO_API_KEY_PROJECTA`, or `OPENCODE_GO_API_KEY_PROJECTB`). OpenCode Go uses RubyLLM's Chat Completions protocol. Dynamic providers use RubyLLM's provider-level model assumption hook, so workflows can pass provider-specific model IDs without maintaining a static model registry.
 
+### Typed decisions with Cloudflare Clef
+
+Use `judge` for probabilities, choices, and scores over text or JSON input. The client
+returns native `RubyLLM::Judgment` answers through the System One adapter:
+
+```ruby
+llm = ctx.client.llm(
+  api_key_env: "CLOUDFLARE_API_TOKEN_PROJECTA",
+  max_retries: 0
+) do |config|
+  config.cloudflare_account_id = R3x::Env.fetch!("CLOUDFLARE_ACCOUNT_ID_PROJECTA")
+end
+
+decision = llm.judge(
+  "Please refund the duplicate charge.",
+  model: "clef-flash",
+  questions: {
+    team: {
+      type: :choice,
+      instructions: "Which team should handle this request?",
+      options: { billing: "Payments and refunds", technical: "Errors and configuration" }
+    }
+  }
+)
+
+decision.team.choice
+decision.team.probabilities
+decision.team.confidence
+decision.tokens.input
+```
+
+Credentials use `<PROVIDER>_API_KEY` or `<PROVIDER>_API_TOKEN`, including underscore-suffixed
+variants. The exact selected env name is read; there is no fallback between the two.
+An optional block configures the isolated RubyLLM context
+for that client using the SDK's own settings; it runs after the key and `max_retries:`
+are applied. Provider-specific settings belong in this block. For Cloudflare, set
+`config.cloudflare_account_id` to a 32-character hexadecimal account ID. The example
+reads it from an explicitly selected env name; no account env or suffix is inferred.
+
+For other question types, use `type: :probability` with an instruction, or
+`type: :score` with an instruction and ordered `levels:`. `judge` shares the existing
+LLM retry configuration and `TransientError` translation. Authentication and invalid
+response errors propagate. It performs real model calls in all environments; it has
+no dry-run mode. This initial adapter accepts text/JSON input without image attachments.
+Cloudflare judgments use `judge`; `message` and `classify` retain their generative API.
+
 ## Return Value
 
 - Do not design `#run` to return a special metadata hash, status object, or summary structure.

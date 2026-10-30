@@ -9,10 +9,22 @@ module R3x
         MUTEX = Mutex.new
 
         def register!
-          MUTEX.synchronize { register_opencode_go! }
+          MUTEX.synchronize do
+            register_opencode_go!
+            register_cloudflare!
+          end
         end
 
         private
+
+        def register_cloudflare!
+          unless RubyLLM::Providers.const_defined?(:Cloudflare, false)
+            RubyLLM::Providers.const_set(:Cloudflare, Cloudflare.provider_class)
+          end
+          return if RubyLLM::Provider.providers[:cloudflare] == RubyLLM::Providers::Cloudflare
+
+          RubyLLM::Provider.register(:cloudflare, RubyLLM::Providers::Cloudflare)
+        end
 
         def register_opencode_go!
           RubyLLM::Providers.const_set(:OpenCodeGo, opencode_go_provider_class) unless RubyLLM::Providers.const_defined?(:OpenCodeGo, false)

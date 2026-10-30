@@ -194,6 +194,7 @@ module R3x
         Llm::ProviderRegistry.register!
 
         assert_same RubyLLM::Providers::OpenCodeGo, RubyLLM::Provider.providers.fetch(:opencode_go)
+        assert_same RubyLLM::Providers::Cloudflare, RubyLLM::Provider.providers.fetch(:cloudflare)
       end
 
       test "leaves provider unset for registry-backed models" do

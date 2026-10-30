@@ -45,6 +45,7 @@ module R3x
         @llm_context = RubyLLM.context do |config|
           config.public_send(:"#{config_api_key_attr}=", api_key)
           config.max_retries = max_retries unless max_retries.nil?
+          yield config if block_given?
         end
       end
 
@@ -62,15 +63,25 @@ module R3x
         Classifier.new(method(:message)).classify(...)
       end
 
+      def judge(input, model:, questions:)
+        with_transient_errors { llm_context.judge(input, model:, questions:, **chat_options) }
+      end
+
       private
 
       attr_reader :llm_context, :chat_options
 
       def ask_model(model:, prompt:, schema:, attachments: nil)
-        conversation = llm_context.chat(**chat_options.merge(model:))
-        conversation = conversation.with_schema(schema) if schema
+        with_transient_errors do
+          conversation = llm_context.chat(**chat_options.merge(model:))
+          conversation = conversation.with_schema(schema) if schema
 
-        conversation.ask(prompt, with: attachments)
+          conversation.ask(prompt, with: attachments)
+        end
+      end
+
+      def with_transient_errors
+        yield
       rescue RubyLLM::RateLimitError,
         RubyLLM::ServerError,
         RubyLLM::ServiceUnavailableError,

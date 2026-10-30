@@ -7,6 +7,10 @@ There are no open app-quality items from the 2026-07-10 audit.
 
 ## Current review backlog (local only)
 
+- Implemented, awaiting review: text/JSON judgments through RubyLLM, with a lazy Cloudflare Clef
+  adapter, KEY/TOKEN credential naming, and an isolated RubyLLM configuration block.
+  Existing workflows retain their model selection.
+
 - Implemented, awaiting review: optional `rails-ai-context` CLI through `mise.toml`, with static
   source inspection, context generation disabled, and tool selection, evidence-based configuration
   changes, and workflow/route discovery limits in `AGENTS.md`.
