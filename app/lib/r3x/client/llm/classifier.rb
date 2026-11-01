@@ -8,12 +8,12 @@ module R3x
           @message_method = message_method
         end
 
-        def classify(text:, model:, categories:, include_reason: false, allow_other: true)
+        def classify(text:, model:, categories:, include_reason: false, allow_other: true, thinking_effort: nil)
           all_categories = build_categories(categories, allow_other:)
           schema = build_schema(all_categories.keys, include_reason:)
           prompt = build_prompt(text, all_categories, include_reason:)
 
-          message_method.call(model:, prompt:, schema:).parsed
+          message_method.call(model:, prompt:, schema:, thinking_effort:).parsed
         end
 
         private

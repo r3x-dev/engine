@@ -648,6 +648,25 @@ an explicit one-run operator override and remains available in production.
   end
   ```
 
+## Thinking Effort
+
+`message`, `analyze_image`, and `classify` accept a per-call `thinking_effort:` option:
+
+```ruby
+ctx.client.llm(api_key_env: "GEMINI_API_KEY").message(
+  model: "gemini-flash-latest", prompt: prompt, thinking_effort: :low
+)
+```
+
+Choose a level supported by the selected model. R3x passes the value to RubyLLM's
+`with_thinking(effort:)`; RubyLLM owns provider-specific serialization. Model families
+support different levels, and a `latest` alias can change its target. Omission or `nil`
+preserves the provider default for compatibility. Effort does not leak into later calls
+or other clients. `judge` uses its separate judgment API and has no effort option.
+
+For resumable workflows, save an edition's chosen effort with its model and prompt when
+unfinished generation must retain the same configuration after a source update.
+
 ## Dry Run
 
 - Side-effecting workflow helpers should support `dry_run` when it makes sense.

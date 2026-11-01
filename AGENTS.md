@@ -166,6 +166,8 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Prefer env-name references such as `api_key_env:` or `project:` over raw secrets or parsed credential hashes. Resolve secrets lazily so dry-run paths avoid credential loading.
 - Lazy-load optional/heavy gems at the smallest practical boundary with `R3x::GemLoader.require(...)`; mark the gem `require: false` in `Gemfile`.
 - Prefer `R3x::Workflow::LlmSchema.define` for workflow-defined structured LLM output so workflows without schemas do not load the Schematist gem.
+- Generative LLM calls expose per-call `thinking_effort:` through `message`, `analyze_image`, and
+  `classify`. Choose an explicit level supported by the selected model; `judge` has no effort option.
 - Use `ctx.client.llm(...).judge(input, model:, questions:)` for typed decisions. Cloudflare Clef uses
   the lazy RubyLLM System One adapter; set provider-specific options in the LLM configuration block
   and select credentials with `<PROVIDER>_API_KEY` or `<PROVIDER>_API_TOKEN`, optionally suffixed;

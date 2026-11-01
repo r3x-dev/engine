@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "base64"
 
 module R3x
   module Client
@@ -54,6 +55,52 @@ module R3x
         llm = Llm.new(api_key: "test-key", config_api_key_attr: "gemini_api_key")
 
         assert_not_nil llm
+      end
+
+      test "message sends explicit thinking effort with structured Gemini output" do
+        request = stub_gemini_generation do |payload|
+          payload.dig("generationConfig", "thinkingConfig", "thinkingLevel") == "low" &&
+            !payload.fetch("generationConfig").fetch("thinkingConfig").key?("thinkingBudget") &&
+            payload.dig("generationConfig", "responseMimeType") == "application/json"
+        end
+        schema = R3x::Workflow::LlmSchema.define { string :status }
+        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key", max_retries: 0)
+
+        result = llm.message(model: "gemini-flash-latest", prompt: "Check this", schema:, thinking_effort: :low)
+
+        assert_equal({ "status" => "OK" }, result.parsed)
+        assert_requested request
+      end
+
+      test "image analysis sends explicit effort alongside its attachment" do
+        request = stub_gemini_generation do |payload|
+          payload.dig("generationConfig", "thinkingConfig", "thinkingLevel") == "minimal" &&
+            payload.fetch("contents").any? { |content| content.fetch("parts").any? { |part| part.dig("inline_data", "mime_type") == "image/png" } }
+        end
+        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key", max_retries: 0)
+        image_bytes = Base64.strict_decode64("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a5d8AAAAASUVORK5CYII=")
+
+        result = llm.analyze_image(image_bytes, model: "gemini-flash-lite-latest", prompt: "Check image", thinking_effort: :minimal)
+
+        assert_equal '{"status":"OK"}', result.content
+        assert_requested request
+      end
+
+      test "thinking effort is scoped to one call and omission preserves provider defaults" do
+        request = stub_gemini_generation
+        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key", max_retries: 0)
+
+        llm.message(model: "gemini-flash-latest", prompt: "First", thinking_effort: :medium)
+        llm.message(model: "gemini-flash-latest", prompt: "Second")
+
+        assert_requested request, times: 2
+        assert_requested(:post, %r{generativelanguage.googleapis.com/.*:generateContent}) do |http_request|
+          payload = MultiJSON.parse(http_request.body)
+          payload.dig("generationConfig", "thinkingConfig", "thinkingLevel") == "medium"
+        end
+        assert_requested(:post, %r{generativelanguage.googleapis.com/.*:generateContent}) do |http_request|
+          !MultiJSON.parse(http_request.body).fetch("generationConfig").key?("thinkingConfig")
+        end
       end
 
       test "inherits RubyLLM retry configuration" do
@@ -278,6 +325,21 @@ module R3x
           RubyLLM.configure { |config| config.logger = original_logger }
           RubyLLM.instance_variable_set(:@logger, nil)
         end
+      end
+
+      private
+
+      def stub_gemini_generation(&check_payload)
+        request = stub_request(:post, %r{https://generativelanguage.googleapis.com/.*:generateContent})
+        request = request.with { |http_request| check_payload.call(MultiJSON.parse(http_request.body)) } if check_payload
+        request.to_return(
+          status: 200,
+          headers: { "Content-Type" => "application/json" },
+          body: MultiJSON.generate(
+            candidates: [{ content: { role: "model", parts: [{ text: '{"status":"OK"}' }] }, finishReason: "STOP" }],
+            usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1, totalTokenCount: 2 },
+          ),
+        )
       end
     end
   end

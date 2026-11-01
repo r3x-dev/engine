@@ -49,14 +49,14 @@ module R3x
         end
       end
 
-      def analyze_image(image_bytes, prompt:, model:, schema: nil)
+      def analyze_image(image_bytes, prompt:, model:, schema: nil, thinking_effort: nil)
         image = StringIO.new(image_bytes).tap { it.set_encoding(Encoding::BINARY) }
 
-        ask_model(model:, prompt:, schema:, attachments: [image])
+        ask_model(model:, prompt:, schema:, thinking_effort:, attachments: [image])
       end
 
-      def message(model:, prompt:, schema: nil)
-        ask_model(model:, prompt:, schema:)
+      def message(model:, prompt:, schema: nil, thinking_effort: nil)
+        ask_model(model:, prompt:, schema:, thinking_effort:)
       end
 
       def classify(...)
@@ -71,10 +71,11 @@ module R3x
 
       attr_reader :llm_context, :chat_options
 
-      def ask_model(model:, prompt:, schema:, attachments: nil)
+      def ask_model(model:, prompt:, schema:, thinking_effort:, attachments: nil)
         with_transient_errors do
           conversation = llm_context.chat(**chat_options.merge(model:))
           conversation = conversation.with_schema(schema) if schema
+          conversation = conversation.with_thinking(effort: thinking_effort) unless thinking_effort.nil?
 
           conversation.ask(prompt, with: attachments)
         end
