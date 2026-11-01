@@ -79,6 +79,10 @@ that show shape only.
 | `FEEDWAY_URL_*` | Optional variant | Feedway explicit `url_env:` | Alternate Feedway URL env names. | `FEEDWAY_URL_STAGING=https://feedway-staging.example` |
 | `FEEDWAY_API_TOKEN` | Required when Feedway client is used | `R3x::Client::Feedway`, `ctx.client.feedway` | Feedway API Bearer token. Custom names may start with this prefix. | `FEEDWAY_API_TOKEN=<token>` |
 | `FEEDWAY_API_TOKEN_*` | Optional variant | Feedway explicit `api_token_env:` | Alternate Feedway API token env names. | `FEEDWAY_API_TOKEN_STAGING=<token>` |
+| `SOURCETAP_URL` | Required when Sourcetap client is used | `R3x::Client::Sourcetap`, `ctx.client.sourcetap` | Full stateless JSON MCP endpoint, including `/mcp`. Reads still run in dry-run mode. | `SOURCETAP_URL=https://sourcetap.example/mcp` |
+| `SOURCETAP_URL_*` | Optional variant | Sourcetap explicit `url_env:` | Alternate Sourcetap endpoint env names. | `SOURCETAP_URL_STAGING=https://sourcetap-staging.example/mcp` |
+| `SOURCETAP_AUTH_TOKEN` | Required when Sourcetap client is used | `R3x::Client::Sourcetap`, `ctx.client.sourcetap` | MCP Bearer token; the remote server owns source sessions. | `SOURCETAP_AUTH_TOKEN=<token>` |
+| `SOURCETAP_AUTH_TOKEN_*` | Optional variant | Sourcetap explicit `auth_token_env:` | Alternate Sourcetap token env names. | `SOURCETAP_AUTH_TOKEN_STAGING=<token>` |
 | `PROMETHEUS_URL` | Required when Prometheus client is used | `R3x::Client::Prometheus`, `ctx.client.prometheus` | Prometheus base URL. Custom names may start with this prefix. | `PROMETHEUS_URL=http://prometheus.example:9090` |
 | `PROMETHEUS_URL_*` | Optional variant | Prometheus explicit `url_env:` | Alternate Prometheus URL env names. | `PROMETHEUS_URL_HOME=http://prometheus-home.example:9090` |
 | `DISCORD_WEBHOOK_URL` | Required when Discord client uses default env | `R3x::Client::Discord`, `ctx.client.discord` | Discord webhook URL. Custom names may start with this prefix. | `DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...` |

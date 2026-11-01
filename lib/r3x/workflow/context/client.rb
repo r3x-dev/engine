@@ -72,6 +72,13 @@ module R3x
           R3x::Client::Feedway.new(url_env:, api_token_env:)
         end
 
+        def sourcetap(
+          url_env: R3x::Client::Sourcetap::DEFAULT_URL_ENV,
+          auth_token_env: R3x::Client::Sourcetap::DEFAULT_AUTH_TOKEN_ENV
+        )
+          R3x::Client::Sourcetap.new(url_env:, auth_token_env:)
+        end
+
         def wordpress(url:, api_path: R3x::Client::WordPress::API_PATH, user_agent: nil, headers: {})
           R3x::Client::WordPress.new(url:, api_path:, user_agent:, headers:)
         end

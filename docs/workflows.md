@@ -299,6 +299,38 @@ raises, the workflow fails instead of logging a false success.
 - Prefer this for best-effort dedup across runs; prefer a real table only when you need permanent
   history or hard uniqueness guarantees.
 
+## MCP Clients
+
+Reusable outbound protocol clients live under `app/lib/r3x/client/`, alongside provider clients.
+`lib/r3x/` holds workflow engine machinery; workflow-specific tool choices and payload schemas
+belong in the workflow pack.
+
+`R3x::Client::Mcp.new(url:, headers: {}, timeout: 30)` implements stateless HTTP/JSON MCP
+with protocol version `2025-11-25`. It accepts HTTP or HTTPS endpoints and does not read ENV
+or assume an authentication scheme. Each `call_tool(name, arguments: {})` initializes the
+protocol and returns the complete successful tool result. HTTP, JSON-RPC, and tool errors
+propagate instead of becoming empty results. Stateful sessions, SSE, stdio, discovery, and
+automatic retries are outside this client's supported scope.
+
+Provider clients compose this protocol client with their configuration. `R3x::Client::Sourcetap`
+resolves endpoint/token env names, supplies a Bearer header, and sets a 65-second per-request
+timeout. It delegates tool calls without interpreting their payloads.
+
+The Sourcetap integration performs real source reads even when workflow dry-run is enabled,
+as read methods on other clients do. It has no dry-run switch: the server exposes read-only
+tools. Generation and delivery follow their own client/workflow dry-run policies. The generic MCP client
+does not infer side effects from tool names; providers that expose writes must define
+their delivery policy at the provider/workflow boundary.
+
+Read the Sourcetap MCP API before choosing a tool, its arguments, and its response fields.
+Call `ctx.client.sourcetap.call_tool(name, arguments: {})` with the documented tool name
+and argument object.
+
+Successful calls return the complete MCP tool result unchanged. Interpret `content`,
+`structuredContent`, and any tool-specific fields in the workflow; no common item schema
+is assumed. Source sessions are managed by Sourcetap. See [environment.md](environment.md)
+for endpoint and token configuration.
+
 ## Google Sheets Rows
 
 `ctx.client.google_sheets(...).read_rows(range:)` returns raw arrays by default,

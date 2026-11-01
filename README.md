@@ -203,6 +203,9 @@ Workflow code uses `ctx.client.*` helpers for integration boundaries. Existing c
 
 New integration code should usually live under `app/lib/r3x/client/`, lazy-load heavy gems, expose a
 small workflow-facing API, and keep real side effects behind explicit dry-run-aware boundaries.
+Reusable protocol clients such as `Http` and `Mcp` also live there. Provider clients compose them
+with service configuration; workflow packs own source-specific tool choices and payload schemas.
+`lib/r3x/` contains workflow engine machinery rather than an alternate home for integration helpers.
 
 ## Runtime Model
 

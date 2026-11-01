@@ -86,7 +86,8 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 ## Code Map
 
 - `lib/r3x/`: workflow DSL, triggers, loading/registry, execution context, recurring tasks, validators, gem loading.
-- `app/lib/r3x/client/`: integration clients used by workflows and runtime.
+- `app/lib/r3x/client/`: reusable outbound clients (such as HTTP and MCP) and provider integrations.
+  Keep shared protocol code here; provider clients own env/auth configuration and workflow packs own tool-specific payloads.
 - `app/lib/r3x/dashboard/`: dashboard query/composition objects and log provider code.
 - `app/models/dashboard/`: dashboard-facing models over Solid Queue metadata.
 - `app/controllers/r3x/`, `app/views/r3x/dashboard/`, `app/views/layouts/r3x/dashboard.html.erb`: dashboard and HTML surfaces in the API app.
@@ -153,6 +154,12 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 
 ## Integrations
 
+- Before using `ctx.client.sourcetap.call_tool(name, arguments: {})`, read the Sourcetap MCP API
+  and select the tool name, arguments, and result fields in the workflow. The client returns the full
+  MCP tool result and raises on protocol/tool errors; source sessions belong to the server.
+  See `docs/environment.md` for endpoint/token configuration.
+- `R3x::Client::Mcp` owns the reusable stateless HTTP/JSON MCP protocol, without provider env names
+  or source payload schemas. Provider clients compose it with their endpoint, headers, and timeout.
 - Put third-party API logic in a dedicated client under `app/lib/r3x/client/<provider>/...`; keep outputs thin.
 - Prefer env-name references such as `api_key_env:` or `project:` over raw secrets or parsed credential hashes. Resolve secrets lazily so dry-run paths avoid credential loading.
 - Lazy-load optional/heavy gems at the smallest practical boundary with `R3x::GemLoader.require(...)`; mark the gem `require: false` in `Gemfile`.
