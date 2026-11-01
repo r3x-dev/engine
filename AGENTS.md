@@ -12,7 +12,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Use `git --no-pager` for agent-read Git output such as diff, show, log, and status details.
 - When adding non-production/tooling files or patterns to `.dockerignore` that do not affect app runtime or CI test execution, keep `.github/workflows/ci.yml` `paths-ignore` synchronized so CI and Docker image builds are not needlessly triggered.
 - Dockerfile validation uses `mise exec -- droast Dockerfile` locally and the `docker_validate` CI job. Keep the action ref current; use `just show_dockerignore` to inspect the real Docker build context.
-- Keep this file and `docs/todo.md` synchronized when code changes alter architecture, workflow loading, trigger discovery, scheduling, validation contracts, env behavior, HTTP policy, or repo layout.
+- Keep this file and relevant documentation synchronized when code changes alter architecture, workflow loading, trigger discovery, scheduling, validation contracts, env behavior, HTTP policy, or repo layout.
 - Keep engine documentation and instructions independent of any user's workflow catalog.
   `AGENTS.md`, `README.md`, and `docs/` describe framework/client contracts and general principles;
   examples use fictional workflows and placeholder configuration. Store concrete workflow
@@ -278,4 +278,5 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 
 - Apply these defaults to new work and touched code.
 - Do not rewrite existing code only to satisfy preferences unless the task calls for that refactor.
-- Future ideas and design debt live in `docs/todo.md`; when picking up an item, update its status there.
+- Track future ideas and design debt in Linear; update the existing issue when picking up an item.
+  Add the `r3x` label when creating or updating project issues so they can be filtered consistently.

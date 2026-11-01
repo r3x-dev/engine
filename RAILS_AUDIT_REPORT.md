@@ -34,7 +34,7 @@ Uwaga dotycząca dokumentacji: wynik Context7 dla gałęzi `main` opisuje już `
 
 ### R1 — wysoki: utrwalić wynik digestu i rozdzielić dostawy
 
-Dowód: `workflows/region_weekly_news_digest/workflow.rb:44–75`; istniejący wpis `docs/todo.md:11`.
+Dowód: `workflows/region_weekly_news_digest/workflow.rb:44–75`.
 
 Kolejność to wygenerowanie digestu → Gmail → Feedway → potwierdzenie Miniflux. Awaria po Gmailu zostawia workflow bez potwierdzonego końca. Ponowne uruchomienie, np. ręczny retry po błędzie Feedway, może ponownie wygenerować treść i wysłać mail. Obecne `retry_on` dotyczy błędów LLM, więc nie twierdzę, że błąd Feedway automatycznie uruchamia retry.
 
@@ -88,7 +88,7 @@ Kroki `process_event_0`, `process_event_1` odnoszą się do pozycji w liście po
 
 Drugi problem: `processed_events.add?` jest jednocześnie claimem przed pracą i markerem zakończenia. Wyjątek Ruby usuwa wpis w rescue, ale twardo ubity proces tego nie zrobi. Kolejne uruchomienie potraktuje niedokończony event jako przetworzony do czasu usunięcia/wygaszenia wpisu.
 
-Propozycja: jeśli powiadomienia wymagają tej niezawodności, osobny krótki claim z określonym terminem ważności i osobny marker udanego zakończenia; dla twardych gwarancji mały rekord dostawy z unikalnym kluczem. Dobór czasu claimu i jego przejmowanie po awarii wymagają jawnego kontraktu. Dotyczy to też pomysłu z `docs/todo.md:13–14`: proste przeniesienie markera przed Discord zmienia ryzyko duplikatu w ryzyko utraty dostawy po awarii. Nie przedstawiać tego jako rozwiązania exactly-once.
+Propozycja: jeśli powiadomienia wymagają tej niezawodności, osobny krótki claim z określonym terminem ważności i osobny marker udanego zakończenia; dla twardych gwarancji mały rekord dostawy z unikalnym kluczem. Dobór czasu claimu i jego przejmowanie po awarii wymagają jawnego kontraktu. Proste przeniesienie markera przed Discord zmienia ryzyko duplikatu w ryzyko utraty dostawy po awarii. Nie przedstawiać tego jako rozwiązania exactly-once.
 
 ### R7 — niski: odbudowa registry powinna zachować spójny stan po błędzie
 
@@ -180,4 +180,4 @@ Nie usuwać automatycznie obejścia Tempfile w `Http#upload_file`: kod HTTPX 1.8
 4. Przygotowanie schematu Solid Queue i pilot batches dla jednej uzasadnionej operacji.
 5. Fibers i szersze zmiany UI dopiero na podstawie pomiarów lub konkretnej potrzeby produktu.
 
-Rekomendacje są materiałem do wyboru i review. Ten raport nie zmienia `docs/todo.md` ani architektury i nie oznacza akceptacji całego backlogu do wdrożenia.
+Rekomendacje są materiałem do wyboru i review. Ten raport nie zmienia backlogu w Linear ani architektury i nie oznacza akceptacji całego backlogu do wdrożenia.
