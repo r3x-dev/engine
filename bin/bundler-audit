@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 require_relative "../config/boot"
 require "bundler/audit/cli"
 
-ARGV.concat %w[ --config config/bundler-audit.yml ] if ARGV.empty? || ARGV.include?("check")
+ARGV.concat %w[ check --update ] if ARGV.empty?
+ARGV.concat %w[ --config config/bundler-audit.yml ] if ARGV.include?("check")
 Bundler::Audit::CLI.start

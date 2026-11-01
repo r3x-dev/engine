@@ -282,6 +282,9 @@ mise exec -- bin/lint-r3x
 This repo uses `.githooks/`; the pre-commit hook formats staged YAML and then runs the full local
 `bin/ci` suite. This is intentional while the suite remains reasonably fast: developers get the
 complete feedback loop before a commit exists, with GitHub Actions providing an independent check.
+The default `bin/bundler-audit` invocation refreshes the advisory database before scanning, so
+local CI requires network access and fails if that refresh fails. An explicit offline scan is
+available as `bin/bundler-audit check --no-update`; it uses the cached database and can miss newer advisories.
 See [DHH's local CI reasoning](https://world.hey.com/dhh/we-re-moving-continuous-integration-back-to-developer-machines-3ac6c611).
 
 ## Documentation
