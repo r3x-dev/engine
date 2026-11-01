@@ -102,6 +102,21 @@ module R3x
         end
       end
 
+      test "publish includes native report JSON alongside HTML" do
+        report = { "intro" => "Today", "sections" => [] }
+        stub_request(:post, "https://feedway.test/api/v1/entries")
+          .with(body: { content_html: "<p>Today</p>", feed: "daily-briefing", data_json: report })
+          .to_return(status: 201, body: '{"result":"created","id":"entry-123"}', headers: { "Content-Type" => "application/json" })
+
+        with_client_env do
+          with_env("R3X_FEEDWAY_DRY_RUN" => "false") do
+            result = Feedway.new.publish(content_html: "<p>Today</p>", feed: "daily-briefing", data_json: report)
+
+            assert_equal "entry-123", result.fetch("id")
+          end
+        end
+      end
+
       test "publish sends an explicitly blank feed and raises on a 422 response" do
         stub_request(:post, "https://feedway.test/api/v1/entries")
           .with(

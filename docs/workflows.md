@@ -198,7 +198,8 @@ errors; ordinary authorization/client errors propagate. `deliver` returns a hash
 `mode` is `real` or `dry_run`, so callers must check actual delivery before marking completion.
 The Feedway client uses a ten-second total request timeout. `publish` accepts an optional
 `feed:` slug. Without it, entries are unassigned and visible only in the aggregate feed;
-the server has no named default feed. These client capabilities do not choose which
+the server has no named default feed. Optional `data_json:` publishes native JSON alongside
+the HTML; omitting it preserves HTML-only publication. These client capabilities do not choose which
 destination is required or set a workflow's retry policy.
 
 Optional copies can share the final phase with source acknowledgment. Confirm required work
