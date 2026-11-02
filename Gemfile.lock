@@ -124,7 +124,7 @@ GEM
     fugit (1.14.0)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
-    gapic-common (1.6.0)
+    gapic-common (1.6.1)
       faraday (>= 1.9, < 3.a)
       faraday-retry (>= 1.0, < 3.a)
       google-cloud-env (~> 2.2)
@@ -149,35 +149,35 @@ GEM
       retriable (>= 3.1, < 5.0)
     google-apis-gmail_v1 (0.54.0)
       google-apis-core (>= 0.15.0, < 2.a)
-    google-apis-sheets_v4 (0.50.0)
+    google-apis-sheets_v4 (0.51.0)
       google-apis-core (>= 0.15.0, < 2.a)
-    google-cloud-core (1.9.0)
+    google-cloud-core (1.9.1)
       google-cloud-env (>= 1.0, < 3.a)
       google-cloud-errors (~> 1.0)
     google-cloud-env (2.4.1)
       base64 (~> 0.2)
       faraday (>= 1.0, < 3.a)
-    google-cloud-errors (1.7.0)
-    google-cloud-location (1.5.1)
-      gapic-common (~> 1.3)
+    google-cloud-errors (1.7.1)
+    google-cloud-location (1.6.0)
+      gapic-common (~> 1.6)
       google-cloud-errors (~> 1.0)
     google-cloud-translate (3.9.1)
       google-cloud-core (~> 1.6)
       google-cloud-translate-v2 (>= 0.0, < 2.a)
       google-cloud-translate-v3 (>= 0.11, < 2.a)
-    google-cloud-translate-v2 (1.2.0)
+    google-cloud-translate-v2 (1.2.1)
       faraday (>= 1.0, < 3.a)
       google-cloud-core (~> 1.6)
       googleapis-common-protos (>= 1.3.10, < 2.a)
       googleapis-common-protos-types (>= 1.0.5, < 2.a)
       googleauth (>= 0.16.2, < 2.a)
-    google-cloud-translate-v3 (1.10.1)
-      gapic-common (~> 1.3)
+    google-cloud-translate-v3 (1.11.0)
+      gapic-common (~> 1.6)
       google-cloud-errors (~> 1.0)
       google-cloud-location (~> 1.0)
       google-iam-v1 (~> 1.3)
-    google-iam-v1 (1.8.0)
-      gapic-common (~> 1.3)
+    google-iam-v1 (1.10.0)
+      gapic-common (~> 1.6)
       google-cloud-errors (~> 1.0)
       grpc-google-iam-v1 (~> 1.11)
     google-logging-utils (0.2.2)
@@ -251,7 +251,7 @@ GEM
       http-2 (>= 1.2.0)
     i18n (1.15.2)
       concurrent-ruby (~> 1.0)
-    io-console (0.9.4)
+    io-console (0.9.5)
     irb (1.18.0)
       pp (>= 0.6.0)
       prism (>= 1.3.0)
@@ -279,7 +279,7 @@ GEM
       prism (~> 1.5)
     mocha (3.1.0)
       ruby2_keywords (>= 0.0.5)
-    msgpack (1.8.5)
+    msgpack (1.8.7)
     multi_json (1.21.2)
     multipart-post (2.4.1)
     net-http (0.10.0)
@@ -394,7 +394,7 @@ GEM
     rexml (3.4.4)
     rss (0.3.3)
       rexml
-    rubocop (1.92.1)
+    rubocop (1.92.2)
       json (>= 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
@@ -584,20 +584,20 @@ CHECKSUMS
   faraday-net_http (3.5.0) sha256=2e7094c34e38754ee048cc3df47376f8657005d9375f8473bce1c3b526a22e36
   faraday-retry (2.4.0) sha256=7b79c48fb7e56526faf247b12d94a680071ff40c9fda7cf1ec1549439ad11ebe
   fugit (1.14.0) sha256=e311a9cc85a54bb67649df45060e721282a1e2c8ebad40e41874a3a7d576f37e
-  gapic-common (1.6.0) sha256=d859a7549afd9b16f787db1e2560e6e1e79283f3eb32199b741f71686b2d8270
+  gapic-common (1.6.1) sha256=b4d5c2b1a68f30bb316581e447678377972773ce44d3f5959580b1df075a801e
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   google-apis-calendar_v3 (0.58.0) sha256=227ef78164a0efc53ddcba4a09b690013893a16e6cbe560753d78396cc58a735
   google-apis-core (1.4.0) sha256=74e838a334926e79ce685d3ff9f418956cc23e48c5fd7cade779fea933e96582
   google-apis-gmail_v1 (0.54.0) sha256=e30b3a098d30015042b00e899d85e417b148771198c39124ddb982b5685f6155
-  google-apis-sheets_v4 (0.50.0) sha256=2b4e482183715cfd8048ae05828c82bf75d2d3357a97ed759e21a5ea784e070e
-  google-cloud-core (1.9.0) sha256=ab55409f51488e8deefb6edcc1ce4771dfb5da2fe7b3bc075709a030c2b682a4
+  google-apis-sheets_v4 (0.51.0) sha256=6226aa3c9bb11791fc4a37114731cd4941e691d01641c76e1ca189a664937a86
+  google-cloud-core (1.9.1) sha256=6590e393cbeadf018e6880038e19348d2ccfc83000625c569a9b21ab3b450af0
   google-cloud-env (2.4.1) sha256=987cc58afc50ce2903128ab4dcd442159be4457246b8137e41d49d5c3fc590dd
-  google-cloud-errors (1.7.0) sha256=6e682f42d89aae08689f36f28495de629d756da076bafff0003bac7f8042ebb3
-  google-cloud-location (1.5.1) sha256=ab0c4d29b9616f93c07b3307dbaf07e373e47115bb81ee7067eda6e448b9a0ae
+  google-cloud-errors (1.7.1) sha256=818bcf30998d10f28f30532a2595b49438cb7abf42f6ac495843078839987207
+  google-cloud-location (1.6.0) sha256=d1fba7ea7534c15b042048e16ffeece250effa894d0d4c74e3b0a182360a827c
   google-cloud-translate (3.9.1) sha256=a8624fdd64f9ad5c188fb9ae27752734574fca9908f3df67bb62a74f499ac43e
-  google-cloud-translate-v2 (1.2.0) sha256=718dfe18a2368650773daf5fcae17fdbc2875755bf1e8b5c25188e2bc1b01f26
-  google-cloud-translate-v3 (1.10.1) sha256=3770fe0690ba2046ebac52906b94930e7e49bb7b5b09e6959f0c77260cbe5bb3
-  google-iam-v1 (1.8.0) sha256=132b3f2b81884ee8a7b9158f0a826431076f68910bd65858b90657f5ff892e82
+  google-cloud-translate-v2 (1.2.1) sha256=40b3b4ab2b491eb78e9c0cf45bc0925d55fa4cabd7181859c8baf360970037d1
+  google-cloud-translate-v3 (1.11.0) sha256=99ffac430e5f4b0a78936aa3bc35c8eda5428a32816354c6fa4629d4a227e90b
+  google-iam-v1 (1.10.0) sha256=fa66feba4a77512ea0fed351ce5a97e880df9cc54726cfd5cb4068b9ceb301cc
   google-logging-utils (0.2.2) sha256=ad2436ef22e918e2b1c3ad2bbaf5949f42f5389d49fd37e41b43bbdd3068e27c
   google-protobuf (4.36.2) sha256=2f8daff50ae14aad36ab0ccdcf284065fa71d726c444efe114e6db82ffe62494
   google-protobuf (4.36.2-aarch64-linux-gnu) sha256=c3279ec6eaa59f6ed6276eda2a33cffb4306471183ab79a332e698b8564f5169
@@ -623,7 +623,7 @@ CHECKSUMS
   http-2 (1.3.0) sha256=58fc8636c2b937b651853e9f6d9ada9fdaa8bf80b5a7d0333ce15653e5ca6ac1
   httpx (1.9.0) sha256=ce6fb4bee1d23d311fb41414094f3423a0ad7b6ae68ea6d9619d1b6e411f18a9
   i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5
-  io-console (0.9.4) sha256=a403304f32928ee85e56d457b4612ca43f2703b561a3258844992bd24085fbb1
+  io-console (0.9.5) sha256=83dd9bbf4c4680416629245b39cd4212eb5f4d9a4ea91804870c1f6b846414d5
   irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
   json (3.1.0) sha256=3ce7ccf8fde58960177a3a756c31f292a4c1e1dedee884547096a5b0604e3bd8
   jwt (3.3.0) sha256=44cc34fbc341c148233cf66641522b4bce0dfb1ce55e8073f05c56f44f4ee546
@@ -636,7 +636,7 @@ CHECKSUMS
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   minitest (6.0.6) sha256=153ea36d1d987a62942382b61075745042a2b3123b1cd48f4c3675af9cc7d6f1
   mocha (3.1.0) sha256=75f42d69ebfb1f10b32489dff8f8431d37a418120ecdfc07afe3bc183d4e1d56
-  msgpack (1.8.5) sha256=97419eaa7b35dfe3e462c0e6c1a3dfdcbfc8756605c09e46e4c6daef127517ba
+  msgpack (1.8.7) sha256=dfefec761b5f9047e6e8d95d2c7f8af4b3725d984a01942adc533aa819a2df33
   multi_json (1.21.2) sha256=245531eaf54bdba57aba515ff08b4503505c5e09911daa89c5a561e2f85bea8e
   multipart-post (2.4.1) sha256=9872d03a8e552020ca096adadbf5e3cb1cd1cdd6acd3c161136b8a5737cdb4a8
   net-http (0.10.0) sha256=1a2ff6e37a05724973c43f2bf7bf105f59c36a4cd0a7e9b1c021a0a566987c27
@@ -690,7 +690,7 @@ CHECKSUMS
   retryable (3.0.5) sha256=c9f3dd6836bacf59c08b3f33548416debca7c0757e0c008d35df32ec9266d55f
   rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
   rss (0.3.3) sha256=37ef1ec4d691d67edbe92159079a4e89a0965e6a6b32246009ae3d734d12d1ab
-  rubocop (1.92.1) sha256=a905381a5344215a79abcfe80f6c94366447e6a55347c9a525b5a24990e33f62
+  rubocop (1.92.2) sha256=14fb31eed143a0dc6f78186c550c1715e81cd38f59d05d1165050e445c1f5382
   rubocop-ast (1.50.0) sha256=b9ca88300da0803ee222ad20cdb30494c0a784eed06fdc35d254b06d662788db
   rubocop-minitest (0.41.0) sha256=c15bfe00134a30c8a00ce670b07ecc80440455ba277b8682cf0d515c98ee7426
   rubocop-performance (1.27.0) sha256=eeeb1374d062a368ee1c787b70eb0b0cc4b184cb1f8565f424760946146d61ce
