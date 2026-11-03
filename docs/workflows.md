@@ -2,6 +2,43 @@
 
 These notes apply to workflow code in general.
 
+## Workflow Acceptance Test Image
+
+For explicitly requested, pack-owned Minitest suites, the engine publishes
+`ghcr.io/r3x-dev/engine:test` with test gems already installed. The channel follows
+the engine's default branch; `test-<full-commit-SHA>` tags identify fixed engine
+revisions. The ordinary production image continues to exclude test dependencies.
+
+From a workflow catalog checkout:
+
+```sh
+docker run --rm --network none \
+  --mount "type=bind,source=$PWD,target=/workflows,readonly" \
+  ghcr.io/r3x-dev/engine:test /workflows/example_digest/test/publication_test.rb
+```
+
+The example path represents a pack-owned test script. The image starts
+`bundle exec ruby` in `/rails`, uses the headless test environment and skips Vault.
+It does not prepare a database or load the engine's test fixtures. Test helpers
+must block/stub external requests and own any database setup their suite requires.
+The catalog is mounted read-only; engine code and installed gems come from the image.
+
+Build the same runtime locally with
+`docker build --target test --tag r3x-test:local .`. Engine CI builds and smoke-tests
+this target before publishing both production and test images. The default Docker
+build target remains production.
+
+Both targets inherit the same production-gem installation. The test dependency
+stage adds missing test gems and removes excluded web-only gems before source
+files are copied, so source changes preserve both dependency caches. Runtime code
+and gems are root-owned; within `/rails`, only `log`, `storage` and `tmp` are
+writable by UID 1000.
+
+The Ruby base is pinned by digest. `.ruby-version` owns version upgrades; the
+Renovate Ruby lockfile workflow aligns the Docker ARG, resolves the matching slim
+image digest and updates the lockfile. The native Dockerfile manager handles
+digest-only refreshes for the current Ruby tag.
+
 ## Documentation Ownership
 
 The engine supports independently supplied workflow catalogs. Keep this guide, the engine README,

@@ -161,6 +161,7 @@ jobs:
   docker_validate:
     if: ${{ !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -188,6 +189,40 @@ jobs:
           cache-from: type=gha,scope=docker-production
           cache-to: type=gha,mode=max,scope=docker-production
 
+      - name: Build workflow test Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          target: test
+          load: true
+          push: false
+          tags: r3x-test:${{ github.sha }}
+          build-args: |
+            RUBY_VERSION=${{ steps.ruby_version.outputs.value }}
+            GIT_CODE_VERSION=${{ github.sha }}
+          cache-from: type=gha,scope=docker-test
+          cache-to: type=gha,mode=max,scope=docker-test
+
+      - name: Smoke-test workflow test runtime
+        run: |
+          docker run --rm -i --network none "r3x-test:${GITHUB_SHA}" - <<'RUBY'
+          require "./config/environment"
+          require "minitest/test"
+          require "mocha/minitest"
+          require "webmock/minitest"
+          require "httpx/adapters/webmock"
+          abort "Expected Rails test environment" unless Rails.env.test?
+          paths = ["app/jobs/application_job.rb", Gem::Specification.find_by_name("rails").full_gem_path]
+          abort "Expected root-owned, read-only code and gems" unless paths.all? { |path| File.stat(path).uid.zero? && !File.writable?(path) }
+          %w[log storage tmp].each do |directory|
+            probe = File.join(directory, ".ci-write-probe")
+            File.write(probe, "fixture")
+            File.delete(probe)
+          end
+          puts "Workflow test runtime ready"
+          RUBY
+
   docker_publish:
     if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
     needs:
@@ -199,6 +234,7 @@ jobs:
       - test_postgresql
       - docker_validate
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
@@ -246,10 +282,27 @@ jobs:
           cache-from: type=gha,scope=docker-production
           cache-to: type=gha,mode=max,scope=docker-production
 
+      - name: Build and push workflow test image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          target: test
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:test
+            ghcr.io/${{ github.repository }}:test-${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            RUBY_VERSION=${{ steps.ruby_version.outputs.value }}
+            GIT_CODE_VERSION=${{ github.sha }}
+          cache-from: type=gha,scope=docker-test
+          cache-to: type=gha,mode=max,scope=docker-test
+
       - name: Clean up old images
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
           keep-n-tagged: ${{ env.OLD_VERSIONS_TO_KEEP }}
           keep-n-untagged: ${{ env.OLD_VERSIONS_TO_KEEP }}
-          exclude-tags: stable
+          exclude-tags: stable,test
           delete-partial-images: true

@@ -22,18 +22,6 @@
       datasourceTemplate: 'docker',
       versioningTemplate: 'docker',
     },
-    {
-      customType: 'regex',
-      managerFilePatterns: [
-        '/^Dockerfile$/',
-      ],
-      matchStrings: [
-        'ARG RUBY_VERSION=(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$',
-      ],
-      depNameTemplate: 'docker.io/library/ruby',
-      datasourceTemplate: 'docker',
-      versioningTemplate: 'docker',
-    },
   ],
   labels: [
     'dependencies',
@@ -46,6 +34,23 @@
     automergeStrategy: 'squash',
   },
   packageRules: [
+    {
+      // .ruby-version owns Ruby upgrades; its workflow aligns the ARG and slim-image digest.
+      // The native Dockerfile manager still refreshes the current tag's digest.
+      description: 'Keep Ruby tag upgrades with the version-file workflow',
+      matchManagers: [
+        'dockerfile',
+      ],
+      matchPackageNames: [
+        'docker.io/library/ruby',
+      ],
+      matchUpdateTypes: [
+        'major',
+        'minor',
+        'patch',
+      ],
+      enabled: false,
+    },
     {
       description: 'Update in-range Bundler gems in Gemfile.lock',
       matchManagers: [
