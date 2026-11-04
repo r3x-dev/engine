@@ -827,7 +827,38 @@ response = ctx.client.llm(
 
 The provider is dynamically inferred from the environment variable name prefix (e.g. `OPENCODE_GO` to `:opencode_go`), routing the request through the lazy registered custom provider adapter while allowing the workflow to choose the exact token env variant (such as `OPENCODE_GO_API_KEY`, `OPENCODE_GO_API_KEY_PROJECTA`, or `OPENCODE_GO_API_KEY_PROJECTB`). OpenCode Go uses RubyLLM's Chat Completions protocol. Dynamic providers use RubyLLM's provider-level model assumption hook, so workflows can pass provider-specific model IDs without maintaining a static model registry.
 
-### Typed decisions with Cloudflare Clef
+### Typed decisions
+
+`judge(input, model:, questions:, with: nil)` returns native RubyLLM typed answers.
+For OpenAI, it uses the [Decisions API](https://developers.openai.com/api/docs/guides/decisions),
+which accepts text and image evidence and has no reasoning-effort option. Pass images
+through RubyLLM's `with:` attachment interface, including ordered arrays and
+`RubyLLM::Attachment.new(source, resolution: :high)` when small text needs high detail:
+
+```ruby
+llm = ctx.client.llm(api_key_env: "OPENAI_API_KEY", max_retries: 0)
+decision = llm.judge(
+  "Classify these scanned documents together",
+  model: "gpt-6-luna",
+  with: ["scan-a.png", "scan-b.png"],
+  questions: {
+    category: {
+      type: :choice,
+      instructions: "Which category describes the documents?",
+      options: { invoice: "A bill requesting payment", other: "Other documents" }
+    }
+  }
+)
+decision.category.choice
+decision.category.probabilities
+decision.category.confidence
+```
+
+Image support depends on the provider. Decisions select from fixed answers; use
+generative structured output when extracting arbitrary fields. Provider refusals
+or malformed answers fail visibly; the client does not substitute a category.
+
+#### Cloudflare Clef
 
 Use `judge` for probabilities, choices, and scores over text or JSON input. The client
 returns native `RubyLLM::Judgment` answers through the System One adapter:

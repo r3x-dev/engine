@@ -63,8 +63,8 @@ module R3x
         Classifier.new(method(:message)).classify(...)
       end
 
-      def judge(input, model:, questions:)
-        with_transient_errors { llm_context.judge(input, model:, questions:, **chat_options) }
+      def judge(input, model:, questions:, with: nil)
+        with_transient_errors { llm_context.judge(input, model:, questions:, with:, **chat_options) }
       end
 
       private

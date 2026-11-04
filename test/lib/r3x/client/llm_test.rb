@@ -57,6 +57,41 @@ module R3x
         assert_not_nil llm
       end
 
+      test "judge sends ordered high detail images to OpenAI Decisions and returns a typed choice" do
+        image_bytes = [
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a5d8AAAAASUVORK5CYII=",
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+        ].map { |image| Base64.strict_decode64(image) }
+        request = stub_request(:post, "https://api.openai.com/v1/decisions").with do |http_request|
+          payload = MultiJSON.parse(http_request.body)
+          content = payload.fetch("input").sole.fetch("content")
+          images = content.select { |part| part["type"] == "input_image" }
+          question = payload.fetch("questions").sole
+
+          payload.fetch("model") == "gpt-6-luna" && !payload.key?("reasoning") &&
+            content.first == { "type" => "input_text", "text" => "Compare these documents" } &&
+            images.map { |image| image.fetch("image_url") } == image_bytes.map { |bytes| "data:image/png;base64,#{Base64.strict_encode64(bytes)}" } &&
+            images.all? { |image| image["detail"] == "high" } &&
+            question == { "type" => "choice", "name" => "category", "instructions" => "Choose the document category",
+              "choices" => [{ "value" => "invoice", "description" => "A bill" }, { "value" => "other", "description" => "Other documents" }] }
+        end.to_return(
+          status: 200,
+          headers: { "Content-Type" => "application/json" },
+          body: MultiJSON.generate(model: "gpt-6-luna", answers: [{ type: "choice", name: "category", choice: "invoice",
+            probabilities: [{ value: "invoice", probability: 0.95 }, { value: "other", probability: 0.05 }], confidence: 0.9 }]),
+        )
+        llm = Llm.new(api_key: "openai-key", config_api_key_attr: "openai_api_key", max_retries: 0)
+        images = image_bytes.map { |bytes| RubyLLM::Attachment.new(StringIO.new(bytes), resolution: :high) }
+
+        decision = llm.judge("Compare these documents", model: "gpt-6-luna", with: images,
+          questions: { category: { type: :choice, instructions: "Choose the document category", options: { invoice: "A bill", other: "Other documents" } } })
+
+        assert_equal :invoice, decision.category.choice
+        assert_equal({ invoice: 0.95, other: 0.05 }, decision.category.probabilities)
+        assert_in_delta 0.9, decision.category.confidence
+        assert_requested request
+      end
+
       test "message sends explicit thinking effort with structured Gemini output" do
         request = stub_gemini_generation do |payload|
           payload.dig("generationConfig", "thinkingConfig", "thinkingLevel") == "low" &&
