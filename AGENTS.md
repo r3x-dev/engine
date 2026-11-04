@@ -274,7 +274,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Avoid `cattr_accessor`/`mattr_accessor` for mutable global state unless Rails-owned configuration behavior is specifically desired.
 - For immutable value objects, prefer class-form `Data.define` and put constants inside the class body.
 - For singleton-method namespace modules, use `extend self` only when the module is not meant to be included.
-- Prefer expressive stdlib methods (`values_at`, `slice`, `filter_map`, `each_with_object`, `sum`, `tally`) over verbose manual loops when they make intent clearer.
+- Before presenting Ruby changes, review touched code for simpler stdlib/Active Support expressions and repeated defaults that can share one initialization. Prefer expressive methods (`values_at`, `slice`, `filter_map`, `each_with_object`, `sum`, `tally`) when clearer. Preserve ordering, meaningful `nil`/`false` values, and failure behavior (`fetch` for required keys); avoid line-count-only changes and unrelated rewrites.
 - For conditional hash keys, build a base hash, assign optional keys, and return it. Avoid `Hash#tap`/`merge` for simple conditional key assignment.
 - Method chaining is fine when it makes data flow clearer; introduce locals when the intermediate value is reused or has important meaning.
 - Prefer one-line `tap { it... }` for a single obvious post-construction tweak on the returned object. Use a named block parameter or multiline block when the object role is not obvious, there is more than one mutation, or the block contains branching/side effects that deserve a name.
