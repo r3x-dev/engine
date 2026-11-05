@@ -17,12 +17,12 @@ module R3x
         if R3x::Policy.dry_run_for(:discord)
           logger.info "[DRY-RUN] action=deliver content_length=#{content.to_s.bytesize} content_preview=#{content.to_s.first(200).inspect}"
 
-          return { "mode" => "dry_run" }
+          return Delivery.new(status: :dry_run)
         end
 
         HTTPX.post(webhook_url, json: { "content" => content }).raise_for_status
 
-        { "mode" => "real", "content" => content }
+        Delivery.new(status: :delivered, message: content)
       end
 
       private

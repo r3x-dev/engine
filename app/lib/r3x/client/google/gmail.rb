@@ -20,7 +20,7 @@ module R3x
                 "body_preview=#{body_preview} attachments=#{attachments.size}",
             )
 
-            return { "mode" => "dry_run" }
+            return Delivery.new(status: :dry_run)
           end
 
           service = build_service
@@ -35,10 +35,7 @@ module R3x
             raise TransientError, error.message
           end
 
-          {
-            "mode"       => "real",
-            "message_id" => result.id,
-          }
+          Delivery.new(status: :delivered, message: result)
         end
 
         private

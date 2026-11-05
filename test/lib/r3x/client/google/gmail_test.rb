@@ -8,11 +8,15 @@ module R3x
       class GmailTest < ActiveSupport::TestCase
         class FakeGmailService
           attr_accessor :authorization
-          attr_reader :delivered_message
+          attr_reader :delivered_message, :response
+
+          def initialize
+            @response = Struct.new(:id, :thread_id, :label_ids).new("message-123", "thread-123", ["SENT"])
+          end
 
           def send_user_message(_user_id, message)
             @delivered_message = message
-            Struct.new(:id).new("message-123")
+            response
           end
         end
 
@@ -36,7 +40,11 @@ module R3x
             )
 
             assert_equal authorization, service.authorization
-            assert_equal({ "mode" => "real", "message_id" => "message-123" }, result)
+            assert_instance_of Delivery, result
+            assert_predicate result, :delivered?
+            assert_same service.response, result.message
+            assert_equal "thread-123", result.message.thread_id
+            assert_equal ["SENT"], result.message.label_ids
             assert_includes service.delivered_message.raw, "To: recipient@example.com"
             assert_includes service.delivered_message.raw, "Subject: Hello"
             assert_includes service.delivered_message.raw, "Body"
@@ -44,6 +52,8 @@ module R3x
         end
 
         test "deliver returns dry_run mode without sending when dry run is active" do
+          request = stub_request(:post, "https://gmail.googleapis.com/gmail/v1/users/me/messages/send")
+
           with_env("R3X_GMAIL_DRY_RUN" => "true") do
             result = nil
             output = capture_logged_output do
@@ -56,7 +66,10 @@ module R3x
               )
             end
 
-            assert_equal({ "mode" => "dry_run" }, result)
+            assert_instance_of Delivery, result
+            assert_predicate result, :dry_run?
+            assert_nil result.message
+            assert_not_requested request
             assert_includes output, "DRY-RUN"
             assert_includes output, "action=deliver"
             assert_includes output, "to=recipient@example.com"

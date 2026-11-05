@@ -19,7 +19,9 @@ module R3x
           result = Discord.new(webhook_url_env: "DISCORD_WEBHOOK_URL_TEST").deliver(content: "Hello Discord")
 
           assert_equal({ "content" => "Hello Discord" }, delivered)
-          assert_equal({ "mode" => "real", "content" => "Hello Discord" }, result)
+          assert_instance_of Delivery, result
+          assert_predicate result, :delivered?
+          assert_equal "Hello Discord", result.message
         end
       end
 
@@ -37,7 +39,9 @@ module R3x
           result = Discord.new.deliver(content: "Hello Discord")
 
           assert_equal({ "content" => "Hello Discord" }, delivered)
-          assert_equal({ "mode" => "real", "content" => "Hello Discord" }, result)
+          assert_instance_of Delivery, result
+          assert_predicate result, :delivered?
+          assert_equal "Hello Discord", result.message
         end
       end
 
@@ -73,7 +77,9 @@ module R3x
             result = Discord.new(webhook_url_env: "DISCORD_WEBHOOK_URL_TEST").deliver(content: "private message")
           end
 
-          assert_equal({ "mode" => "dry_run" }, result)
+          assert_instance_of Delivery, result
+          assert_predicate result, :dry_run?
+          assert_nil result.message
           assert_includes output, "DRY-RUN"
           assert_includes output, "action=deliver content_length=15"
           assert_includes output, 'content_preview=\"private message\"'
@@ -94,7 +100,9 @@ module R3x
           result = Discord.new(webhook_url:).deliver(content: "Hello Discord")
 
           assert_equal({ "content" => "Hello Discord" }, delivered)
-          assert_equal({ "mode" => "real", "content" => "Hello Discord" }, result)
+          assert_instance_of Delivery, result
+          assert_predicate result, :delivered?
+          assert_equal "Hello Discord", result.message
         end
       end
 

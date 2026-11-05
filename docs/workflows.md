@@ -229,10 +229,17 @@ For safely retryable transient required-delivery errors, declare bounded workflo
 SDK error classes in the workflow declaration. Keep authorization/configuration errors fatal.
 Choose retry budgets and delays for that workflow and document them in its directory.
 
-Engine client contracts remain independent of any catalog. The Gmail client exposes
+The Gmail client exposes
 `R3x::Client::Google::Gmail::TransientError` for server, rate-limit, timeout, and transport
-errors; ordinary authorization/client errors propagate. `deliver` returns a hash whose
-`mode` is `real` or `dry_run`, so callers must check actual delivery before marking completion.
+errors; ordinary authorization/client errors propagate. Gmail and Discord `deliver` return
+an immutable `R3x::Client::Delivery` with `delivered?`, `dry_run?`, and `message`.
+`message` contains the Gmail SDK response or the text sent to Discord; it is `nil`
+for a dry run.
+Check `delivered?` before recording completion, handle `dry_run?` explicitly, and raise
+for unexpected results. Provider confirmation does not establish recipient delivery or
+reading; a timeout can leave the remote outcome unknown.
+Persist a delivery flag when needed across resumptions rather than serializing the object.
+
 The Feedway client uses a ten-second total request timeout. `publish` accepts an optional
 `feed:` slug. Without it, entries are unassigned and visible only in the aggregate feed;
 the server has no named default feed. Optional `data_json:` publishes native JSON alongside
