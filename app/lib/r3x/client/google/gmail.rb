@@ -35,6 +35,10 @@ module R3x
             raise TransientError, error.message
           end
 
+          unless result.id.is_a?(String) && result.id.present?
+            raise ArgumentError, "Gmail response must contain a nonblank message id"
+          end
+
           Delivery.new(status: :delivered, message: result)
         end
 

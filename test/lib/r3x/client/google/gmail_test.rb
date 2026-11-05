@@ -148,6 +148,36 @@ module R3x
           end
         end
 
+        test "deliver retains the Gmail SDK response after confirming its message id" do
+          with_real_delivery do
+            request = stub_request(:post, "https://gmail.googleapis.com/gmail/v1/users/me/messages/send")
+              .to_return(status: 200, body: { id: "message-123", threadId: "thread-123", labelIds: ["SENT"] }.to_json,
+                headers: { "Content-Type" => "application/json" })
+
+            result = deliver_message
+
+            assert_predicate result, :delivered?
+            assert_instance_of ::Google::Apis::GmailV1::Message, result.message
+            assert_equal "message-123", result.message.id
+            assert_equal "thread-123", result.message.thread_id
+            assert_equal ["SENT"], result.message.label_ids
+            assert_requested request, times: 1
+          end
+        end
+
+        [{}, { id: nil }, { id: "" }, { id: " \t" }, { id: 123 }].each do |response_body|
+          test "deliver rejects invalid Gmail receipt #{response_body.inspect}" do
+            with_real_delivery do
+              request = stub_request(:post, "https://gmail.googleapis.com/gmail/v1/users/me/messages/send")
+                .to_return(status: 200, body: response_body.to_json,
+                  headers: { "Content-Type" => "application/json" })
+
+              assert_raises(ArgumentError) { deliver_message }
+              assert_requested request, times: 1
+            end
+          end
+        end
+
         private
 
         def with_real_delivery(&)
