@@ -58,6 +58,13 @@ does not scan app helpers. Unlike the slimmer `jobs` profile used by
 `bin/jobs-worker` and `bin/jobs-scheduler`, `workflow_cli` still leaves
 `lib/r3x/workflow/cli.rb` available for the Thor wrapper.
 
+## Catalog Loading
+
+The registry is replaced only after all enabled entrypoints load successfully.
+A failed load preserves the previous catalog and raises before schedule synchronization.
+`PackLoader.load!(rebuild_registry: true)` rebuilds the registry using Ruby `require`;
+it does not reload previously required source files or undo their side effects.
+
 ## Temporarily Disabling A Workflow
 
 - To disable a workflow without deleting it, add a top-of-file pragma near the start of

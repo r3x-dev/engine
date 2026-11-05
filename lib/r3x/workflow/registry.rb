@@ -6,7 +6,7 @@ module R3x
       extend self
 
       MUTEX = Mutex.new
-      REGISTRATIONS = Concurrent::Map.new
+      REGISTRATIONS = {} # rubocop:disable Style/MutableConstant -- All access is guarded by MUTEX.
 
       def register(workflow_class)
         MUTEX.synchronize do
@@ -16,11 +16,16 @@ module R3x
       end
 
       def fetch(workflow_key)
-        REGISTRATIONS.fetch(workflow_key.to_s)
+        MUTEX.synchronize { REGISTRATIONS.fetch(workflow_key.to_s) }
       end
 
       def all
-        REGISTRATIONS.values.sort_by(&:workflow_key)
+        MUTEX.synchronize { REGISTRATIONS.values }.sort_by(&:workflow_key)
+      end
+
+      def replace!(workflow_classes)
+        registrations = workflow_classes.index_by { |workflow_class| workflow_class.workflow_key.to_s }
+        MUTEX.synchronize { REGISTRATIONS.replace(registrations) }
       end
 
       def reset!

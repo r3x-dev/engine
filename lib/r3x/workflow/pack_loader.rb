@@ -20,7 +20,6 @@ module R3x
         MUTEX.synchronize do
           return if LOADED.true? && !rebuild_registry
 
-          R3x::Workflow::Registry.reset!
           loaded = []
 
           entrypoints.each do |entrypoint|
@@ -30,7 +29,7 @@ module R3x
             end
 
             require entrypoint
-            workflow_class = register_workflow(entrypoint)
+            workflow_class = workflow_class_for(entrypoint)
             loaded << workflow_class
 
             Rails.logger.tagged(R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_class.workflow_key)) do
@@ -44,6 +43,7 @@ module R3x
             raise
           end
 
+          R3x::Workflow::Registry.replace!(loaded)
           logger.info "Loaded #{loaded.size} workflow packs"
           LOADED.make_true
         end
@@ -72,15 +72,13 @@ module R3x
         end.uniq
       end
 
-      def register_workflow(entrypoint_file)
+      private
+
+      def workflow_class_for(entrypoint_file)
         dir_name = File.basename(File.dirname(entrypoint_file))
         class_name = "Workflows::#{dir_name.camelize}"
-        workflow_class = class_name.constantize
-        R3x::Workflow::Registry.register(workflow_class)
-        workflow_class
+        class_name.constantize
       end
-
-      private
 
       def workflow_paths
         R3x::Env.fetch!("R3X_WORKFLOW_PATHS")

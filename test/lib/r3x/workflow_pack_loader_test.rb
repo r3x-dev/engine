@@ -107,7 +107,86 @@ module R3x
       end
     end
 
+    test "failed rebuild preserves the complete catalog and can be retried" do
+      previous_workflows = Workflow::Registry.all
+
+      with_replacement_catalog do |broken_file|
+        error = assert_raises(RuntimeError) do
+          Workflow::PackLoader.load!(rebuild_registry: true)
+        end
+
+        assert_equal "Broken workflow", error.message
+        assert_equal previous_workflows, Workflow::Registry.all
+
+        Workflow::PackLoader.load!
+
+        assert_equal previous_workflows, Workflow::Registry.all
+
+        File.delete(broken_file)
+        Workflow::PackLoader.load!(rebuild_registry: true)
+
+        assert_equal [Workflows::ReplacementWorkflow], Workflow::Registry.all
+      end
+    end
+
+    test "keeps the previous catalog visible while loading its replacement" do
+      previous_workflows = Workflow::Registry.all
+
+      with_replacement_catalog do |broken_file|
+        File.delete(broken_file)
+        Workflow::PackLoader.load!(rebuild_registry: true)
+
+        assert_equal previous_workflows, Workflows::ReplacementWorkflow::OBSERVED_WORKFLOWS
+        assert_equal [Workflows::ReplacementWorkflow], Workflow::Registry.all
+      end
+    end
+
+    test "failed initial load leaves the registry empty and allows another load" do
+      with_replacement_catalog do |broken_file|
+        Workflow::Registry.reset!
+        Workflow::PackLoader::LOADED.make_false
+
+        assert_raises(RuntimeError) do
+          Workflow::PackLoader.load!
+        end
+
+        assert_empty Workflow::Registry.all
+
+        File.delete(broken_file)
+        Workflow::PackLoader.load!
+
+        assert_equal [Workflows::ReplacementWorkflow], Workflow::Registry.all
+      end
+    end
+
     private
+
+    def with_replacement_catalog
+      Dir.mktmpdir do |dir|
+        replacement_dir = File.join(dir, "replacement_workflow")
+        broken_dir = File.join(dir, "broken_workflow")
+        FileUtils.mkdir_p([replacement_dir, broken_dir])
+        File.write(File.join(replacement_dir, "workflow.rb"), <<~RUBY)
+          module Workflows
+            class ReplacementWorkflow < R3x::Workflow::Base
+              OBSERVED_WORKFLOWS = R3x::Workflow::Registry.all
+
+              def run
+              end
+            end
+          end
+        RUBY
+        broken_file = File.join(broken_dir, "workflow.rb")
+        File.write(broken_file, 'raise "Broken workflow"')
+        ENV["R3X_WORKFLOW_PATHS"] = [replacement_dir, broken_dir].join(File::PATH_SEPARATOR)
+
+        yield broken_file
+      end
+    ensure
+      ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
+      Workflow::PackLoader.load!(rebuild_registry: true)
+      Workflows.send(:remove_const, :ReplacementWorkflow) if defined?(Workflows::ReplacementWorkflow)
+    end
 
     def workflow_source(message:)
       <<~RUBY
