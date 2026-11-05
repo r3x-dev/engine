@@ -9,7 +9,7 @@
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
 # Keep the base digest aligned with this version; the Renovate Ruby workflow updates both.
 ARG RUBY_VERSION=4.0.9
-FROM docker.io/library/ruby:$RUBY_VERSION-slim@sha256:575fcf0c168d396a6fa9fba87ea1e390ceb4904af6c3fe2bbfdf4824224628c3 AS base
+FROM docker.io/library/ruby:$RUBY_VERSION-slim@sha256:22cfdec4c490b9e7e4913527a126ddc34bf30cf5432711f70eb1aa4b3ac388a5 AS base
 
 # Rails app lives here
 WORKDIR /rails
