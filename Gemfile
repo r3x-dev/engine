@@ -14,6 +14,7 @@ gem "puma", ">= 5.0"
 
 # HTTP client
 gem "httpx"
+gem "addressable", require: false
 
 # Json
 gem "multi_json"

@@ -233,8 +233,9 @@ The Gmail client exposes
 `R3x::Client::Google::Gmail::TransientError` for server, rate-limit, timeout, and transport
 errors; ordinary authorization/client errors propagate. Gmail and Discord `deliver` return
 an immutable `R3x::Client::Delivery` with `delivered?`, `dry_run?`, and `message`.
-`message` contains the Gmail SDK response or the text sent to Discord; it is `nil`
-for a dry run.
+`message` retains the original provider response: a Gmail SDK message or a Discord hash;
+it is `nil` for a dry run. Discord uses `wait=true` and requires a nonblank message ID
+before reporting delivery.
 Check `delivered?` before recording completion, handle `dry_run?` explicitly, and raise
 for unexpected results. Provider confirmation does not establish recipient delivery or
 reading; a timeout can leave the remote outcome unknown.
