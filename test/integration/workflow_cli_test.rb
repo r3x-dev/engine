@@ -18,13 +18,33 @@ class WorkflowCliTest < ActiveSupport::TestCase
   test "run command executes workflow from file path" do
     output = run_cli("run #{@fixture_path}")
 
-    assert_includes output, "Running with dry run: #{@fixture_path}"
+    assert_includes output, "Running with dry run by default: #{@fixture_path}"
   end
 
   test "run command accepts skip wait option" do
     output = run_cli("run --skip-wait #{@fixture_path}")
 
+    assert_includes output, "Running with dry run by default: #{@fixture_path}"
+  end
+
+  test "explicit dry run reports ignored real-write overrides" do
+    output = run_cli("run --dry-run #{@fixture_path}", env: { "R3X_DISCORD_DRY_RUN" => "false" })
+
+    assert_includes output, "INFO: Global dry run enabled. Ignored real-write overrides: R3X_DISCORD_DRY_RUN."
     assert_includes output, "Running with dry run: #{@fixture_path}"
+  end
+
+  test "global ENV dry run reports ignored real-write overrides" do
+    output = run_cli("run #{@fixture_path}", env: { "R3X_DRY_RUN" => "true", "R3X_DISCORD_DRY_RUN" => "false" })
+
+    assert_includes output, "INFO: Global dry run enabled. Ignored real-write overrides: R3X_DISCORD_DRY_RUN."
+    assert_includes output, "Running with dry run: #{@fixture_path}"
+  end
+
+  test "run warns when ENV enables real writes under the environment dry-run default" do
+    output = run_cli("run #{@fixture_path}", env: { "R3X_DRY_RUN" => "", "R3X_DISCORD_DRY_RUN" => "false" })
+
+    assert_includes output, "WARN: Mixed mode. Default: dry run. Configured real-write overrides: R3X_DISCORD_DRY_RUN."
   end
 
   test "nonexistent file shows error" do

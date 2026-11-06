@@ -251,7 +251,7 @@ module R3x
         assert_equal({ "entry_ids" => [123, 456], "status" => "read" }, delivered)
       end
 
-      [[nil, nil], ["true", nil], %w[false true]].each do |global, miniflux|
+      [[nil, nil], ["true", nil], %w[true false], %w[false true]].each do |global, miniflux|
         test "dry run blocks both writes with global #{global.inspect} and Miniflux #{miniflux.inspect}" do
           with_client_env do
             with_env("R3X_DRY_RUN" => global, "R3X_MINIFLUX_DRY_RUN" => miniflux) do
@@ -268,7 +268,7 @@ module R3x
         end
       end
 
-      [["false", nil], %w[true false]].each do |global, miniflux|
+      [["false", nil], [nil, "false"], %w[false false]].each do |global, miniflux|
         test "write policy allows delivery with global #{global.inspect} and Miniflux #{miniflux.inspect}" do
           request = stub_request(:put, "https://miniflux.test/v1/entries")
                     .with(body: { entry_ids: [123], starred: false }.to_json)

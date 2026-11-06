@@ -10,6 +10,7 @@ module R3x
         @fixture_dir = Rails.root.join("test/fixtures/workflows")
         @fixture_path = @fixture_dir.join("test_workflow/workflow.rb")
         @continuable_fixture_path = @fixture_dir.join("continuable_workflow/workflow.rb")
+        @original_run_env = %w[R3X_DRY_RUN R3X_SKIP_CACHE].to_h { |key| [key, ENV.delete(key)] }
         @original_workflow_paths = ENV["R3X_WORKFLOW_PATHS"]
         ENV["R3X_WORKFLOW_PATHS"] = @fixture_dir.to_s
         R3x::Workflow::PackLoader.load!(rebuild_registry: true)
@@ -18,8 +19,7 @@ module R3x
 
       teardown do
         ENV["R3X_WORKFLOW_PATHS"] = @original_workflow_paths
-        ENV.delete("R3X_DRY_RUN")
-        ENV.delete("R3X_SKIP_CACHE")
+        @original_run_env.each { |key, value| ENV[key] = value }
         R3x::Workflow::Registry.reset!
       end
 
@@ -63,7 +63,7 @@ module R3x
 
         result = Cli.new(stdout: output).run(@fixture_path.to_s)
 
-        assert_includes output.string, "Running with dry run: #{@fixture_path}"
+        assert_includes output.string, "Running with dry run by default: #{@fixture_path}"
         assert_equal({ "test" => true, "message" => "Test workflow executed successfully" }, result)
       end
 
@@ -128,9 +128,101 @@ module R3x
         Cli.new(stdout: output).run(@fixture_path.to_s, dry_run: true, skip_cache: true)
 
         assert_includes output.string, "Running with dry run + skip cache: #{@fixture_path}"
-        assert_includes output.string, "(--dry-run is redundant in this environment)"
+        assert_includes output.string, "INFO: Global dry run enabled."
         assert_nil ENV["R3X_DRY_RUN"]
         assert_nil ENV["R3X_SKIP_CACHE"]
+      end
+
+      test "CLI and ENV global dry run block writes across resumptions and restore the original mode" do
+        delivery = stub_request(:post, "https://discord.test/webhook?wait=true")
+          .to_return(status: 200, body: '{"id":"123"}', headers: { "Content-Type" => "application/json" })
+        acknowledgment = stub_request(:put, "https://miniflux.test/v1/entries").to_return(status: 204)
+        reads = stub_request(:get, %r{https://miniflux.test/v1/entries\?})
+          .to_return(status: 200, body: '{"entries":[]}', headers: { "Content-Type" => "application/json" })
+        path = @fixture_dir.join("dry_run_workflow/workflow.rb").to_s
+        output = StringIO.new
+        cli = Cli.new(stdout: output)
+
+        with_delivery_env(
+          "R3X_DRY_RUN"          => "false",
+          "R3X_DISCORD_DRY_RUN"  => "false",
+          "R3X_MINIFLUX_DRY_RUN" => "false",
+        ) do
+          result = cli.run(path, dry_run: true, wait: false)
+
+          assert_not_requested delivery
+          assert_not_requested acknowledgment
+          assert_requested reads, times: 1
+          assert result.fetch("explicit_dry_run")
+          assert result.fetch("thread_dry_run")
+          assert_includes output.string, "INFO: Global dry run enabled. Ignored real-write overrides: R3X_DISCORD_DRY_RUN, R3X_MINIFLUX_DRY_RUN."
+          assert_equal "false", ENV["R3X_DRY_RUN"]
+          assert_equal "false", ENV["R3X_DISCORD_DRY_RUN"]
+          assert_equal "false", ENV["R3X_MINIFLUX_DRY_RUN"]
+
+          ENV["R3X_DRY_RUN"] = "true"
+          result = cli.run(path, wait: false)
+
+          assert_not_requested delivery
+          assert_not_requested acknowledgment
+          assert_requested reads, times: 2
+          assert result.fetch("explicit_dry_run")
+          assert result.fetch("thread_dry_run")
+
+          ENV["R3X_DRY_RUN"] = "false"
+          output.truncate(0)
+          output.rewind
+          result = cli.run(path, wait: false)
+
+          assert_requested delivery, times: 1
+          assert_requested acknowledgment, times: 1
+          assert_requested reads, times: 3
+          assert_not result.fetch("explicit_dry_run")
+          assert_not result.fetch("thread_dry_run")
+          assert_includes output.string, "INFO: Default: real writes."
+        end
+      end
+
+      test "run restores policy after a resumed workflow raises" do
+        stub_request(:get, %r{https://miniflux.test/v1/entries\?}).to_return(status: 500)
+        path = @fixture_dir.join("dry_run_workflow/workflow.rb").to_s
+
+        with_delivery_env("R3X_DRY_RUN" => "false", "R3X_DISCORD_DRY_RUN" => "false", "R3X_MINIFLUX_DRY_RUN" => "false") do
+          assert_raises(HTTPX::HTTPError) do
+            Cli.new(stdout: StringIO.new).run(path, dry_run: true, skip_cache: true, wait: false)
+          end
+
+          assert_not R3x::Policy.dry_run_for(:discord)
+          assert_equal "false", ENV["R3X_DRY_RUN"]
+          assert_nil ENV["R3X_SKIP_CACHE"]
+        end
+      end
+
+      test "explicit real mode preserves per-feature dry run" do
+        acknowledgment = stub_request(:put, "https://miniflux.test/v1/entries").to_return(status: 204)
+        stub_request(:get, %r{https://miniflux.test/v1/entries\?})
+          .to_return(status: 200, body: '{"entries":[]}', headers: { "Content-Type" => "application/json" })
+        path = @fixture_dir.join("dry_run_workflow/workflow.rb").to_s
+        output = StringIO.new
+
+        with_delivery_env("R3X_DRY_RUN" => "true", "R3X_DISCORD_DRY_RUN" => "true", "R3X_MINIFLUX_DRY_RUN" => nil) do
+          Cli.new(stdout: output).run(path, dry_run: false, wait: false)
+
+          assert_not_requested :post, "https://discord.test/webhook?wait=true"
+          assert_requested acknowledgment, times: 1
+          assert_includes output.string, "INFO: Default: real writes. Configured dry-run overrides: R3X_DISCORD_DRY_RUN."
+          assert_equal "true", ENV["R3X_DRY_RUN"]
+        end
+      end
+
+      test "explicit dry run still rejects invalid per-feature flags before executing" do
+        with_env("R3X_DISCORD_DRY_RUN" => "maybe") do
+          error = assert_raises(ArgumentError) do
+            Cli.new(stdout: StringIO.new).run(@fixture_path.to_s, dry_run: true)
+          end
+
+          assert_equal 'Invalid boolean for R3X_DISCORD_DRY_RUN: "maybe"', error.message
+        end
       end
 
       test "run supports explicit skip cache override in production" do
@@ -148,7 +240,7 @@ module R3x
 
         Cli.new(stdout: output).run(@fixture_path.expand_path.to_s)
 
-        assert_includes output.string, "Running with dry run: #{@fixture_path.expand_path}"
+        assert_includes output.string, "Running with dry run by default: #{@fixture_path.expand_path}"
       end
 
       test "run with --no-dry-run disables dry run even in test environment" do
@@ -178,7 +270,7 @@ module R3x
 
           Cli.new(stdout: output).run(@fixture_path.to_s)
 
-          assert_includes output.string, "Running with dry run: #{@fixture_path}"
+          assert_includes output.string, "Running with dry run by default: #{@fixture_path}"
         end
       end
 
@@ -209,6 +301,24 @@ module R3x
 
           assert_equal "No workflow class found in #{path}", error.message
         end
+      end
+
+      private
+
+      def with_delivery_env(overrides, &)
+        with_env({
+          "DISCORD_WEBHOOK_URL" => "https://discord.test/webhook",
+          "MINIFLUX_URL"        => "https://miniflux.test",
+          "MINIFLUX_API_KEY"    => "test-key",
+        }.merge(overrides), &)
+      end
+
+      def with_env(values)
+        originals = ENV.to_h.slice(*values.keys)
+        values.each { |key, value| ENV[key] = value }
+        yield
+      ensure
+        values.each_key { |key| ENV[key] = originals[key] }
       end
     end
   end

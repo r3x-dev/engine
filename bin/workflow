@@ -18,7 +18,7 @@ class WorkflowCli < Thor
   map "run" => :execute
 
   desc "run PATH", "Run a workflow from file path"
-  option :dry_run, type: :boolean, desc: "Run with global dry run mode (clients skip external side effects)"
+  option :dry_run, type: :boolean, desc: "Enable global dry run for clients that support it (same as R3X_DRY_RUN=true)"
   option :skip_cache, type: :boolean, desc: "Run without workflow cache (with_cache blocks execute directly)"
   option :skip_wait, type: :boolean, desc: "Skip waits between resumable workflow executions"
   option :verbose, type: :boolean, aliases: "-v", desc: "Enable verbose logging (debug level)"

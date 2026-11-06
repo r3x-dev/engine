@@ -5,9 +5,9 @@ require "test_helper"
 module R3x
   class PolicyTest < ActiveSupport::TestCase
     setup do
-      @original_global = ENV["R3X_DRY_RUN"]
-      @original_gmail = ENV["R3X_GMAIL_DRY_RUN"]
-      @original_skip_cache = ENV["R3X_SKIP_CACHE"]
+      @original_global = ENV.delete("R3X_DRY_RUN")
+      @original_gmail = ENV.delete("R3X_GMAIL_DRY_RUN")
+      @original_skip_cache = ENV.delete("R3X_SKIP_CACHE")
     end
 
     teardown do
@@ -57,6 +57,47 @@ module R3x
     test "global env override wins when specific is absent" do
       with_env("R3X_GMAIL_DRY_RUN" => nil, "R3X_DRY_RUN" => "false") do
         assert_not Policy.default_dry_run_for(:discord)
+      end
+    end
+
+    test "global env override also applies without a feature key" do
+      with_env("R3X_DRY_RUN" => "false") do
+        assert_not Policy.default_dry_run_for
+      end
+    end
+
+    test "global dry run overrides per-feature real mode in every environment" do
+      %w[test development production].each do |environment|
+        Rails.stubs(:env).returns(ActiveSupport::StringInquirer.new(environment))
+
+        with_env("R3X_DRY_RUN" => "true", "R3X_GMAIL_DRY_RUN" => "false") do
+          assert Policy.dry_run_for(:gmail)
+          assert Policy.default_dry_run_for
+        end
+      end
+    end
+
+    test "global dry run overrides defaults and explicit real mode" do
+      with_env("R3X_DRY_RUN" => "true", "R3X_GMAIL_DRY_RUN" => "false") do
+        assert Policy.default_dry_run_for(:gmail)
+        assert Policy.dry_run_for(:gmail, false)
+        assert_not Policy.real_delivery_for?(:gmail, false)
+      end
+    end
+
+    test "per-feature dry run remains enabled with global real mode" do
+      with_env("R3X_DRY_RUN" => "false", "R3X_GMAIL_DRY_RUN" => "true") do
+        assert Policy.dry_run_for(:gmail)
+      end
+    end
+
+    test "rejects invalid global boolean even with per-feature real mode" do
+      with_env("R3X_DRY_RUN" => "maybe", "R3X_GMAIL_DRY_RUN" => "false") do
+        error = assert_raises(ArgumentError) do
+          Policy.dry_run_for(:gmail)
+        end
+
+        assert_equal 'Invalid boolean for R3X_DRY_RUN: "maybe"', error.message
       end
     end
 

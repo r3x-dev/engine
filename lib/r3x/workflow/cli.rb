@@ -11,7 +11,8 @@ module R3x
 
       def run(path, dry_run: nil, skip_cache: false, wait: true)
         with_run_env(dry_run:, skip_cache:) do
-          stdout.puts run_message(path, dry_run_explicit: dry_run == true)
+          stdout.puts dry_run_message
+          stdout.puts run_message(path)
           run_workflow(load_workflow(path), wait:)
         end
       end
@@ -103,21 +104,46 @@ module R3x
         workflow
       end
 
-      def run_message(path, dry_run_explicit: false)
+      def run_message(path)
         mode_notes = []
-        policy_dry_run = R3x::Policy.dry_run_for(:workflow)
-        mode_notes << "dry run" if policy_dry_run
+        if R3x::Policy.default_dry_run_for
+          mode_notes << (R3x::Env.fetch_boolean("R3X_DRY_RUN") ? "dry run" : "dry run by default")
+        end
         mode_notes << "skip cache" if R3x::Policy.skip_cache?
 
-        message = if mode_notes.any?
+        if mode_notes.any?
           "Running with #{mode_notes.join(" + ")}: #{path}"
         else
           "Running: #{path}"
         end
+      end
 
-        message += " (--dry-run is redundant in this environment)" if dry_run_explicit && policy_dry_run
+      def dry_run_message
+        overrides = dry_run_overrides
+        real_overrides = overrides.select { |_, value| value == false }.keys
 
-        message
+        if R3x::Env.fetch_boolean("R3X_DRY_RUN")
+          message = "INFO: Global dry run enabled."
+          message += " Ignored real-write overrides: #{real_overrides.join(", ")}." if real_overrides.any?
+          message
+        elsif R3x::Policy.default_dry_run_for
+          if real_overrides.empty?
+            "INFO: Default: dry run."
+          else
+            "WARN: Mixed mode. Default: dry run. Configured real-write overrides: #{real_overrides.join(", ")}."
+          end
+        else
+          dry_overrides = overrides.select { |_, value| value }.keys
+          message = "INFO: Default: real writes."
+          message += " Configured dry-run overrides: #{dry_overrides.join(", ")}." if dry_overrides.any?
+          message
+        end
+      end
+
+      def dry_run_overrides
+        ENV.keys.grep(/\AR3X_.+_DRY_RUN\z/).sort.to_h do |key|
+          [key, R3x::Env.fetch_boolean(key)]
+        end.compact
       end
 
       def trigger_types_for(workflow)
@@ -134,6 +160,7 @@ module R3x
 
       def with_run_env(dry_run:, skip_cache:)
         overrides = {}
+        # Apply CLI choices only for this run, then restore the original ENV.
         overrides["R3X_DRY_RUN"] = dry_run.to_s unless dry_run.nil?
         overrides["R3X_SKIP_CACHE"] = "true" if skip_cache
 

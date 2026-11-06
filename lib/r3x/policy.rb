@@ -4,6 +4,8 @@ module R3x
   class Policy
     class << self
       def dry_run_for(key = nil, dry_run = nil)
+        return true if R3x::Env.fetch_boolean("R3X_DRY_RUN")
+
         dry_run.nil? ? default_dry_run_for(key) : dry_run
       end
 
@@ -34,16 +36,11 @@ module R3x
       private
 
       def env_override(key)
-        return if key.blank?
+        global = R3x::Env.fetch_boolean("R3X_DRY_RUN")
+        return true if global
 
-        [specific_dry_run_env_key(key), "R3X_DRY_RUN"].each do |env_key|
-          value = R3x::Env.fetch_boolean(env_key)
-          next if value.nil?
-
-          return value
-        end
-
-        nil
+        value = R3x::Env.fetch_boolean(specific_dry_run_env_key(key)) if key.present?
+        value.nil? ? global : value
       end
 
       def specific_dry_run_env_key(key)

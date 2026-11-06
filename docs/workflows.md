@@ -463,14 +463,19 @@ bin/workflow run --skip-wait workflows/<workflow_name>/workflow.rb
 
 - `list` and `info` load workflow packs from `R3X_WORKFLOW_PATHS`.
 - `run` always takes a direct path to a `workflow.rb` file.
-- In `development` and `test`, `bin/workflow run` defaults to dry-run, so dry-run-aware clients avoid
-  real side effects.
+- In `development` and `test`, `bin/workflow run` defaults to dry-run. Per-feature settings can
+  enable real writes when global dry run is not enabled.
 - `run` resumes `ActiveJob::Continuable` interruptions in-process until the workflow completes.
   For `isolated: true` steps it waits according to the workflow's `resume_options[:wait]`, matching
   queued execution.
-- `--dry-run` explicitly enables dry-run for that run (`R3X_DRY_RUN=true`).
-- `--no-dry-run` explicitly disables dry-run for that run (`R3X_DRY_RUN=false`), even in
-  `development`.
+- `--dry-run` and `R3X_DRY_RUN=true` enable the same global dry run. Clients that support it skip
+  side effects, including across in-process resumptions. Neither per-feature ENV nor per-call
+  `dry_run: false` can override it. Reads and clients without dry-run support keep their usual behavior.
+- `--no-dry-run` sets a real-write default (`R3X_DRY_RUN=false`), even in `development`.
+  CLI flags override the global ENV value for that run; per-feature dry-run settings still apply.
+- The CLI reports the default and configured exceptions. It warns when ENV enables real writes
+  under an environment dry-run default and lists real-write ENV overrides ignored by global dry run.
+  These messages describe configuration, not which integrations the workflow will call.
 - `--skip-cache` sets `R3X_SKIP_CACHE=true` for that run and bypasses all `with_cache` caching,
   including `ttl:` mode. It is an explicit one-run operator override and works in production.
 - `--skip-wait` fast-forwards through local Continuable waits when debugging isolated steps.
