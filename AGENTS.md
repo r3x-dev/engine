@@ -41,7 +41,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
   only when those data are needed for the current task and access is already authorized.
 - Static output describes source, not live database state or runtime behavior. Read the response
   for errors and incomplete sections even when the command exits successfully.
-- `job_pattern` does not discover workflow packs. Use `docs/workflows.md` and the existing
+- `job_pattern` does not discover workflow packs. Use the R3x workflow skill and the existing
   workflow CLI for catalog/runtime questions. Static route discovery can misread the headless
   route reset in `config/application.rb`; inspect `config/routes.rb` directly in that case.
 - Keep context generation disabled so the tool does not write agent instructions. Its generated
@@ -114,21 +114,21 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 
 ## Workflow Work
 
-- If changing workflows or workflow framework code, read `docs/workflows.md` first.
+- If changing workflows or framework code that affects workflow contracts, read the [R3x workflow skill](.agents/skills/r3x-workflows/SKILL.md) first and follow its task-specific reference routing.
 - For resumable workflows, preserve run input, ordering, and required intermediate results independently
   of TTL cache. Continuable saves steps/cursors, not arbitrary variables or block results. Use explicit
   job serialization for small JSON-compatible snapshots, or a durable run record for larger state.
   Never apply saved indices to freshly fetched input. Review old queued payloads and manually simulate
-  resume after source changes and cache eviction; see docs/workflows.md "Stable Input Across Resumptions".
+  resume after source changes and cache eviction; see [state and delivery](.agents/skills/r3x-workflows/references/state-and-delivery.md#stable-input-across-resumptions).
 - Write completion markers only after all required work succeeds. Keep temporary processing
   reservations separate; a busy item must remain unfinished and retry later. Cache reservations are
   best-effort, and deleting one without ownership checks can delete a newer attempt's reservation.
-  See docs/workflows.md "Completion Markers And Processing Reservations".
+  See [completion markers and reservations](.agents/skills/r3x-workflows/references/state-and-delivery.md#completion-markers-and-processing-reservations).
 - Acquire delivery reservations after preparation/classification and recheck completion after
   acquisition, so preparation failures do not block retries behind their own reservation.
 - For multiple destinations, distinguish required delivery from optional backups. Save input/content
   and isolate required delivery from acknowledgment. Optional integration errors may be logged locally
-  without blocking confirmation or retrying delivery; see docs/workflows.md "Pipelines With Multiple Deliveries".
+  without blocking confirmation or retrying delivery; see [multiple deliveries](.agents/skills/r3x-workflows/references/state-and-delivery.md#pipelines-with-multiple-deliveries).
 - Bound optional calls with a short total timeout. Retry transient required-delivery errors
   in the queue using client-owned exceptions and saved content; keep authentication/configuration errors fatal.
 - Before retrying a side effect, establish provider idempotency or an explicit response contract
@@ -138,7 +138,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
   not convert unfinished required work into a completed skip. Validate provider success responses
   and actual delivery results before recording success; a dry-run result is not delivery.
 - Use `bin/workflow list` and `bin/workflow info <key>` to inspect registered workflows.
-- `bin/workflow run <path>` always requires a path to `workflow.rb`; use `-d` for dry run and `--skip-cache` to bypass `with_cache`.
+- `bin/workflow run <path>` always requires a path to `workflow.rb`; use `--dry-run` for dry run and `--skip-cache` to bypass `with_cache`.
 - New code with external side effects should default to `dry_run: true` or equivalent safe mode. Real delivery must be explicit, e.g. `dry_run: false`.
 - App/runtime clients should resolve dry-run defaults through `R3x::Policy.dry_run_for(:key, dry_run)`: development/test default dry, production default real unless explicitly dry.
 - Miniflux guards both write methods in the client through `R3x::Policy.dry_run_for(:miniflux)`;
@@ -153,7 +153,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
   repeated calls across retries and resumes. TTL caching is best-effort: concurrent misses or cache
   eviction can recompute, so use provider idempotency or durable database claims when duplicate
   calls are unacceptable. Keep `ttl:` at or below `config/cache.yml` `store_options.max_age` when
-  using `:solid_cache_store`. See docs/workflows.md "Caching Policy".
+  using `:solid_cache_store`. See [caching and retries](.agents/skills/r3x-workflows/references/caching-and-retries.md).
 
 ## Integrations
 
@@ -173,7 +173,7 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
   Decisions API and supports image attachments through `with:`. Cloudflare Clef uses
   the lazy RubyLLM System One adapter; set provider-specific options in the LLM configuration block
   and select credentials with `<PROVIDER>_API_KEY` or `<PROVIDER>_API_TOKEN`, optionally suffixed;
-  see `docs/workflows.md`.
+  see [integrations and LLMs](.agents/skills/r3x-workflows/references/integrations-and-llm.md#typed-decisions).
   Judgment calls share LLM retries/errors and make real model requests in every environment.
 
 ## HTTP & JSON

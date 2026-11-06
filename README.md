@@ -26,7 +26,7 @@ code-first route.
   delivery checks before explicitly enabling real side effects.
 - 🌿 **Git from day one** - workflow packs are just files and directories, so changes get normal
   branches, pull requests, diffs, history, and rollback.
-- 🤖 **Agent-first maintenance** - `AGENTS.md` and `docs/workflows.md` give coding agents the same
+- 🤖 **Agent-first maintenance** - `AGENTS.md` and the R3x workflow skill give coding agents the same
   project rules humans use, which makes generated workflows easier to review and keep consistent.
 - 🚂 **Rails-native runtime** - Active Job, Solid Queue, Active Record, Rails cache, Minitest, and a
   small server-rendered dashboard do the heavy lifting instead of a separate orchestration stack.
@@ -136,7 +136,7 @@ That makes it easy to use `r3x` as the engine while keeping your own automation 
 Recommended workflow loop:
 
 1. Create `workflows/<name>/workflow.rb`.
-2. Read [docs/workflows.md](docs/workflows.md) for the workflow writing rules.
+2. Read the [R3x workflow skill](.agents/skills/r3x-workflows/SKILL.md) for the workflow writing rules.
 3. Run it locally with `bin/workflow run --dry-run workflows/<name>/workflow.rb`.
 4. Inspect the dry-run output and repeat with `--skip-cache` when you need fresh provider data.
 5. Schedule it with `trigger :schedule` or run it manually from the dashboard.
@@ -153,9 +153,9 @@ Agents use it to understand:
 - how to write safe dry-run behavior for outputs
 - how `ActiveJob::Continuable`, `step`, `with_cache`, and durable sets should be used
 
-The workflow-specific knowledge lives in [docs/workflows.md](docs/workflows.md), and `AGENTS.md`
-points agents there before they edit workflow code. In practice, that means you can ask an agent to
-create or modify a workflow and it has a shared source of truth instead of guessing the local style.
+Workflow authoring rules live in the [R3x workflow skill](.agents/skills/r3x-workflows/SKILL.md).
+`AGENTS.md` directs agents there before they edit workflows; its task-specific references
+cover state, delivery, caching, integrations and verification without loading the whole guide.
 
 For structured Rails code inspection, `mise.toml` also provides the standalone
 [rails-ai-context CLI](https://github.com/crisnahine/rails-ai-context). It runs independently of the
@@ -290,7 +290,8 @@ See [DHH's local CI reasoning](https://world.hey.com/dhh/we-re-moving-continuous
 
 ## Documentation
 
-- [docs/workflows.md](docs/workflows.md) - workflow writing guide
+- [R3x workflow skill](.agents/skills/r3x-workflows/SKILL.md) - workflow authoring rules and task-specific references
+- [docs/workflows.md](docs/workflows.md) - workflow overview
 - [docs/workflows/example_multi_step_digest.md](docs/workflows/example_multi_step_digest.md) - full example workflow
 - [docs/google_oauth.md](docs/google_oauth.md) - Google OAuth setup
 - [docs/deployment.md](docs/deployment.md) - deployment and operations

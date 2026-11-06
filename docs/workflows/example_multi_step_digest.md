@@ -170,7 +170,7 @@ end
   inputs, store an immutable run record and pass its ID instead of embedding all rows in the job.
 - `with_cache(key:, ttl:)` reduces repeated source reads across new runs. The saved candidates
   preserve one run's input even when that cache disappears. See
-  [Stable Input Across Resumptions](../workflows.md#stable-input-across-resumptions) for persistence
+  [Stable Input Across Resumptions](../../.agents/skills/r3x-workflows/references/state-and-delivery.md#stable-input-across-resumptions) for persistence
   timing, old queued payloads, and hard-kill limits.
 - `ctx.durable_set(:sent, ttl: ...)` is used for best-effort cross-run dedup. Add to it only after
   the delivery side effect succeeds. The Discord and Gmail calls here are separate effects: if
@@ -178,7 +178,7 @@ end
   recording success has the same risk. Production delivery requiring stronger guarantees needs
   provider idempotency or persisted progress per destination.
   This combined-delivery example is intentionally simplified; for a production pipeline use
-  [required delivery and optional backup semantics](../workflows.md#pipelines-with-multiple-deliveries).
+  [required delivery and optional backup semantics](../../.agents/skills/r3x-workflows/references/state-and-delivery.md#pipelines-with-multiple-deliveries).
   It also records a sent marker when a client skips delivery in dry-run. That can suppress a
   later real run using the same cache. Before adapting it, check each required client's actual
   delivery result and record completion only for real delivery; dry-run is not acknowledgment.
