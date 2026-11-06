@@ -5,11 +5,14 @@ module R3x
     class Base
       include Dsl::Validatable
 
-      attr_reader :type, :options
+      validates_with Validators::TriggerKey
 
-      def initialize(type, **options)
+      attr_reader :type, :options, :key
+
+      def initialize(type, key: nil, **options)
         @type = type
         @options = options
+        @key = key.is_a?(String) || key.is_a?(Symbol) ? key.to_s.dup.freeze : key
       end
 
       def cron_schedulable?
@@ -21,6 +24,8 @@ module R3x
       end
 
       def unique_key
+        return "#{type}:#{key}" unless key.nil?
+
         # Generate unique key from type + sorted options hash
         key_json = MultiJSON.generate(options.sort.to_h)
         "#{type}:#{Digest::SHA256.hexdigest(key_json)[0..15]}"

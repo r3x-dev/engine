@@ -21,7 +21,7 @@ module Workflows
     SENT_ITEMS_TTL = 30.days
     SOURCE_TTL = 1.hour
 
-    trigger :schedule, cron: "0 8 * * *", timezone: "Europe/Lisbon"
+    trigger :schedule, key: :daily, cron: "0 8 * * *", timezone: "Europe/Lisbon"
 
     DigestSchema = R3x::Workflow::LlmSchema.define do
       array :items do

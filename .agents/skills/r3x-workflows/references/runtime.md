@@ -75,6 +75,23 @@ or a permanent first-ever flag. Use workflow-owned durable state for those decis
 
 ## Scheduling
 
+Give every declared trigger a stable semantic `key:`, including manual triggers:
+
+```ruby
+trigger :schedule, key: :daily, cron: "0 8 * * *"
+trigger :manual, key: :refresh
+```
+
+Keep the key when changing cron, timezone or declaration order. Names must satisfy
+the [trigger-key validator](../../../../lib/r3x/validators/trigger_key.rb);
+duplicate identities within a workflow fail at declaration. Avoid names derived
+from schedules, dates or positions.
+
+The engine retains hash identities for legacy declarations without `key:`.
+Adding a key for the first time, renaming it or removing a trigger changes its
+identity: finish or explicitly reconcile old queued and resumable jobs before
+rollout. Old hashes are not automatically mapped to new names.
+
 Check the [schedule trigger](../../../../lib/r3x/triggers/schedule.rb) when changing
 timezone handling. `timezone:` accepts IANA or Rails names and normalizes Rails
 names. Choose either an explicit timezone argument or a timezone embedded in cron;

@@ -56,6 +56,9 @@ client or duplicate its implementation.
 
 - Implement `run` on `R3x::Workflow::Base`; use `ctx` during execution.
   `step` is a resumable boundary, not a block-result helper.
+- Give every declared trigger a stable semantic `key:`. Preserve it when changing
+  schedules or declaration order; see [runtime and structure](references/runtime.md#scheduling)
+  before changing existing trigger identities.
 - Save run input and required intermediate results across resumptions. TTL cache
   cannot establish stable input, permanent deduplication or exactly-once delivery.
 - Establish required delivery and provider success before marking completion.

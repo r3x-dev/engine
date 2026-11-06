@@ -50,7 +50,7 @@ Workflows subclass `R3x::Workflow::Base`, declare triggers, and implement `#run`
 ```ruby
 module Workflows
   class DailyDigest < R3x::Workflow::Base
-    trigger :schedule, cron: "0 8 * * *", timezone: "Europe/Lisbon"
+    trigger :schedule, key: :daily, cron: "0 8 * * *", timezone: "Europe/Lisbon"
 
     def run
       rows = ctx.client.google_sheets(
