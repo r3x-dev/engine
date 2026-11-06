@@ -66,6 +66,13 @@ Do not design `run` around a special return/status hash unless explicitly asked.
 Its incidental return value is allowed; observe completion through logs, saved
 state and actual downstream results.
 
+`ctx.execution.previous_run_at` returns the latest retained recurring occurrence
+strictly before this run's scheduled occurrence, including on resume. If the
+current occurrence is absent (for example, a manual run or purged queue history),
+it returns the latest retained occurrence instead. `first_run?` means this query
+returned `nil`. These helpers describe enqueue history, not successful completion
+or a permanent first-ever flag. Use workflow-owned durable state for those decisions.
+
 ## Scheduling
 
 Check the [schedule trigger](../../../../lib/r3x/triggers/schedule.rb) when changing

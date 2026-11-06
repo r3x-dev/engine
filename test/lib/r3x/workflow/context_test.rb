@@ -41,7 +41,7 @@ module R3x
         assert_equal previous_run_at, execution.previous_run_at
       end
 
-      test "previous_run_at ignores the current recurring execution" do
+      test "first recurring execution ignores current and later occurrences" do
         task_key = "workflow:test_workflow:schedule:daily"
         current_run_at = 1.hour.ago.change(usec: 0)
         current_job = create_workflow_job!(arguments: ["schedule:daily"])
@@ -50,6 +50,12 @@ module R3x
           task_key:,
           run_at: current_run_at,
           job_id: current_job.id,
+        )
+        later_job = create_workflow_job!(arguments: ["schedule:daily"])
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: current_run_at + 1.hour,
+          job_id: later_job.id,
         )
 
         execution = Execution.new(
@@ -79,6 +85,12 @@ module R3x
           run_at: current_run_at,
           job_id: current_job.id,
         )
+        later_job = create_workflow_job!(arguments: ["schedule:daily"])
+        SolidQueue::RecurringExecution.create!(
+          task_key:,
+          run_at: current_run_at + 1.hour,
+          job_id: later_job.id,
+        )
 
         execution = Execution.new(
           workflow_key: "test_workflow",
@@ -87,6 +99,53 @@ module R3x
         )
 
         assert_equal previous_run_at, execution.previous_run_at
+        assert_not_predicate execution, :first_run?
+      end
+
+      test "resumed execution uses the original recurring occurrence" do
+        task_key = "workflow:test_workflow:schedule:daily"
+        previous_run_at = 3.hours.ago.change(usec: 0)
+        current_run_at = previous_run_at + 1.hour
+        create_recurring_task!(task_key:, arguments: ["schedule:daily"])
+        previous_job = create_workflow_job!(arguments: ["schedule:daily"])
+        SolidQueue::RecurringExecution.create!(task_key:, run_at: previous_run_at, job_id: previous_job.id)
+
+        active_job = R3x::TestSupport::DashboardWorkflowJob.new("schedule:daily")
+        original_job = SolidQueue::Job.enqueue(active_job)
+        SolidQueue::RecurringExecution.create!(task_key:, run_at: current_run_at, job_id: original_job.id)
+        original_job.update!(finished_at: Time.current)
+        later_job = create_workflow_job!(arguments: ["schedule:daily"])
+        SolidQueue::RecurringExecution.create!(task_key:, run_at: current_run_at + 1.hour, job_id: later_job.id)
+
+        resumed_job = SolidQueue::Job.enqueue(ActiveJob::Base.deserialize(original_job.arguments))
+        execution = Execution.new(
+          workflow_key: "test_workflow",
+          trigger_key: "schedule:daily",
+          active_job_id: resumed_job.active_job_id,
+        )
+
+        assert_not_equal original_job.id, resumed_job.id
+        assert_equal original_job.active_job_id, resumed_job.active_job_id
+        assert_equal previous_run_at, execution.previous_run_at
+        assert_not_predicate execution, :first_run?
+      end
+
+      test "manual execution without a recurring occurrence uses the latest retained history" do
+        task_key = "workflow:test_workflow:schedule:daily"
+        latest_run_at = 1.hour.ago.change(usec: 0)
+        create_recurring_task!(task_key:, arguments: ["schedule:daily"])
+        [latest_run_at, latest_run_at - 1.hour].each do |run_at|
+          job = create_workflow_job!(arguments: ["schedule:daily"])
+          SolidQueue::RecurringExecution.create!(task_key:, run_at:, job_id: job.id)
+        end
+        manual_job = create_workflow_job!(arguments: ["schedule:daily"])
+        execution = Execution.new(
+          workflow_key: "test_workflow",
+          trigger_key: "schedule:daily",
+          active_job_id: manual_job.active_job_id,
+        )
+
+        assert_equal latest_run_at, execution.previous_run_at
         assert_not_predicate execution, :first_run?
       end
 
