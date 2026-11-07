@@ -1,0 +1,16 @@
+module R3x
+  module Client
+    class Http
+      class DownloadedFile
+        attr_reader body: String
+        attr_reader content_type: String?
+        attr_reader filename: String
+        attr_reader url: String
+
+        def initialize: (body: String body, content_type: String? content_type, filename: String filename, url: String url) -> void
+
+        def to_io: () -> StringIO
+      end
+    end
+  end
+end

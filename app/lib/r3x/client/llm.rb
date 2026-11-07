@@ -5,7 +5,7 @@ module R3x
     class Llm
       include R3x::Concerns::Logger
 
-      DEFAULT_CHAT_OPTIONS = {}.freeze
+      DEFAULT_CHAT_OPTIONS = {}.freeze # steep:ignore UnannotatedEmptyCollection
       CHAT_OPTIONS_BY_PROVIDER = {} # rubocop:disable Style/MutableConstant
       CHAT_OPTIONS_BY_PROVIDER_MUTEX = Mutex.new
 

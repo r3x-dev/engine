@@ -1,0 +1,7 @@
+module R3x
+  module Workflow
+    class Base
+      def self.workflow_key: () -> String
+    end
+  end
+end
