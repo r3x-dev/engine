@@ -31,16 +31,16 @@ module R3x
         )
 
         result = nil
-        assert_difference -> { SolidQueue::Job.where(class_name: WORKFLOW_JOB_CLASS_NAME).count }, 1 do
+        assert_difference -> { SolidQueue::Job.where(class_name: "R3x::Workflow::EnqueueJob").count }, 1 do
           result = Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: nil).enqueue!
         end
 
-        assert_instance_of ::Dashboard::Run, result
+        assert_instance_of ::Dashboard::EnqueueRequest, result
         job = SolidQueue::Job.order(:id).last
 
         assert_equal "critical", job.queue_name
         assert_equal 7, job.priority
-        assert_equal [], ::Dashboard::Run.find(job.id).workflow_arguments
+        assert_equal [], ::Dashboard::EnqueueRequest.find(job.id).workflow_arguments.second
       end
 
       test "enqueue without trigger key prefers current recurring task metadata over the last run" do
@@ -64,11 +64,11 @@ module R3x
         )
 
         result = nil
-        assert_difference -> { SolidQueue::Job.where(class_name: WORKFLOW_JOB_CLASS_NAME).count }, 1 do
+        assert_difference -> { SolidQueue::Job.where(class_name: "R3x::Workflow::EnqueueJob").count }, 1 do
           result = Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: nil).enqueue!
         end
 
-        assert_instance_of ::Dashboard::Run, result
+        assert_instance_of ::Dashboard::EnqueueRequest, result
         job = SolidQueue::Job.order(:id).last
 
         assert_equal "critical", job.queue_name
@@ -87,16 +87,16 @@ module R3x
         )
 
         result = nil
-        assert_difference -> { SolidQueue::Job.where(class_name: WORKFLOW_JOB_CLASS_NAME).count }, 1 do
+        assert_difference -> { SolidQueue::Job.where(class_name: "R3x::Workflow::EnqueueJob").count }, 1 do
           result = Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: nil).enqueue!
         end
 
-        assert_instance_of ::Dashboard::Run, result
+        assert_instance_of ::Dashboard::EnqueueRequest, result
         job = SolidQueue::Job.order(:id).last
 
         assert_equal "feeds", job.queue_name
         assert_equal 3, job.priority
-        assert_equal [], ::Dashboard::Run.find(job.id).workflow_arguments
+        assert_equal [], ::Dashboard::EnqueueRequest.find(job.id).workflow_arguments.second
       end
 
       test "enqueue without trigger key matches recurring tasks for workflow key literally" do
@@ -123,14 +123,14 @@ module R3x
         )
 
         result = nil
-        assert_difference -> { SolidQueue::Job.where(class_name: "Workflows::FooBar").count }, 1 do
+        assert_difference -> { SolidQueue::Job.where(class_name: "R3x::Workflow::EnqueueJob").count }, 1 do
           result = Workflow::RunEnqueuer.new(workflow_key: "foo_bar", trigger_key: nil).enqueue!
         end
 
-        assert_instance_of ::Dashboard::Run, result
+        assert_instance_of ::Dashboard::EnqueueRequest, result
         job = SolidQueue::Job.order(:id).last
 
-        assert_equal "Workflows::FooBar", job.class_name
+        assert_equal "Workflows::FooBar", ::Dashboard::EnqueueRequest.find(job.id).workflow_arguments.first
         assert_equal "expected", job.queue_name
         assert_equal 7, job.priority
       end
@@ -147,16 +147,16 @@ module R3x
         )
 
         result = nil
-        assert_difference -> { SolidQueue::Job.where(class_name: WORKFLOW_JOB_CLASS_NAME).count }, 1 do
+        assert_difference -> { SolidQueue::Job.where(class_name: "R3x::Workflow::EnqueueJob").count }, 1 do
           result = Workflow::RunEnqueuer.new(workflow_key: "test_workflow", trigger_key: "schedule:123").enqueue!
         end
 
-        assert_instance_of ::Dashboard::Run, result
+        assert_instance_of ::Dashboard::EnqueueRequest, result
         job = SolidQueue::Job.order(:id).last
 
         assert_equal "critical", job.queue_name
         assert_equal 7, job.priority
-        assert_equal ["schedule:123"], ::Dashboard::Run.find(job.id).workflow_arguments
+        assert_equal ["schedule:123"], ::Dashboard::EnqueueRequest.find(job.id).workflow_arguments.second
       end
 
       test "enqueue without direct target raises a key error" do

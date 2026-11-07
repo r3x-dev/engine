@@ -805,15 +805,22 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "workflow detail can enqueue run now from recurring task" do
-    assert_difference -> { SolidQueue::Job.where(class_name: WORKFLOW_JOB_CLASS_NAME).count }, 1 do
+  test "workflow detail can queue and display a run request from recurring task" do
+    assert_difference -> { SolidQueue::Job.where(class_name: "R3x::Workflow::EnqueueJob").count }, 1 do
       post "/workflows/test_workflow/runs"
     end
 
     job = SolidQueue::Job.order(:id).last
 
-    assert_redirected_to "/workflow-runs/#{job.id}"
-    assert_equal [], Dashboard::Run.find(job.id).workflow_arguments
+    assert_redirected_to "/workflows/test_workflow"
+    assert_equal "Queued a run request for Test Workflow.", flash[:notice]
+    assert_equal [], Dashboard::EnqueueRequest.find(job.id).workflow_arguments.second
+
+    follow_redirect!
+
+    assert_response :success
+    assert_includes response.body, "Run requests"
+    assert_includes response.body, "Admitted means queued for execution"
   end
 
   test "workflow index shows run now for manual-only workflows discovered from direct runs" do
@@ -832,6 +839,23 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Manual Only Workflow"
     assert_includes response.body, "/workflows/manual_only_workflow/runs"
     assert_not_includes response.body, "Unavailable"
+  end
+
+  test "workflow detail displays failed admission errors and distinguishes admitted requests from run results" do
+    failed_request = Dashboard::DirectWorkflowEnqueuer.enqueue!(class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], queue_name: "default", priority: 0)
+    SolidQueue::ReadyExecution.where(job_id: failed_request.id).delete_all
+    SolidQueue::FailedExecution.create!(job_id: failed_request.id, error: { "exception_class" => "NameError", "message" => "Workflow is not loaded" })
+    admitted_request = Dashboard::DirectWorkflowEnqueuer.enqueue!(class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], queue_name: "default", priority: 0)
+    SolidQueue::ReadyExecution.where(job_id: admitted_request.id).delete_all
+    admitted_request.update!(finished_at: Time.current)
+
+    get "/workflows/test_workflow"
+
+    assert_response :success
+    assert_includes response.body, "Workflow is not loaded"
+    assert_includes response.body, "Admitted"
+    assert_includes response.body, "check Recent runs for the workflow result"
+    assert_equal [@job.id], R3x::Dashboard::Workflow::Runs.new(workflow_key: "test_workflow").all.map { |run| run[:job_id] }
   end
 
   test "workflow detail run now returns not found for unknown workflow keys" do

@@ -17,9 +17,9 @@ module R3x
       end
 
       def create
-        run = Workflow::RunEnqueuer.new(workflow_key: params[:workflow_key], trigger_key: params[:trigger_key]).enqueue!
+        Workflow::RunEnqueuer.new(workflow_key: params[:workflow_key], trigger_key: params[:trigger_key]).enqueue!
 
-        redirect_to workflow_run_path(run), notice: "Queued a new run for #{params[:workflow_key].titleize}."
+        redirect_to workflow_path(params[:workflow_key]), notice: "Queued a run request for #{params[:workflow_key].titleize}."
       end
     end
   end

@@ -276,7 +276,7 @@ class Dashboard::RunTest < ActiveSupport::TestCase
     )
   end
 
-  test "enqueue_direct! persists a direct workflow row with active job payload" do
+  test "enqueue_direct! persists a worker admission request with active job payload" do
     job = Dashboard::Run.enqueue_direct!(
       class_name: WORKFLOW_JOB_CLASS_NAME,
       arguments: ["schedule:abc123", { trigger_payload: { "id" => "42" } }],
@@ -284,10 +284,11 @@ class Dashboard::RunTest < ActiveSupport::TestCase
       priority: 7,
     )
 
-    assert_equal WORKFLOW_JOB_CLASS_NAME, job.class_name
+    assert_equal "R3x::Workflow::EnqueueJob", job.class_name
     assert_equal "critical", job.queue_name
     assert_equal 7, job.priority
-    assert_equal ["schedule:abc123", { trigger_payload: { "id" => "42" } }], job.workflow_arguments
+    assert_equal WORKFLOW_JOB_CLASS_NAME, job.workflow_arguments.first
+    assert_equal ["schedule:abc123", { trigger_payload: { "id" => "42" } }], job.workflow_arguments.second
     assert SolidQueue::ReadyExecution.exists?(job_id: job.id)
   end
 

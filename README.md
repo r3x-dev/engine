@@ -182,6 +182,15 @@ The default web surface is server-rendered and intentionally small:
 - `/workflow-runs` shows recent runs inside the Solid Queue retention window
 - `/ops/jobs` opens Flightdeck for queue inspection and operational actions
 
+Dashboard Run now queues an admission request for a worker that has loaded the
+workflow packs. The worker enqueues the real workflow through Active Job, so its
+callbacks and Solid Queue concurrency policy also apply to dashboard runs.
+The workflow page lists recent requests and their admission errors; an admitted
+request is not a successful workflow run. Requests are not automatically retried.
+Inspect Flightdeck before manually retrying a failed or interrupted request:
+a worker crash after admission can leave an unfinished request even though its
+workflow was queued, so retrying that request can enqueue another run.
+
 If `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL` are configured, run pages can show
 indexed logs correlated by Active Job IDs. Set `R3X_LOG_FORMAT=json` when you want structured logs
 for the dashboard log view.

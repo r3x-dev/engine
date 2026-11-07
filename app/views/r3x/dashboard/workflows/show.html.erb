@@ -53,6 +53,31 @@
   </div>
 </section>
 
+<% if @enqueue_requests.any? %>
+  <section class="panel stack panel-spaced">
+    <div>
+      <h3 class="section-title">Run requests</h3>
+      <p class="section-copy">Latest 10 dashboard requests. Admitted means queued for execution; check Recent runs for the workflow result.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Request</th><th>Requested</th><th>State</th><th>Error</th></tr></thead>
+        <tbody>
+          <% @enqueue_requests.each do |request| %>
+            <tr>
+              <td><code><%= request.id %></code></td>
+              <td><%= dashboard_timestamp(request.created_at) %></td>
+              <td><%= request.status == "finished" ? "Admitted" : request.status.humanize %></td>
+              <td><%= R3x::Dashboard::ErrorDetails.new(request.failed_execution.error).summary if request.failed_execution %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= link_to "Inspect requests in Flightdeck", "/ops/jobs", class: "button subtle" %>
+  </section>
+<% end %>
+
 <section class="panel stack panel-spaced">
   <div>
     <h3 class="section-title">Triggers</h3>
