@@ -4,6 +4,17 @@ require "test_helper"
 require "shellwords"
 
 class DockerEntrypointTest < ActiveSupport::TestCase
+  test "docker entrypoint treats an empty Rails environment as production" do
+    command_output = run_command(
+      "bin/docker-entrypoint ./bin/web 2>&1",
+      env: { "RAILS_ENV" => "" },
+      inject_production_secret: false,
+    )
+
+    assert_not_predicate $?, :success?
+    assert_includes command_output, "Missing SECRET_KEY_BASE for production runtime"
+  end
+
   test "docker entrypoint fails fast for production runtime commands without secret key base" do
     command_output = run_command(
       "bin/docker-entrypoint ./bin/jobs-worker 2>&1",

@@ -5,6 +5,31 @@ encrypted credentials in production deployments.
 
 See `docs/environment.md` for the central environment-variable index.
 
+## Container Builds
+
+The Dockerfile uses Docker Hardened Images. Run `docker login dhi.io` before
+building locally. GitHub Actions requires `DHI_USERNAME` and `DHI_TOKEN` secrets
+with read access to the registry. Fork pull requests do not receive these
+secrets, so `docker_validate` fails explicitly for forks while the other CI
+jobs run normally. After reviewing a fork contribution, a maintainer should:
+
+1. Create a branch in this repository from the current base and apply the
+   reviewed commits. Review all code and build instructions before running it
+   with access to repository secrets.
+2. Open a pull request from that branch and wait for its `docker_validate` job
+   to build and smoke-test both images. The branch must have the DHI secrets
+   available to CI.
+3. Merge only after the checks pass for the final pull request revision and
+   current base. If either changes, repeat the verification. The original fork
+   check remains failed; the maintainer pull request is the merge path.
+
+This is a maintainer-enforced procedure unless repository rules require
+`docker_validate` before merging and restrict bypasses.
+
+The image runs as UID/GID 1000. Mounted writable directories must permit that
+user to write, unless the deployment explicitly selects a compatible user and
+group. The runtime image has no shell or package manager.
+
 ## Required Runtime Environment
 
 - `SECRET_KEY_BASE`: required for production runtime processes. Generate with

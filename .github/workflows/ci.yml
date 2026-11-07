@@ -173,6 +173,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - name: Require trusted branch for Docker validation
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
+        run: |
+          echo '::error::Docker validation cannot run for a fork because DHI credentials are unavailable. After reviewing the contribution, validate it in a pull request from a trusted repository branch; see docs/deployment.md.'
+          exit 1
+
       - name: Checkout code
         uses: actions/checkout@v7
 
@@ -186,13 +192,22 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
+      - name: Log in to DHI
+        uses: docker/login-action@v4
+        with:
+          registry: dhi.io
+          username: ${{ secrets.DHI_USERNAME }}
+          password: ${{ secrets.DHI_TOKEN }}
+
       - name: Build production Docker image
         uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
           target: production
+          load: true
           push: false
+          tags: r3x-production:${{ github.sha }}
           build-args: |
             RUBY_VERSION=${{ steps.ruby_version.outputs.value }}
             GIT_CODE_VERSION=${{ github.sha }}
@@ -233,6 +248,24 @@ jobs:
           puts "Workflow test runtime ready"
           RUBY
 
+      - name: Smoke-test production entrypoint
+        run: |
+          docker run --rm --network none -e SECRET_KEY_BASE=ci-smoke-secret -e R3X_SKIP_VAULT_ENV_LOAD=true \
+            "r3x-production:${GITHUB_SHA}" ./bin/rails db:prepare
+
+      - name: Verify Ruby uses jemalloc
+        run: |
+          for image in "r3x-test:${GITHUB_SHA}" "r3x-production:${GITHUB_SHA}"; do
+          docker run --rm -i --network none --entrypoint ruby "$image" -rfiddle - <<'RUBY'
+          address = Fiddle::Handle::DEFAULT["malloc"]
+          mapping = File.readlines("/proc/self/maps").find do |line|
+            first, last = line.split.first.split("-").map { |part| part.to_i(16) }
+            address >= first && address < last
+          end
+          abort "Expected Ruby to use jemalloc" unless mapping&.include?("libjemalloc.so")
+          RUBY
+          done
+
   docker_publish:
     if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
     needs:
@@ -258,6 +291,13 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
+
+      - name: Log in to DHI
+        uses: docker/login-action@v4
+        with:
+          registry: dhi.io
+          username: ${{ secrets.DHI_USERNAME }}
+          password: ${{ secrets.DHI_TOKEN }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v4

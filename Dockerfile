@@ -9,32 +9,23 @@
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
 # Keep the base digest aligned with this version; the Renovate Ruby workflow updates both.
 ARG RUBY_VERSION=4.0.9
-FROM docker.io/library/ruby:$RUBY_VERSION-slim@sha256:22cfdec4c490b9e7e4913527a126ddc34bf30cf5432711f70eb1aa4b3ac388a5 AS base
+# Shared build stage for installing gems
+FROM dhi.io/ruby:$RUBY_VERSION-debian13-dev@sha256:5f43427dc01e1064969cf84678e9d07b5baacd716e53472c37f5210559ffaebc AS build-base
 
 # Rails app lives here
 WORKDIR /rails
 
-# Install base packages
+# Install packages needed to build gems
+# DHI dev supplies build tools and headers; pkg-config is needed by native gems.
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y libjemalloc2 sqlite3 && \
-    ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
-    apt-get clean && \
+    apt-get install --no-install-recommends -y pkg-config && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Set production environment variables and enable jemalloc for reduced memory usage and latency.
+# Set production environment variables.
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_VERSION="system" \
-    LD_PRELOAD="/usr/local/lib/libjemalloc.so"
-
-# Shared build stage for installing gems
-FROM base AS build-base
-
-# Install packages needed to build gems
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+    BUNDLE_VERSION="system"
 
 # Copy dependency inputs before application source to preserve gem caches.
 COPY vendor/ ./vendor/
@@ -56,7 +47,8 @@ RUN bundle exec bootsnap precompile --gemfile
 COPY . .
 
 # Precompile bootsnap code cache for faster boot
-RUN bundle exec bootsnap precompile app/ lib/
+RUN bundle exec bootsnap precompile app/ lib/ && \
+    chown -R 1000:1000 log storage tmp
 
 # Install test dependencies separately so they are ready in the published test image.
 FROM production-gems AS test-build
@@ -68,13 +60,23 @@ RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
 
 COPY . .
+RUN chown -R 1000:1000 log storage tmp
 
-# Shared runtime user for production and workflow tests.
-FROM base AS runtime
+# Shared runtime for production and workflow tests.
+# Runtime already includes jemalloc, which Ruby uses without LD_PRELOAD.
+FROM dhi.io/ruby:$RUBY_VERSION-debian13@sha256:751ff0691c1f59798f280ff66886231672dea886939dab73651141787ed269b6 AS runtime
 
-# Create the unprivileged runtime user; code and gems stay root-owned.
-RUN groupadd --system --gid 1000 rails && \
-    useradd -l rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
+# The runtime includes Bundler's library but not its executable.
+COPY --from=build-base /usr/bin/bundle /usr/bin/bundle
+# Ruby entrypoints use /usr/bin/env in their shebangs.
+COPY --from=build-base /usr/bin/env /usr/bin/env
+COPY --from=build-base /usr/share/zoneinfo /usr/share/zoneinfo
+WORKDIR /rails
+ENV RAILS_ENV="production" \
+    BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_PATH="/usr/local/bundle" \
+    BUNDLE_VERSION="system" \
+    HOME="/tmp"
 
 FROM runtime AS test
 
@@ -86,7 +88,7 @@ ENV RAILS_ENV="test" \
 COPY --from=test-build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=test-build /rails /rails
 
-RUN chown -R rails:rails log storage tmp
+# Run unprivileged; code and gems stay root-owned.
 USER 1000:1000
 
 ARG GIT_CODE_VERSION=dev
@@ -105,7 +107,6 @@ ENV BUNDLE_WITHOUT="development:test"
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
 
-RUN chown -R rails:rails log storage tmp
 USER 1000:1000
 
 ARG GIT_CODE_VERSION=dev

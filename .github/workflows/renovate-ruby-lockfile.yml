@@ -30,6 +30,13 @@ jobs:
       - name: Install locked Bundler
         run: gem install bundler -v "$(tail -n 1 Gemfile.lock | tr -d ' ')"
 
+      - name: Log in to DHI
+        uses: docker/login-action@v4
+        with:
+          registry: dhi.io
+          username: ${{ secrets.DHI_USERNAME }}
+          password: ${{ secrets.DHI_TOKEN }}
+
       - name: Align Dockerfile Ruby version and digest
         run: |
           require "json"
@@ -38,22 +45,22 @@ jobs:
           ruby_version = File.read(".ruby-version").strip
           abort "Invalid Ruby version" unless ruby_version.match?(/\A\d+\.\d+\.\d+\z/)
 
-          image = "docker.io/library/ruby:#{ruby_version}-slim"
-          metadata, status = Open3.capture2("docker", "buildx", "imagetools", "inspect", image, "--format", "{{json .Manifest}}")
-          abort "Could not resolve #{image}" unless status.success?
-          digest = JSON.parse(metadata).fetch("digest")
-          abort "Invalid Ruby image digest" unless digest.is_a?(String) && digest.match?(/\Asha256:[a-f0-9]{64}\z/)
-
           dockerfile = "Dockerfile"
           contents = File.read(dockerfile)
-
           unless contents.sub!(/^ARG RUBY_VERSION=.*/, "ARG RUBY_VERSION=#{ruby_version}")
             abort "Could not find ARG RUBY_VERSION in #{dockerfile}"
           end
 
-          unless contents.sub!(/^FROM docker\.io\/library\/ruby:\$RUBY_VERSION-slim@sha256:[a-f0-9]{64} AS base$/,
-            "FROM docker.io/library/ruby:$RUBY_VERSION-slim@#{digest} AS base")
-            abort "Could not find pinned Ruby base in #{dockerfile}"
+          { "-dev" => "build-base", "" => "runtime" }.each do |suffix, stage|
+            image = "dhi.io/ruby:#{ruby_version}-debian13#{suffix}"
+            metadata, status = Open3.capture2("docker", "buildx", "imagetools", "inspect", image, "--format", "{{json .Manifest}}")
+            abort "Could not resolve #{image}" unless status.success?
+            digest = JSON.parse(metadata).fetch("digest")
+            abort "Invalid Ruby image digest" unless digest.is_a?(String) && digest.match?(/\Asha256:[a-f0-9]{64}\z/)
+
+            pattern = /^FROM dhi\.io\/ruby:\$RUBY_VERSION-debian13#{Regexp.escape(suffix)}@sha256:[a-f0-9]{64} AS #{stage}$/
+            replacement = "FROM dhi.io/ruby:$RUBY_VERSION-debian13#{suffix}@#{digest} AS #{stage}"
+            abort "Could not find pinned #{stage} image in #{dockerfile}" unless contents.sub!(pattern) { replacement }
           end
 
           File.write(dockerfile, contents)

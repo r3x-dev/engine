@@ -1,24 +1,19 @@
-#!/bin/bash -e
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-runtime_command=false
+runtime_command = %w[./bin/web ./bin/jobs ./bin/jobs-worker ./bin/jobs-scheduler].include?(ARGV[0]) ||
+  (ARGV[0] == "./bin/rails" && ARGV[1] == "server")
+rails_env = ENV.fetch("RAILS_ENV", "")
+rails_env = "production" if rails_env.empty?
 
-case "${1:-}" in
-  ./bin/web | ./bin/jobs | ./bin/jobs-worker | ./bin/jobs-scheduler)
-    runtime_command=true
-    ;;
-  ./bin/rails)
-    [ "${2:-}" == "server" ] && runtime_command=true
-    ;;
-esac
-
-if [ "${RAILS_ENV:-production}" == "production" ] && [ "$runtime_command" == "true" ] && [ -z "${SECRET_KEY_BASE:-}" ]; then
-  echo "Missing SECRET_KEY_BASE for production runtime" >&2
+if rails_env == "production" && runtime_command && ENV.fetch("SECRET_KEY_BASE", "").empty?
+  warn "Missing SECRET_KEY_BASE for production runtime"
   exit 1
-fi
+end
 
 # If running the rails server or jobs entrypoints then create or migrate existing database
-if [ "$runtime_command" == "true" ]; then
-  ./bin/rails db:prepare
-fi
+if runtime_command && !system("./bin/rails", "db:prepare")
+  exit($?.exitstatus || 1)
+end
 
-exec "${@}"
+exec(*ARGV)

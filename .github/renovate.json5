@@ -35,7 +35,7 @@
   },
   packageRules: [
     {
-      // .ruby-version owns Ruby upgrades; its workflow aligns the ARG and slim-image digest.
+      // .ruby-version owns Ruby upgrades; its workflow aligns the ARG and DHI image digests.
       // The native Dockerfile manager still refreshes the current tag's digest.
       description: 'Keep Ruby tag upgrades with the version-file workflow',
       matchManagers: [
@@ -43,6 +43,7 @@
       ],
       matchPackageNames: [
         'docker.io/library/ruby',
+        'dhi.io/ruby',
       ],
       matchUpdateTypes: [
         'major',
