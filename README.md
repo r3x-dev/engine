@@ -292,6 +292,9 @@ Run the project lint/reference checks with:
 mise exec -- bin/lint-r3x
 ```
 
+Run `bin/typecheck` for the selected workflow-facing framework code listed in `Steepfile`.
+RBS signatures live in `sig/`; both local CI and GitHub Actions run this check.
+
 This repo uses `.githooks/`; the pre-commit hook formats staged YAML and then runs the full local
 `bin/ci` suite. This is intentional while the suite remains reasonably fast: developers get the
 complete feedback loop before a commit exists, with GitHub Actions providing an independent check.

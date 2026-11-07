@@ -20,6 +20,7 @@ module R3x
         private
 
         def httpx_options(verify_ssl:, timeout:)
+          # @type var opts: Hash[Symbol, untyped]
           opts = {}
           # Apply the supplied timeout to reads, writes, and operations so shorter
           # httpx defaults do not cause the request to time out earlier.
@@ -31,6 +32,7 @@ module R3x
 
       def initialize(verify_ssl: true, timeout: nil)
         # Keep option building private to this class while sharing it with the class-level persistence path.
+        # @type var opts: Hash[Symbol, untyped]
         opts = self.class.send(:httpx_options, verify_ssl:, timeout:)
         @client = HTTPX.plugin(:follow_redirects)
         @client = @client.with(**opts) if opts.any?

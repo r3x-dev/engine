@@ -53,6 +53,7 @@ module R3x
       end
 
       def build_params(io_or_path, mime_type, language:, engine:, overlay:)
+        # @type var params: Hash[Symbol, String]
         params = {}
         params[:isOverlayRequired] = overlay.to_s
         params[:language] = language if language
