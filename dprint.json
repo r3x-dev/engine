@@ -19,5 +19,5 @@
     "config/queue.yml",
     "config/queue.worker.yml"
   ],
-  "plugins": ["https://plugins.dprint.dev/g-plane/pretty_yaml-v0.5.0.wasm"]
+  "plugins": ["https://plugins.dprint.dev/g-plane/pretty_yaml-v0.6.0.wasm"]
 }

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "signet/oauth_2/client"
 
 module R3x
   module Client
