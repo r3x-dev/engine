@@ -870,6 +870,7 @@
           on: "5s"
         }
         let timeoutId
+        let refreshing = false
 
         const panel = () => document.getElementById("run-logs")
 
@@ -894,10 +895,8 @@
           }
         }
 
-        const activeStatuses = ["queued", "running"]
-
         const refreshable = (element) => {
-          return element?.dataset.r3xLogRefresh === "true" && activeStatuses.includes(element.dataset.r3xRunStatus)
+          return element?.dataset.r3xLogRefresh === "true"
         }
 
         const refreshInterval = () => intervalByOption[currentOption()]
@@ -968,7 +967,7 @@
 
         const refresh = async () => {
           const currentPanel = panel()
-          if (!refreshable(currentPanel) || !refreshInterval()) return
+          if (refreshing || !refreshable(currentPanel) || !refreshInterval()) return
 
           if (document.hidden) {
             setLiveState("idle")
@@ -977,12 +976,16 @@
           }
 
           const oldStatus = currentPanel.dataset.r3xRunStatus
+          const controller = new AbortController()
+          const requestTimeout = setTimeout(() => controller.abort(), 30000)
 
+          refreshing = true
           setLiveState("refreshing")
           setStatus("Refreshing")
 
           try {
             const response = await fetch(currentPanel.dataset.r3xLogRefreshUrl, {
+              signal: controller.signal,
               headers: {
                 "Accept": "text/html",
                 "X-Requested-With": "XMLHttpRequest"
@@ -1006,9 +1009,14 @@
               schedule()
             }
           } catch (_) {
-            setLiveState("paused")
-            setStatus("Retrying")
+            if (refreshInterval()) {
+              setLiveState("paused")
+              setStatus("Retrying")
+            }
             schedule()
+          } finally {
+            clearTimeout(requestTimeout)
+            refreshing = false
           }
         }
 

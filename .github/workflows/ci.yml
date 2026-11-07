@@ -120,11 +120,19 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
       - name: Run tests
         env:
           RAILS_ENV: test
           # REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test
+
+      - name: Run JavaScript tests
+        run: node --test test/javascript/*_test.js
 
   test_postgresql:
     if: ${{ !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) }}

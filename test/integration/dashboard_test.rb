@@ -651,6 +651,47 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Still working"
   end
 
+  %w[sleeping scheduled blocked].each do |status|
+    test "#{status} workflow run logs remain refreshable" do
+      ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+      ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+      stub_request(:post, "http://victoria-logs.test:9428/select/logsql/query").to_return(status: 200, body: "")
+
+      job = DashboardJobRows.create_job!(
+        job_class_name: WORKFLOW_JOB_CLASS_NAME,
+        arguments: [@trigger],
+        active_job_id: "aj-#{status}",
+        concurrency_key: "test-key",
+        created_at: 1.minute.ago,
+        scheduled_at: 1.hour.from_now,
+      )
+      SolidQueue::ReadyExecution.where(job_id: job.id).delete_all
+
+      if status == "blocked"
+        SolidQueue::ScheduledExecution.where(job_id: job.id).delete_all
+        SolidQueue::BlockedExecution.create!(
+          job_id: job.id,
+          queue_name: job.queue_name,
+          priority: job.priority,
+          concurrency_key: "test-key",
+          expires_at: 1.hour.from_now,
+        )
+      else
+        job.update!(arguments: job.arguments.merge("resumptions" => 1)) if status == "sleeping"
+        SolidQueue::ScheduledExecution.find_or_initialize_by(job_id: job.id).update!(
+          queue_name: job.queue_name, priority: job.priority, scheduled_at: job.scheduled_at,
+        )
+      end
+
+      get "/workflow-runs/#{job.id}/logs"
+
+      assert_response :success
+      assert_select "#run-logs[data-r3x-run-status=?][data-r3x-log-refresh=?]", status, "true"
+      assert_select "select[data-r3x-log-refresh-select]", count: 1
+      assert_includes response.body, "/workflow-runs/#{job.id}/logs"
+    end
+  end
+
   test "terminal workflow run logs do not auto-refresh" do
     ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
     ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"

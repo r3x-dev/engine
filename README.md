@@ -266,7 +266,10 @@ Run tests with:
 
 ```bash
 bin/rails test
+node --test test/javascript/*_test.js
 ```
+
+JavaScript tests require Node.js 20 or newer; GitHub Actions uses Node.js 24.
 
 SQLite is the default test adapter. To run the same suite against an ephemeral local PostgreSQL container:
 
