@@ -11,6 +11,8 @@ on:
       - ".rails-ai-context.yml"
       - ".vscode/**"
       - ".wtp.yml"
+      - "**/node_modules/**"
+      - "**/dist/**"
       - "docs/**"
       - "justfile"
       - "Justfile"

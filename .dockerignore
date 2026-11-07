@@ -21,6 +21,8 @@ tmp/storage/*
 !tmp/storage/.keep
 
 # Ignore development, CI, and Docker config/tooling
+**/node_modules
+**/dist
 /*.json
 /*.yml
 /*.yaml
