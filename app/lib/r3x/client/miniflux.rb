@@ -12,6 +12,7 @@ module R3x
 
       DEFAULT_URL_ENV = "MINIFLUX_URL"
       DEFAULT_API_KEY_ENV = "MINIFLUX_API_KEY"
+      API_PREFIX = "/v1"
 
       DEFAULT_STATUS = "unread"
       DEFAULT_LIMIT = 20
@@ -19,7 +20,7 @@ module R3x
       DEFAULT_DIRECTION = "desc"
 
       def initialize(url_env: DEFAULT_URL_ENV, api_key_env: DEFAULT_API_KEY_ENV)
-        @base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_").delete_suffix("/")
+        @base_url = R3x::Env.secure_fetch(url_env, prefix: "#{DEFAULT_URL_ENV}_").delete_suffix("/") + API_PREFIX
         api_key = R3x::Env.secure_fetch(api_key_env, prefix: "#{DEFAULT_API_KEY_ENV}_")
         @connection = HTTPX.with(headers: { "X-Auth-Token" => api_key })
       end
@@ -27,7 +28,7 @@ module R3x
       # GET /v1/entries
       # See https://miniflux.app/docs/api.html#endpoint-get-entries
       def entries(status: DEFAULT_STATUS, limit: DEFAULT_LIMIT, order: DEFAULT_ORDER, direction: DEFAULT_DIRECTION, **filters)
-        get("/v1/entries", status:, limit:, order:, direction:, **filters)
+        get("/entries", status:, limit:, order:, direction:, **filters)
       end
 
       # GET /v1/categories/{categoryID}/entries
@@ -36,13 +37,19 @@ module R3x
         category_id:, status: DEFAULT_STATUS, limit: DEFAULT_LIMIT,
         order: DEFAULT_ORDER, direction: DEFAULT_DIRECTION, **filters
       )
-        get("/v1/categories/#{Integer(category_id)}/entries", status:, limit:, order:, direction:, **filters)
+        get("/categories/#{Integer(category_id)}/entries", status:, limit:, order:, direction:, **filters)
+      end
+
+      # PUT /v1/feeds/{feedID}/refresh
+      # See https://miniflux.app/docs/api.html#endpoint-refresh-feed
+      def refresh_feed(feed_id:)
+        put("/feeds/#{Integer(feed_id)}/refresh")
       end
 
       # PUT /v1/categories/{categoryID}/mark-all-as-read
       # See https://miniflux.app/docs/api.html#endpoint-mark-category-entries-as-read
       def mark_category_entries_as_read(category_id:)
-        put("/v1/categories/#{Integer(category_id)}/mark-all-as-read")
+        put("/categories/#{Integer(category_id)}/mark-all-as-read")
       end
 
       # PUT /v1/entries
@@ -56,7 +63,7 @@ module R3x
         payload[:status] = status if status.present?
         payload[:starred] = starred unless starred.nil?
 
-        put("/v1/entries", json: payload)
+        put("/entries", json: payload)
       end
 
       private
@@ -69,7 +76,7 @@ module R3x
 
       def put(path, json: nil)
         if R3x::Policy.dry_run_for(:miniflux)
-          logger.info "[DRY-RUN] method=PUT path=#{path}"
+          logger.info "[DRY-RUN] method=PUT path=#{API_PREFIX}#{path}"
           return false
         end
 

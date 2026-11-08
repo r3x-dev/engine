@@ -40,7 +40,7 @@ that show shape only.
 | `R3X_SKIP_CACHE` | Optional (development environment flag) | Workflow CLI, workflow cache policy | Boolean. Bypasses all workflow caching, including `with_cache(key:, ttl:)`. Production boot rejects this environment flag. `bin/workflow run --skip-cache` remains an explicit one-run operator override in production. | `R3X_SKIP_CACHE=true` |
 | `R3X_DRY_RUN` | Optional | `R3x::Policy` | Boolean. `true` enables global dry run for clients that support it; per-feature and per-call settings cannot enable real writes. `false` sets a real-write default while allowing per-feature dry run. When unset, `development` and `test` default to dry-run. CLI `--dry-run` / `--no-dry-run` overrides this global value for one run. | `R3X_DRY_RUN=true` |
 | `R3X_<FEATURE>_DRY_RUN` | Optional | `R3x::Policy` | Boolean per-feature default for dry-run-aware clients. Applies when global dry run is not enabled; falls back to `R3X_DRY_RUN`, then the environment default. | `R3X_DISCORD_DRY_RUN=true` |
-| `R3X_MINIFLUX_DRY_RUN` | Optional | Miniflux client writes | Boolean setting for all Miniflux writes (`update_entries`, `mark_category_entries_as_read`), subject to global dry run. Dry-run skips PUT and returns `false`; reads still call the API. | `R3X_MINIFLUX_DRY_RUN=true` |
+| `R3X_MINIFLUX_DRY_RUN` | Optional | Miniflux client writes | Boolean setting for all Miniflux writes, subject to global dry run. Dry-run skips PUT and returns `false`; reads still call the API. | `R3X_MINIFLUX_DRY_RUN=true` |
 
 ## Logging And Dashboard
 

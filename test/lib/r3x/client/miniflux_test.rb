@@ -214,6 +214,30 @@ module R3x
         end
       end
 
+      test "refresh_feed sends an authenticated PUT request for the selected feed" do
+        request = stub_request(:put, "https://miniflux.test/v1/feeds/80/refresh")
+          .with(headers: { "X-Auth-Token" => "api-key" })
+          .to_return(status: 204)
+
+        with_client_env do
+          with_env("R3X_MINIFLUX_DRY_RUN" => "false") do
+            assert Miniflux.new.refresh_feed(feed_id: "80")
+          end
+        end
+
+        assert_requested request, times: 1
+      end
+
+      test "refresh_feed propagates HTTP errors" do
+        stub_request(:put, "https://miniflux.test/v1/feeds/80/refresh").to_return(status: 503)
+
+        with_client_env do
+          with_env("R3X_MINIFLUX_DRY_RUN" => "false") do
+            assert_raises(HTTPX::HTTPError) { Miniflux.new.refresh_feed(feed_id: 80) }
+          end
+        end
+      end
+
       test "mark_category_entries_as_read sends PUT request to category mark-all-as-read endpoint" do
         request = stub_request(:put, "https://miniflux.test/v1/categories/12/mark-all-as-read")
           .with(headers: { "X-Auth-Token" => "api-key" })
@@ -252,13 +276,14 @@ module R3x
       end
 
       [[nil, nil], ["true", nil], %w[true false], %w[false true]].each do |global, miniflux|
-        test "dry run blocks both writes with global #{global.inspect} and Miniflux #{miniflux.inspect}" do
+        test "dry run blocks writes with global #{global.inspect} and Miniflux #{miniflux.inspect}" do
           with_client_env do
             with_env("R3X_DRY_RUN" => global, "R3X_MINIFLUX_DRY_RUN" => miniflux) do
               client = Miniflux.new
               output = capture_logged_output do
                 assert_not client.update_entries(entry_ids: [123], status: "read", starred: false)
                 assert_not client.mark_category_entries_as_read(category_id: 12)
+                assert_not client.refresh_feed(feed_id: 80)
               end
 
               assert_includes output, "DRY-RUN"
