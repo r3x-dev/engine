@@ -3,6 +3,14 @@
   extends: [
     'config:recommended',
   ],
+  hostRules: [
+    {
+      hostType: 'docker',
+      matchHost: 'https://dhi.io',
+      username: '{{ secrets.DHI_USERNAME }}',
+      password: '{{ secrets.DHI_TOKEN }}',
+    },
+  ],
   gitIgnoredAuthors: [
     'renovate-ruby-fix@users.noreply.github.com',
   ],
