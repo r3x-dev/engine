@@ -10,7 +10,7 @@
 # Keep the base digest aligned with this version; the Renovate Ruby workflow updates both.
 ARG RUBY_VERSION=4.0.9
 # Shared build stage for installing gems
-FROM dhi.io/ruby:$RUBY_VERSION-debian13-dev@sha256:5f43427dc01e1064969cf84678e9d07b5baacd716e53472c37f5210559ffaebc AS build-base
+FROM dhi.io/ruby:$RUBY_VERSION-debian13-dev@sha256:2959910e26bfa059d46b9a3d90bf09ed6010a24fe1130d747446576c34b25724 AS build-base
 
 # Rails app lives here
 WORKDIR /rails
@@ -64,7 +64,7 @@ RUN chown -R 1000:1000 log storage tmp
 
 # Shared runtime for production and workflow tests.
 # Runtime already includes jemalloc, which Ruby uses without LD_PRELOAD.
-FROM dhi.io/ruby:$RUBY_VERSION-debian13@sha256:751ff0691c1f59798f280ff66886231672dea886939dab73651141787ed269b6 AS runtime
+FROM dhi.io/ruby:$RUBY_VERSION-debian13@sha256:e4da5f2745e77f192f7422aa1a2d3fd91c4b82ebb6bcc85250ab9a9a8c094464 AS runtime
 
 # The runtime includes Bundler's library but not its executable.
 COPY --from=build-base /usr/bin/bundle /usr/bin/bundle
