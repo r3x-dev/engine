@@ -42,6 +42,10 @@ client or duplicate its implementation.
   needed Action View helpers in a rendering component without depending on a request
   or controller. Use `tag`, `link_to` and `safe_join` when appropriate; never mark
   model/source text `html_safe` just to make it render.
+- For URL parsing, normalization, fragment removal, or query parameter filtering,
+  prefer `Addressable::URI` over stdlib `URI` or manual string/regex splitting. Use
+  `uri.query_values` to inspect or filter parameters, `uri.fragment = nil` for anchors,
+  and `uri.normalize` for canonical encoding.
 - Follow the repository's lazy-loading policy for optional/heavy gems. Verify
   version-sensitive APIs against the installed version; adding wrappers or new gems
   is justified only by a current requirement.

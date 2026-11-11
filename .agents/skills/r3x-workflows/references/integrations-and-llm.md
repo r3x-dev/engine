@@ -19,6 +19,8 @@ options to thin clients speculatively. [HTTP client](../../../../app/lib/r3x/cli
 redirects follow HTTPX policy: at most three hops, no HTTPS-to-HTTP downgrade, and no
 forwarding Authorization to another origin. Use `json:` / `response.json` at
 the HTTPX boundary and MultiJSON for other JSON work; propagate transport failures.
+For URL parsing, normalization, or query parameter and anchor cleaning on external
+links, prefer `Addressable::URI` (`uri.query_values`, `uri.normalize`) over stdlib `URI`.
 
 ## MCP and Sourcetap
 
