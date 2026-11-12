@@ -49,40 +49,23 @@ module R3x
       attr_reader :pack_loader, :registry, :stdout
 
       def run_workflow(workflow_class, wait:)
+        queue_adapter = QueueAdapter.new
         workflow = workflow_class.new
 
+        # Isolated Continuable steps interrupt so a queue adapter can persist progress
+        # and resume the job later. The local CLI runs in-process, so it carries that
+        # serialized continuation forward itself.
         loop do
-          return workflow.perform
-        rescue ActiveJob::Continuation::Interrupt
-          # Isolated Continuable steps interrupt so a queue adapter can persist progress
-          # and resume the job later. The local CLI runs in-process, so it carries that
-          # serialized continuation forward itself.
-          max_resumptions = workflow.class.max_resumptions
+          workflow.extend(Execution)
+          workflow.queue_adapter = queue_adapter
+          result = workflow.perform_now
 
-          if max_resumptions && workflow.resumptions >= max_resumptions
-            raise ActiveJob::Continuation::ResumeLimitError, "Job was resumed a maximum of #{max_resumptions} times"
-          end
+          job_data = queue_adapter.shift
+          return result unless job_data
 
-          sleep resume_delay_for(workflow) if wait
-          workflow = workflow.class.deserialize(workflow.serialize).tap { it.resumptions += 1 }
+          workflow = workflow_class.deserialize(job_data)
+          sleep [workflow.scheduled_at.to_f - Time.current.to_f, 0].max if wait && workflow.scheduled_at
         end
-      end
-
-      def resume_delay_for(workflow)
-        resume_options = workflow.class.resume_options
-
-        if resume_options[:wait_until]
-          return [resume_options[:wait_until].to_f - Time.current.to_f, 0].max
-        end
-
-        return 0 unless resume_options[:wait]
-
-        workflow.send(
-          :determine_delay,
-          seconds_or_duration_or_algorithm: resume_options[:wait],
-          executions: workflow.resumptions + 1,
-          jitter: 0,
-        )
       end
 
       def load_workflow(path)

@@ -104,6 +104,10 @@ the global ENV value for that run. Without global dry run, per-feature settings 
 `development` and `test` default to dry-run. The CLI reports the effective policy and configured
 exceptions. Use `--skip-cache` for a fresh local run without changing workflow code.
 
+Local execution uses the Active Job callback and retry lifecycle. Retries and continuations of
+the running job stay in the CLI process; `--skip-wait` skips their delays. Solid Queue concurrency
+controls and durable queue persistence apply only to queued execution.
+
 ## Build Your Workflow Catalog
 
 Workflow catalogs are user-owned and independent of the engine. Keep concrete workflow behavior,

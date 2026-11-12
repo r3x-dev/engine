@@ -18,10 +18,14 @@ bin/workflow info example_digest
 bin/workflow run --dry-run workflows/example_digest/workflow.rb
 ```
 
-Use a real catalog path and pack name; the example is fictional. The CLI serializes/
-restores isolated continuations in-process until completion and honors
-`resume_options` waits. `--skip-wait` fast-forwards those local waits;
-it is not evidence of real queue timing.
+Use a real catalog path and pack name; the example is fictional. The CLI uses the
+Active Job callback and exception-handler lifecycle, including `retry_on` and
+Continuable's recovery after progress. Retries and continuations of the running
+instance are serialized/restored in-process, with their requested waits and limits.
+`--skip-wait` fast-forwards those local waits; it is not evidence of real queue
+timing. Local execution has no durable queue persistence or Solid Queue concurrency
+controls. Separate explicit `perform_later` calls still use the configured backend,
+including calls on the same workflow class.
 
 New side effects should default dry. Resolve client/helper defaults through
 `R3x::Policy.dry_run_for(:key, dry_run)`. Development/test defaults are dry;

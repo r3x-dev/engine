@@ -27,6 +27,23 @@ class WorkflowCliTest < ActiveSupport::TestCase
     assert_includes output, "Running with dry run by default: #{@fixture_path}"
   end
 
+  test "run command completes isolated steps with one correlated Active Job identity" do
+    output = run_cli("run --skip-wait test/fixtures/workflows/callback_workflow/workflow.rb")
+    run_ids = output.scan(/r3x\.run_active_job_id=([^\]\s]+)/).flatten
+
+    assert_includes output, "Resuming workflow"
+    assert_includes output, "Workflow run completed"
+    assert_not_empty run_ids
+    assert_equal 1, run_ids.uniq.size
+  end
+
+  test "run command completes a retry on recovery in the foreground" do
+    output = run_cli("run --skip-wait test/fixtures/workflows/retry_workflow/workflow.rb")
+
+    assert_includes output, "Workflow run failed"
+    assert_includes output, "Workflow run completed"
+  end
+
   test "explicit dry run reports ignored real-write overrides" do
     output = run_cli("run --dry-run #{@fixture_path}", env: { "R3X_DISCORD_DRY_RUN" => "false" })
 

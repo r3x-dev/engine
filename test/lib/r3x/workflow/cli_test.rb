@@ -6,6 +6,8 @@ require "fileutils"
 module R3x
   module Workflow
     class CliTest < ActiveSupport::TestCase
+      include ActiveJob::TestHelper
+
       setup do
         @fixture_dir = Rails.root.join("test/fixtures/workflows")
         @fixture_path = @fixture_dir.join("test_workflow/workflow.rb")
@@ -15,6 +17,8 @@ module R3x
         ENV["R3X_WORKFLOW_PATHS"] = @fixture_dir.to_s
         R3x::Workflow::PackLoader.load!(rebuild_registry: true)
         Workflows::ContinuableWorkflow.reset_events!
+        Workflows::CallbackWorkflow::EVENTS.clear
+        Workflows::RetryWorkflow::EXECUTIONS.clear
       end
 
       teardown do
@@ -78,24 +82,151 @@ module R3x
         assert_equal({ "events" => %w[first second third] }, result)
       end
 
-      test "run waits between continuable workflow resumptions by default" do
-        output = StringIO.new
-        cli = Cli.new(stdout: output)
-        cli.expects(:sleep).twice.with(2.minutes.to_i)
+      test "run honors a before perform callback that aborts execution" do
+        Workflows::CallbackWorkflow.stubs(:abort_execution?).returns(true)
 
-        cli.run(@continuable_fixture_path.to_s)
+        run_callback_workflow
+
+        assert_equal ["before"], Workflows::CallbackWorkflow::EVENTS
       end
 
-      test "run supports polynomial wait between continuable workflow resumptions" do
-        original_resume_options = Workflows::ContinuableWorkflow.resume_options
-        Workflows::ContinuableWorkflow.resume_options = { wait: :polynomially_longer }
-        output = StringIO.new
-        cli = Cli.new(stdout: output)
-        sleeps = sequence("sleeps")
-        cli.expects(:sleep).with(3).in_sequence(sleeps)
-        cli.expects(:sleep).with(18).in_sequence(sleeps)
+      test "run applies Active Job callbacks and counters across isolated resumptions without using the backend" do
+        original_adapter = Workflows::CallbackWorkflow.queue_adapter
+        result = nil
 
-        cli.run(@continuable_fixture_path.to_s)
+        assert_no_enqueued_jobs do
+          result = run_callback_workflow
+        end
+
+        assert_equal %w[before around first enqueued before around second after], Workflows::CallbackWorkflow::EVENTS
+        assert_equal({ "executions" => 2, "resumptions" => 1, "snapshot" => "original" }, result)
+        assert_same original_adapter, Workflows::CallbackWorkflow.queue_adapter
+      end
+
+      test "run preserves the serialized snapshot before after enqueue callbacks mutate the running instance" do
+        Workflows::CallbackWorkflow.stubs(:mutate_after_enqueue?).returns(true)
+
+        result = run_callback_workflow
+
+        assert_includes Workflows::CallbackWorkflow::EVENTS, "enqueued"
+        assert_equal "original", result.fetch("snapshot")
+      end
+
+      test "run resumes errors after progress through the Active Job lifecycle" do
+        Workflows::CallbackWorkflow.stubs(:fail_after_progress?).returns(true)
+        result = nil
+
+        assert_no_enqueued_jobs do
+          result = run_callback_workflow
+        end
+
+        assert_equal 2, result.fetch("executions")
+        assert_equal 1, result.fetch("resumptions")
+        assert_equal 1, Workflows::CallbackWorkflow::EVENTS.count("first")
+        assert_equal 1, Workflows::CallbackWorkflow::EVENTS.count("second")
+      end
+
+      test "run raises when an enqueue callback aborts a required resumption" do
+        Workflows::CallbackWorkflow.stubs(:abort_resume?).returns(true)
+
+        error = assert_raises(ActiveJob::EnqueueError) do
+          run_callback_workflow
+        end
+
+        assert_includes error.message, "aborted"
+        assert_not_includes Workflows::CallbackWorkflow::EVENTS, "second"
+      end
+
+      test "run respects a discarded resumption enqueue error" do
+        Workflows::CallbackWorkflow.stubs(:discard_resume?).returns(true)
+
+        assert_no_enqueued_jobs do
+          run_callback_workflow
+        end
+
+        assert_includes Workflows::CallbackWorkflow::EVENTS, "discarded"
+        assert_not_includes Workflows::CallbackWorkflow::EVENTS, "second"
+      end
+
+      test "run enforces the Active Job resumption limit without queuing background work" do
+        Workflows::ContinuableWorkflow.stubs(:max_resumptions).returns(1)
+
+        assert_no_enqueued_jobs do
+          assert_raises(ActiveJob::Continuation::ResumeLimitError) do
+            Cli.new(stdout: StringIO.new).run(@continuable_fixture_path.to_s, wait: false)
+          end
+        end
+
+        assert_equal %w[first second], Workflows::ContinuableWorkflow.events
+      end
+
+      test "run leaves separate workflow enqueues on the configured backend" do
+        Workflows::CallbackWorkflow.stubs(:enqueue_separate_run?).returns(true)
+
+        assert_enqueued_jobs 1, only: Workflows::CallbackWorkflow do
+          run_callback_workflow
+        end
+      end
+
+      test "run preserves job correlation tags across resumptions" do
+        output = capture_logged_output { run_callback_workflow }
+        starts = output.lines.map { |line| MultiJSON.parse(line) }.select do |entry|
+          entry.fetch("message").start_with?("Running workflow", "Resuming workflow")
+        end
+        run_tags = starts.map do |entry|
+          entry.fetch("tags", []).find { |tag| tag.start_with?("r3x.run_active_job_id=") }
+        end
+
+        assert_equal 2, starts.size
+        assert run_tags.all?(&:present?)
+        assert_equal 1, run_tags.uniq.size
+      end
+
+      test "run honors bounded retry on handlers locally with their requested delay" do
+        freeze_time do
+          cli = Cli.new(stdout: StringIO.new)
+          cli.expects(:sleep).once.with(3)
+          result = nil
+
+          assert_no_enqueued_jobs do
+            result = cli.run(@fixture_dir.join("retry_workflow/workflow.rb").to_s)
+          end
+
+          assert_equal "recovered", result
+          assert_equal [1, 2], Workflows::RetryWorkflow::EXECUTIONS
+        end
+      end
+
+      test "run propagates an exhausted retry and restores its policy" do
+        Workflows::RetryWorkflow.stubs(:failures).returns(2)
+
+        assert_raises(Timeout::Error) do
+          Cli.new(stdout: StringIO.new).run(@fixture_dir.join("retry_workflow/workflow.rb").to_s, dry_run: true, wait: false)
+        end
+
+        assert_equal [1, 2], Workflows::RetryWorkflow::EXECUTIONS
+        assert_nil ENV["R3X_DRY_RUN"]
+      end
+
+      test "run waits between continuable workflow resumptions by default" do
+        freeze_time do
+          output = StringIO.new
+          cli = Cli.new(stdout: output)
+          cli.expects(:sleep).twice.with(2.minutes.to_i)
+
+          cli.run(@continuable_fixture_path.to_s)
+        end
+      end
+
+      test "run rejects continuation wait algorithms unsupported by Active Job" do
+        original_resume_options = Workflows::ContinuableWorkflow.resume_options
+        [:polynomially_longer, ->(attempt) { attempt * 3 }].each do |unsupported_wait|
+          Workflows::ContinuableWorkflow.resume_options = { wait: unsupported_wait }
+
+          assert_raises(NoMethodError) do
+            Cli.new(stdout: StringIO.new).run(@continuable_fixture_path.to_s, wait: false)
+          end
+        end
       ensure
         Workflows::ContinuableWorkflow.resume_options = original_resume_options
       end
@@ -304,6 +435,10 @@ module R3x
       end
 
       private
+
+      def run_callback_workflow
+        Cli.new(stdout: StringIO.new).run(@fixture_dir.join("callback_workflow/workflow.rb").to_s, wait: false)
+      end
 
       def with_delivery_env(overrides, &)
         with_env({
