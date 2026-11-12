@@ -22,7 +22,7 @@ references for every task.
 | --- | --- |
 | Add a pack, change triggers, steps, guards, callbacks or catalog loading | [Runtime and structure](references/runtime.md) |
 | Resume work, save input, deduplicate items, reserve processing or deliver to multiple destinations | [State and delivery](references/state-and-delivery.md) |
-| Cache expensive calls or change request/queue retries | [Caching and retries](references/caching-and-retries.md) |
+| Cache expensive calls, change request/queue retries, or add/change a resumable step with side effects | [Caching and retries](references/caching-and-retries.md) |
 | Use HTTP, MCP, Sheets or LLMs, including structured output and typed decisions | [Integrations and LLMs](references/integrations-and-llm.md) |
 | Run locally, configure dry run/Vault, inspect logs or verify a workflow | [Local verification](references/local-verification.md) |
 
@@ -66,7 +66,9 @@ client or duplicate its implementation.
 - Save run input and required intermediate results across resumptions. TTL cache
   cannot establish stable input, permanent deduplication or exactly-once delivery.
 - Establish required delivery and provider success before marking completion.
-  Unknown external outcomes require reconciliation, not blind retries.
+  Before repeating an unknown outcome, establish idempotency or reconcile it unless
+  the user explicitly accepts duplicate risk for that operation; see
+  [caching and retries](references/caching-and-retries.md#short-request-retries-versus-queued-recovery).
 - Keep new side effects dry by default. A global dry run does not imply that reads,
   paid generation or every client become no-ops; inspect the affected boundary.
 - Let unexpected errors and invalid states propagate. Rescue only at an intentional

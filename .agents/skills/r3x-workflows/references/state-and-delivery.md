@@ -89,13 +89,17 @@ does not prove recipient delivery or reading. Save a JSON-compatible delivery fl
 when needed rather than serializing the result object.
 
 Use client-owned transient errors for bounded queue retries, such as Gmail's
-`R3x::Client::Google::Gmail::TransientError`; keep authentication/configuration
-failures fatal. Do not refer to lazy SDK error constants in workflow declarations.
-Read [caching and retries](caching-and-retries.md) before adding retry behavior.
+`R3x::Client::Google::Gmail::TransientError`; do not add explicit retries for
+authentication/configuration errors. Do not refer to lazy SDK error constants in
+workflow declarations. Before adding or changing a resumable step with side effects
+or adding retry behavior, read [caching and retries](caching-and-retries.md) for
+the automatic Continuable resume boundary.
 
 Before repeating an external write, establish provider idempotency or an explicit
-response contract proving no required write happened. Lost responses/timeouts need
-reconciliation. A later run can also repeat unfinished work; queue retries alone
+response contract proving no required write happened, or reconcile the unknown
+outcome. The exception is when the user explicitly accepts duplicate risk for that
+operation; follow [caching and retries](caching-and-retries.md#short-request-retries-versus-queued-recovery)
+for that decision. A later run can also repeat unfinished work; queue retries alone
 do not close that boundary.
 
 After required work succeeds, optional copies can share a final phase with source

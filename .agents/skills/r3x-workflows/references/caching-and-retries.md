@@ -52,9 +52,29 @@ a long option/default inventory into the pack.
 
 Use workflow-level Active Job `retry_on` for multi-minute outages so Solid Queue
 schedules recovery without sleeping in a worker. Use client-owned exception classes
-and save content/intent before retry. Keep authorization and configuration failures
-fatal. Never blanket-retry writes with unknown outcomes; see
+and save content/intent before retry. Do not add explicit retries for authorization
+or configuration failures. Do not add blanket retries for writes with unknown outcomes; see
 [state and delivery](state-and-delivery.md).
+
+`ActiveJob::Continuable` can also resume a job without `retry_on`: by default,
+after a step completes or a cursor advances in the current execution, an ordinary
+error can cause a new execution with the progress serialized. This includes
+authorization and configuration errors, and can occur before `retry_on` handles
+the error. Such a resume uses `resume_options` and `max_resumptions`, not that
+`retry_on` handler's wait or attempts. Do not assume an error is immediately
+fatal or an unfinished side effect will not run again. A checkpoint is not an
+exactly-once guarantee. Check the installed Rails behavior and the workflow's
+continuation settings when designing recovery.
+
+For an external write with an unknown outcome, establish whether the user has
+explicitly accepted duplicate risk for that specific operation. If the decision is
+unclear and affects the solution, ask the user, explaining the possible duplicate
+and the alternative of stopping for reconciliation. If duplicates are unacceptable,
+use provider idempotency or a durable attempt guard recorded before the write that
+stops repetition until the outcome is reconciled; if neither is available, report
+the blocker. If duplicates are accepted, document the decision and its scope in the
+owning workflow. Acceptance does not by itself authorize adding a new retry. Preserve
+accepted intent across resumptions in either case.
 
 ## LLM retry
 

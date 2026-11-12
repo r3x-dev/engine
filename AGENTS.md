@@ -2,6 +2,12 @@
 
 This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes small, boring, and easy to maintain. Prefer the simplest DHH/Sandi-friendly production code first; tests and tooling should validate that design, not force extra production seams.
 
+Do not add backward-compatibility layers, version markers, migration branches, or
+fallbacks for old jobs or formats unless explicitly required. Prefer a controlled
+rollout, such as finishing in-flight work before deployment; incompatible old state
+should fail visibly rather than be silently converted or reconstructed. Identify
+affected state and the rollout boundary. Do not cancel jobs without authorization.
+
 ## Agent Workflow
 
 - Do not commit, push, open PRs, or merge unless the user explicitly asks.
@@ -130,10 +136,15 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
   and isolate required delivery from acknowledgment. Optional integration errors may be logged locally
   without blocking confirmation or retrying delivery; see [multiple deliveries](.agents/skills/r3x-workflows/references/state-and-delivery.md#pipelines-with-multiple-deliveries).
 - Bound optional calls with a short total timeout. Retry transient required-delivery errors
-  in the queue using client-owned exceptions and saved content; keep authentication/configuration errors fatal.
-- Before retrying a side effect, establish provider idempotency or an explicit response contract
-  that guarantees no required writes occurred. Ambiguous timeouts/lost responses need reconciliation,
-  not blanket retries. A later run can also repeat unfinished delivery; document that boundary locally.
+  in the queue using client-owned exceptions and saved content; do not add explicit retries for
+  authentication/configuration errors. Continuable can still resume after progress; see
+  [caching and retries](.agents/skills/r3x-workflows/references/caching-and-retries.md#short-request-retries-versus-queued-recovery).
+- Before repeating a side effect, establish provider idempotency or an explicit response contract
+  that guarantees no required writes occurred, or reconcile the unknown outcome. The exception is
+  when the user has explicitly accepted duplicate risk for that specific operation.
+  If the decision is unclear and affects the solution, ask the user. Acceptance does not by itself
+  authorize adding a new retry. Continuations and later runs can also repeat unfinished delivery;
+  document the decision and boundary in the owning workflow.
 - Preserve accepted classification and delivery intent across resumptions. Recomputing them must
   not convert unfinished required work into a completed skip. Validate provider success responses
   and actual delivery results before recording success; a dry-run result is not delivery.
@@ -275,7 +286,8 @@ This is a Rails API app for the `r3x` Ruby-native workflow engine. Keep changes 
 - Avoid `cattr_accessor`/`mattr_accessor` for mutable global state unless Rails-owned configuration behavior is specifically desired.
 - For immutable value objects, prefer class-form `Data.define` and put constants inside the class body.
 - For singleton-method namespace modules, use `extend self` only when the module is not meant to be included.
-- Before implementing or presenting Ruby changes, look for existing stdlib, Rails, or installed gem methods that express the required behavior, including formatting and conversions. Prefer them when they make the code clearer and match the contract; check units, precision, localization, ordering, meaningful `nil`/`false` values, and failure behavior (`fetch` for required keys). Share repeated defaults where appropriate; avoid line-count-only changes and unrelated rewrites.
+- Before implementing or presenting Ruby changes, look for existing stdlib, Rails, or installed gem methods that express the required behavior, including formatting and conversions. Prefer them when they make the code clearer and match the contract; check units, precision, localization, ordering, meaningful `nil`/`false` values, and failure behavior. Share repeated defaults where appropriate; avoid line-count-only changes and unrelated rewrites.
+- For required and optional hash fields, follow the [hash access contracts](.agents/skills/ruby-refactor/SKILL.md#hash-access-contracts).
 - For conditional hash keys, build a base hash, assign optional keys, and return it. Avoid `Hash#tap`/`merge` for simple conditional key assignment.
 - Method chaining is fine when it makes data flow clearer; introduce locals when the intermediate value is reused or has important meaning.
 - Prefer one-line `tap { it... }` for a single obvious post-construction tweak on the returned object. Use a named block parameter or multiline block when the object role is not obvious, there is more than one mutation, or the block contains branching/side effects that deserve a name.
