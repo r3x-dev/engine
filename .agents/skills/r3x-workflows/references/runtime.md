@@ -16,7 +16,9 @@ Sources: [Base](../../../../lib/r3x/workflow/base.rb),
   `info <key>` for discovery, not static job discovery. The CLI's `run` command
   requires a direct path to `workflow.rb`.
 - Catalog-dependent processes require existing directories with at least one
-  entrypoint. The registry is replaced only after all enabled entrypoints load;
+  entrypoint. Enabled entrypoints must resolve to distinct workflow classes across
+  all selected directories; conflicts fail before any pack is evaluated.
+  The registry is replaced only after all enabled entrypoints load;
   loading errors preserve the previous registry and stop schedule synchronization.
   `PackLoader.load!(rebuild_registry: true)` still uses Ruby `require`; it is not
   same-process source reload.

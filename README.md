@@ -127,6 +127,8 @@ workflows/
 ```
 
 The loader discovers `workflow.rb` files from directories listed in `R3X_WORKFLOW_PATHS`.
+Enabled packs must resolve to distinct workflow classes across those directories. Conflicting
+entrypoints fail before any pack is evaluated, so one catalog cannot silently overwrite another.
 
 For local development, point it at this repo's `workflows/` directory:
 

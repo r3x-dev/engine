@@ -159,6 +159,54 @@ module R3x
       end
     end
 
+    test "rejects enabled entrypoints that resolve to the same class before requiring them" do
+      previous_workflows = Workflow::Registry.all
+      original_report = Workflows.const_get(:Report, false) if Workflows.const_defined?(:Report, false)
+      Workflows.send(:remove_const, :Report) if original_report
+      report_class = Workflows.const_set(:Report, Class.new(Workflow::Base) do
+        define_method(:run) { { "message" => "original" } }
+      end)
+
+      with_duplicate_report_catalog do |executions_file|
+        error = assert_raises(ArgumentError) do
+          Workflow::PackLoader.load!(rebuild_registry: true)
+        end
+
+        assert_includes error.message, "Workflows::Report"
+        assert_equal previous_workflows, Workflow::Registry.all
+        assert_equal "original", report_class.new.run.fetch("message")
+        assert_empty report_class.triggers_by_key
+        refute_path_exists executions_file
+      end
+    ensure
+      Workflows.send(:remove_const, :Report) if Workflows.const_defined?(:Report, false)
+      Workflows.const_set(:Report, original_report) if original_report
+    end
+
+    test "allows a disabled entrypoint to share a class identity with an enabled entrypoint" do
+      with_duplicate_report_catalog(disabled_indexes: [0]) do |executions_file|
+        Workflow::PackLoader.load!(rebuild_registry: true)
+
+        assert_equal [Workflows::Report], Workflow::Registry.all
+        assert_equal "second", Workflows::Report.new.run.fetch("message")
+        assert_equal ["manual:second"], Workflows::Report.triggers_by_key.keys
+        assert_equal "second", File.read(executions_file)
+      end
+    ensure
+      Workflows.send(:remove_const, :Report) if Workflows.const_defined?(:Report, false)
+    end
+
+    test "loads a repeated catalog root only once" do
+      with_duplicate_report_catalog(root_indexes: [1, 1]) do |executions_file|
+        Workflow::PackLoader.load!(rebuild_registry: true)
+
+        assert_equal [Workflows::Report], Workflow::Registry.all
+        assert_equal "second", File.read(executions_file)
+      end
+    ensure
+      Workflows.send(:remove_const, :Report) if Workflows.const_defined?(:Report, false)
+    end
+
     private
 
     def with_replacement_catalog
@@ -198,6 +246,41 @@ module R3x
           end
         end
       RUBY
+    end
+
+    def with_duplicate_report_catalog(disabled_indexes: [], root_indexes: [0, 1])
+      Dir.mktmpdir do |dir|
+        executions_file = File.join(dir, "executions")
+        roots = [File.join(dir, "first"), File.join(dir, "second")]
+        FileUtils.mkdir_p(roots)
+
+        %w[report Report].each_with_index do |pack_name, index|
+          workflow_dir = File.join(roots[index], pack_name)
+          FileUtils.mkdir_p(workflow_dir)
+          label = index.zero? ? "first" : "second"
+          source = +""
+          source << "# r3x:disable duplicate test\n" if disabled_indexes.include?(index)
+          source << <<~RUBY
+            File.open(#{executions_file.inspect}, "a") { |file| file.write(#{label.inspect}) }
+
+            module Workflows
+              class Report < R3x::Workflow::Base
+                trigger :manual, key: :#{label}
+
+                def run
+                  { "message" => #{label.inspect} }
+                end
+              end
+            end
+          RUBY
+          File.write(File.join(workflow_dir, "workflow.rb"), source)
+        end
+
+        ENV["R3X_WORKFLOW_PATHS"] = roots.values_at(*root_indexes).join(File::PATH_SEPARATOR)
+        yield executions_file
+      end
+    ensure
+      ENV["R3X_WORKFLOW_PATHS"] = Rails.root.join("test/fixtures/workflows").to_s
     end
   end
 end

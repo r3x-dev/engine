@@ -16,6 +16,7 @@ module R3x
         paths = workflow_paths
         entrypoints = workflow_files(paths)
         validate_workflow_catalog!(paths, entrypoints)
+        validate_unique_enabled_workflow_classes!(entrypoints)
 
         MUTEX.synchronize do
           return if LOADED.true? && !rebuild_registry
@@ -75,9 +76,12 @@ module R3x
       private
 
       def workflow_class_for(entrypoint_file)
+        workflow_class_name_for(entrypoint_file).constantize
+      end
+
+      def workflow_class_name_for(entrypoint_file)
         dir_name = File.basename(File.dirname(entrypoint_file))
-        class_name = "Workflows::#{dir_name.camelize}"
-        class_name.constantize
+        "Workflows::#{dir_name.camelize}"
       end
 
       def workflow_paths
@@ -99,6 +103,17 @@ module R3x
         return if entrypoints.any?
 
         raise ArgumentError, "R3X_WORKFLOW_PATHS contains no workflow.rb entrypoints"
+      end
+
+      def validate_unique_enabled_workflow_classes!(entrypoints)
+        duplicate_classes = entrypoints
+          .reject { |entrypoint| disabled_workflow?(entrypoint) }
+          .group_by { |entrypoint| workflow_class_name_for(entrypoint) }
+          .select { |_class_name, paths| paths.many? }
+        return if duplicate_classes.empty?
+
+        details = duplicate_classes.map { |class_name, paths| "#{class_name}: #{paths.join(', ')}" }
+        raise ArgumentError, "R3X_WORKFLOW_PATHS contains duplicate enabled workflow classes: #{details.join('; ')}"
       end
     end
   end
