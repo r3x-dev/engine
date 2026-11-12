@@ -2,6 +2,8 @@
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
     'config:recommended',
+    'github>zewelor/renovate-config//presets/ruby-version',
+    'github>zewelor/renovate-config//presets/ruby-images',
   ],
   hostRules: [
     {
@@ -13,23 +15,6 @@
   ],
   gitIgnoredAuthors: [
     'renovate-ruby-fix@users.noreply.github.com',
-  ],
-  'ruby-version': {
-    enabled: false,
-  },
-  customManagers: [
-    {
-      customType: 'regex',
-      managerFilePatterns: [
-        '/^\\.ruby-version$/',
-      ],
-      matchStrings: [
-        '^(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$',
-      ],
-      depNameTemplate: 'docker.io/library/ruby',
-      datasourceTemplate: 'docker',
-      versioningTemplate: 'docker',
-    },
   ],
   labels: [
     'dependencies',
