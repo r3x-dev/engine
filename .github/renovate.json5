@@ -2,8 +2,6 @@
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
     'config:recommended',
-    'github>zewelor/renovate-config//presets/ruby-version',
-    'github>zewelor/renovate-config//presets/ruby-images',
   ],
   hostRules: [
     {
@@ -15,6 +13,23 @@
   ],
   gitIgnoredAuthors: [
     'renovate-ruby-fix@users.noreply.github.com',
+  ],
+  'ruby-version': {
+    enabled: false,
+  },
+  customManagers: [
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^\\.ruby-version$/',
+      ],
+      matchStrings: [
+        '^(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$',
+      ],
+      depNameTemplate: 'docker.io/library/ruby',
+      datasourceTemplate: 'docker',
+      versioningTemplate: 'docker',
+    },
   ],
   labels: [
     'dependencies',
@@ -28,6 +43,30 @@
   },
   packageRules: [
     {
+      description: 'Pin DHI Ruby image digests',
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'dhi.io/ruby',
+      ],
+      pinDigests: true,
+    },
+    {
+      description: 'Auto-merge DHI Ruby image digest updates when tests pass',
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'dhi.io/ruby',
+      ],
+      matchUpdateTypes: [
+        'digest',
+      ],
+      automerge: true,
+      automergeType: 'branch',
+    },
+    {
       // .ruby-version owns Ruby upgrades; its workflow aligns the ARG and DHI image digests.
       // The native Dockerfile manager still refreshes the current tag's digest.
       description: 'Keep Ruby tag upgrades with the version-file workflow',
@@ -35,7 +74,6 @@
         'dockerfile',
       ],
       matchPackageNames: [
-        'docker.io/library/ruby',
         'dhi.io/ruby',
       ],
       matchUpdateTypes: [
