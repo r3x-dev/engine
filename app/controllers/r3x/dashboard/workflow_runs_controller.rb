@@ -13,13 +13,17 @@ module R3x
 
       def show
         @run = Workflow::Runs.new.find!(params[:id])
-        @logs = Logs.run_logs(@run) if Logs.enabled?
+
+        respond_to do |format|
+          format.html { @logs = Logs.run_logs(@run) if Logs.enabled? }
+          format.json { render json: { status: @run.fetch(:status) } }
+        end
       end
 
       def create
-        Workflow::RunEnqueuer.new(workflow_key: params[:workflow_key], trigger_key: params[:trigger_key]).enqueue!
+        request = Workflow::RunEnqueuer.new(workflow_key: params[:workflow_key], trigger_key: params[:trigger_key]).enqueue!
 
-        redirect_to workflow_path(params[:workflow_key]), notice: "Queued a run request for #{params[:workflow_key].titleize}."
+        redirect_to workflow_run_request_path(workflow_key: params[:workflow_key], id: request.id), status: :see_other
       end
     end
   end

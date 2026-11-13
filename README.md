@@ -191,11 +191,22 @@ The default web surface is server-rendered and intentionally small:
 Dashboard Run now queues an admission request for a worker that has loaded the
 workflow packs. The worker enqueues the real workflow through Active Job, so its
 callbacks and Solid Queue concurrency policy also apply to dashboard runs.
-The workflow page lists recent requests and their admission errors; an admitted
-request is not a successful workflow run. Requests are not automatically retried.
+Run now opens a waiting page and follows that request's workflow run automatically,
+showing its status and optional live logs. Status updates do not depend on the log
+provider. The workflow page keeps request history in technical details and surfaces
+admission errors separately; an admitted request is not a successful workflow run.
+Requests reserve their workflow's Active Job ID before admission so concurrent
+starts, retries and continuations remain associated with the correct run.
+Requests are not automatically retried.
 Inspect Flightdeck before manually retrying a failed or interrupted request:
 a worker crash after admission can leave an unfinished request even though its
 workflow was queued, so retrying that request can enqueue another run.
+
+Before deploying this request format, pause dashboard run submissions and finish
+pending admission requests with the old workers. Do not mix old and new web/worker
+versions during this switch. The new worker requires the reserved workflow job ID;
+old pending requests are intentionally incompatible.
+Existing workflow jobs and completed request history do not need conversion.
 
 If `R3X_LOGS_PROVIDER=victorialogs` and `R3X_VICTORIA_LOGS_URL` are configured, run pages can show
 indexed logs correlated by Active Job IDs. Set `R3X_LOG_FORMAT=json` when you want structured logs

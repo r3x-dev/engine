@@ -12,6 +12,7 @@ Rails.application.routes.draw do
     resources :workflow_runs, only: %i[ index show ], path: "workflow-runs" do
       resource :logs, only: :show, controller: "workflow_run_logs"
     end
+    get "workflows/:workflow_key/run-requests/:id", to: "workflow_run_requests#show", as: :workflow_run_request
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

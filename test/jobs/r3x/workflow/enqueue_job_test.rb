@@ -22,6 +22,27 @@ class R3x::Workflow::EnqueueJobTest < ActiveSupport::TestCase
     SolidQueue::Semaphore.delete_all
   end
 
+  test "each request identifies its workflow before admission and across continuation" do
+    requests = 2.times.map { enqueue_request(["manual:manual"]) }
+    workflow_job_ids = requests.map(&:workflow_job_id)
+
+    assert_equal 2, workflow_job_ids.uniq.size
+    assert_empty workflow_job_ids & requests.map(&:active_job_id)
+    assert_nil requests.first.workflow_run
+
+    2.times { perform_next }
+
+    assert_equal workflow_job_ids, workflow_jobs.pluck(:active_job_id)
+    assert_equal workflow_jobs.pluck(:id), requests.map { |request| request.workflow_run.id }
+
+    perform_next
+
+    continuation = workflow_jobs.last
+
+    assert_equal workflow_job_ids.first, continuation.active_job_id
+    assert_equal workflow_job_ids.first, requests.first.reload.workflow_job_id
+  end
+
   test "dashboard requests use the real class key and group and release blocked work after continuation" do
     requests = 2.times.map { enqueue_request(["manual:manual", { trigger_payload: { "partition" => "same" } }]) }
 

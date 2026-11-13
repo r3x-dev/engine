@@ -1,0 +1,47 @@
+<% content_for :title, @workflow.fetch(:title) %>
+<% waiting = %w[finished failed].exclude?(@request.status) %>
+
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <%= link_to "Overview", root_path %>
+  <span>/</span>
+  <%= link_to @workflow.fetch(:title), workflow_path(@workflow.fetch(:workflow_key)) %>
+  <span>/</span>
+  <span aria-current="page">Starting run</span>
+</nav>
+
+<section class="page-header">
+  <div>
+    <h2 class="page-title"><%= @workflow.fetch(:title) %></h2>
+    <p>Your run request was received.</p>
+  </div>
+  <%= link_to "Back to workflow", workflow_path(@workflow.fetch(:workflow_key)), class: "button subtle" %>
+</section>
+
+<section class="panel stack panel-spaced">
+  <% if waiting %>
+    <div data-r3x-run-tracking-url="<%= workflow_run_request_path(workflow_key: @workflow.fetch(:workflow_key), id: @request.id, format: :json) %>"
+         data-r3x-run-status="<%= @request.status %>">
+      <h3 class="section-title">Waiting for worker</h3>
+      <p>The worker will start your run when it is available. This page will open its status and logs automatically.</p>
+      <p class="meta" role="status" data-r3x-run-tracking-message>Updates automatically.</p>
+    </div>
+    <noscript><p>Refresh this page to check whether your run has started.</p></noscript>
+  <% elsif @request.failed_execution %>
+    <h3 class="section-title">Run request failed</h3>
+    <div class="failure-summary">
+      <strong><%= dashboard_error_summary(@request.failed_execution.error) %></strong>
+    </div>
+    <p>Startup could not be confirmed. Inspect the queue before trying again.</p>
+  <% else %>
+    <h3 class="section-title">Run unavailable</h3>
+    <p>The request was admitted, but its run is no longer available in the queue history.</p>
+  <% end %>
+  <details class="technical-details">
+    <summary>Request details</summary>
+    <p>Request <code><%= @request.id %></code> · <%= dashboard_timestamp(@request.created_at) %></p>
+    <% if @request.failed_execution %>
+      <pre class="error-block"><%= dashboard_error_body(@request.failed_execution.error) %></pre>
+    <% end %>
+    <%= link_to "Inspect queue in Flightdeck", flightdeck_path, class: "button subtle" %>
+  </details>
+</section>

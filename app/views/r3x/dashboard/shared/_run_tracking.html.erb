@@ -1,0 +1,72 @@
+<script>
+(() => {
+  document.addEventListener("submit", (event) => {
+    const form = event.target.closest("form[data-r3x-run-now]")
+    if (!form) return
+
+    if (form.dataset.r3xSubmitting === "true") {
+      event.preventDefault()
+      return
+    }
+
+    const button = form.querySelector("button[type=submit]")
+    form.dataset.r3xSubmitting = "true"
+    button.dataset.r3xOriginalLabel = button.innerHTML
+    button.disabled = true
+    button.textContent = "Starting…"
+  })
+
+  window.addEventListener("pageshow", () => {
+    document.querySelectorAll("form[data-r3x-run-now]").forEach((form) => {
+      const button = form.querySelector("button[type=submit]")
+      if (button.dataset.r3xOriginalLabel) button.innerHTML = button.dataset.r3xOriginalLabel
+      button.disabled = false
+      delete form.dataset.r3xSubmitting
+    })
+  })
+
+  const tracker = document.querySelector("[data-r3x-run-tracking-url]")
+  if (!tracker) return
+
+  const message = tracker.querySelector("[data-r3x-run-tracking-message]")
+  const schedule = () => setTimeout(refresh, 3000)
+
+  async function refresh() {
+    if (document.hidden) {
+      schedule()
+      return
+    }
+
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 30000)
+
+    try {
+      const response = await fetch(tracker.dataset.r3xRunTrackingUrl, {
+        signal: controller.signal,
+        cache: "no-store",
+        headers: { "Accept": "application/json" }
+      })
+      if (!response.ok) throw new Error(`Status check failed: ${response.status}`)
+      const state = await response.json()
+
+      if (state.run_url) {
+        window.location.replace(state.run_url)
+        return
+      }
+      if (state.status !== tracker.dataset.r3xRunStatus) {
+        window.location.reload()
+        return
+      }
+      message.textContent = "Updates automatically."
+    } catch (_) {
+      message.textContent = "Could not update status. Retrying…"
+    } finally {
+      clearTimeout(timeout)
+    }
+
+    schedule()
+  }
+
+  schedule()
+})()
+</script>

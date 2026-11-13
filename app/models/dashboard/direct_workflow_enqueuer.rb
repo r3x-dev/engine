@@ -37,7 +37,10 @@ module Dashboard
     # workflow runs from persisted runtime data without loading workflow packs;
     # jobs pods resolve and execute the real class when Solid Queue performs it.
     def request_job
-      job = R3x::Workflow::EnqueueJob.new(class_name, Dashboard::Run.normalize_arguments(arguments), queue_name:, priority:)
+      job = R3x::Workflow::EnqueueJob.new(
+        class_name, Dashboard::Run.normalize_arguments(arguments),
+        workflow_job_id: SecureRandom.uuid, queue_name:, priority:
+      )
       job.queue_name = queue_name if queue_name.present?
       job.priority = priority unless priority.nil?
       job

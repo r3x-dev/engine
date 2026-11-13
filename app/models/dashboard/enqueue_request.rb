@@ -6,6 +6,14 @@ module Dashboard
       where(class_name: R3x::Workflow::EnqueueJob.name).where(Arel.sql(target_class_sql).in(class_names))
     end
 
+    def workflow_job_id
+      workflow_arguments.third.fetch(:workflow_job_id)
+    end
+
+    def workflow_run
+      Dashboard::Run.where(class_name: workflow_arguments.first, active_job_id: workflow_job_id).order(:id).first
+    end
+
     def self.target_class_sql
       case connection.adapter_name
       when /sqlite/i

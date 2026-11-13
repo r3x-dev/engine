@@ -248,7 +248,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Overview"
     assert_includes response.body, "View all runs"
-    assert_includes response.body, "Last result"
+    assert_includes response.body, "Last run"
     assert_includes response.body, "Last seen"
     assert_includes response.body, "Triggers"
     assert_includes response.body, @trigger
@@ -785,7 +785,9 @@ class DashboardTest < ActionDispatch::IntegrationTest
     get "/workflows/test_workflow"
 
     assert_response :success
-    assert_equal %w[Result Observed Trigger Open], css_select("table").last.css("thead th").map(&:text)
+    recent_runs = css_select("section").find { |section| section.at_css("h3")&.text == "Recent runs" }
+
+    assert_equal %w[Result Observed Trigger Open], recent_runs.css("thead th").map(&:text)
     assert_not_includes response.body, "<th>Workflow</th>"
     assert_not_includes response.body, "<th>Queue</th>"
   end
@@ -812,15 +814,14 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
     job = SolidQueue::Job.order(:id).last
 
-    assert_redirected_to "/workflows/test_workflow"
-    assert_equal "Queued a run request for Test Workflow.", flash[:notice]
+    assert_redirected_to "/workflows/test_workflow/run-requests/#{job.id}"
     assert_equal [], Dashboard::EnqueueRequest.find(job.id).workflow_arguments.second
 
     follow_redirect!
 
     assert_response :success
-    assert_includes response.body, "Run requests"
-    assert_includes response.body, "Admitted means queued for execution"
+    assert_includes response.body, "Waiting for worker"
+    assert_select "[data-r3x-run-tracking-url]"
   end
 
   test "workflow index shows run now for manual-only workflows discovered from direct runs" do
@@ -839,6 +840,90 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Manual Only Workflow"
     assert_includes response.body, "/workflows/manual_only_workflow/runs"
     assert_not_includes response.body, "Unavailable"
+  end
+
+  test "run request follows only its reserved workflow even before admission finishes" do
+    request = Dashboard::DirectWorkflowEnqueuer.enqueue!(class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], queue_name: "default", priority: 0)
+    target = DashboardJobRows.create_job!(job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], active_job_id: request.workflow_job_id, finished_at: Time.current)
+    DashboardJobRows.create_job!(job_class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], active_job_id: "another-run")
+
+    get "/workflows/test_workflow/run-requests/#{request.id}.json"
+
+    assert_response :success
+    assert_equal "/workflow-runs/#{target.id}", response.parsed_body.fetch("run_url")
+
+    get "/workflows/test_workflow/run-requests/#{request.id}"
+
+    assert_redirected_to "/workflow-runs/#{target.id}"
+    follow_redirect!
+
+    assert_includes response.body, "Completed"
+  end
+
+  test "run request polling waits for admission without requiring logs" do
+    request = Dashboard::DirectWorkflowEnqueuer.enqueue!(class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], queue_name: "default", priority: 0)
+
+    get "/workflows/test_workflow/run-requests/#{request.id}.json"
+
+    assert_response :success
+    assert_equal({ "status" => "queued" }, response.parsed_body)
+  end
+
+  test "failed run requests show their error without claiming the workflow succeeded" do
+    request = Dashboard::DirectWorkflowEnqueuer.enqueue!(class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], queue_name: "default", priority: 0)
+    SolidQueue::ReadyExecution.where(job_id: request.id).delete_all
+    SolidQueue::FailedExecution.create!(job_id: request.id, error: { "exception_class" => "NameError", "message" => "Workflow is not loaded" })
+
+    get "/workflows/test_workflow/run-requests/#{request.id}"
+
+    assert_response :success
+    assert_includes response.body, "Run request failed"
+    assert_includes response.body, "Workflow is not loaded"
+    assert_select "[data-r3x-run-tracking-url]", count: 0
+  end
+
+  test "a finished request whose run was removed does not wait forever or choose another run" do
+    request = Dashboard::DirectWorkflowEnqueuer.enqueue!(class_name: WORKFLOW_JOB_CLASS_NAME, arguments: [], queue_name: "default", priority: 0)
+    SolidQueue::ReadyExecution.where(job_id: request.id).delete_all
+    request.update!(finished_at: Time.current)
+
+    get "/workflows/test_workflow/run-requests/#{request.id}"
+
+    assert_response :success
+    assert_includes response.body, "Run unavailable"
+    assert_select "[data-r3x-run-tracking-url]", count: 0
+  end
+
+  test "run request lookup excludes ordinary jobs and requests for other workflows" do
+    request = Dashboard::DirectWorkflowEnqueuer.enqueue!(class_name: "Workflows::OtherWorkflow", arguments: [], queue_name: "default", priority: 0)
+
+    [request.id, @job.id].each do |id|
+      get "/workflows/test_workflow/run-requests/#{id}"
+
+      assert_response :not_found
+    end
+  end
+
+  test "run status polling does not fetch optional logs" do
+    ENV["R3X_LOGS_PROVIDER"] = "victorialogs"
+    ENV["R3X_VICTORIA_LOGS_URL"] = "http://victoria-logs.test:9428"
+    R3x::Dashboard::Logs.expects(:run_logs).never
+
+    get "/workflow-runs/#{@job.id}.json"
+
+    assert_response :success
+    assert_equal({ "status" => "finished" }, response.parsed_body)
+  end
+
+  test "unfinished runs track status without a logs provider" do
+    ENV["R3X_LOGS_PROVIDER"] = nil
+    ENV["R3X_VICTORIA_LOGS_URL"] = nil
+    @job.update!(finished_at: nil)
+
+    get "/workflow-runs/#{@job.id}"
+
+    assert_response :success
+    assert_select "[data-r3x-run-tracking-url=?]", "/workflow-runs/#{@job.id}.json"
   end
 
   test "workflow detail displays failed admission errors and distinguishes admitted requests from run results" do
