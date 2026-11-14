@@ -1,0 +1,11 @@
+module R3x
+  module Client
+    class Llm
+      module ProviderRegistry
+        MUTEX: Mutex
+
+        def self.register!: () -> void
+      end
+    end
+  end
+end

@@ -1,0 +1,27 @@
+module R3x
+  module Client
+    class HealthchecksIO
+      class Response
+        def initialize: (untyped response) -> void
+
+        def success?: () -> bool
+
+        def status: () -> Integer
+
+        def body: () -> String
+
+        def headers: () -> untyped
+
+        def body_limit: () -> Integer?
+
+        def to_s: () -> String
+
+        def inspect: () -> String
+
+        private
+
+        attr_reader response: untyped
+      end
+    end
+  end
+end

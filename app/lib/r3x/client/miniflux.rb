@@ -59,6 +59,7 @@ module R3x
         raise ArgumentError, "entry_ids must not be empty" if ids.empty?
         raise ArgumentError, "status or starred is required" if status.nil? && starred.nil?
 
+        # @type var payload: Hash[Symbol, untyped]
         payload = { entry_ids: ids }
         payload[:status] = status if status.present?
         payload[:starred] = starred unless starred.nil?

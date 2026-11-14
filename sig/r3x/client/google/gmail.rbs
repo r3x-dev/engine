@@ -1,0 +1,24 @@
+module R3x
+  module Client
+    module Google
+      class Gmail
+        include R3x::Concerns::Logger
+
+        def initialize: (project: String project) -> void
+
+        def deliver: (to: String | Array[String] to, subject: String subject, body: String body, ?html_body: String? html_body, ?attachments: Array[Hash[Symbol, untyped]] attachments) -> R3x::Client::Delivery
+
+        private
+
+        attr_reader project: String
+
+        def build_service: () -> untyped
+
+        def raw_message: (to: String | Array[String] to, subject: String subject, body: String body, ?html_body: String? html_body, ?attachments: Array[Hash[Symbol, untyped]] attachments) -> String
+
+        class TransientError < StandardError
+        end
+      end
+    end
+  end
+end

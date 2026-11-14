@@ -1,0 +1,29 @@
+module R3x
+  module Client
+    class Ocr
+      class Result
+        include Enumerable[untyped]
+
+        def initialize: (untyped body) -> void
+
+        def text: () -> String
+
+        def success?: () -> bool
+
+        def partial?: () -> bool
+
+        def exit_code: () -> Integer
+
+        def processing_time_ms: () -> Integer?
+
+        def each: () { (untyped) -> untyped } -> untyped
+                | () -> untyped
+
+        private
+
+        attr_reader body: untyped
+        attr_reader pages: Array[untyped]
+      end
+    end
+  end
+end

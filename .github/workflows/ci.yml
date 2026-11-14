@@ -94,6 +94,9 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+      - name: Check static types
+        run: bin/typecheck
+
   lint_yaml:
     runs-on: ubuntu-latest
     steps:

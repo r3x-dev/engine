@@ -70,6 +70,10 @@ group :development, :test do
   gem "rubocop-thread_safety", "~> 0.8.0", require: false
   gem "rubydex", require: false
 
+  # Static checks for selected workflow-facing API contracts
+  gem "rbs", require: false
+  gem "steep", ">= 2.1", require: false
+
   # Auto-load environment variables from .env file
   gem "dotenv-rails", require: false
 end
