@@ -10,7 +10,7 @@ idiomatic_version_file_enable_tools = ["ruby"]
 "gem:rails-ai-context" = "5.39.1"
 "gem:rubycritic" = "5.0.0"
 "gem:skunk" = "0.6.0"
-"github:AlDanial/cloc" = { version = "2.10", asset_pattern = "cloc-2.10.pl", bin = "cloc" }
+"github:AlDanial/cloc" = { version = "2.12", asset_pattern = "cloc-2.10.pl", bin = "cloc" }
 dprint = "latest"
 trivy = "0.76.2"
 
