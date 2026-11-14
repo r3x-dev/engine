@@ -10,7 +10,7 @@
 # Keep the base digest aligned with this version; the Renovate Ruby workflow updates both.
 ARG RUBY_VERSION=4.0.9
 # Shared build stage for installing gems
-FROM dhi.io/ruby:$RUBY_VERSION-debian13-dev@sha256:0563320d2ac3bf22e89a8d160bfcdb22d958dce53afdc18c04c02cbc94ef4032 AS build-base
+FROM dhi.io/ruby:$RUBY_VERSION-debian13-dev@sha256:251f5f08918f9bb4dc5d5cab4a0927aaaa80f5533891a496095ce78fc385e4d7 AS build-base
 
 # Rails app lives here
 WORKDIR /rails
