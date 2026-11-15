@@ -191,9 +191,11 @@ end
 
 ## Run It Locally
 
-Save the workflow as `workflows/example_island_digest/workflow.rb`, then run it directly:
+After [development setup](../../README.md#development), save the workflow as
+`workflows/example_island_digest/workflow.rb`, then activate the commands in Bash or Zsh and run it:
 
 ```bash
+source ./dockerized.sh
 bin/workflow run --dry-run workflows/example_island_digest/workflow.rb
 ```
 
@@ -207,7 +209,6 @@ bin/workflow run --dry-run --skip-cache workflows/example_island_digest/workflow
 If the workflow pack is included in `R3X_WORKFLOW_PATHS`, you can also inspect it by key:
 
 ```bash
-export R3X_WORKFLOW_PATHS="$PWD/workflows"
 bin/workflow list
 bin/workflow info example_island_digest
 ```
