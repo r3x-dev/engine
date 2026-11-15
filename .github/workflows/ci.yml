@@ -10,7 +10,6 @@ on:
       - ".githooks/**"
       - ".rails-ai-context.yml"
       - ".vscode/**"
-      - ".wtp.yml"
       - "**/node_modules/**"
       - "**/dist/**"
       - "docs/**"
