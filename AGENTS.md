@@ -10,16 +10,21 @@ affected state and the rollout boundary. Do not cancel jobs without authorizatio
 
 ## Agent Workflow
 
+- Run local agent commands through `./dockerized.sh COMMAND [ARG...]` or an existing `just` recipe. CI runners keep using native `bin/` commands.
+- Use `just setup` for an unprepared checkout or after dependency changes. It prepares the development environment, SQLite, and Git hooks. Reuse the prepared environment for routine tasks.
+- Docker must run rootless or rootful without user namespace remapping. Use `./dockerized.sh compose ...` for explicit service administration.
+- Before providing user-facing local command examples or working on editor/LSP integration, read [Development](README.md#development). Editor startup must use prepared, locked dependencies without building images, installing dependencies, or booting the application.
+
 - Do not commit, push, open PRs, or merge unless the user explicitly asks.
-- During implementation and user-review iterations, do not automatically rerun validation after every edit. Run only focused checks when they are needed to develop or diagnose the change, such as a bug fix's red/green regression test. Do not run `bin/ci` or another full-suite validation unless the user explicitly asks; present the changes for review first.
-- Treat the user's request to commit the reviewed changes as approval and as the signal for full validation. Invoke the requested commit and let the pre-commit hook run `bin/ci` before the commit is created. Do not run `bin/ci` manually immediately before `git commit`, because that duplicates the hook; run it manually only when the hook is disabled or the user explicitly asks.
+- During implementation and user-review iterations, do not automatically rerun validation after every edit. Run only focused checks when they are needed to develop or diagnose the change, such as a bug fix's red/green regression test. Do not run `just ci`, `bin/ci`, or another full-suite validation unless the user explicitly asks; present the changes for review first.
+- Treat the user's request to commit the reviewed changes as approval and as the signal for full validation. Invoke the requested commit and let the pre-commit hook run `just ci` before the commit is created. Do not run `just ci` manually immediately before `git commit`, because that duplicates the hook; run it manually only when the hook is disabled or the user explicitly asks.
 - If the pre-commit validation fails, fix validation-only issues and retry the commit until it passes unless the user accepts the known failure. Return changes that alter behavior or scope for user review before retrying the full validation gate.
-- The pre-commit hook intentionally runs the full local `bin/ci` suite while it remains reasonably fast. Keep failures close to the change, use the same acceptance gate before a commit exists, and avoid making remote CI the first feedback loop. Do not narrow this hook to targeted lint or tests without an explicit project decision; revisit only when its runtime materially disrupts normal commits. This follows the local-CI reasoning in [DHH's write-up](https://world.hey.com/dhh/we-re-moving-continuous-integration-back-to-developer-machines-3ac6c611).
+- The pre-commit hook intentionally runs the full local `just ci` suite across the Ruby and JavaScript containers while it remains reasonably fast. Keep failures close to the change, use the same acceptance gate before a commit exists, and avoid making remote CI the first feedback loop. Do not narrow this hook to targeted lint or tests without an explicit project decision; revisit only when its runtime materially disrupts normal commits. This follows the local-CI reasoning in [DHH's write-up](https://world.hey.com/dhh/we-re-moving-continuous-integration-back-to-developer-machines-3ac6c611).
 - Default `bin/bundler-audit` refreshes its advisory database before scanning and requires network access;
   update failures are fatal. `bin/bundler-audit check --no-update` is an explicit cached/offline scan, not the CI gate.
 - Use `git --no-pager` for agent-read Git output such as diff, show, log, and status details.
 - When adding non-production/tooling files or patterns to `.dockerignore` that do not affect app runtime or CI test execution, keep `.github/workflows/ci.yml` `paths-ignore` synchronized so CI and Docker image builds are not needlessly triggered.
-- Dockerfile validation uses `mise exec -- droast Dockerfile` locally and the `docker_validate` CI job. Keep the action ref current; use `just show_dockerignore` to inspect the real Docker build context.
+- Dockerfile validation uses `just lint-docker` locally and the `docker_validate` CI job. Keep the action ref current; use `just show_dockerignore` to inspect the real Docker build context.
 - Keep README files and overview documentation focused on purpose, big-picture design, major flows, and non-obvious operational constraints. Keep agent instructions focused on durable decision rules and constraints. Treat code and configuration as the source of truth for implementation details; link their canonical location instead of duplicating prompts, settings, inventories, or discoverable control-flow details. Include concrete details only when needed to use, diagnose, or recover the system or explain a compatibility boundary.
 - Keep the owning documentation synchronized when code changes alter architecture, workflow loading, trigger discovery, scheduling, validation contracts, env behavior, HTTP policy, or repo layout. Update agent instructions when the required agent decisions or workflow change.
 - Keep engine documentation and instructions independent of any user's workflow catalog.
@@ -31,9 +36,9 @@ affected state and the rollout boundary. Do not cancel jobs without authorizatio
 
 ## Rails Code Context
 
-- `rails-ai-context` is an optional standalone CLI managed by `mise.toml`; configuration lives in `.rails-ai-context.yml`.
+- `rails-ai-context` is a development-only gem; configuration lives in `.rails-ai-context.yml`.
 - For structured schema/model context or method definitions and callers, use
-  `mise exec -- rails-ai-context tool <name> --no-boot`. Discover tools with `tool --list --no-boot`
+  `./dockerized.sh bundle exec rails-ai-context tool <name> --no-boot`. Discover tools with `tool --list --no-boot`
   and parameters with `tool <name> --help`. Prefer `rg` for simple text searches.
 - When a task needs context across Rails files, inspect the available tools and choose the
   smallest relevant set. Built-in tools are available unless `skip_tools` disables them;
@@ -295,7 +300,7 @@ affected state and the rollout boundary. Do not cancel jobs without authorizatio
 
 ## Ruby Version Updates
 
-- `.ruby-version` is the source of truth. `Gemfile` reads it; `mise` follows it; CI should let `ruby/setup-ruby` auto-detect it.
+- `.ruby-version` is the source of truth. `Gemfile` reads it; CI should let `ruby/setup-ruby` auto-detect it.
 - Keep `Dockerfile ARG RUBY_VERSION` aligned with `.ruby-version`; GitHub Actions reads `.ruby-version` for Docker builds.
 - When bumping Ruby: update `.ruby-version`, update Docker ARGs/scripts that hardcode Ruby, run `bundle update --ruby`, update `Gemfile.lock` through Bundler only, and rebuild the Docker `production` target.
 
