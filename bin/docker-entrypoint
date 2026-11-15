@@ -1,8 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-runtime_command = %w[./bin/web ./bin/jobs ./bin/jobs-worker ./bin/jobs-scheduler].include?(ARGV[0]) ||
-  (ARGV[0] == "./bin/rails" && ARGV[1] == "server")
+app_root = File.expand_path("..", __dir__)
+command_path = File.expand_path(ARGV.fetch(0), Dir.pwd)
+runtime_command = %w[web jobs jobs-worker jobs-scheduler].any? { |name| command_path == File.join(app_root, "bin", name) } ||
+  (command_path == File.join(app_root, "bin/rails") && ARGV[1] == "server")
+
 rails_env = ENV.fetch("RAILS_ENV", "")
 rails_env = "production" if rails_env.empty?
 
@@ -12,8 +15,13 @@ if rails_env == "production" && runtime_command && ENV.fetch("SECRET_KEY_BASE", 
 end
 
 # If running the rails server or jobs entrypoints then create or migrate existing database
-if runtime_command && !system("./bin/rails", "db:prepare")
+if runtime_command && !system(File.join(app_root, "bin/rails"), "db:prepare", chdir: app_root)
   exit($?.exitstatus || 1)
 end
 
-exec(*ARGV)
+begin
+  exec([ARGV.fetch(0), ARGV.fetch(0)], *ARGV.drop(1))
+rescue Errno::ENOENT
+  warn "Command [#{ARGV.first}] is unavailable; check its path or update project dependencies and run just setup."
+  exit 127
+end

@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 ENV["SOLID_QUEUE_IN_PUMA"] = "false"
 
-exec "./bin/rails", "server", *ARGV
+exec File.expand_path("rails", __dir__), "server", *ARGV

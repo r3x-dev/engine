@@ -200,11 +200,12 @@ jobs:
           build-args: |
             RUBY_VERSION=${{ steps.ruby_version.outputs.value }}
 
-      - name: Lint YAML with development image
+      - name: Prepare formatter plugins and lint YAML with development image
         run: |
           docker run --rm --read-only --tmpfs /tmp:mode=1777 \
             --volume "${GITHUB_WORKSPACE}:/workspace:ro" --workdir /workspace \
-            --entrypoint /usr/local/bin/dprint "r3x-dev:${GITHUB_SHA}" check
+            --env DPRINT_CACHE_DIR=/tmp/dprint \
+            --entrypoint /bin/bash "r3x-dev:${GITHUB_SHA}" -c 'bin/dprint install && bin/dprint check'
 
       - name: Build production Docker image
         uses: docker/build-push-action@v7

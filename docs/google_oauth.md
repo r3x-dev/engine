@@ -51,11 +51,7 @@ ctx.client.google_translate(project: "MYAPP")
 
 ## Commands
 
-After [development setup](../README.md#development), activate the local commands once in Bash or Zsh:
-
-```bash
-source ./dockerized.sh
-```
+Run the following commands after [development setup](../README.md#development).
 
 ### `bin/google-oauth authorize --project <PROJECT>`
 
@@ -73,14 +69,14 @@ Starts the interactive OAuth2 flow.
 If you do not pass `--scopes`, the CLI prompts you interactively. You can pick scopes one by one, or choose **`all`** to select every available scope at once.
 
 ```bash
-bin/google-oauth authorize --project MYAPP
+./dockerized.sh bin/google-oauth authorize --project MYAPP
 # Interactive menu: pick individual scopes or select 'all'
 ```
 
 You can also pass scopes directly:
 
 ```bash
-bin/google-oauth authorize --project MYAPP --scopes gmail.readonly,sheets.readonly
+./dockerized.sh bin/google-oauth authorize --project MYAPP --scopes gmail.readonly,sheets.readonly
 ```
 
 Available scope aliases can be listed with `bin/google-oauth scopes`.
@@ -90,7 +86,7 @@ Available scope aliases can be listed with `bin/google-oauth scopes`.
 Checks whether `GOOGLE_CLIENT_ID_<PROJECT>`, `GOOGLE_CLIENT_SECRET_<PROJECT>`, and `GOOGLE_REFRESH_TOKEN_<PROJECT>` are present, and attempts to fetch an access token from the refresh token. Use this to verify that stored credentials are still valid.
 
 ```bash
-bin/google-oauth status --project MYAPP
+./dockerized.sh bin/google-oauth status --project MYAPP
 ```
 
 ### `bin/google-oauth current-scopes --project <PROJECT>`
@@ -98,7 +94,7 @@ bin/google-oauth status --project MYAPP
 Shows the scopes currently granted to the stored refresh token without printing the token itself.
 
 ```bash
-bin/google-oauth current-scopes --project MYAPP
+./dockerized.sh bin/google-oauth current-scopes --project MYAPP
 ```
 
 ### `bin/google-oauth add-scopes --project <PROJECT> --scopes <SCOPES>`
@@ -106,7 +102,7 @@ bin/google-oauth current-scopes --project MYAPP
 Reads the scopes granted to the stored refresh token, adds the requested aliases, and starts an OAuth flow for a replacement refresh token that preserves the existing grants.
 
 ```bash
-bin/google-oauth add-scopes --project MYAPP --scopes gmail.send
+./dockerized.sh bin/google-oauth add-scopes --project MYAPP --scopes gmail.send
 ```
 
 ### `bin/google-oauth remove-scopes --project <PROJECT> --scopes <SCOPES>`
@@ -114,7 +110,7 @@ bin/google-oauth add-scopes --project MYAPP --scopes gmail.send
 Reads the scopes granted to the stored refresh token, removes the requested aliases, and starts an OAuth flow for a replacement refresh token.
 
 ```bash
-bin/google-oauth remove-scopes --project MYAPP --scopes gmail.readonly
+./dockerized.sh bin/google-oauth remove-scopes --project MYAPP --scopes gmail.readonly
 ```
 
 ### `bin/google-oauth scopes`
@@ -122,7 +118,7 @@ bin/google-oauth remove-scopes --project MYAPP --scopes gmail.readonly
 Lists all supported scope aliases and their full Google OAuth2 scope URLs.
 
 ```bash
-bin/google-oauth scopes
+./dockerized.sh bin/google-oauth scopes
 ```
 
 ## Security notes

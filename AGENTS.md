@@ -10,10 +10,10 @@ affected state and the rollout boundary. Do not cancel jobs without authorizatio
 
 ## Agent Workflow
 
-- Run local agent commands through `./dockerized.sh COMMAND [ARG...]` or an existing `just` recipe. CI runners keep using native `bin/` commands.
-- Use `just setup` for an unprepared checkout or after dependency changes. It prepares the development environment, SQLite, and Git hooks. Reuse the prepared environment for routine tasks.
-- Docker must run rootless or rootful without user namespace remapping. Use `./dockerized.sh compose ...` for explicit service administration.
-- Before providing user-facing local command examples or working on editor/LSP integration, read [Development](README.md#development). Editor startup must use prepared, locked dependencies without building images, installing dependencies, or booting the application.
+- Run local agent commands through an existing `just` recipe or `./dockerized.sh COMMAND [ARG...]`. Direct runner invocations preserve the caller's directory inside this checkout; `just` recipes run at the project root. Run Rails and workflow commands from the root so `.env` and relative catalog paths resolve consistently.
+- Use `just setup` for an unprepared checkout, after pulling dependency changes, or after deleting caches. It prepares Docker images, locked gems, formatter plugins, SQLite, and Git hooks. Reuse the prepared environment for routine tasks. Ordinary tasks must not build images, pull service images, install gems, or fall back to host tools. dprint owns its plugin cache and may download a missing plugin; do not add a custom downloader.
+- Docker must run rootless or rootful without user namespace remapping. Use `./dockerized.sh compose ...` for explicit service administration. Do not source the runner or add project wrappers to `PATH`.
+- CI runners keep native `bin/` commands and explicitly prepare formatter plugins with `bin/dprint install` before checking. Editor/LSP integration is deferred. Follow [Development](README.md#development) for explicit dependency updates and user-facing local command examples.
 
 - Do not commit, push, open PRs, or merge unless the user explicitly asks.
 - During implementation and user-review iterations, do not automatically rerun validation after every edit. Run only focused checks when they are needed to develop or diagnose the change, such as a bug fix's red/green regression test. Do not run `just ci`, `bin/ci`, or another full-suite validation unless the user explicitly asks; present the changes for review first.

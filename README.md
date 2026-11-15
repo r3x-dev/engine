@@ -15,8 +15,7 @@ It is a good fit when you want:
 - 🧱 database-backed runtime state through Rails, Active Record, Solid Queue, and Solid Cache
 - 🤖 agent-friendly docs so Codex-style agents can help write and maintain workflows
 
-Local shell examples assume `source ./dockerized.sh` in Bash or Zsh after
-[development setup](#development).
+Local commands use the explicit Docker runner after [development setup](#development).
 
 ## Project Principles
 
@@ -95,11 +94,11 @@ deployment, use `bin/web` for the workflow-agnostic web process and run `bin/job
 Useful local commands:
 
 ```bash
-bin/workflow list
-bin/workflow info <workflow_key>
-bin/workflow run workflows/<workflow_name>/workflow.rb
-bin/workflow run --dry-run workflows/<workflow_name>/workflow.rb
-bin/workflow run --skip-cache workflows/<workflow_name>/workflow.rb
+./dockerized.sh bin/workflow list
+./dockerized.sh bin/workflow info <workflow_key>
+./dockerized.sh bin/workflow run workflows/<workflow_name>/workflow.rb
+./dockerized.sh bin/workflow run --dry-run workflows/<workflow_name>/workflow.rb
+./dockerized.sh bin/workflow run --skip-cache workflows/<workflow_name>/workflow.rb
 ```
 
 `bin/workflow run --dry-run` and `R3X_DRY_RUN=true` enable the same global dry run: clients that
@@ -142,7 +141,7 @@ Recommended workflow loop:
 
 1. Create `workflows/<name>/workflow.rb`.
 2. Read the [R3x workflow skill](.agents/skills/r3x-workflows/SKILL.md) for the workflow writing rules.
-3. Run it locally with `bin/workflow run --dry-run workflows/<name>/workflow.rb`.
+3. Run it locally with `./dockerized.sh bin/workflow run --dry-run workflows/<name>/workflow.rb`.
 4. Inspect the dry-run output and repeat with `--skip-cache` when you need fresh provider data.
 5. Schedule it with `trigger :schedule` or run it manually from the dashboard.
 
@@ -167,9 +166,9 @@ For structured Rails code inspection, the development bundle includes
 additional skill is needed:
 
 ```bash
-bundle exec rails-ai-context tool schema --table solid_queue_jobs --no-boot
-bundle exec rails-ai-context tool model_details --model Dashboard::Run --no-boot
-bundle exec rails-ai-context tool search_code --pattern logical_key_sql --match-type trace --no-boot
+./dockerized.sh bundle exec rails-ai-context tool schema --table solid_queue_jobs --no-boot
+./dockerized.sh bundle exec rails-ai-context tool model_details --model Dashboard::Run --no-boot
+./dockerized.sh bundle exec rails-ai-context tool search_code --pattern logical_key_sql --match-type trace --no-boot
 ```
 
 `--no-boot` reads source without starting Rails. The tool's job catalog does not include workflow
@@ -276,48 +275,79 @@ database env vars, and shutdown behavior.
 
 ## Development
 
+The host needs Bash 4+, `sha256sum`, `just`, and Docker with the Compose plugin. Use a local
+Docker daemon that can bind-mount the checkout at its host path. App tools run in containers;
+Ruby and Node.js are not required on the host.
+
 After cloning, run:
 
 ```bash
 just setup
-source ./dockerized.sh
 ```
 
-That builds the development image, installs gems in `.bundle/gems`, prepares SQLite, and configures
-pre-commit hooks. Tool caches live in `.dev/cache`; setup creates both directories as the host user
-before containers write through the checkout bind mount. No shared host cache or `HOME`/`XDG_CACHE_HOME`
-setting is needed for dependencies or tool caches. Existing checkout-local Bundler settings are
-ignored in development. The checkout is mounted once at its host path, which is also the container
-working directory, so host editor tools can read the local gem definitions at the same path.
-SQLite, logs, and generated app state also remain in the checkout. Stop its containers with
-`dockerized compose down` before deleting the checkout; removing the checkout frees its gems and tool
-caches along with its other local state.
-Rootless Docker maps the app container's root to the daemon user. Rootful Docker runs the app as
-the host UID/GID; rootful user namespace remapping is rejected because bind mount IDs differ.
+Before `just up`, place a workflow catalog under `workflows/` (or configure another mounted path
+in `.env`). The default server runs both web and jobs and requires at least one `workflow.rb`;
+an empty or missing catalog fails visibly. See [workflow catalogs](#build-your-workflow-catalog)
+for catalog ownership. Then run `just up` to start the app at `http://localhost:3000`.
 
-In Bash or Zsh, source the wrapper once per shell from the checkout. Then use `ruby`, `bundle`,
-and `bin/…` normally: they run in the development container, including while `just up` is running.
-Sourcing also prepends the checkout's `.dev/bin` to `PATH`, so editor child processes can use
-`ruby-lsp` and `dprint` without knowing about `dockerized.sh`; `ruby` and `bundle` use the same
-project-bound path. These wrappers remain bound to the selected checkout and route through the
-existing rootless Docker guard.
-Zsh support is for the host shell; the development container only requires Bash.
-The shell functions stay bound to that checkout; source the other checkout’s wrapper when switching
-worktrees, or open a fresh shell to return to host commands. Shell exports are not automatically
-forwarded to containers; use the project `.env` or pass overrides with `dockerized env KEY=value COMMAND`.
-Scripts and editor integrations use the explicit `./dockerized.sh COMMAND [ARG...]` form.
-Use `dockerized compose down` to stop the app. Re-run `just setup` after a fresh checkout or
-dependency changes to regenerate its local bundle and caches. The previous shared cache and any
-existing named Bundler volumes are left untouched and are not used by the wrapper. Docker images
-and build layers remain Docker-managed and require separate explicit cleanup.
-`dockerized lsp` starts the locked development Ruby LSP without booting Rails, Vault,
-or schedulers. It requires the prepared image, local bundle, and lockfile and disables installation
-and lockfile updates. Re-run `just setup` after a fresh checkout or dependency changes to regenerate
-the local bundle and warm dprint's declared plugin cache. Existing shared cache directories are left
-untouched and are not used by the wrapper. Docker images and build layers remain Docker-managed and
-require separate explicit cleanup. Ordinary shutdown removes the one-off container; a killed Docker
-client or host crash can require targeted cleanup. Production keeps its separate `/rails` image and
-entrypoints.
+Setup builds the development image, pulls the JavaScript, Dockerfile lint and PostgreSQL images,
+installs the locked gems in `.bundle/gems`, prepares dprint plugins in `.dev/cache`, prepares SQLite,
+and configures the pre-commit hook. These dependencies belong to this checkout. Re-run setup after
+pulling dependency changes or deleting caches. Ordinary tasks never build or pull images, install
+gems, or fall back to host tools. Bundler enforces the lockfile and reports missing or inconsistent
+gems. dprint owns its plugin cache and may download a missing plugin during formatting or checking;
+`./dockerized.sh bin/dprint install` prepares it separately when needed.
+The development image, Gemfile and Gemfile.lock define the toolchain.
+
+When editing Gemfile or deliberately updating gems, explicitly allow Bundler to change the lockfile:
+
+```bash
+./dockerized.sh env BUNDLE_VERSION=lockfile BUNDLE_FROZEN=false bundle install
+./dockerized.sh env BUNDLE_VERSION=lockfile BUNDLE_FROZEN=false bundle update <gem>
+```
+
+Ordinary commands use the Bundler shipped in the image. Explicit dependency maintenance uses the
+lockfile version, installing that Bundler if needed, so it does not incidentally downgrade the lockfile.
+Review both Gemfile and Gemfile.lock before committing. `just setup` installs locked dependencies;
+it does not resolve a changed Gemfile. Setup also runs `bin/setup`, which prepares the database and
+clears development logs and temporary files.
+
+Use `just up`, `just format`, `just tests [ARG...]`, and `just ci` from anywhere in the checkout;
+recipes run at the project root. The runner is an explicit command, with no shell activation or
+PATH changes:
+
+```bash
+./dockerized.sh bin/rails console
+./dockerized.sh bundle exec ruby -e 'puts RUBY_VERSION'
+cd app
+../dockerized.sh ruby -e 'puts Dir.pwd'
+```
+
+Direct commands preserve their arguments and the caller's directory, including subdirectories.
+Run Rails and workflow commands from the project root so `.env` and relative workflow paths resolve
+consistently; use `just` recipes when working from a subdirectory. A runner invoked from outside its
+own checkout refuses to run. Each worktree gets its own Compose project, gems, caches, SQLite, and
+generated state. The absolute checkout path is the same inside
+and outside the container. Shell exports are not automatically forwarded; use the project `.env`
+or `./dockerized.sh env KEY=value COMMAND` for one-off tools. Rails loads `.env` after the container
+entrypoint. For web/jobs variables needed before Rails boot, including `RAILS_ENV` and
+`SECRET_KEY_BASE`, use `./dockerized.sh compose run --rm --no-deps --env KEY=value app bin/web`;
+add `--service-ports` and `-b 0.0.0.0` for access from the host. This keeps the runtime command visible
+to the entrypoint so database preparation and production startup checks run. Editor/LSP integration
+is deferred.
+
+The runner executes the Compose plugin registered by Docker directly, preserving signal delivery
+and the command's exit status. Docker's parent CLI can cancel the plugin connection instead of
+forwarding `SIGTERM`; see the [CLI signal handler](https://github.com/docker/cli/blob/v29.9.2/cmd/docker/docker.go#L329-L364)
+and [Compose signal forwarding](https://github.com/docker/compose/blob/v5.7.1/pkg/compose/run.go#L46-L52).
+A missing Compose plugin is an explicit prerequisite failure.
+
+Rootless Docker maps the app container's root to the daemon user. Rootful Docker uses the host
+UID/GID; rootful user namespace remapping is rejected because bind mount IDs differ.
+Stop the checkout's containers with `./dockerized.sh compose down` before deleting it. Removing
+the checkout frees its gems and caches; Docker images and build layers require separate cleanup.
+Ordinary shutdown removes one-off containers; a killed Docker client or host crash can require
+targeted cleanup. Production keeps its separate `/rails` image and entrypoints.
 
 Run tests with:
 
@@ -328,7 +358,7 @@ just test-javascript
 
 The development image includes standalone dprint. JavaScript tests run in a separate Node.js
 distroless container, with a read-only checkout and networking disabled. For a single Ruby test, use
-`bin/rails test test/path/to_test.rb`; Rails selects the test environment.
+`just tests test/path/to_test.rb`; Rails selects the test environment.
 Direct Ruby invocations retain the development environment unless explicitly overridden.
 
 SQLite is the default test adapter. To run the same suite against an ephemeral local PostgreSQL container:
@@ -342,11 +372,13 @@ The PostgreSQL test service uses temporary storage and publishes no host port.
 Run the project lint/reference checks with:
 
 ```bash
-bin/lint-r3x
+./dockerized.sh bin/lint-r3x
 just lint-docker
 ```
 
-Run `just format` explicitly to format YAML before staging. This repo uses `.githooks/`;
+Run `just format` explicitly to correct Ruby with RuboCop and format YAML with dprint before staging.
+It uses the same project rules and scope as CI and changes only working-tree files; it never stages them.
+This repo uses `.githooks/`;
 the pre-commit hook runs the full local
 `just ci` suite: `bin/ci` runs the Ruby/tooling checks in the development container, followed by
 `just test-javascript` in the Node.js container. This is intentional while the suite remains reasonably
@@ -357,7 +389,7 @@ local CI requires network access and fails if that refresh fails. Formatter and 
 in `.dev/cache` for this checkout and are removed with it. The hook checks the working tree, not a
 separately staged snapshot.
 An explicit offline scan is
-available as `bin/bundler-audit check --no-update`; it uses the cached database and can miss newer advisories.
+available as `./dockerized.sh bin/bundler-audit check --no-update`; it uses the cached database and can miss newer advisories.
 See [DHH's local CI reasoning](https://world.hey.com/dhh/we-re-moving-continuous-integration-back-to-developer-machines-3ac6c611).
 
 ## Documentation

@@ -9,13 +9,14 @@ Read before local execution or validating a pack. Sources:
 ## Select execution and dry-run policy first
 
 `bin/workflow` boots Rails headlessly and runs in-process. Discovery uses the
-catalog path; execution takes an entrypoint path:
+catalog path; execution takes an entrypoint path. After `just setup`, configure
+`R3X_WORKFLOW_PATHS` in the engine checkout's `.env` (default: `workflows`) and run
+these commands from that checkout:
 
 ```sh
-export R3X_WORKFLOW_PATHS="$PWD/workflows"
-bin/workflow list
-bin/workflow info example_digest
-bin/workflow run --dry-run workflows/example_digest/workflow.rb
+./dockerized.sh bin/workflow list
+./dockerized.sh bin/workflow info example_digest
+./dockerized.sh bin/workflow run --dry-run workflows/example_digest/workflow.rb
 ```
 
 Use a real catalog path and pack name; the example is fictional. The CLI uses the

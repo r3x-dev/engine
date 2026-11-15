@@ -1,4 +1,4 @@
-RAILS_BIN := "./dockerized.sh bin/rails"
+set positional-arguments
 
 setup:
   git config --local core.hooksPath .githooks
@@ -6,19 +6,20 @@ setup:
   ./dockerized.sh bin/setup --skip-server
 
 up:
-  ./dockerized.sh compose up app
+  ./dockerized.sh up
 
-tests:
-  {{RAILS_BIN}} test
+tests *args:
+  ./dockerized.sh bin/rails test "$@"
 
 format:
+  ./dockerized.sh bin/rubocop -a
   ./dockerized.sh bin/dprint fmt
 
 lint-docker:
-  ./dockerized.sh compose run --rm --no-deps -T dockerfile-lint
+  ./dockerized.sh compose run --pull never --rm --no-deps -T dockerfile-lint
 
 test-javascript:
-  ./dockerized.sh compose run --rm --no-deps -T js-tests
+  ./dockerized.sh compose run --pull never --rm --no-deps -T js-tests
 
 ci:
   ./dockerized.sh bin/ci
@@ -28,7 +29,7 @@ test-postgres:
   #!/usr/bin/env bash
   set -euo pipefail
   trap './dockerized.sh compose --profile postgres rm --stop --force postgres' EXIT
-  ./dockerized.sh compose --profile postgres up -d --wait postgres
+  ./dockerized.sh compose --profile postgres up --no-build --pull never -d --wait postgres
   ./dockerized.sh env R3X_TEST_DATABASE_URL="postgresql://r3x:r3x@postgres:5432/r3x_test" bin/rails db:test:prepare test
 
 vault_check:

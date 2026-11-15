@@ -445,10 +445,6 @@ GEM
       lint_roller (~> 1.1)
       rubocop (~> 1.89)
       rubocop-ast (>= 1.44.0, < 2.0)
-    ruby-lsp (0.26.11)
-      language_server-protocol (~> 3.17.0)
-      prism (>= 1.2, < 2.0)
-      rbs (>= 3, < 5)
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
     ruby_llm (2.2.2)
@@ -557,7 +553,6 @@ DEPENDENCIES
   rubocop-minitest
   rubocop-rails-omakase
   rubocop-thread_safety (~> 0.8.0)
-  ruby-lsp
   ruby_llm
   rubydex
   schematist
@@ -726,7 +721,6 @@ CHECKSUMS
   rubocop-rails (2.38.0) sha256=6e2b7c532efa95e3050371bec20b8f5b025662acead8bc70ee31f0e3e6fa2f06
   rubocop-rails-omakase (1.1.0) sha256=2af73ac8ee5852de2919abbd2618af9c15c19b512c4cfc1f9a5d3b6ef009109d
   rubocop-thread_safety (0.8.0) sha256=71fe5e7894fb9acfbd4c2dcd394feabc35bd690f75b0bc846e1504d9e31f9034
-  ruby-lsp (0.26.11) sha256=4cc8f1587237ff8c9031680b5491df901a82559eeaa1ae96863ffe700b32583d
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
   ruby2_keywords (0.0.5) sha256=ffd13740c573b7301cf7a2e61fc857b2a8e3d3aff32545d6f8300d8bae10e3ef
   ruby_llm (2.2.2) sha256=e08da09150bc11e15b294a7628b8295e0813d7f611ca97f74dcb1286ba7cdc79

@@ -192,25 +192,24 @@ end
 ## Run It Locally
 
 After [development setup](../../README.md#development), save the workflow as
-`workflows/example_island_digest/workflow.rb`, then activate the commands in Bash or Zsh and run it:
+`workflows/example_island_digest/workflow.rb`, then run it through the Docker runner:
 
 ```bash
-source ./dockerized.sh
-bin/workflow run --dry-run workflows/example_island_digest/workflow.rb
+./dockerized.sh bin/workflow run --dry-run workflows/example_island_digest/workflow.rb
 ```
 
 Use `--dry-run` first for workflows that send mail, post webhooks, upload files, or call other
 side-effecting APIs. Add `--skip-cache` when you want to force fresh reads from upstream sources:
 
 ```bash
-bin/workflow run --dry-run --skip-cache workflows/example_island_digest/workflow.rb
+./dockerized.sh bin/workflow run --dry-run --skip-cache workflows/example_island_digest/workflow.rb
 ```
 
 If the workflow pack is included in `R3X_WORKFLOW_PATHS`, you can also inspect it by key:
 
 ```bash
-bin/workflow list
-bin/workflow info example_island_digest
+./dockerized.sh bin/workflow list
+./dockerized.sh bin/workflow info example_island_digest
 ```
 
 ## Validate It Manually
@@ -219,8 +218,8 @@ Workflow packs stay as small scripts and are validated through the runtime rathe
 test suites. Inspect registration first, then run with fresh provider reads and dry-run delivery:
 
 ```bash
-bin/workflow info example_island_digest
-bin/workflow run --dry-run --skip-cache workflows/example_island_digest/workflow.rb
+./dockerized.sh bin/workflow info example_island_digest
+./dockerized.sh bin/workflow run --dry-run --skip-cache workflows/example_island_digest/workflow.rb
 ```
 
 ## Vault Parity
