@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_root="$(cd -- "$(dirname -- "$0")/../.." && pwd -P)"
+command_name="${0##*/}"
+
+case "$command_name" in
+  ruby-lsp)
+    exec "$project_root/dockerized.sh" lsp
+    ;;
+  ruby | bundle)
+    exec "$project_root/dockerized.sh" "$command_name" "$@"
+    ;;
+  dprint)
+    exec "$project_root/dockerized.sh" bin/dprint "$@"
+    ;;
+  *)
+    printf 'Error: unsupported project command %s.\n' "$command_name" >&2
+    exit 127
+    ;;
+esac

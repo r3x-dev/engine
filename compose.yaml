@@ -1,0 +1,116 @@
+x-app-environment: &app-environment
+  BUNDLE_PATH: ${DOCKER_BUNDLE_DIR:?Use ./dockerized.sh}
+  GEM_HOME: ${DOCKER_BUNDLE_DIR:?Use ./dockerized.sh}
+  BUNDLE_IGNORE_CONFIG: "true"
+  BUNDLE_AUTO_INSTALL: "false"
+  XDG_CACHE_HOME: ${DOCKER_CACHE_DIR:?Use ./dockerized.sh}
+  DPRINT_CACHE_DIR: ${DOCKER_CACHE_DIR:?Use ./dockerized.sh}/dprint
+  RUBOCOP_CACHE_ROOT: ${DOCKER_CACHE_DIR:?Use ./dockerized.sh}/rubocop
+  BUNDLER_AUDIT_DB: ${DOCKER_CACHE_DIR:?Use ./dockerized.sh}/bundler-audit
+  HOME: /tmp
+
+x-app-volumes: &app-volumes # The checkout mount exposes local gem definitions to host editor tools at the same absolute path.
+  - type: bind
+    source: .
+    target: ${PWD:?Run Compose from the project root}
+    bind:
+      create_host_path: false
+
+x-app-runtime: &app-runtime
+  image: ${COMPOSE_PROJECT_NAME:?Use ./dockerized.sh}-app
+  environment: *app-environment
+  working_dir: ${PWD:?Run Compose from the project root}
+  # Rootless UID 0 maps to the daemon user; rootful uses the invoking host user.
+  user: "${DOCKERIZED_USER:?Use ./dockerized.sh}"
+  init: true
+  read_only: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  tmpfs:
+    - /tmp:mode=1777,exec
+  volumes: *app-volumes
+
+services:
+  app:
+    <<: *app-runtime
+    build:
+      context: .
+      target: dev
+    tty: true
+    stdin_open: true
+    tmpfs:
+      - /tmp:mode=1777,exec
+      - ${PWD:?Run Compose from the project root}/tmp/pids:mode=1777
+    ports:
+      - "127.0.0.1:3000:3000"
+    entrypoint: ["./bin/docker-entrypoint"]
+    command: ["./bin/rails", "server", "-b", "0.0.0.0"]
+
+  js-tests:
+    image: gcr.io/distroless/nodejs26-debian13:nonroot@sha256:1d736cf8b5716c07a245301f92717143215d248fd55771ee1936ef4b3302e531
+    profiles: [test]
+    working_dir: /workspace
+    init: true
+    read_only: true
+    network_mode: none
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+        read_only: true
+    command: ["--test", "test/javascript/*_test.js"]
+
+  postgres:
+    image: postgres:18-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
+    profiles: [postgres]
+    # Tests connect over the Compose network; no host port is needed.
+    environment:
+      POSTGRES_DB: r3x_test
+      POSTGRES_PASSWORD: r3x
+      POSTGRES_USER: r3x
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U r3x -d r3x_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+    stop_grace_period: 5s
+
+  # Share the app image and source/cache mounts, without app startup, ports or network.
+  editor:
+    <<: *app-runtime
+    profiles: [editor]
+    network_mode: none
+    environment:
+      <<: *app-environment
+      HOME: /tmp
+      BUNDLE_FROZEN: "true"
+      BUNDLE_GEMFILE: ${PWD:?Use ./dockerized.sh}/Gemfile
+    command: ["bundle", "exec", "ruby-lsp"]
+
+  dockerfile-lint:
+    image: ghcr.io/immanuwell/droast:1.7.0@sha256:4f31be49f26804c0a2f8a0ab0ae578719e30376323e8fd5951c6dcc79a478b40
+    profiles: [lint]
+    user: "${DOCKERIZED_USER:?Use ./dockerized.sh}"
+    working_dir: /workspace
+    network_mode: none
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+        read_only: true
+        bind:
+          create_host_path: false
+    command: ["Dockerfile"]

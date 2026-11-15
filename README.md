@@ -15,6 +15,9 @@ It is a good fit when you want:
 - 🧱 database-backed runtime state through Rails, Active Record, Solid Queue, and Solid Cache
 - 🤖 agent-friendly docs so Codex-style agents can help write and maintain workflows
 
+Local shell examples assume `source ./dockerized.sh` in Bash or Zsh after
+[development setup](#development).
+
 ## Project Principles
 
 `r3x` sits near tools like n8n, Huginn, and Argo Workflows, but takes a deliberately Ruby/Rails,
@@ -76,10 +79,12 @@ multiple clients, read
 ```bash
 git clone <your-r3x-repo-url>
 cd r3x
-mise install
 just setup
-bin/rails server
+just up
 ```
+
+Local development requires Docker with Compose, Git, and `just`. Ruby and the local CI
+toolchain run in the development image; host Ruby is optional.
 
 Open http://localhost:3000/ for the workflow dashboard.
 
@@ -90,7 +95,6 @@ deployment, use `bin/web` for the workflow-agnostic web process and run `bin/job
 Useful local commands:
 
 ```bash
-export R3X_WORKFLOW_PATHS="$PWD/workflows"
 bin/workflow list
 bin/workflow info <workflow_key>
 bin/workflow run workflows/<workflow_name>/workflow.rb
@@ -130,14 +134,9 @@ The loader discovers `workflow.rb` files from directories listed in `R3X_WORKFLO
 Enabled packs must resolve to distinct workflow classes across those directories. Conflicting
 entrypoints fail before any pack is evaluated, so one catalog cannot silently overwrite another.
 
-For local development, point it at this repo's `workflows/` directory:
-
-```bash
-export R3X_WORKFLOW_PATHS="$PWD/workflows"
-```
-
-You can also keep workflow packs in a separate private repo and point `R3X_WORKFLOW_PATHS` there.
-That makes it easy to use `r3x` as the engine while keeping your own automation catalog separate.
+For local development, `.env` defaults `R3X_WORKFLOW_PATHS` to `workflows`. Keep a separate
+private catalog checkout under that directory so the same project bind includes it. Catalogs
+outside the checkout need an explicit additional bind at the same host path.
 
 Recommended workflow loop:
 
@@ -163,15 +162,14 @@ Workflow authoring rules live in the [R3x workflow skill](.agents/skills/r3x-wor
 `AGENTS.md` directs agents there before they edit workflows; its task-specific references
 cover state, delivery, caching, integrations and verification without loading the whole guide.
 
-For structured Rails code inspection, `mise.toml` also provides the standalone
-[rails-ai-context CLI](https://github.com/crisnahine/rails-ai-context). It runs independently of the
-application's Gemfile; no MCP server or additional skill is needed:
+For structured Rails code inspection, the development bundle includes
+[rails-ai-context CLI](https://github.com/crisnahine/rails-ai-context). No MCP server or
+additional skill is needed:
 
 ```bash
-mise install gem:rails-ai-context
-mise exec -- rails-ai-context tool schema --table solid_queue_jobs --no-boot
-mise exec -- rails-ai-context tool model_details --model Dashboard::Run --no-boot
-mise exec -- rails-ai-context tool search_code --pattern logical_key_sql --match-type trace --no-boot
+bundle exec rails-ai-context tool schema --table solid_queue_jobs --no-boot
+bundle exec rails-ai-context tool model_details --model Dashboard::Run --no-boot
+bundle exec rails-ai-context tool search_code --pattern logical_key_sql --match-type trace --no-boot
 ```
 
 `--no-boot` reads source without starting Rails. The tool's job catalog does not include workflow
@@ -282,20 +280,56 @@ After cloning, run:
 
 ```bash
 just setup
+source ./dockerized.sh
 ```
 
-That installs dependencies, prepares the database, configures pre-commit hooks, and writes a local
-absolute Bundler path for the checkout. Keep that Bundler setting local to each clone so Ruby LSP and
-the app resolve the same bundle cleanly.
+That builds the development image, installs gems in `.bundle/gems`, prepares SQLite, and configures
+pre-commit hooks. Tool caches live in `.dev/cache`; setup creates both directories as the host user
+before containers write through the checkout bind mount. No shared host cache or `HOME`/`XDG_CACHE_HOME`
+setting is needed for dependencies or tool caches. Existing checkout-local Bundler settings are
+ignored in development. The checkout is mounted once at its host path, which is also the container
+working directory, so host editor tools can read the local gem definitions at the same path.
+SQLite, logs, and generated app state also remain in the checkout. Stop its containers with
+`dockerized compose down` before deleting the checkout; removing the checkout frees its gems and tool
+caches along with its other local state.
+Rootless Docker maps the app container's root to the daemon user. Rootful Docker runs the app as
+the host UID/GID; rootful user namespace remapping is rejected because bind mount IDs differ.
+
+In Bash or Zsh, source the wrapper once per shell from the checkout. Then use `ruby`, `bundle`,
+and `bin/…` normally: they run in the development container, including while `just up` is running.
+Sourcing also prepends the checkout's `.dev/bin` to `PATH`, so editor child processes can use
+`ruby-lsp` and `dprint` without knowing about `dockerized.sh`; `ruby` and `bundle` use the same
+project-bound path. These wrappers remain bound to the selected checkout and route through the
+existing rootless Docker guard.
+Zsh support is for the host shell; the development container only requires Bash.
+The shell functions stay bound to that checkout; source the other checkout’s wrapper when switching
+worktrees, or open a fresh shell to return to host commands. Shell exports are not automatically
+forwarded to containers; use the project `.env` or pass overrides with `dockerized env KEY=value COMMAND`.
+Scripts and editor integrations use the explicit `./dockerized.sh COMMAND [ARG...]` form.
+Use `dockerized compose down` to stop the app. Re-run `just setup` after a fresh checkout or
+dependency changes to regenerate its local bundle and caches. The previous shared cache and any
+existing named Bundler volumes are left untouched and are not used by the wrapper. Docker images
+and build layers remain Docker-managed and require separate explicit cleanup.
+`dockerized lsp` starts the locked development Ruby LSP without booting Rails, Vault,
+or schedulers. It requires the prepared image, local bundle, and lockfile and disables installation
+and lockfile updates. Re-run `just setup` after a fresh checkout or dependency changes to regenerate
+the local bundle and warm dprint's declared plugin cache. Existing shared cache directories are left
+untouched and are not used by the wrapper. Docker images and build layers remain Docker-managed and
+require separate explicit cleanup. Ordinary shutdown removes the one-off container; a killed Docker
+client or host crash can require targeted cleanup. Production keeps its separate `/rails` image and
+entrypoints.
 
 Run tests with:
 
 ```bash
-bin/rails test
-node --test test/javascript/*_test.js
+just tests
+just test-javascript
 ```
 
-JavaScript tests require Node.js 20 or newer; GitHub Actions uses Node.js 24.
+The development image includes standalone dprint. JavaScript tests run in a separate Node.js
+distroless container, with a read-only checkout and networking disabled. For a single Ruby test, use
+`bin/rails test test/path/to_test.rb`; Rails selects the test environment.
+Direct Ruby invocations retain the development environment unless explicitly overridden.
 
 SQLite is the default test adapter. To run the same suite against an ephemeral local PostgreSQL container:
 
@@ -303,17 +337,26 @@ SQLite is the default test adapter. To run the same suite against an ephemeral l
 just test-postgres
 ```
 
+The PostgreSQL test service uses temporary storage and publishes no host port.
+
 Run the project lint/reference checks with:
 
 ```bash
-mise exec -- bin/lint-r3x
+bin/lint-r3x
+just lint-docker
 ```
 
-This repo uses `.githooks/`; the pre-commit hook formats staged YAML and then runs the full local
-`bin/ci` suite. This is intentional while the suite remains reasonably fast: developers get the
-complete feedback loop before a commit exists, with GitHub Actions providing an independent check.
+Run `just format` explicitly to format YAML before staging. This repo uses `.githooks/`;
+the pre-commit hook runs the full local
+`just ci` suite: `bin/ci` runs the Ruby/tooling checks in the development container, followed by
+`just test-javascript` in the Node.js container. This is intentional while the suite remains reasonably
+fast: developers get the complete feedback loop before a commit exists, with GitHub Actions
+providing an independent check.
 The default `bin/bundler-audit` invocation refreshes the advisory database before scanning, so
-local CI requires network access and fails if that refresh fails. An explicit offline scan is
+local CI requires network access and fails if that refresh fails. Formatter and audit caches live
+in `.dev/cache` for this checkout and are removed with it. The hook checks the working tree, not a
+separately staged snapshot.
+An explicit offline scan is
 available as `bin/bundler-audit check --no-update`; it uses the cached database and can miss newer advisories.
 See [DHH's local CI reasoning](https://world.hey.com/dhh/we-re-moving-continuous-integration-back-to-developer-machines-3ac6c611).
 

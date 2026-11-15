@@ -27,12 +27,53 @@ ENV RAILS_ENV="production" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_VERSION="system"
 
-# Copy dependency inputs before application source to preserve gem caches.
-COPY vendor/ ./vendor/
-COPY .ruby-version Gemfile Gemfile.lock ./
+# dprint belongs only to the local development/CI toolchain.
+FROM build-base AS dev-tools
+# Renovate updates the version; checksums come from the matching release.
+# renovate: datasource=github-releases depName=dprint/dprint
+ARG DPRINT_VERSION=0.64.3
+ARG TARGETARCH
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y ca-certificates curl unzip && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives && \
+    case "$TARGETARCH" in \
+      amd64) dprint_arch=x86_64 ;; \
+      arm64) dprint_arch=aarch64 ;; \
+      *) echo "Unsupported dprint architecture: $TARGETARCH" >&2; exit 1 ;; \
+    esac && \
+    release_url="https://github.com/dprint/dprint/releases/download/${DPRINT_VERSION}" && \
+    cd /tmp && \
+    curl -fsSL "$release_url/SHASUMS256.txt" -o SHASUMS256.txt && \
+    for arch in x86_64 aarch64; do \
+      archive="dprint-${arch}-unknown-linux-gnu.zip"; \
+      curl -fsSL "$release_url/$archive" -o "$archive" && \
+      awk -v name="$archive" '$2 == name' SHASUMS256.txt | sha256sum -c - || exit 1; \
+    done && \
+    unzip -q "dprint-${dprint_arch}-unknown-linux-gnu.zip" -d /usr/local/bin && \
+    rm dprint-*-unknown-linux-gnu.zip SHASUMS256.txt
+
+FROM build-base AS dev
+COPY --from=dev-tools /usr/local/bin/dprint /usr/local/bin/dprint
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y git && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Local commands use the host bundle bind and ignore checkout-local Bundler configuration.
+ENV RAILS_ENV="development" \
+    BUNDLE_DEPLOYMENT="false" \
+    BUNDLE_IGNORE_CONFIG="true" \
+    BUNDLE_PATH="/bundle" \
+    HOME="/tmp"
+WORKDIR /
+USER 1000:1000
 
 # Build production gems once for both output targets.
 FROM build-base AS production-gems
+
+# Keep dependency inputs out of the shared dev-tools and dev image layers.
+# Copy dependency inputs before application source to preserve gem caches.
+COPY vendor/ ./vendor/
+COPY .ruby-version Gemfile Gemfile.lock ./
 
 ENV BUNDLE_WITHOUT="development:test"
 

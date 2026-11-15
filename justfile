@@ -1,26 +1,38 @@
-RAILS_BIN := "bundle exec rails"
+RAILS_BIN := "./dockerized.sh bin/rails"
 
 setup:
-  bundle config set --local path "$PWD/.bundle"
   git config --local core.hooksPath .githooks
-  bin/setup --skip-server
+  ./dockerized.sh setup
+  ./dockerized.sh bin/setup --skip-server
 
 up:
-  {{RAILS_BIN}} s
+  ./dockerized.sh compose up app
 
 tests:
   {{RAILS_BIN}} test
 
+format:
+  ./dockerized.sh bin/dprint fmt
+
+lint-docker:
+  ./dockerized.sh compose run --rm --no-deps -T dockerfile-lint
+
+test-javascript:
+  ./dockerized.sh compose run --rm --no-deps -T js-tests
+
+ci:
+  ./dockerized.sh bin/ci
+  just test-javascript
+
 test-postgres:
   #!/usr/bin/env bash
   set -euo pipefail
-  port="${R3X_TEST_POSTGRES_PORT:-55432}"
-  trap 'docker compose -f compose.test.yml down --volumes --remove-orphans' EXIT
-  docker compose -f compose.test.yml up -d --wait
-  R3X_TEST_DATABASE_URL="postgresql://r3x:r3x@127.0.0.1:${port}/r3x_test" {{RAILS_BIN}} db:test:prepare test
+  trap './dockerized.sh compose --profile postgres rm --stop --force postgres' EXIT
+  ./dockerized.sh compose --profile postgres up -d --wait postgres
+  ./dockerized.sh env R3X_TEST_DATABASE_URL="postgresql://r3x:r3x@postgres:5432/r3x_test" bin/rails db:test:prepare test
 
 vault_check:
-  R3X_SKIP_VAULT_ENV_LOAD=true {{RAILS_BIN}} runner 'puts MultiJSON.generate(R3x::Client::HashiCorpVault.diagnose, pretty: true)'
+  ./dockerized.sh env R3X_SKIP_VAULT_ENV_LOAD=true bin/rails runner 'puts MultiJSON.generate(R3x::Client::HashiCorpVault.diagnose, pretty: true)'
 
 # Use Docker's own context filtering so `!` rules are evaluated correctly.
 show_dockerignore:

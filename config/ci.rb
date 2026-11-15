@@ -3,7 +3,7 @@
 # Run using bin/ci
 
 CI.run do
-  step "Setup", "bin/setup --skip-server"
+  step "Prepare test database", "bin/rails db:test:prepare"
 
   step "Style: Ruby", "bin/rubocop"
   step "Style: YAML", "bin/dprint check"
@@ -12,7 +12,6 @@ CI.run do
   step "Security: Gem audit", "bin/bundler-audit"
   step "Security: Brakeman code analysis", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
   step "Tests: Rails", "bin/rails test"
-  step "Tests: JavaScript", "node --test test/javascript/*_test.js"
 
   # Optional: Run system tests
   # step "Tests: System", "bin/rails test:system"
