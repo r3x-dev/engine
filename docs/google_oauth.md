@@ -20,6 +20,8 @@ Before running `authorize`, make sure the following environment variables are se
 - `GOOGLE_CLIENT_SECRET_<PROJECT>` — OAuth2 client secret from Google Cloud Console.
 
 These represent the app registration itself and are shared across all scopes for a project.
+For local Docker commands, provide them through the project's `.env` or Vault; shell exports
+on the host are not automatically forwarded to the container.
 
 ## Credential storage convention
 
@@ -31,7 +33,7 @@ Each project uses three separate environment variables:
 | `GOOGLE_CLIENT_SECRET_<PROJECT>` | OAuth2 client secret |
 | `GOOGLE_REFRESH_TOKEN_<PROJECT>` | OAuth2 refresh token obtained via `bin/google-oauth authorize` |
 
-Example for project `MYAPP`:
+Example environment variables for project `MYAPP` (shell exports for native execution):
 
 ```bash
 export GOOGLE_CLIENT_ID_MYAPP="..."
@@ -48,6 +50,12 @@ ctx.client.google_translate(project: "MYAPP")
 ```
 
 ## Commands
+
+After [development setup](../README.md#development), activate the local commands once in Bash or Zsh:
+
+```bash
+source ./dockerized.sh
+```
 
 ### `bin/google-oauth authorize --project <PROJECT>`
 
