@@ -16,7 +16,6 @@ on:
       - "justfile"
       - "Justfile"
       - "LICENSE"
-      - "mise.toml"
       - "opencode.json"
       - "README.md"
       - "scratchpad/**"
