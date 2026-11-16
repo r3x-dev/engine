@@ -66,6 +66,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # Local commands use the host bundle bind and ignore checkout-local Bundler configuration.
 ENV RAILS_ENV="development" \
     BUNDLE_DEPLOYMENT="false" \
+    BUNDLE_AUTO_INSTALL="true" \
     BUNDLE_IGNORE_CONFIG="true" \
     BUNDLE_PATH="/bundle" \
     HOME="/tmp"
@@ -122,6 +123,7 @@ ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_VERSION="system" \
+    BUNDLE_AUTO_INSTALL="false" \
     HOME="/tmp"
 
 FROM runtime AS test

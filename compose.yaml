@@ -9,7 +9,6 @@ services:
       BUNDLE_PATH: ${DOCKER_BUNDLE_DIR:?Use ./dockerized.sh}
       GEM_HOME: ${DOCKER_BUNDLE_DIR:?Use ./dockerized.sh}
       BUNDLE_IGNORE_CONFIG: "true"
-      BUNDLE_AUTO_INSTALL: "true"
       BUNDLE_FROZEN: "true"
       BUNDLE_GEMFILE: ${DOCKER_PROJECT_DIR:?Use ./dockerized.sh}/Gemfile
       XDG_CACHE_HOME: ${DOCKER_CACHE_DIR:?Use ./dockerized.sh}
