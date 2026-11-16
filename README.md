@@ -293,9 +293,12 @@ for catalog ownership. Then run `just up` to start the app at `http://localhost:
 Setup builds the development image, pulls the JavaScript, Dockerfile lint and PostgreSQL images,
 installs the locked gems in `.bundle/gems`, prepares dprint plugins in `.dev/cache`, prepares SQLite,
 and configures the pre-commit hook. These dependencies belong to this checkout. Re-run setup after
-pulling dependency changes or deleting caches. Ordinary tasks never build or pull images, install
-gems, or fall back to host tools. Bundler enforces the lockfile and reports missing or inconsistent
-gems. dprint owns its plugin cache and may download a missing plugin during formatting or checking;
+changing the development image or deleting caches. Bundler-backed development commands automatically
+install missing locked gems in the project bundle, including when starting the app. Installation
+failures stop the command. The lockfile stays frozen: changing Gemfile requires an explicit dependency
+update. Standalone tools do not require application gems. Production uses gems installed during image
+builds and does not auto-install at startup. Ordinary tasks never build or pull images or fall back
+to host tools. dprint owns its plugin cache and may download a missing plugin during formatting or checking;
 `./dockerized.sh bin/dprint install` prepares it separately when needed.
 The development image, Gemfile and Gemfile.lock define the toolchain.
 
