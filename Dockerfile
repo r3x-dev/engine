@@ -17,9 +17,11 @@ WORKDIR /rails
 
 # Install packages needed to build gems
 # DHI dev supplies build tools and headers; pkg-config is needed by native gems.
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y pkg-config && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean && \
+    apt-get update -qq && \
+    apt-get install --no-install-recommends -y pkg-config
 
 # Set production environment variables.
 ENV RAILS_ENV="production" \
@@ -29,14 +31,16 @@ ENV RAILS_ENV="production" \
 
 # dprint belongs only to the local development/CI toolchain.
 FROM build-base AS dev-tools
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update -qq && \
+    apt-get install --no-install-recommends -y ca-certificates curl unzip
+
 # Renovate updates the version; checksums come from the matching release.
 # renovate: datasource=github-releases depName=dprint/dprint
 ARG DPRINT_VERSION=0.64.3
 ARG TARGETARCH
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y ca-certificates curl unzip && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives && \
-    case "$TARGETARCH" in \
+RUN case "$TARGETARCH" in \
       amd64) dprint_arch=x86_64 ;; \
       arm64) dprint_arch=aarch64 ;; \
       *) echo "Unsupported dprint architecture: $TARGETARCH" >&2; exit 1 ;; \
@@ -54,9 +58,10 @@ RUN apt-get update -qq && \
 
 FROM build-base AS dev
 COPY --from=dev-tools /usr/local/bin/dprint /usr/local/bin/dprint
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y git && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update -qq && \
+    apt-get install --no-install-recommends -y git
 
 # Local commands use the host bundle bind and ignore checkout-local Bundler configuration.
 ENV RAILS_ENV="development" \
