@@ -83,7 +83,7 @@ The mount is read-only, and image-owned code/gems are root-owned; only log, stor
 and tmp under `/rails` are writable by UID 1000. A local equivalent is
 `docker build --target test --tag r3x-test:local .`.
 
-Dockerfile, CI and `.ruby-version` own build/cache stages, publishing and base-image
+Dockerfile and CI own build/cache stages, publishing and base-image
 updates. Inspect those files when changing image behavior rather than copying their
 implementation into workflow instructions.
 

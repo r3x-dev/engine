@@ -10,6 +10,7 @@ plugins:
   - rubocop-minitest
 
 AllCops:
+  TargetRubyVersion: <%= RUBY_VERSION.to_f %>
   NewCops: enable
   SuggestExtensions: true
   Exclude:

@@ -3,7 +3,6 @@
 # Ignore all hidden files and directories, preserving required build files and directory keeps
 .*
 **/.*
-!.ruby-version
 
 # Ignore logfiles, tempfiles, and storage
 *.log

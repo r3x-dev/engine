@@ -300,9 +300,9 @@ affected state and the rollout boundary. Do not cancel jobs without authorizatio
 
 ## Ruby Version Updates
 
-- `.ruby-version` is the source of truth. `Gemfile` reads it; CI should let `ruby/setup-ruby` auto-detect it.
-- Keep `Dockerfile ARG RUBY_VERSION` aligned with `.ruby-version`; GitHub Actions reads `.ruby-version` for Docker builds.
-- When bumping Ruby: update `.ruby-version`, update Docker ARGs/scripts that hardcode Ruby, run `bundle update --ruby`, update `Gemfile.lock` through Bundler only, and rebuild the Docker `production` target.
+- `Dockerfile ARG RUBY_VERSION` owns the Ruby version; the CI setup action reads it for runner-native jobs.
+- Keep both DHI image digests aligned with the version. The Renovate Ruby workflow updates them when the version changes.
+- When bumping Ruby, update the Dockerfile version and both digests together and rebuild the Docker `production` target.
 
 ## Scope
 

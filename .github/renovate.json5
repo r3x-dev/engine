@@ -14,28 +14,13 @@
   gitIgnoredAuthors: [
     'renovate-ruby-fix@users.noreply.github.com',
   ],
-  'ruby-version': {
-    enabled: false,
-  },
   customManagers: [
     {
       customType: 'regex',
       managerFilePatterns: ['/^Dockerfile$/'],
       matchStrings: [
-        '# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)\\s+ARG [A-Z_]+=(?<currentValue>[^\\s]+)',
+        '# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)(?: versioning=(?<versioning>[^\\s]+))?\\s+ARG [A-Z_]+=(?<currentValue>[^\\s]+)',
       ],
-    },
-    {
-      customType: 'regex',
-      managerFilePatterns: [
-        '/^\\.ruby-version$/',
-      ],
-      matchStrings: [
-        '^(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*$',
-      ],
-      depNameTemplate: 'docker.io/library/ruby',
-      datasourceTemplate: 'docker',
-      versioningTemplate: 'docker',
     },
   ],
   labels: [
@@ -74,9 +59,9 @@
       automergeType: 'branch',
     },
     {
-      // .ruby-version owns Ruby upgrades; its workflow aligns the ARG and DHI image digests.
+      // The Dockerfile ARG owns Ruby upgrades; its workflow aligns the DHI image digests.
       // The native Dockerfile manager still refreshes the current tag's digest.
-      description: 'Keep Ruby tag upgrades with the version-file workflow',
+      description: 'Keep Ruby tag upgrades with the Dockerfile version workflow',
       matchManagers: [
         'dockerfile',
       ],

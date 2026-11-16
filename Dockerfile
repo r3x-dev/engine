@@ -6,8 +6,8 @@
 # docker build -t main .
 # docker run --rm -p 3000:3000 --env SECRET_KEY_BASE --name main main ./bin/web
 
-# Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
-# Keep the base digest aligned with this version; the Renovate Ruby workflow updates both.
+# Keep both base digests aligned with this version; the Renovate Ruby workflow updates them.
+# renovate: datasource=docker depName=docker.io/library/ruby versioning=docker
 ARG RUBY_VERSION=4.0.9
 # Shared build stage for installing gems
 FROM dhi.io/ruby:$RUBY_VERSION-debian13-dev@sha256:4ddf6c1b849c4e78a8e3728243b8b00ca06c2956d312b04ae75dfc7be5bf5558 AS build-base
@@ -78,7 +78,7 @@ FROM build-base AS production-gems
 # Keep dependency inputs out of the shared dev-tools and dev image layers.
 # Copy dependency inputs before application source to preserve gem caches.
 COPY vendor/ ./vendor/
-COPY .ruby-version Gemfile Gemfile.lock ./
+COPY Gemfile Gemfile.lock ./
 
 ENV BUNDLE_WITHOUT="development:test"
 
