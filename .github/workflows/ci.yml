@@ -32,7 +32,16 @@ env:
 
 jobs:
   scan_ruby:
-    if: ${{ !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) }}
+    if: >
+      !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) &&
+      (
+        github.event_name != 'pull_request' ||
+        github.event.pull_request.head.repo.full_name != github.repository ||
+        github.event.pull_request.user.login != 'renovate[bot]' ||
+        github.triggering_actor != 'renovate[bot]' ||
+        !startsWith(github.head_ref, 'renovate/') ||
+        startsWith(github.head_ref, 'renovate/docker.io-library-ruby-')
+      )
     runs-on: ubuntu-latest
 
     steps:
@@ -49,7 +58,16 @@ jobs:
         run: bin/bundler-audit
 
   agents_lint:
-    if: ${{ !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) }}
+    if: >
+      !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) &&
+      (
+        github.event_name != 'pull_request' ||
+        github.event.pull_request.head.repo.full_name != github.repository ||
+        github.event.pull_request.user.login != 'renovate[bot]' ||
+        github.triggering_actor != 'renovate[bot]' ||
+        !startsWith(github.head_ref, 'renovate/') ||
+        startsWith(github.head_ref, 'renovate/docker.io-library-ruby-')
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -62,7 +80,16 @@ jobs:
         run: bin/lint-r3x
 
   lint:
-    if: ${{ !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) }}
+    if: >
+      !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) &&
+      (
+        github.event_name != 'pull_request' ||
+        github.event.pull_request.head.repo.full_name != github.repository ||
+        github.event.pull_request.user.login != 'renovate[bot]' ||
+        github.triggering_actor != 'renovate[bot]' ||
+        !startsWith(github.head_ref, 'renovate/') ||
+        startsWith(github.head_ref, 'renovate/docker.io-library-ruby-')
+      )
     runs-on: ubuntu-latest
     env:
       RUBOCOP_CACHE_ROOT: tmp/rubocop
@@ -87,7 +114,16 @@ jobs:
         run: bin/rubocop -f github
 
   test:
-    if: ${{ !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) }}
+    if: >
+      !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) &&
+      (
+        github.event_name != 'pull_request' ||
+        github.event.pull_request.head.repo.full_name != github.repository ||
+        github.event.pull_request.user.login != 'renovate[bot]' ||
+        github.triggering_actor != 'renovate[bot]' ||
+        !startsWith(github.head_ref, 'renovate/') ||
+        startsWith(github.head_ref, 'renovate/docker.io-library-ruby-')
+      )
     runs-on: ubuntu-latest
 
     # services:
@@ -118,7 +154,16 @@ jobs:
         run: node --test test/javascript/*_test.js
 
   test_postgresql:
-    if: ${{ !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) }}
+    if: >
+      !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) &&
+      (
+        github.event_name != 'pull_request' ||
+        github.event.pull_request.head.repo.full_name != github.repository ||
+        github.event.pull_request.user.login != 'renovate[bot]' ||
+        github.triggering_actor != 'renovate[bot]' ||
+        !startsWith(github.head_ref, 'renovate/') ||
+        startsWith(github.head_ref, 'renovate/docker.io-library-ruby-')
+      )
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -148,7 +193,16 @@ jobs:
         run: bin/rails db:test:prepare test
 
   docker_validate:
-    if: ${{ !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) }}
+    if: >
+      !(github.event_name == 'push' && github.actor == 'renovate[bot]' && startsWith(github.ref_name, 'renovate/docker.io-library-ruby-')) &&
+      (
+        github.event_name != 'pull_request' ||
+        github.event.pull_request.head.repo.full_name != github.repository ||
+        github.event.pull_request.user.login != 'renovate[bot]' ||
+        github.triggering_actor != 'renovate[bot]' ||
+        !startsWith(github.head_ref, 'renovate/') ||
+        startsWith(github.head_ref, 'renovate/docker.io-library-ruby-')
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
