@@ -38,7 +38,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 # Renovate updates the version; checksums come from the matching release.
 # renovate: datasource=github-releases depName=dprint/dprint
-ARG DPRINT_VERSION=0.64.3
+ARG DPRINT_VERSION=0.65.0
 ARG TARGETARCH
 RUN case "$TARGETARCH" in \
       amd64) dprint_arch=x86_64 ;; \
