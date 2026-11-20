@@ -27,14 +27,7 @@ module R3x
         end
 
         def llm(api_key_env:, **, &)
-          configuration = R3x::Client::Llm::ProviderConfiguration.resolve(api_key_env:)
-
-          R3x::Client::Llm.new(
-            api_key: configuration.api_key,
-            config_api_key_attr: configuration.config_api_key_attr,
-            **,
-            &
-          )
+          R3x::Client::Llm.new(api_key_env:, **, &)
         end
 
         def google_sheets(spreadsheet_id:, project:)

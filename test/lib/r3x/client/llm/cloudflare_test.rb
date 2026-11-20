@@ -71,16 +71,20 @@ module R3x
           assert_requested request, times: 1
         end
 
-        test "uses an api token env name through the workflow client" do
-          ENV["CLOUDFLARE_API_TOKEN_TEST"] = "named-token"
-          request = stub_request(:post, endpoint).with(headers: { "Authorization" => "Bearer named-token" })
-            .to_return(status: 200, headers: json_headers, body: MultiJSON.generate(success_body))
-          llm = R3x::Workflow::Context::Client.llm(api_key_env: "CLOUDFLARE_API_TOKEN_TEST", max_retries: 0) do |config|
-            config.cloudflare_account_id = R3x::Env.fetch!("CLOUDFLARE_ACCOUNT_ID_TEST")
-          end
+        test "uses the selected base or suffixed api token env through the workflow client" do
+          tokens = { "CLOUDFLARE_API_TOKEN" => "base-token", "CLOUDFLARE_API_TOKEN_TEST" => "named-token" }
+          ENV.update(tokens)
 
-          assert_equal "society", llm.judge("Public works announced", model: "clef-flash", questions:).topic.choice
-          assert_requested request, times: 1
+          tokens.each do |api_key_env, token|
+            request = stub_request(:post, endpoint).with(headers: { "Authorization" => "Bearer #{token}" })
+              .to_return(status: 200, headers: json_headers, body: MultiJSON.generate(success_body))
+            llm = R3x::Workflow::Context::Client.llm(api_key_env:, max_retries: 0) do |config|
+              config.cloudflare_account_id = R3x::Env.fetch!("CLOUDFLARE_ACCOUNT_ID_TEST")
+            end
+
+            assert_equal "society", llm.judge("Public works announced", model: "clef-flash", questions:).topic.choice
+            assert_requested request, times: 1
+          end
         end
 
         test "translates rate limits to the workflow transient error without retrying" do

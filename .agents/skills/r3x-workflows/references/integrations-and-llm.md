@@ -77,9 +77,8 @@ underscore suffix. The exact selected env name is read, with no key/token fallba
 The prefix selects a supported provider; unknown providers fail. Custom compatible
 providers use their registered protocol/model-assumption hook, so provider-specific
 model IDs do not require a hand-maintained workflow model registry. For example,
-OpenCode Go uses its registered Chat Completions adapter. See
-[provider configuration](../../../../app/lib/r3x/client/llm/provider_configuration.rb)
-and [registry](../../../../app/lib/r3x/client/llm/provider_registry.rb).
+OpenCode Go uses its registered Chat Completions adapter. For custom providers, see the
+[provider registry](../../../../app/lib/r3x/client/llm/provider_registry.rb).
 
 ## Typed decisions
 

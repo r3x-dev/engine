@@ -51,10 +51,16 @@ module R3x
         end
       end
 
-      test "can configure gemini api key dynamically" do
-        llm = Llm.new(api_key: "test-key", config_api_key_attr: "gemini_api_key")
+      setup do
+        @original_env = ENV.to_h
+        ENV["GEMINI_API_KEY_R3X_TEST"] = "gemini-key"
+        ENV["OPENAI_API_KEY_R3X_TEST"] = "openai-key"
+        ENV["OPENCODE_GO_API_KEY_R3X_TEST"] = "opencode-key"
+        ENV["OPENCODE_GO_API_KEY_R3X_OTHER"] = "other-opencode-key"
+      end
 
-        assert_not_nil llm
+      teardown do
+        ENV.replace(@original_env)
       end
 
       test "judge sends ordered high detail images to OpenAI Decisions and returns a typed choice" do
@@ -80,7 +86,7 @@ module R3x
           body: MultiJSON.generate(model: "gpt-6-luna", answers: [{ type: "choice", name: "category", choice: "invoice",
             probabilities: [{ value: "invoice", probability: 0.95 }, { value: "other", probability: 0.05 }], confidence: 0.9 }]),
         )
-        llm = Llm.new(api_key: "openai-key", config_api_key_attr: "openai_api_key", max_retries: 0)
+        llm = Llm.new(api_key_env: "OPENAI_API_KEY_R3X_TEST", max_retries: 0)
         images = image_bytes.map { |bytes| RubyLLM::Attachment.new(StringIO.new(bytes), resolution: :high) }
 
         decision = llm.judge("Compare these documents", model: "gpt-6-luna", with: images,
@@ -99,7 +105,7 @@ module R3x
             payload.dig("generationConfig", "responseMimeType") == "application/json"
         end
         schema = R3x::Workflow::LlmSchema.define { string :status }
-        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key", max_retries: 0)
+        llm = Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST", max_retries: 0)
 
         result = llm.message(model: "gemini-flash-latest", prompt: "Check this", schema:, thinking_effort: :low)
 
@@ -112,7 +118,7 @@ module R3x
           payload.dig("generationConfig", "thinkingConfig", "thinkingLevel") == "minimal" &&
             payload.fetch("contents").any? { |content| content.fetch("parts").any? { |part| part.dig("inline_data", "mime_type") == "image/png" } }
         end
-        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key", max_retries: 0)
+        llm = Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST", max_retries: 0)
         image_bytes = Base64.strict_decode64("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a5d8AAAAASUVORK5CYII=")
 
         result = llm.analyze_image(image_bytes, model: "gemini-flash-lite-latest", prompt: "Check image", thinking_effort: :minimal)
@@ -123,7 +129,7 @@ module R3x
 
       test "thinking effort is scoped to one call and omission preserves provider defaults" do
         request = stub_gemini_generation
-        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key", max_retries: 0)
+        llm = Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST", max_retries: 0)
 
         llm.message(model: "gemini-flash-latest", prompt: "First", thinking_effort: :medium)
         llm.message(model: "gemini-flash-latest", prompt: "Second")
@@ -144,7 +150,7 @@ module R3x
         original_interval = config.retry_interval
         config.retry_interval = 0.25
 
-        llm = Llm.new(api_key: "test", config_api_key_attr: "gemini_api_key")
+        llm = Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST")
         context = llm.instance_variable_get(:@llm_context)
 
         assert_equal config.max_retries, context.config.max_retries
@@ -158,8 +164,8 @@ module R3x
         test "overrides max_retries #{max_retries} only for this client" do
           R3x::GemLoader.require("ruby_llm")
           default_max_retries = RubyLLM.config.max_retries
-          llm = Llm.new(api_key: "test", config_api_key_attr: "gemini_api_key", max_retries:)
-          other_llm = Llm.new(api_key: "other", config_api_key_attr: "gemini_api_key")
+          llm = Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST", max_retries:)
+          other_llm = Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST")
           context = llm.instance_variable_get(:@llm_context)
           other_context = other_llm.instance_variable_get(:@llm_context)
 
@@ -177,7 +183,7 @@ module R3x
         context = FakeLlmContext.new(FakeChat.new(provider_error))
         RubyLLM.stubs(:context).returns(context)
 
-        llm = Llm.new(api_key: "test", config_api_key_attr: "gemini_api_key")
+        llm = Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST")
 
         error = assert_raises(Llm::TransientError) do
           llm.message(model: "gemini-1.5-flash", prompt: "hello")
@@ -193,7 +199,7 @@ module R3x
         context = FakeLlmContext.new(FakeChat.new(provider_error))
         RubyLLM.stubs(:context).returns(context)
 
-        llm = Llm.new(api_key: "test", config_api_key_attr: "gemini_api_key")
+        llm = Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST")
 
         error = assert_raises(RubyLLM::BadRequestError) do
           llm.message(model: "gemini-1.5-flash", prompt: "hello")
@@ -208,10 +214,7 @@ module R3x
         R3x::GemLoader.require("ruby_llm")
         RubyLLM.stubs(:context).returns(context)
 
-        llm = Llm.new(
-          api_key: "opencode-key",
-          config_api_key_attr: "opencode_go_api_key",
-        )
+        llm = Llm.new(api_key_env: "OPENCODE_GO_API_KEY_R3X_TEST")
 
         assert_equal "response", llm.message(model: "deepseek-chat", prompt: "hello").content
 
@@ -229,10 +232,7 @@ module R3x
       end
 
       test "opencode go provider keeps underscore slug for dynamic model context switching" do
-        llm = Llm.new(
-          api_key: "opencode-key",
-          config_api_key_attr: "opencode_go_api_key",
-        )
+        llm = Llm.new(api_key_env: "OPENCODE_GO_API_KEY_R3X_TEST")
         context = llm.instance_variable_get(:@llm_context)
         chat = context.chat(model: "deepseek-chat", provider: :opencode_go)
 
@@ -257,14 +257,14 @@ module R3x
             ),
           )
 
-        llm = Llm.new(api_key: "opencode-key", config_api_key_attr: "opencode_go_api_key", max_retries: 0)
+        llm = Llm.new(api_key_env: "OPENCODE_GO_API_KEY_R3X_TEST", max_retries: 0)
 
         assert_equal "hello back", llm.message(model: "deepseek-chat", prompt: "hello").content
         assert_requested request
       end
 
       test "uses provider metadata instead of pinning opencode go to registered models" do
-        llm = Llm.new(api_key: "opencode-key", config_api_key_attr: "opencode_go_api_key")
+        llm = Llm.new(api_key_env: "OPENCODE_GO_API_KEY_R3X_TEST")
 
         assert_equal({ provider: :opencode_go, assume_model_exists: true }, llm.instance_variable_get(:@chat_options))
       end
@@ -285,7 +285,7 @@ module R3x
         R3x::GemLoader.require("ruby_llm")
         RubyLLM.stubs(:context).returns(context)
 
-        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key")
+        llm = Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST")
 
         assert_equal "response", llm.message(model: "gemini-1.5-flash", prompt: "hello").content
         assert_equal [{ model: "gemini-1.5-flash" }], context.chat_calls
@@ -298,7 +298,7 @@ module R3x
         R3x::GemLoader.require("ruby_llm")
         RubyLLM.stubs(:context).returns(context)
 
-        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key")
+        llm = Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST")
 
         assert_equal "image response", llm.analyze_image("bytes", prompt: "describe", model: "gemini-1.5-flash").content
 
@@ -317,31 +317,49 @@ module R3x
         R3x::GemLoader.require("ruby_llm")
         RubyLLM.stubs(:context).returns(context)
 
-        llm = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key")
+        llm = Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST")
 
         assert_equal({ "status" => "OK" }, llm.analyze_image("bytes", prompt: "check", model: "gemini-1.5-flash", schema: :schema).parsed)
         assert_equal [:schema], chat.schema_calls
       end
 
       test "does not pin chat options to the first provider initialized in a process" do
-        gemini = Llm.new(api_key: "gemini-key", config_api_key_attr: "gemini_api_key")
-        opencode_go = Llm.new(api_key: "opencode-key", config_api_key_attr: "opencode_go_api_key")
+        gemini = Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST")
+        opencode_go = Llm.new(api_key_env: "OPENCODE_GO_API_KEY_R3X_TEST")
 
         assert_equal({}, gemini.instance_variable_get(:@chat_options))
         assert_equal({ provider: :opencode_go, assume_model_exists: true }, opencode_go.instance_variable_get(:@chat_options))
       end
 
       test "memoizes chat options per provider" do
-        first = Llm.new(api_key: "first-key", config_api_key_attr: "opencode_go_api_key")
-        second = Llm.new(api_key: "second-key", config_api_key_attr: "opencode_go_api_key")
+        first = Llm.new(api_key_env: "OPENCODE_GO_API_KEY_R3X_TEST")
+        second = Llm.new(api_key_env: "OPENCODE_GO_API_KEY_R3X_OTHER")
 
         assert_same first.instance_variable_get(:@chat_options), second.instance_variable_get(:@chat_options)
       end
 
-      test "raises ArgumentError when provider is unregistered" do
-        assert_raises(ArgumentError) do
-          Llm.new(api_key: "unknown-key", config_api_key_attr: "unknown_service_api_key")
+      test "rejects a blank credential env name" do
+        [nil, ""].each do |api_key_env|
+          error = assert_raises(ArgumentError) { Llm.new(api_key_env:) }
+
+          assert_equal "api_key_env is required", error.message
         end
+      end
+
+      test "rejects malformed credential env names" do
+        %w[GEMINI CLOUDFLARE_API_TOKENISH GEMINI_API_KEYTEST].each do |api_key_env|
+          error = assert_raises(ArgumentError) { Llm.new(api_key_env:) }
+
+          assert_equal "LLM credential env name must contain _API_KEY or _API_TOKEN", error.message
+        end
+      end
+
+      test "rejects a credential env name with an unregistered provider" do
+        error = assert_raises(ArgumentError) do
+          Llm.new(api_key_env: "UNKNOWN_SERVICE_API_KEY")
+        end
+
+        assert_equal "Unsupported LLM provider for UNKNOWN_SERVICE_API_KEY: unknown_service", error.message
       end
 
       test "configures RubyLLM logger to Rails.logger lazily" do
@@ -352,7 +370,7 @@ module R3x
         RubyLLM.instance_variable_set(:@logger, nil)
 
         begin
-          Llm.new(api_key: "test-key", config_api_key_attr: "gemini_api_key")
+          Llm.new(api_key_env: "GEMINI_API_KEY_R3X_TEST")
 
           assert_not_nil RubyLLM.config.logger
           assert_same RubyLLM.config.logger, RubyLLM.logger
