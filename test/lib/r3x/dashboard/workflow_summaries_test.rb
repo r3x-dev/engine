@@ -152,6 +152,30 @@ module R3x
         assert_equal "Last run failed", summary.dig(:health, :label)
       end
 
+      test "last run summary orders sleeping runs by their latest queue activity" do
+        recently_ready_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: ["schedule:abc123"],
+          active_job_id: "older-continuation",
+          created_at: 10.minutes.ago,
+        )
+        later_enqueued_job = DashboardJobRows.create_job!(
+          job_class_name: WORKFLOW_JOB_CLASS_NAME,
+          arguments: ["schedule:abc123"],
+          active_job_id: "newer-continuation",
+          created_at: 5.minutes.ago,
+        )
+        [recently_ready_job, later_enqueued_job].each do |job|
+          job.update!(arguments: job.arguments.merge("resumptions" => 1))
+        end
+        SolidQueue::ReadyExecution.find_by!(job_id: recently_ready_job.id).update!(created_at: 1.minute.ago)
+        SolidQueue::ReadyExecution.find_by!(job_id: later_enqueued_job.id).update!(created_at: 3.minutes.ago)
+
+        summary = Workflow::Summaries.new.find!("test_workflow")
+
+        assert_equal recently_ready_job.id, summary.dig(:last_run, :job_id)
+      end
+
       test "last run summary counts the final resumed execution" do
         SolidQueue::RecurringTask.create!(
           key: "workflow:test_workflow:schedule:abc123",

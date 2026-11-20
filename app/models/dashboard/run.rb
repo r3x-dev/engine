@@ -180,12 +180,11 @@ module Dashboard
 
         LATEST_ACTIVITY_BUCKETS.map do |bucket, table_name, column_name|
           status = bucket.start_with?("queued") ? "queued" : bucket
-          latest_activity_status_scope(base_scope, bucket)
-            .left_joins(:ready_execution, :scheduled_execution)
+          activity_status_scope(base_scope, bucket)
             .select(
               "#{quoted_table_name}.id, #{quoted_table_name}.created_at",
               "#{logical_key_sql} AS logical_key",
-              "#{recent_recorded_at_sql(status, table_name, column_name)} AS recorded_at",
+              "#{recorded_at_sql(bucket, table_name, column_name)} AS recorded_at",
               "#{STATUS_PRIORITY.index(status)} AS status_priority",
               "#{%w[queued scheduled].include?(status) ? 1 : 0} AS waiting",
               "CASE WHEN #{resumptions_positive_sql} THEN 1 ELSE 0 END AS resumed",
@@ -218,19 +217,19 @@ module Dashboard
         SQL
       end
 
-      def recent_recorded_at_sql(status, table_name, column_name)
-        case status
+      def recorded_at_sql(bucket, table_name, column_name)
+        case bucket
         when "sleeping"
           "COALESCE(solid_queue_ready_executions.created_at, " \
             "solid_queue_scheduled_executions.created_at, #{quoted_table_name}.updated_at)"
         when "scheduled"
           "COALESCE(solid_queue_scheduled_executions.scheduled_at, #{quoted_table_name}.scheduled_at, #{quoted_table_name}.created_at)"
-        when "failed", "finished", "running", "blocked", "queued"
-          fallback = %w[failed finished running].include?(status) ? "updated_at" : "created_at"
+        when "failed", "finished", "running", "blocked", "queued_ready", "queued_waiting"
+          fallback = %w[failed finished running].include?(bucket) ? "updated_at" : "created_at"
           "COALESCE(#{connection.quote_table_name(table_name)}.#{connection.quote_column_name(column_name)}, " \
             "#{quoted_table_name}.#{fallback})"
         else
-          raise ArgumentError, "Unsupported status: #{status}"
+          raise ArgumentError, "Unsupported activity bucket: #{bucket}"
         end
       end
 
@@ -254,18 +253,15 @@ module Dashboard
       # Returns the latest activity run candidate IDs for the specified workflow class names.
       # To avoid N+1 database round-trips when fetching the latest run for each execution status,
       # we generate ranked subqueries for each status bucket and combine them using a UNION.
-      #
-      # Note: This UNION is highly performant and safe from query planner bloating because the number
-      # of buckets (7) is static and we only project the indexed job ID fields.
       def latest_activity_candidate_ids(class_names:)
         visible_class_names = Array(class_names).compact_blank
         return [] if visible_class_names.empty?
 
         base_scope = dashboard_visible(visible_class_names)
 
-        sqls = LATEST_ACTIVITY_BUCKETS.map do |status, table_name, column_name|
-          recorded_at = Arel::Table.new(table_name)[column_name]
-          ranked_sql = latest_activity_status_scope(base_scope, status)
+        sqls = LATEST_ACTIVITY_BUCKETS.map do |bucket, table_name, column_name|
+          recorded_at = Arel.sql(recorded_at_sql(bucket, table_name, column_name))
+          ranked_sql = activity_status_scope(base_scope, bucket)
             .select(run_table[:id].as("id"), latest_activity_rank(recorded_at).as("dashboard_rank"))
             .to_sql
           "SELECT id FROM (#{ranked_sql}) dashboard_latest_runs WHERE dashboard_rank = 1"
@@ -274,14 +270,16 @@ module Dashboard
         connection.select_values(sqls.join(" UNION "))
       end
 
-      def latest_activity_status_scope(base_scope, status)
-        case status
+      def activity_status_scope(base_scope, bucket)
+        case bucket
         when "queued_ready"
           base_scope.for_status("queued").joins(:ready_execution)
         when "queued_waiting"
           base_scope.for_status("queued").where.missing(:ready_execution)
+        when "sleeping"
+          base_scope.for_status("sleeping").left_joins(:ready_execution, :scheduled_execution)
         else
-          base_scope.for_status(status)
+          base_scope.for_status(bucket)
         end
       end
 
