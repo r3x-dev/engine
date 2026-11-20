@@ -8,9 +8,9 @@
 
 # Keep both base digests aligned with this version; the Renovate Ruby workflow updates them.
 # renovate: datasource=docker depName=docker.io/library/ruby versioning=docker
-ARG RUBY_VERSION=4.0.9
+ARG RUBY_VERSION=4.0.10
 # Shared build stage for installing gems
-FROM dhi.io/ruby:$RUBY_VERSION-debian13-dev@sha256:4ddf6c1b849c4e78a8e3728243b8b00ca06c2956d312b04ae75dfc7be5bf5558 AS build-base
+FROM dhi.io/ruby:$RUBY_VERSION-debian13-dev@sha256:951a398ff475db6f4142596720b1c19296da8e88bb1b2e49fec4b96a5054fe04 AS build-base
 
 # Rails app lives here
 WORKDIR /rails
@@ -111,7 +111,7 @@ RUN chown -R 1000:1000 log storage tmp
 
 # Shared runtime for production and workflow tests.
 # Runtime already includes jemalloc, which Ruby uses without LD_PRELOAD.
-FROM dhi.io/ruby:$RUBY_VERSION-debian13@sha256:d5919cd983e663c6cc4f40582bf097ff3fb2cde90d7e6baafaa919c2319251e8 AS runtime
+FROM dhi.io/ruby:$RUBY_VERSION-debian13@sha256:4968c8c1f8b51360594ee869b3e0d7155a78979a92fd83a9e9d3c50279a440b6 AS runtime
 
 # The runtime includes Bundler's library but not its executable.
 COPY --from=build-base /usr/bin/bundle /usr/bin/bundle
