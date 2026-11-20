@@ -201,6 +201,13 @@ affected state and the rollout boundary. Do not cancel jobs without authorizatio
 - For repeated workflow HTTP calls in one controlled scope, use `ctx.client.persistent_http(...) { |http| ... }`; keep persistence opt-in for measured hot paths.
 - `R3x::Client::Http` follows redirects in ordinary and persistent sessions using HTTPX defaults: at most three hops, no HTTPS-to-HTTP downgrade, and no forwarding `Authorization` to another origin.
 - Use `json:` for JSON request bodies and `response.json` for JSON responses. Prefer `MultiJSON` elsewhere.
+- Default to JSON Schema when validating payload structure at API, LLM output, or persistence
+  boundaries. Reuse the contract's schema if one exists. Otherwise, generate it from the types or
+  metadata that define the contract, or write a schema if those are unavailable. Validate locally
+  with `json_schemer`. Derive provider-specific constraints from the base schema. Keep rules that
+  depend on application state in Ruby. In LLM prompts, describe field semantics and evidence
+  requirements. When replacing a validator, check malformed payloads and representative valid
+  payloads from existing producers or storage.
 - Call `.raise_for_status` when a client should fail fast on transport 4xx/5xx. Do not hand-roll ordinary 2xx checks in thin clients.
 - Manual provider-level error translation is fine after successful transport status, e.g. a `200` response with an error field.
 
