@@ -6,9 +6,7 @@ module R3x
 
     class << self
       def schedule_all!
-        current_keys = []
-        scheduled_logs = []
-        task_options = []
+        tasks = []
         stale_count = 0
 
         Workflow::Registry.all.each do |workflow_class|
@@ -18,30 +16,28 @@ module R3x
           workflow_key = workflow_class.workflow_key
 
           triggers.each do |trigger|
-            key = namespaced_key(workflow_key, trigger)
-            current_keys << key
-            task_options << [key, task_options_for(workflow_class:, trigger:)]
+            trigger_key = trigger.unique_key
+            key = Workflow::RecurringTaskKey.build(workflow_key:, trigger_key:)
+            tasks << [key, workflow_key, trigger_key, task_options_for(workflow_class:, trigger:)]
           end
         end
 
         SolidQueue::RecurringTask.transaction do
-          stale_scope = SolidQueue::RecurringTask.dynamic.where("key LIKE 'workflow:%'").where.not(key: current_keys)
+          stale_scope = SolidQueue::RecurringTask.dynamic
+            .where("key LIKE ?", Workflow::RecurringTaskKey::PATTERN).where.not(key: tasks.map(&:first))
           stale_count = stale_scope.delete_all
 
-          task_options.each do |key, options|
+          tasks.each do |key, _, _, options|
             task = SolidQueue::RecurringTask.dynamic.find_or_initialize_by(key:)
             task.class_name = options[:class]
             task.arguments = options[:args]
             task.schedule = options[:schedule]
             task.queue_name = options[:queue]
             task.save!
-
-            workflow_key, trigger_key = workflow_and_trigger_for(key)
-            scheduled_logs << [workflow_key, trigger_key, options]
           end
         end
 
-        scheduled_logs.each do |workflow_key, trigger_key, options|
+        tasks.each do |_, workflow_key, trigger_key, options|
           tags = [R3x::Log.tag(R3x::Log::WORKFLOW_KEY_TAG, workflow_key), R3x::Log.tag(R3x::Log::TRIGGER_KEY_TAG, trigger_key)]
 
           Rails.logger.tagged(*tags) do
@@ -49,7 +45,7 @@ module R3x
           end
         end
 
-        logger.info("Scheduled #{current_keys.size} dynamic recurring tasks stale_removed=#{stale_count}")
+        logger.info("Scheduled #{tasks.size} dynamic recurring tasks stale_removed=#{stale_count}")
       rescue => e
         logger.error("Recurring task scheduling failed error_class=#{e.class} error_message=#{e.message}")
         raise
@@ -65,7 +61,7 @@ module R3x
           workflow_key = workflow_class.workflow_key
 
           triggers.each do |trigger|
-            result_key = namespaced_key(workflow_key, trigger)
+            result_key = Workflow::RecurringTaskKey.build(workflow_key:, trigger_key: trigger.unique_key)
             result[result_key] = task_options_for(workflow_class:, trigger:).stringify_keys
           end
         end
@@ -74,10 +70,6 @@ module R3x
       end
 
       private
-
-      def namespaced_key(workflow_key, trigger)
-        "workflow:#{workflow_key}:#{trigger.unique_key}"
-      end
 
       def task_options_for(workflow_class:, trigger:)
         queue_attr = workflow_class.queue_name
@@ -89,11 +81,6 @@ module R3x
           schedule: trigger.schedule,
           queue: queue_name,
         }
-      end
-
-      def workflow_and_trigger_for(key)
-        _, workflow_key, *trigger_key_parts = key.split(":")
-        [workflow_key, trigger_key_parts.join(":")]
       end
     end
   end

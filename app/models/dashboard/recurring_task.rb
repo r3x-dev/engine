@@ -6,29 +6,26 @@ module Dashboard
 
     serialize :arguments, coder: SolidQueue::RecurringTask::Arguments, default: []
 
-    scope :workflow_tasks, -> { where("key LIKE ?", "workflow:%").order(:key) }
+    scope :workflow_tasks, -> { where("key LIKE ?", R3x::Workflow::RecurringTaskKey::PATTERN).order(:key) }
     scope :for_workflow_key, ->(workflow_key) do
       escaped_workflow_key = ActiveRecord::Base.sanitize_sql_like(workflow_key.to_s, "!")
-      workflow_tasks.where("key LIKE ? ESCAPE '!'", "workflow:#{escaped_workflow_key}:%")
+      pattern = R3x::Workflow::RecurringTaskKey.build(workflow_key: escaped_workflow_key, trigger_key: "%")
+      workflow_tasks.where("key LIKE ? ESCAPE '!'", pattern)
     end
 
     class << self
       def find_by_workflow_and_trigger_key(workflow_key:, trigger_key:)
-        find_by(key: workflow_task_key(workflow_key, trigger_key))
+        find_by(key: R3x::Workflow::RecurringTaskKey.build(workflow_key:, trigger_key:))
       end
 
       def find_by_workflow_and_trigger_key!(workflow_key:, trigger_key:)
-        find_by!(key: workflow_task_key(workflow_key, trigger_key))
+        find_by!(key: R3x::Workflow::RecurringTaskKey.build(workflow_key:, trigger_key:))
       end
 
       def preferred_for_workflow(workflow_key)
         tasks = for_workflow_key(workflow_key).to_a
 
         tasks.find { |task| task.direct_workflow_class_name.present? } || tasks.first
-      end
-
-      def workflow_task_key(workflow_key, trigger_key)
-        "workflow:#{workflow_key}:#{trigger_key}"
       end
     end
 
@@ -56,14 +53,7 @@ module Dashboard
     private
 
     def parsed_key
-      @parsed_key ||= begin
-        prefix, workflow_key, trigger_key = key.to_s.split(":", 3)
-        unless prefix == "workflow" && workflow_key.present? && trigger_key.present?
-          raise ArgumentError, "Unsupported recurring task key: #{key.inspect}"
-        end
-
-        { workflow_key:, trigger_key: }
-      end
+      @parsed_key ||= R3x::Workflow::RecurringTaskKey.parse(key)
     end
   end
 end
