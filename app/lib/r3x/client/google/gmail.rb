@@ -61,14 +61,16 @@ module R3x
             mail.subject = subject
 
             if html_body.present?
-              mail.text_part = Mail::Part.new do |part|
+              alternatives = attachments.empty? ? mail : Mail::Part.new
+              alternatives.text_part = Mail::Part.new do |part|
                 part.content_type = "text/plain; charset=UTF-8"
                 part.body = body
               end
-              mail.html_part = Mail::Part.new do |part|
+              alternatives.html_part = Mail::Part.new do |part|
                 part.content_type = "text/html; charset=UTF-8"
                 part.body = html_body
               end
+              mail.add_part(alternatives) if attachments.any?
             elsif attachments.any?
               mail.text_part = Mail::Part.new do |part|
                 part.content_type = "text/plain; charset=UTF-8"

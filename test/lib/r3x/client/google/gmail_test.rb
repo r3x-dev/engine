@@ -105,6 +105,62 @@ module R3x
           end
         end
 
+        test "deliver groups alternative bodies separately from attachments" do
+          service = FakeGmailService.new
+          html = '<p><a href="https://example.test/add_event/#prefill=event">Rever evento</a></p>'
+
+          with_env("R3X_GMAIL_DRY_RUN" => "false") do
+            R3x::Client::GoogleAuth.require_gmail!
+            R3x::Client::GoogleAuth.stubs(:from_env).returns(Object.new)
+            ::Google::Apis::GmailV1::GmailService.stubs(:new).returns(service)
+
+            Gmail.new(project: "TEST_APP").deliver(
+              to: "recipient@example.com",
+              subject: "Review required",
+              body: "Review the poster",
+              html_body: html,
+              attachments: [{ filename: "poster.png", content: "poster bytes" }],
+            )
+          end
+
+          message = Mail.read_from_string(service.delivered_message.raw)
+
+          assert_equal "multipart/mixed", message.mime_type
+          assert_equal %w[multipart/alternative image/png], message.parts.map(&:mime_type)
+          alternatives, poster = message.parts
+
+          assert_equal %w[text/plain text/html], alternatives.parts.map(&:mime_type)
+          assert_equal "Review the poster", alternatives.text_part.decoded
+          assert_equal html, alternatives.html_part.decoded
+          assert_predicate poster, :attachment?
+          assert_equal "poster.png", poster.filename
+          assert_equal "poster bytes", poster.decoded
+        end
+
+        test "deliver sends plain text alongside attachments" do
+          service = FakeGmailService.new
+
+          with_real_delivery do
+            ::Google::Apis::GmailV1::GmailService.stubs(:new).returns(service)
+
+            Gmail.new(project: "TEST_APP").deliver(
+              to: "recipient@example.com",
+              subject: "Review required",
+              body: "Review the poster",
+              attachments: [{ filename: "poster.png", content: "poster bytes" }],
+            )
+          end
+
+          message = Mail.read_from_string(service.delivered_message.raw)
+
+          assert_equal "multipart/mixed", message.mime_type
+          assert_equal %w[text/plain image/png], message.parts.map(&:mime_type)
+          text, poster = message.parts
+
+          assert_equal "Review the poster", text.decoded
+          assert_predicate poster, :attachment?
+        end
+
         [[500, "backendError"], [503, "backendError"], [429, "rateLimitExceeded"],
           [403, "userRateLimitExceeded"], [408, "requestTimeout"]].each do |status, reason|
           test "deliver exposes transient Gmail error for #{status} #{reason}" do
