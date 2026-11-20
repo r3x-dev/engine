@@ -97,28 +97,39 @@
       ],
     },
     {
-      description: 'Auto-merge only patch updates for gems when tests pass',
+      description: 'Auto-merge patch and minor updates, including Ruby, when tests pass',
       matchUpdateTypes: [
         'patch',
-      ],
-      automerge: true,
-      automergeType: 'branch',
-      automergeStrategy: 'squash',
-      matchPackageNames: [
-        '*',
-      ],
-    },
-    {
-      description: 'Auto-merge minor updates when tests pass',
-      matchUpdateTypes: [
         'minor',
       ],
       automerge: true,
       automergeType: 'branch',
       automergeStrategy: 'squash',
-      matchPackageNames: [
-        '*',
+    },
+    {
+      description: 'Keep PostgreSQL test images on major version 18',
+      matchDatasources: [
+        'docker',
       ],
+      matchPackageNames: [
+        'postgres',
+      ],
+      allowedVersions: '/^18(?:[.-]|$)/',
+    },
+    {
+      description: 'Auto-merge PostgreSQL 18 Alpine digest updates when tests pass',
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'postgres',
+      ],
+      matchCurrentValue: '18-alpine',
+      matchUpdateTypes: [
+        'digest',
+      ],
+      automerge: true,
+      automergeType: 'branch',
     },
     {
       description: 'Major updates - PR only, no auto-merge',

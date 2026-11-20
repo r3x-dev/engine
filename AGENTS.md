@@ -210,6 +210,7 @@ affected state and the rollout boundary. Do not cancel jobs without authorizatio
 - Do not write DB-specific SQL strings directly without an adapter branch and a clear unsupported-adapter error.
 - Prefer DB-side filtering, deduplication, ranking, aggregation, and `UNION` over loading many rows and shaping them in Ruby.
 - Tests use SQLite by default. Set `R3X_TEST_DATABASE_URL` to exercise PostgreSQL; `just test-postgres` provides the local acceptance path, and CI runs both adapters.
+- Keep the Compose and CI test services on PostgreSQL 18 with the same image digest. Treat a PostgreSQL major upgrade as a separate decision.
 
 ## Env
 
@@ -303,6 +304,7 @@ affected state and the rollout boundary. Do not cancel jobs without authorizatio
 
 - `Dockerfile ARG RUBY_VERSION` owns the Ruby version; the CI setup action reads it for runner-native jobs.
 - Keep both DHI image digests aligned with the version. The Renovate Ruby workflow updates them when the version changes.
+- Ruby patch and minor updates can automerge when CI passes on the revision with both DHI digests aligned. Keep major upgrades manual.
 - When bumping Ruby, update the Dockerfile version and both digests together and rebuild the Docker `production` target.
 
 ## Scope
