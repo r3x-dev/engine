@@ -1,24 +1,22 @@
 ---
 title: Use respond_to? Over is_a? for Type Checking
-impact: HIGH
-impactDescription: enables polymorphism without inheritance hierarchy
 tags: idiom, duck-typing, respond-to, polymorphism
 ---
 
 ## Use respond_to? Over is_a? for Type Checking
 
-Checking `is_a?` couples code to a specific class hierarchy, breaking when you introduce adapters, decorators, or any object that quacks like the expected type but doesn't inherit from it. Duck typing is the Ruby way -- check behavior, not ancestry. This lets any object participate as long as it implements the expected protocol.
+Use an explicit behavior protocol when multiple real implementations need it. Treat broadening accepted types as an API decision, not an equivalent replacement for is_a?. Remember that is_a? already accepts subclasses. Preserve branch priority and conversion errors; a respond_to? check alone does not prove protocol semantics.
 
-**Incorrect (type checking couples to class hierarchy):**
+**Before (type checking couples to class hierarchy):**
 
 ```ruby
 class NotificationDispatcher
   def dispatch(destination, message)
-    if destination.is_a?(String)  # breaks for StringIO, Pathname, or any string-like object
+    if destination.is_a?(String)  # Accept String and its subclasses under the original API.
       send_to_email(destination, message)
     elsif destination.is_a?(Array)
       destination.each { |dest| dispatch(dest, message) }
-    elsif destination.is_a?(User)  # breaks for AdminUser, GuestUser, or decorated users
+    elsif destination.is_a?(User)  # Accept User subclasses; unrelated adapters need an explicit protocol.
       send_to_user(destination, message)
     else
       raise ArgumentError, "unsupported destination type: #{destination.class}"
@@ -27,7 +25,7 @@ class NotificationDispatcher
 end
 ```
 
-**Correct (check behavior, not ancestry):**
+**Alternative (check behavior, not ancestry):**
 
 ```ruby
 class NotificationDispatcher

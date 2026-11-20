@@ -1,7 +1,5 @@
 ---
 title: Spell Out Names Except Universal Abbreviations
-impact: LOW-MEDIUM
-impactDescription: prevents ambiguity and miscommunication
 tags: name, abbreviations, readability, clarity
 ---
 
@@ -9,7 +7,12 @@ tags: name, abbreviations, readability, clarity
 
 Abbreviated names save keystrokes but cost minutes in comprehension. `desc` could mean description, descending, or descriptor. `mgr` saves three characters but forces every reader to mentally expand it. Spell out names fully unless the abbreviation is universally understood in software (`id`, `url`, `html`, `json`, `http`, `db`, `io`, `api`).
 
-**Incorrect (abbreviations create ambiguity):**
+Distinguish local names from database columns, serialized keys, and public
+methods. Rename external fields only within an approved schema/API migration;
+otherwise improve local names while preserving those boundaries. Update callers
+and keep comments that explain constraints or reasons the code cannot express.
+
+**Before (abbreviations create ambiguity):**
 
 ```ruby
 class TxnProcessor
@@ -31,7 +34,7 @@ class TxnProcessor
 end
 ```
 
-**Correct (spelled-out names eliminate guesswork):**
+**Alternative (spelled-out names eliminate guesswork):**
 
 ```ruby
 class TransactionProcessor

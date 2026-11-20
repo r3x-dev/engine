@@ -1,7 +1,5 @@
 ---
 title: Use One Word per Concept Across Codebase
-impact: LOW-MEDIUM
-impactDescription: prevents confusion between synonyms
 tags: name, vocabulary, consistency, convention
 ---
 
@@ -9,7 +7,12 @@ tags: name, vocabulary, consistency, convention
 
 When different parts of a codebase use `fetch`, `get`, `retrieve`, and `load` for the same conceptual operation, developers waste time wondering whether the synonyms imply different behavior. Pick one word per concept and enforce it everywhere. Consistency lets developers predict method names without searching.
 
-**Incorrect (synonyms for the same operation across services):**
+Distinguish local names from database columns, serialized keys, and public
+methods. Rename external fields only within an approved schema/API migration;
+otherwise improve local names while preserving those boundaries. Update callers
+and keep comments that explain constraints or reasons the code cannot express.
+
+**Before (synonyms for the same operation across services):**
 
 ```ruby
 class UserService
@@ -43,7 +46,7 @@ class PaymentHandler; end    # handler vs controller
 class InvoiceProcessor; end  # processor vs controller
 ```
 
-**Correct (one word per concept, applied consistently):**
+**Alternative (one word per concept, applied consistently):**
 
 ```ruby
 class UserService

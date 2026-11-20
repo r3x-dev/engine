@@ -1,15 +1,13 @@
 ---
 title: Use Pattern Matching for Structural Conditions
-impact: HIGH
-impactDescription: reduces 3-5 nested nil checks to 1 expression
 tags: cond, pattern-matching, ruby3, destructuring
 ---
 
 ## Use Pattern Matching for Structural Conditions
 
-Deeply nested hash access with manual nil checks is fragile and hard to read. Each level of `response[:key] && response[:key][:nested]` adds a potential failure point and obscures the structure being validated. Ruby 3.x pattern matching (`case/in`) declaratively describes the expected shape and destructures values in a single expression, making structural expectations explicit and self-documenting.
+Use pattern matching on Ruby 3.0+ only if it clarifies the schema. In this example, require ordinary symbol-keyed Hashes for each populated nested object; allow nil/false to represent missing data. Preserve the original distinctions between empty, missing, incomplete, and malformed responses, including falsey values. Keep guard clauses instead if they are simpler.
 
-**Incorrect (nested hash checks with manual nil guards):**
+**Before (nested hash checks with manual nil guards):**
 
 ```ruby
 class PaymentResponseParser
@@ -40,21 +38,24 @@ class PaymentResponseParser
 end
 ```
 
-**Correct (pattern matching with destructuring):**
+**Alternative (pattern matching with destructuring):**
 
 ```ruby
 class PaymentResponseParser
   def extract_transaction(response)
     case response
     in { data: { transaction: { id:, status: "completed",
-          amount: { value:, currency: } } } }  # declares expected shape in one expression
+          amount: { value:, currency: } } } } if id && value && currency
       build_record(id: id, value: value, currency: currency)
-    in { data: { transaction: { id:, status: } } }
-      handle_incomplete_transaction(response)
-    in { data: { transaction: nil } }
-      handle_missing_transaction(response)
     else
-      handle_empty_response(response)
+      data = response[:data]
+      return handle_empty_response(response) unless data
+      txn = data[:transaction]
+      return handle_missing_transaction(response) unless txn
+      unless txn[:id] && txn[:status] == "completed" && txn[:amount]
+        return handle_incomplete_transaction(response)
+      end
+      handle_malformed_response(response)
     end
   end
 end

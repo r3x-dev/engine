@@ -1,17 +1,17 @@
 ---
 title: Wrap Objects with Decorator for Added Behavior
-impact: MEDIUM
-impactDescription: reduces subclass explosion from 2^N combinations to N decorators
 tags: pattern, decorator, wrapper, composition
 ---
 
 ## Wrap Objects with Decorator for Added Behavior
 
-When cross-cutting concerns like logging, caching, and retries are added through subclassing, the number of subclasses explodes combinatorially (LoggingClient, CachingClient, LoggingCachingClient, etc.). Decorators using `SimpleDelegator` let you stack behaviors independently and in any order, keeping each concern in its own class.
+Use decorators for independently needed behavior, keeping the original wrapper order. Reordering caching, logging, and retries changes visible effects. Require the delegator and network libraries explicitly. Treat retries as an intentional policy change with bounded attempts and an idempotent operation, not an automatic addition during extraction.
 
-**Incorrect (subclass explosion for every combination of concerns):**
+**Before (subclass explosion for every combination of concerns):**
 
 ```ruby
+require "net/http"
+
 class HttpClient
   def fetch(url)
     Net::HTTP.get(URI(url))
@@ -22,7 +22,7 @@ class LoggingHttpClient < HttpClient
   def fetch(url)
     Rails.logger.info("HTTP GET #{url}")
     result = super
-    Rails.logger.info("HTTP 200 #{url} (#{result.bytesize} bytes)")
+    Rails.logger.info("HTTP response #{url} (#{result.bytesize} bytes)")
     result
   end
 end
@@ -37,9 +37,12 @@ class CachingLoggingHttpClient < LoggingHttpClient
 end
 ```
 
-**Correct (stacked decorators using SimpleDelegator):**
+**Alternative (stacked decorators using SimpleDelegator):**
 
 ```ruby
+require "net/http"
+require "delegate"
+
 class HttpClient
   def fetch(url)
     Net::HTTP.get(URI(url))
@@ -50,7 +53,7 @@ class LoggingDecorator < SimpleDelegator
   def fetch(url)
     Rails.logger.info("HTTP GET #{url}")
     result = super  # delegates to wrapped object
-    Rails.logger.info("HTTP 200 #{url} (#{result.bytesize} bytes)")
+    Rails.logger.info("HTTP response #{url} (#{result.bytesize} bytes)")
     result
   end
 end
@@ -68,6 +71,7 @@ end
 
 class RetryDecorator < SimpleDelegator
   def fetch(url, retries: 3)
+    raise ArgumentError, "retries must be a positive Integer" unless retries.is_a?(Integer) && retries.positive?
     attempts = 0
     begin
       attempts += 1
@@ -83,6 +87,6 @@ end
 client = HttpClient.new
 client = LoggingDecorator.new(client)
 client = CachingDecorator.new(client)
-client = RetryDecorator.new(client)
+# Add RetryDecorator only when retries are explicitly part of the contract.
 client.fetch("https://api.example.com/data")
 ```

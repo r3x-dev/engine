@@ -1,15 +1,17 @@
 ---
 title: One Reason to Change per Class
-impact: HIGH
-impactDescription: reduces change cascade across codebase
 tags: struct, srp, cohesion, coupling
 ---
+
+## Contents
+
+- [Context and examples](#one-reason-to-change-per-class)
 
 ## One Reason to Change per Class
 
 When a class has two responsibilities, a change to one can break the other. If you describe a class using "and" -- "this class formats reports *and* sends them" -- it has too many reasons to change. Split it so each class changes for exactly one reason.
 
-**Incorrect (Report class formats AND sends):**
+**Before (Report class formats AND sends):**
 
 ```ruby
 class Report
@@ -52,7 +54,7 @@ class Report
 end
 ```
 
-**Correct (split into ReportFormatter and ReportSender):**
+**Alternative (split into ReportFormatter and ReportSender):**
 
 ```ruby
 class ReportFormatter

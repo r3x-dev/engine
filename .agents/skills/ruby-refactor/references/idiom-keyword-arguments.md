@@ -1,7 +1,5 @@
 ---
 title: Use Keyword Arguments for Clarity
-impact: HIGH
-impactDescription: self-documents call sites, prevents argument order bugs
 tags: idiom, keyword-arguments, readability, api-design
 ---
 
@@ -9,7 +7,11 @@ tags: idiom, keyword-arguments, readability, api-design
 
 Positional arguments with more than two parameters become unreadable at the call site. Callers must remember exact ordering, and boolean flags are especially cryptic. Keyword arguments make every call self-documenting and immune to transposition bugs.
 
-**Incorrect (positional arguments obscure meaning):**
+Treat this signature change as an API migration. Update all in-scope callers
+and check external consumers before replacing positional arguments with keywords
+or a grouped object; do not silently add wrappers or accept both forms forever.
+
+**Before (positional arguments obscure meaning):**
 
 ```ruby
 class UserService
@@ -28,7 +30,7 @@ end
 service.create_user("John", "Doe", true, false, 25)
 ```
 
-**Correct (keyword arguments self-document every call):**
+**Alternative (keyword arguments self-document every call):**
 
 ```ruby
 class UserService

@@ -1,7 +1,5 @@
 ---
 title: Rename to Eliminate Need for Comments
-impact: LOW-MEDIUM
-impactDescription: eliminates 1 comment per renamed method or variable
 tags: name, comments, self-documenting, rename
 ---
 
@@ -9,7 +7,12 @@ tags: name, comments, self-documenting, rename
 
 A comment explaining what a method or variable does is a naming failure. Comments drift from reality as code evolves, but names are checked by every caller. When you feel the urge to write a comment, rename instead. A name that renders its comment redundant is always the better choice.
 
-**Incorrect (comments compensate for vague names):**
+Distinguish local names from database columns, serialized keys, and public
+methods. Rename external fields only within an approved schema/API migration;
+otherwise improve local names while preserving those boundaries. Update callers
+and keep comments that explain constraints or reasons the code cannot express.
+
+**Before (comments compensate for vague names):**
 
 ```ruby
 class Account
@@ -32,7 +35,7 @@ class Account
 end
 ```
 
-**Correct (names replace every comment):**
+**Alternative (names replace every comment):**
 
 ```ruby
 class Account

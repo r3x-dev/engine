@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ruby Refactor"
+  short_description: "Simplify Ruby code while preserving behavior"
+  default_prompt: "Use $ruby-refactor to simplify this Ruby code while preserving its behavior and public contracts."

@@ -1,15 +1,13 @@
 ---
 title: Extract Algorithm Variations into Strategy Objects
-impact: MEDIUM
-impactDescription: reduces case/when branches from N to 0 in caller
 tags: pattern, strategy, open-closed, algorithm
 ---
 
 ## Extract Algorithm Variations into Strategy Objects
 
-Case/when blocks that select between algorithm variations violate the Open/Closed Principle: every new variation forces a change to the selector method. Extracting each algorithm into a strategy object with a common `call` interface lets you add new strategies by adding code, never by editing existing code.
+Use strategy objects only for existing variations whose independent behavior or reuse justifies the extra classes. Keep a short case when it is clearer. Preserve every tier and fallback, and use shared instances only for stateless strategies; freezing the registry does not freeze its values.
 
-**Incorrect (case/when coupling all pricing logic into one method):**
+**Before (case/when coupling all pricing logic into one method):**
 
 ```ruby
 class PricingCalculator
@@ -35,7 +33,7 @@ class PricingCalculator
 end
 ```
 
-**Correct (strategy objects with common `call` interface):**
+**Alternative (strategy objects with common `call` interface):**
 
 ```ruby
 class StandardPricing

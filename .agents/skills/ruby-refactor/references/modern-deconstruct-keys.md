@@ -1,15 +1,13 @@
 ---
 title: Implement deconstruct_keys for Custom Pattern Matching
-impact: MEDIUM
-impactDescription: enables pattern matching on domain objects
 tags: modern, deconstruct-keys, pattern-matching, protocol
 ---
 
 ## Implement deconstruct_keys for Custom Pattern Matching
 
-Without `deconstruct_keys`, custom objects cannot participate in Ruby 3.0+ `case/in` pattern matching, forcing callers back to manual accessor checks and conditionals. Implementing this protocol method lets domain objects expose their structure declaratively, enabling the same concise matching syntax that works with hashes and arrays.
+Implement `deconstruct_keys` only when callers need hash-pattern matching on a domain object. Return the requested public fields, or all supported fields when keys is nil. Preserve the original numeric conditions: a threshold comparison is not equivalent to an integer range for zero, negative, or fractional altitudes. Use Ruby 3.0+ for the case/in examples.
 
-**Incorrect (manual attribute checks on domain objects):**
+**Before (manual attribute checks on domain objects):**
 
 ```ruby
 class Coordinate
@@ -39,7 +37,7 @@ class FlightTracker
 end
 ```
 
-**Correct (deconstruct_keys enables case/in on domain objects):**
+**Alternative (deconstruct_keys enables case/in on domain objects):**
 
 ```ruby
 class Coordinate
@@ -63,12 +61,14 @@ end
 class FlightTracker
   def classify_position(coordinate)
     case coordinate
-    in { latitude: (-90..90), longitude: (-180..180), altitude: (10_001..) }
-      :high_altitude
-    in { latitude: (-90..90), longitude: (-180..180), altitude: (1..10_000) }
-      :low_altitude
-    in { latitude: (-90..90), longitude: (-180..180) }
-      :ground_level
+    in { latitude:, longitude:, altitude: } if latitude.between?(-90, 90) && longitude.between?(-180, 180)
+      if altitude && altitude > 10_000
+        :high_altitude
+      elsif altitude
+        :low_altitude
+      else
+        :ground_level
+      end
     else
       :invalid
     end

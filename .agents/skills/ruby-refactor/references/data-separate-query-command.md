@@ -1,15 +1,13 @@
 ---
 title: Separate Query Methods from Command Methods
-impact: MEDIUM
-impactDescription: enables safe caching and idempotent reads
 tags: data, cqrs, query, command, side-effects
 ---
 
 ## Separate Query Methods from Command Methods
 
-A method that both returns a value and mutates state is impossible to call safely -- callers cannot check a balance without accidentally triggering a withdrawal, and the result cannot be cached or retried. Separating queries (return data, no side effects) from commands (mutate state, return nothing) makes each independently testable, cacheable, and composable.
+Add a side-effect-free query when callers need to inspect state without invoking a command. Keep useful command return values: a withdrawal returning its new balance is not inherently wrong. Preserve the existing withdraw API and do not infer that a query remains fresh or can be cached while state changes.
 
-**Incorrect (query and command tangled in one method):**
+**Before (query and command tangled in one method):**
 
 ```ruby
 class Account
@@ -21,7 +19,7 @@ class Account
   end
 
   def withdraw(amount)
-    # Returns remaining balance AND mutates state — caller can't query without side effects
+    # Preserve the command's documented remaining-balance result.
     raise InsufficientFundsError, "balance too low" if amount > @balance
 
     @balance -= amount
@@ -31,10 +29,10 @@ class Account
 end
 
 account = Account.new(balance: 500.00)
-remaining = account.withdraw(100.00) # wanted to check balance, got a mutation instead
+remaining = account.withdraw(100.00) # Perform withdrawal and use its result.
 ```
 
-**Correct (query returns data, command mutates state):**
+**Alternative (query returns data, command mutates state):**
 
 ```ruby
 class Account
@@ -45,18 +43,18 @@ class Account
     @transactions = []
   end
 
-  # Query — safe to call any number of times, cacheable
+  # Query — read the current state; do not assume the answer remains fresh.
   def sufficient_funds?(amount)
     amount <= @balance
   end
 
-  # Command — mutates state, returns nothing
+  # Command — mutate state and preserve the documented balance result.
   def withdraw(amount)
     raise InsufficientFundsError, "balance too low" unless sufficient_funds?(amount)
 
     @balance -= amount
     @transactions << { type: :withdrawal, amount: amount, at: Time.current }
-    nil # explicit nil signals no return value by design
+    @balance
   end
 end
 
@@ -65,3 +63,6 @@ if account.sufficient_funds?(100.00)  # query — no side effects
   account.withdraw(100.00)            # command — explicit mutation
 end
 ```
+
+Keep validation inside the command. A prior sufficient_funds? check is not a
+lock or a transaction; it cannot prevent concurrent withdrawals by itself.

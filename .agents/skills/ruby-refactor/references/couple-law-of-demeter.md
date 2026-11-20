@@ -1,15 +1,13 @@
 ---
 title: Enforce Law of Demeter with Delegation
-impact: HIGH
-impactDescription: reduces coupling to 1 dependency per call
 tags: couple, law-of-demeter, delegate, forwardable
 ---
 
 ## Enforce Law of Demeter with Delegation
 
-Chained method calls like `order.customer.address.city` couple the caller to the entire object graph, so renaming or restructuring any intermediate object breaks every call site. Delegation exposes only what the caller needs, keeping each object's contract to a single dot.
+Expose a stable domain operation when repeated callers depend on an internal object graph. Do not enforce a dot-count rule or add delegates without a concrete caller need. Preserve the full path: city and postal_code belong to customer.address, not automatically to customer. Use Rails delegate only in a project that loads it.
 
-**Incorrect (chained calls couple caller to 3 levels of structure):**
+**Before (chained calls couple caller to 3 levels of structure):**
 
 ```ruby
 class OrderMailer
@@ -28,9 +26,13 @@ class OrderMailer
 end
 ```
 
-**Correct (delegate through the immediate collaborator):**
+**Alternative (delegate through the immediate collaborator):**
 
 ```ruby
+class Customer
+  delegate :city, :postal_code, to: :address
+end
+
 class Order
   # Expose only what callers need — internal structure stays private
   delegate :email, to: :customer

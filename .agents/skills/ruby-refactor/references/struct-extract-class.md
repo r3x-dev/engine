@@ -1,15 +1,13 @@
 ---
 title: Extract Class for Single Responsibility
-impact: CRITICAL
-impactDescription: reduces class coupling by 50-80%
 tags: struct, extract-class, srp, sandi-metz
 ---
 
 ## Extract Class for Single Responsibility
 
-When a class accumulates methods that operate on a subset of its data, it has absorbed a second responsibility. Extracting a value object gives that concept a name, a home for validation, and the ability to be reused independently. Sandi Metz's rule: classes should be 100 lines or fewer.
+Extract a class only when a cohesive responsibility has a useful independent owner. Preserve the existing User accessors and methods in this example: email remains the original String or nil, and validation does not trim or coerce it. Do not enforce a class-size quota or introduce a value-object API migration unintentionally.
 
-**Incorrect (User class absorbing email logic):**
+**Before (User class absorbing email logic):**
 
 ```ruby
 class User
@@ -41,26 +39,30 @@ class User
 end
 ```
 
-**Correct (extracted EmailAddress value object):**
+**Alternative (extracted EmailAddress value object):**
 
 ```ruby
 class User
-  attr_accessor :name, :role
-  attr_reader :email
+  attr_accessor :name, :email, :role
 
-  def initialize(name:, email:, role:)
-    @name = name
-    @email = EmailAddress.new(email) # value object owns all email logic
-    @role = role
+  def validate_email
+    EmailAddress.new(email).valid?
+  end
+
+  def email_domain
+    EmailAddress.new(email).domain
+  end
+
+  def corporate_email?
+    EmailAddress.new(email).corporate?
   end
 
   def send_welcome_email
-    return unless email.valid?
-
+    return unless validate_email
     Mailer.deliver(
-      to: email.to_s,
+      to: email,
       subject: "Welcome, #{name}!",
-      body: "Your account on #{email.domain} is ready."
+      body: "Your account on #{email_domain} is ready."
     )
   end
 end
@@ -70,10 +72,11 @@ class EmailAddress
   FORMAT = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
 
   def initialize(address)
-    @address = address.to_s.strip
+    @address = address
   end
 
   def valid?
+    return false if @address.nil? || @address.strip.empty?
     @address.match?(FORMAT)
   end
 
@@ -84,11 +87,7 @@ class EmailAddress
   def corporate?
     !CORPORATE_FREEMAIL.include?(domain)
   end
-
-  def to_s
-    @address
-  end
 end
 ```
 
-Reference: Sandi Metz, *Practical Object-Oriented Design* -- classes should be 100 lines or fewer.
+Keep these small delegating methods only when the extraction has a concrete maintenance benefit.

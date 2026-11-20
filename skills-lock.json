@@ -1,76 +1,105 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "ce-dhh-rails-style": {
       "source": "zewelor/agents-skills",
       "sourceType": "github",
       "skillPath": "skills/ce-dhh-rails-style/SKILL.md",
-      "computedHash": "e1eb7a2cb43023e97160f1d8beadb5e6a02596154148e41c0ba1696d6784f046"
+      "computedHash": "8264bc79cfad063337744c2970b03d61dbfb77f1ce1cbfc93546074aab1d7038"
+    },
+    "codebase-design": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/codebase-design/SKILL.md",
+      "computedHash": "d40f025dc1b0f2020663260f38f2bcb8d6ed3523afb11e5fda624b01238677e8"
     },
     "coordinator": {
       "source": "raine/workmux",
       "sourceType": "github",
       "skillPath": "skills/coordinator/SKILL.md",
-      "computedHash": "1ede776a06bcb19abf7afef806a1fc81a7e509ea1f1335348287b4a7b2b20ccd"
+      "computedHash": "7ddb7c46c392618dca9bef806fc007f7c46432e0ab195d6f5ec71f46a056817e"
+    },
+    "domain-modeling": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/domain-modeling/SKILL.md",
+      "computedHash": "b78689833404148c769077355e12dbe5ad996a158a1e21e58ddf169e439d9d8c"
+    },
+    "grilling": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/productivity/grilling/SKILL.md",
+      "computedHash": "485451958784497cd4c4dbea13cb5bbb579da58fac0d0e45f3bcb310fab68ac7"
+    },
+    "improve-codebase-architecture": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
+      "computedHash": "f0820b18426a7d9a6c823a890988ba0ac70bf0fd596d30d7ef07c88558728c23"
     },
     "merge": {
       "source": "raine/workmux",
       "sourceType": "github",
       "skillPath": "skills/merge/SKILL.md",
-      "computedHash": "c0185d9c78d9756b1d26873138f8bcf71a3f62bd84772f2b1a4213894f00b5e2"
+      "computedHash": "8c4f6e0267641aad5fa5a33463d0b79094b7e7286eae336d33bde60cecd337d9"
     },
     "open-pr": {
       "source": "raine/workmux",
       "sourceType": "github",
       "skillPath": "skills/open-pr/SKILL.md",
-      "computedHash": "f79fdc14a6bbb5e4d0158a659b75a4ec2b0993d60c932e72dc683c4163f578ed"
+      "computedHash": "de974230056b990bd8858d17f39f617aa9d9c03b85284025f55649b753b85fcf"
     },
     "rails-audit-thoughtbot": {
       "source": "thoughtbot/rails-audit-thoughtbot",
       "sourceType": "github",
       "skillPath": "SKILL.md",
-      "computedHash": "1609eb30bb2ad449bfdb3ef61eed04535085368fead17e667ec606afda512cce"
+      "computedHash": "01b26a1c223ff0961bb9d63306f39feb3f0fb11e69478ee2556245e63f3095ca"
     },
     "rebase": {
       "source": "raine/workmux",
       "sourceType": "github",
       "skillPath": "skills/rebase/SKILL.md",
-      "computedHash": "eb77e391bc379b386a2efdc52caeb8933d86f529acba55d9663896ae65217d2f"
+      "computedHash": "d8ff49fea1c59a74daedcc0f8037f1395e10a8f2dc6068e9aeaf015b80601dea"
     },
     "ruby-optimise": {
       "source": "zewelor/agents-skills",
       "sourceType": "github",
       "skillPath": "skills/ruby-optimise/SKILL.md",
-      "computedHash": "511432038c08a649a9fe262d93b1a8f2b1aa3ad47b29212bed26387007a844b3"
+      "computedHash": "834c5b05235c234ba2b5b6d11255173db1fef7dc79e99e4810009fce7044ab5f"
     },
     "ruby-refactor": {
       "source": "zewelor/agents-skills",
+      "commit": "18b46d7600317e0ecfeb435fd052b4da52f21d2c",
       "sourceType": "github",
       "skillPath": "skills/ruby-refactor/SKILL.md",
-      "computedHash": "c7e6a8a49a55d6fc72dd2038223732b5cc66a698fa2365323d65ab4dbc44e46c"
+      "computedHash": "95e72ed59ff1297a2f9a92e96f554f6c789943dc0e90c914293cc6c76c82f673"
     },
     "ruby-resource-map": {
       "source": "./.agents/skills/ruby-resource-map",
       "sourceType": "local",
-      "computedHash": "1a98c79c36d13098bfc84e9811fec9be31ead01d0dedf552ad7e160b58ae56b7"
+      "computedHash": "a1971040663740e369f297a37a07a89d41dd1916f69f5c18458921c4c8735dc7"
     },
     "tech-debt-audit": {
       "source": "fastruby/tech-debt-skill",
       "sourceType": "github",
       "skillPath": ".claude/skills/tech-debt-audit/SKILL.md",
-      "computedHash": "09b1ad0cbeca7f9d2cd4850f0f547ff2efb693bb4d62badee260bef525ef916b"
+      "computedHash": "3fbe5dd5156913cc6f7397eebaad57bfb96f09f84069b86a4d99017a0b65ba70"
     },
     "workmux": {
       "source": "raine/workmux",
       "sourceType": "github",
       "skillPath": "skills/workmux/SKILL.md",
-      "computedHash": "93466fa1a101b4917ddf8b5e633a47d46ac286b1134576f7462273a1c0a71a0b"
+      "computedHash": "8cc02827672bb13426b8db946badf0c8009fbbf7609b74dbd8c7f9e94f6be3cb"
     },
     "worktree": {
       "source": "raine/workmux",
       "sourceType": "github",
       "skillPath": "skills/worktree/SKILL.md",
-      "computedHash": "03b6c8e06b3476a8999108b460b6e2cd864b221e4a993b685a20c1990904a70c"
+      "computedHash": "f91944cdd7951df0dd3fd41fea55b9130bceb170e6aa27aca9d50a09b46dda3a"
     }
   }
 }

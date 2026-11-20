@@ -1,7 +1,5 @@
 ---
 title: Replace Data Clumps with Grouped Objects
-impact: MEDIUM
-impactDescription: eliminates parameter coupling across 3+ methods
 tags: data, data-clump, parameter-object, cohesion
 ---
 
@@ -9,7 +7,11 @@ tags: data, data-clump, parameter-object, cohesion
 
 When the same group of parameters travels together through three or more methods, it signals a missing concept. Adding a sixth field means updating every method signature, every caller, and every test. Extracting the clump into a named object makes the concept explicit and gives formatting, validation, and comparison a natural home.
 
-**Incorrect (address fields repeated across multiple methods):**
+Treat this signature change as an API migration. Update all in-scope callers
+and check external consumers before replacing positional arguments with keywords
+or a grouped object; do not silently add wrappers or accept both forms forever.
+
+**Before (address fields repeated across multiple methods):**
 
 ```ruby
 class ShippingService
@@ -34,7 +36,7 @@ valid = service.validate_address("123 Main St", "Portland", "OR", "97201")
 label = service.format_label("123 Main St", "Portland", "OR", "97201", "Jane Doe")
 ```
 
-**Correct (grouped into an Address object that owns its behavior):**
+**Alternative (grouped into an Address object that owns its behavior):**
 
 ```ruby
 class Address

@@ -1,15 +1,13 @@
 ---
 title: Use case/in for Structural Pattern Matching
-impact: MEDIUM
-impactDescription: reduces 3-5 nested hash checks to 1 destructuring expression
 tags: modern, pattern-matching, case-in, ruby3
 ---
 
 ## Use case/in for Structural Pattern Matching
 
-Manually traversing nested hashes with chained `&&` guards is brittle and obscures the structure you actually expect. Each access adds a nil-check obligation and a potential `NoMethodError`. Ruby 3.0+ `case/in` pattern matching declaratively describes the expected shape, destructures values inline, and makes missing-key handling exhaustive.
+Match structure without silently replacing truthiness checks with key-presence checks. Require ordinary symbol-keyed Hashes for populated data/user/error objects in this example, with nil/false for absent objects. On Ruby 3.0+, preserve fallback messages and treat any truthy verified value as true, as the original does.
 
-**Incorrect (chained nil guards for nested hash access):**
+**Before (chained nil guards for nested hash access):**
 
 ```ruby
 class ApiResponseParser
@@ -30,18 +28,16 @@ class ApiResponseParser
 end
 ```
 
-**Correct (pattern matching with destructuring):**
+**Alternative (pattern matching with destructuring):**
 
 ```ruby
 class ApiResponseParser
   def extract_user_email(response)
     case response
-    in { data: { user: { email:, verified: true } } }  # declares shape and destructures in one expression
-      { email: email, verified: true }
-    in { data: { user: { email: } } }
-      { email: email, verified: false }
-    in { error: { message: } }
-      { error: message }
+    in { data: { user: { email: } => user } } if email
+      { email: email, verified: !!user[:verified] }
+    in { error: error } if error
+      { error: error[:message] || "unknown error" }
     else
       { error: "malformed response" }
     end

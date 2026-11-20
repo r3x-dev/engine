@@ -1,7 +1,5 @@
 ---
 title: Use Intention-Revealing Names
-impact: LOW-MEDIUM
-impactDescription: eliminates need for explanatory comments
 tags: name, intention, readability, self-documenting
 ---
 
@@ -9,7 +7,12 @@ tags: name, intention, readability, self-documenting
 
 Names should answer why something exists, what it does, and how it is used. When a variable or method name requires a comment to explain its purpose, the name has failed. Intention-revealing names make code read like prose and let reviewers focus on logic instead of deciphering abbreviations.
 
-**Incorrect (cryptic names require mental translation):**
+Distinguish local names from database columns, serialized keys, and public
+methods. Rename external fields only within an approved schema/API migration;
+otherwise improve local names while preserving those boundaries. Update callers
+and keep comments that explain constraints or reasons the code cannot express.
+
+**Before (cryptic names require mental translation):**
 
 ```ruby
 class SubscriptionService
@@ -33,7 +36,7 @@ class SubscriptionService
 end
 ```
 
-**Correct (names reveal intent without comments):**
+**Alternative (names reveal intent without comments):**
 
 ```ruby
 class SubscriptionService

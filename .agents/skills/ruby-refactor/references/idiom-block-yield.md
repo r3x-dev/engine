@@ -1,30 +1,30 @@
 ---
 title: Use yield Over block.call for Simple Blocks
-impact: MEDIUM-HIGH
-impactDescription: avoids Proc allocation, 2-5x faster
 tags: idiom, yield, blocks, performance
 ---
 
 ## Use yield Over block.call for Simple Blocks
 
-Capturing a block with `&block` forces Ruby to allocate a Proc object on every call, even when you only need to invoke it once. `yield` passes control directly without allocation, making it 2-5x faster. Reserve `&block` for when you need to store, forward, or inspect the block.
+Prefer yield for directly invoking a required block when it improves clarity. Keep &block when storing or inspecting a block, and follow project conventions for forwarding. Do not assume Proc allocation or a fixed speedup across Ruby versions. Both examples explicitly require a block; without that precondition, block.call and yield raise different errors.
 
-**Incorrect (unnecessary Proc allocation via &block):**
+**Before (unnecessary Proc allocation via &block):**
 
 ```ruby
 class EventProcessor
   def process(events, &block)
+    raise ArgumentError, "block required" unless block
     events.each do |event|
-      result = block.call(event)  # allocates Proc on every call to process
+      result = block.call(event)  # Call the captured block
       log_result(event, result)
     end
   end
 
   def with_retry(max_attempts:, &block)
+    raise ArgumentError, "block required" unless block
     attempts = 0
     begin
       attempts += 1
-      block.call  # Proc allocated unnecessarily
+      block.call  # Invoke the captured block
     rescue TransientError => e
       retry if attempts < max_attempts
       raise
@@ -33,22 +33,24 @@ class EventProcessor
 end
 ```
 
-**Correct (yield avoids Proc allocation):**
+**Alternative (yield avoids Proc allocation):**
 
 ```ruby
 class EventProcessor
   def process(events)
+    raise ArgumentError, "block required" unless block_given?
     events.each do |event|
-      result = yield event  # no Proc allocated, 2-5x faster
+      result = yield event  # Invoke the required block directly
       log_result(event, result)
     end
   end
 
   def with_retry(max_attempts:)
+    raise ArgumentError, "block required" unless block_given?
     attempts = 0
     begin
       attempts += 1
-      yield  # direct dispatch, no allocation
+      yield  # Invoke the required block
     rescue TransientError => e
       retry if attempts < max_attempts
       raise

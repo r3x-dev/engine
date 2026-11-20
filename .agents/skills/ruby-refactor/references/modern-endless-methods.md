@@ -1,7 +1,5 @@
 ---
 title: Use Endless Method Definition for Simple Methods
-impact: MEDIUM
-impactDescription: reduces noise for one-liner methods
 tags: modern, endless-method, syntax, readability
 ---
 
@@ -9,7 +7,7 @@ tags: modern, endless-method, syntax, readability
 
 Three-line method definitions that simply return a single expression add visual noise without adding clarity. Ruby 3.0+ endless methods (`def name = expr`) eliminate the `end` keyword and make the intent immediately scannable, similar to how `attr_reader` signals simple accessors. Reserve this for truly simple expressions -- anything requiring multiple statements or complex logic should keep the traditional form.
 
-**Incorrect (verbose definitions for single-expression methods):**
+**Before (verbose definitions for single-expression methods):**
 
 ```ruby
 class Invoice
@@ -37,7 +35,7 @@ class Invoice
 end
 ```
 
-**Correct (endless methods for single expressions):**
+**Alternative (endless methods for single expressions):**
 
 ```ruby
 class Invoice

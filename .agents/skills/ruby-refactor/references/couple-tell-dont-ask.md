@@ -1,15 +1,13 @@
 ---
 title: "Tell Objects What to Do, Don't Query Their State"
-impact: MEDIUM-HIGH
-impactDescription: reduces caller coupling from N state queries to 1 command
 tags: couple, tell-dont-ask, encapsulation, command
 ---
 
 ## Tell Objects What to Do, Don't Query Their State
 
-Querying an object's internals to make a decision on its behalf scatters the object's business rules across every caller. When the rules change, every call site must be updated. Telling the object what to do keeps the decision and the data together, so changes happen in one place.
+Move a state transition to its owner when that makes the domain contract clearer. Preserve guards, mutation order, and return values. In this example, a negative pending total must remain unchanged; neither charging it nor marking it paid preserves the original behavior. Assume stable ordinary readers during one call.
 
-**Incorrect (caller queries state then acts on behalf of the object):**
+**Before (caller queries state then acts on behalf of the object):**
 
 ```ruby
 class PaymentProcessor
@@ -27,15 +25,18 @@ class PaymentProcessor
 end
 ```
 
-**Correct (tell the object to handle its own transition):**
+**Alternative (tell the object to handle its own transition):**
 
 ```ruby
 class Order
   def process_payment
     return unless status == :pending
 
-    # Decision and data live together — one place to change
-    payment_method.charge(total) unless total.zero?
+    if total > 0
+      payment_method.charge(total)
+    elsif !total.zero?
+      return
+    end
     self.status = :paid
     self.paid_at = Time.current
   end

@@ -1,15 +1,13 @@
 ---
 title: Use Data.define for Immutable Value Objects
-impact: MEDIUM-HIGH
-impactDescription: immutable by default, 10-50x faster construction than OpenStruct
 tags: data, data-define, immutable, ruby3
 ---
 
 ## Use Data.define for Immutable Value Objects
 
-Hand-rolled value objects require boilerplate for initialization, freezing, equality, and pattern matching -- and every line is a chance to forget `freeze` or misimplement `==`. `Data.define` provides all of this out of the box with zero ceremony, and benchmarks at 85x faster than OpenStruct for construction. Ruby 3.2+ only.
+Use Data.define (Ruby 3.2+) for a fixed value schema only after checking constructor, equality, hashing, serialization, and mutation contracts. Data freezes the outer object but does not deep-freeze its members. Use immutable member values or copy/freeze nested data deliberately. Do not infer a performance multiplier from the class choice.
 
-**Incorrect (manual boilerplate for immutability and equality):**
+**Before (manual boilerplate for immutability and equality):**
 
 ```ruby
 class Coordinate
@@ -25,13 +23,16 @@ class Coordinate
   end
 
   def ==(other)
-    other.is_a?(self.class) &&
-      latitude == other.latitude &&
-      longitude == other.longitude
+    other.instance_of?(self.class) &&
+      latitude == other.latitude && longitude == other.longitude
   end
-  alias_method :eql?, :==
 
-  def hash = [latitude, longitude].hash
+  def eql?(other)
+    other.instance_of?(self.class) &&
+      latitude.eql?(other.latitude) && longitude.eql?(other.longitude)
+  end
+
+  def hash = [self.class, latitude, longitude].hash
 
   def deconstruct_keys(keys)
     { latitude: latitude, longitude: longitude }
@@ -39,7 +40,7 @@ class Coordinate
 end
 ```
 
-**Correct (Data.define — immutable, equatable, pattern-matchable):**
+**Alternative (Data.define — immutable, equatable, pattern-matchable):**
 
 ```ruby
 Coordinate = Data.define(:latitude, :longitude) do
@@ -50,7 +51,6 @@ Coordinate = Data.define(:latitude, :longitude) do
     super # frozen, ==, eql?, hash, and deconstruct_keys provided automatically
   end
 
-  def to_s = "#{latitude}, #{longitude}"
 end
 
 # Pattern matching works out of the box
@@ -63,3 +63,8 @@ end
 ```
 
 Note: `Data.define` requires Ruby 3.2+. For earlier versions, use `Struct` with `keyword_init: true` and manual `freeze`.
+
+Check value equality separately from hash-key equality: numeric `1` and `1.0`
+compare with `==` but not `eql?`. Treat added Data constructors/methods and
+changed inspection output as API differences to review, not invisible changes.
+Reference: [Ruby Data](https://docs.ruby-lang.org/en/3.4/Data.html).

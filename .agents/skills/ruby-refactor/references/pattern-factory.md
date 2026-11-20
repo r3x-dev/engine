@@ -1,15 +1,13 @@
 ---
 title: Use Factory Method to Abstract Object Creation
-impact: MEDIUM
-impactDescription: decouples creation from usage, enables extension
 tags: pattern, factory, creation, registry
 ---
 
 ## Use Factory Method to Abstract Object Creation
 
-Hardcoded case/when blocks that instantiate different classes based on a type string scatter creation logic and force edits every time a new type is introduced. A registry-based factory lets each parser register itself, keeping creation logic open for extension and closed for modification.
+Introduce a creation boundary when several callers share selection logic or the application genuinely needs registration. Keep one short case or a fixed mapping for a closed set. In the registry example, load and register all parsers during startup before concurrent use; preserve unknown-format errors and do not infer plugin support from the existence of a factory.
 
-**Incorrect (case/when tightly coupling creation to every type):**
+**Before (case/when tightly coupling creation to every type):**
 
 ```ruby
 class DocumentProcessor
@@ -32,7 +30,7 @@ class DocumentProcessor
 end
 ```
 
-**Correct (registry-based factory with `.register` and `.build`):**
+**Alternative (registry-based factory with `.register` and `.build`):**
 
 ```ruby
 class ParserFactory

@@ -1,15 +1,13 @@
 ---
 title: Introduce Parameter Object for Long Signatures
-impact: CRITICAL
-impactDescription: eliminates parameter coupling across call chain
 tags: struct, parameter-object, data-clump, sandi-metz
 ---
 
 ## Introduce Parameter Object for Long Signatures
 
-Long parameter lists couple every caller to the exact position and count of arguments. When the same group of parameters appears in multiple methods, it signals a missing concept. Bundling them into objects names the concept and gives validation a natural home. Sandi Metz's rule: 4 parameters max.
+Group parameters only when they form a domain concept reused by real callers. Treat positional-to-object arguments as an explicit API migration and update all in-scope callers. Preserve query behavior, including reversed or nil bounds accepted by the original; add validation only as a separately requested contract change.
 
-**Incorrect (5+ parameters repeated across methods):**
+**Before (5+ parameters repeated across methods):**
 
 ```ruby
 class PropertySearch
@@ -35,15 +33,13 @@ class PropertySearch
 end
 ```
 
-**Correct (parameter objects encapsulate related data):**
+**Alternative (parameter objects encapsulate related data):**
 
 ```ruby
 class DateRange
   attr_reader :start_date, :end_date
 
   def initialize(start_date:, end_date:)
-    raise ArgumentError, "start_date must precede end_date" if start_date > end_date
-
     @start_date = start_date
     @end_date = end_date
   end
@@ -57,8 +53,6 @@ class PriceRange
   attr_reader :min_price, :max_price
 
   def initialize(min_price:, max_price:)
-    raise ArgumentError, "min_price must not exceed max_price" if min_price > max_price
-
     @min_price = min_price
     @max_price = max_price
   end
@@ -91,4 +85,4 @@ class PropertySearch
 end
 ```
 
-Reference: Sandi Metz, *Practical Object-Oriented Design* -- pass no more than 4 parameters.
+Prefer keyword arguments when they clarify the call without introducing new domain objects.

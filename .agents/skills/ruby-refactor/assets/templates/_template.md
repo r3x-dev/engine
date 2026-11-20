@@ -1,25 +1,30 @@
 ---
-title: Rule Title Here
-impact: MEDIUM
-impactDescription: quantified impact (e.g., "reduces coupling by 50%", "eliminates N conditionals")
-tags: prefix, technique, related-concept
+title: Describe the specific transformation
+tags: category, technique
 ---
 
-## Rule Title Here
+## Describe the specific transformation
 
-Brief explanation (1-3 sentences) of WHY this matters. Focus on design implications and cascade effects.
+State the concrete problem and the supported Ruby or framework versions.
+Specify input types and preconditions; distinguish a behavior-preserving change
+from an intentional API or behavior change. Avoid universal speedup claims.
 
-**Incorrect (description of the problem/cost):**
-
-```ruby
-# Comment on problematic line explaining consequence
-bad_example_code_here
-```
-
-**Correct (description of the benefit/solution):**
+**Before (describe the observed problem):**
 
 ```ruby
-good_example_code_here
+# Provide a minimal example with explicit inputs and dependencies.
 ```
 
-Reference: [Reference Title](https://example.com)
+**Alternative (describe the tradeoff):**
+
+```ruby
+# Preserve the stated contract, including edge cases and side effects.
+```
+
+## Verification
+
+List representative inputs and expected results, including a case where the
+transformation is invalid. For performance claims, record the benchmark setup
+and measurement or leave the benefit unquantified. Link relevant official
+reference documentation. Keep the file under 100 lines; add a contents list
+if a longer reference is necessary.

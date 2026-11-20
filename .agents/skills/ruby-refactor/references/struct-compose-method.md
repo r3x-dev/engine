@@ -1,7 +1,5 @@
 ---
 title: Compose Methods at Single Abstraction Level
-impact: CRITICAL
-impactDescription: reduces mixed abstraction levels from N to 1 per method
 tags: struct, compose-method, abstraction-level, readability
 ---
 
@@ -9,7 +7,7 @@ tags: struct, compose-method, abstraction-level, readability
 
 When a method mixes high-level intent with low-level implementation details, readers must constantly shift between "what" and "how." Composing the method so every line operates at the same abstraction level makes it readable in a single pass, like a table of contents.
 
-**Incorrect (mixed abstraction levels in registration):**
+**Before (mixed abstraction levels in registration):**
 
 ```ruby
 class RegistrationService
@@ -44,7 +42,7 @@ class RegistrationService
 end
 ```
 
-**Correct (all calls at the same abstraction level):**
+**Alternative (all calls at the same abstraction level):**
 
 ```ruby
 class RegistrationService

@@ -1,7 +1,5 @@
 ---
 title: Always Pair method_missing with respond_to_missing?
-impact: MEDIUM-HIGH
-impactDescription: prevents broken respond_to? and method introspection
 tags: idiom, method-missing, respond-to-missing, metaprogramming
 ---
 
@@ -9,7 +7,7 @@ tags: idiom, method-missing, respond-to-missing, metaprogramming
 
 Defining `method_missing` without `respond_to_missing?` creates objects that handle messages they claim not to understand. This breaks `respond_to?`, `method(:name)`, and any library that checks capabilities before calling. The pair ensures Ruby's introspection protocol stays consistent.
 
-**Incorrect (method_missing without respond_to_missing?):**
+**Before (method_missing without respond_to_missing?):**
 
 ```ruby
 class DynamicConfig
@@ -32,7 +30,7 @@ config.respond_to?(:database_url)  # => false — introspection is broken
 config.method(:database_url)       # => raises NameError
 ```
 
-**Correct (method_missing paired with respond_to_missing?):**
+**Alternative (method_missing paired with respond_to_missing?):**
 
 ```ruby
 class DynamicConfig

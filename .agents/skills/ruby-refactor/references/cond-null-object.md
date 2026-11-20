@@ -1,15 +1,13 @@
 ---
 title: Replace nil Checks with Null Object
-impact: HIGH
-impactDescription: eliminates N nil-guard conditionals per call site
 tags: cond, null-object, nil, duck-typing
 ---
 
 ## Replace nil Checks with Null Object
 
-Scattered nil checks for optional associations create a shotgun of defensive conditionals throughout the codebase. Every caller must remember to guard against nil, and forgetting one produces a NoMethodError in production. A Null Object that responds to the same interface as the real object removes all guards at once, leveraging Ruby's duck typing to make the absence of a value behave like a sensible default.
+Use a Null Object only when absence has a defined domain default and several callers need the same protocol. Keep a simple nil guard when it is clearer. Assume `subscription` returns a subscription object or nil; do not overwrite the model association or make absent subscriptions truthy throughout the application.
 
-**Incorrect (nil guards scattered across call sites):**
+**Before (nil guards scattered across call sites):**
 
 ```ruby
 class AccountDashboard
@@ -35,7 +33,7 @@ class AccountDashboard
 end
 ```
 
-**Correct (Null Object with matching interface):**
+**Alternative (Null Object with matching interface):**
 
 ```ruby
 class NullSubscription
@@ -56,17 +54,12 @@ class NullSubscription
   end
 end
 
-class User
-  def subscription
-    super || NullSubscription.new  # single nil guard replaces all downstream checks
-  end
-end
-
 class AccountDashboard
   def display_plan(user)
-    plan_name = user.subscription.plan
-    show_premium_badge(user) if user.subscription.premium?
-    remaining = user.subscription.days_remaining  # no nil checks, same interface
+    subscription = user.subscription || NullSubscription.new
+    plan_name = subscription.plan
+    show_premium_badge(user) if subscription.premium?
+    remaining = subscription.days_remaining
 
     render_dashboard(plan_name: plan_name, days_remaining: remaining)
   end

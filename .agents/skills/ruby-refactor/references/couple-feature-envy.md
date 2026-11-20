@@ -1,15 +1,13 @@
 ---
 title: Move Method to Resolve Feature Envy
-impact: HIGH
-impactDescription: reduces cross-class coupling from N accessors to 1 method call
 tags: couple, feature-envy, move-method, cohesion
 ---
 
 ## Move Method to Resolve Feature Envy
 
-When a method reaches into another object for most of its data, the logic belongs on that object. Feature envy scatters related calculations across classes, so a change to the data structure forces edits in every envious caller. Moving the method next to the data it uses eliminates this coupling.
+Move cohesive domain calculation only when it belongs with the data owner. Preserve one snapshot of the inputs; do not turn a single subtotal calculation into several scans through mutually calling accessors. Keep formatting in the printer and preserve the existing output.
 
-**Incorrect (OrderPrinter reaches into Order for every value):**
+**Before (OrderPrinter reaches into Order for every value):**
 
 ```ruby
 class OrderPrinter
@@ -25,32 +23,24 @@ class OrderPrinter
 end
 ```
 
-**Correct (calculation moves to Order, printer only formats):**
+**Alternative (calculation moves to Order, printer only formats):**
 
 ```ruby
 class Order
-  def subtotal
-    items.sum { |item| item.price * item.quantity }
-  end
-
-  def discount
-    subtotal * discount_rate
-  end
-
-  def tax
-    (subtotal - discount) * tax_rate
-  end
-
-  # Data and logic live together — one place to change
-  def total
-    subtotal - discount + tax
+  def pricing_summary
+    subtotal = items.sum { |item| item.price * item.quantity }
+    discount = subtotal * discount_rate
+    tax = (subtotal - discount) * tax_rate
+    { subtotal: subtotal, discount: discount, tax: tax,
+      total: subtotal - discount + tax }
   end
 end
 
 class OrderPrinter
   def format_total(order)
-    "Subtotal: #{order.subtotal}, Discount: #{order.discount}, " \
-      "Tax: #{order.tax}, Total: #{order.total}"
+    values = order.pricing_summary
+    "Subtotal: #{values[:subtotal]}, Discount: #{values[:discount]}, " \
+      "Tax: #{values[:tax]}, Total: #{values[:total]}"
   end
 end
 ```

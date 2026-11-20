@@ -1,15 +1,13 @@
 ---
 title: Flatten Deep Nesting with Early Extraction
-impact: HIGH
-impactDescription: reduces cyclomatic complexity by 40-60%
 tags: struct, nesting, complexity, extract-method
 ---
 
 ## Flatten Deep Nesting with Early Extraction
 
-Each level of nesting doubles the mental effort required to trace execution paths. Deeply nested code obscures the happy path and makes edge cases invisible. Extract nested blocks into named methods with early returns so each method handles one concern at one level.
+Flatten nesting without changing the failure contract. Keep the original error hashes and their precedence; replacing them with exceptions is a separate API change. Extract only the cohesive payment operation after all guards succeed.
 
-**Incorrect (4+ levels of nesting in payment processing):**
+**Before (4+ levels of nesting in payment processing):**
 
 ```ruby
 class PaymentProcessor
@@ -47,34 +45,23 @@ class PaymentProcessor
 end
 ```
 
-**Correct (flat methods with early returns):**
+**Alternative (flat methods with early returns):**
 
 ```ruby
 class PaymentProcessor
   def process(payment)
-    validate(payment)
-    account = find_account(payment)
-    verify_account(account, payment)
+    return { success: false, error: "Amount must be positive" } unless payment.amount > 0
+    return { success: false, error: "Currency not supported" } unless payment.currency_supported?
+    account = Account.find_by(id: payment.account_id)
+    return { success: false, error: "Account not found" } unless account
+    return { success: false, error: "Account is suspended" } unless account.active?
+    return { success: false, error: "Insufficient balance" } unless account.balance >= payment.amount
+    return { success: false, error: "Payment flagged for manual review" } if payment.flagged_for_review?
+
     execute_payment(account, payment)
   end
 
   private
-
-  def validate(payment)
-    raise PaymentError, "Amount must be positive" unless payment.amount > 0
-    raise PaymentError, "Currency not supported" unless payment.currency_supported?
-    raise PaymentError, "Payment flagged for manual review" if payment.flagged_for_review?
-  end
-
-  def find_account(payment)
-    Account.find_by(id: payment.account_id) ||
-      raise(PaymentError, "Account not found")
-  end
-
-  def verify_account(account, payment)
-    raise PaymentError, "Account is suspended" unless account.active?
-    raise PaymentError, "Insufficient balance" unless account.balance >= payment.amount
-  end
 
   def execute_payment(account, payment)
     transaction = account.debit(payment.amount)

@@ -1,15 +1,13 @@
 ---
 title: Replace Primitive Obsession with Value Objects
-impact: MEDIUM-HIGH
-impactDescription: reduces scattered validation from N call sites to 1 constructor
 tags: data, value-object, primitive-obsession, domain
 ---
 
 ## Replace Primitive Obsession with Value Objects
 
-Passing raw strings or numbers to represent domain concepts scatters validation and formatting logic across every call site. When the same primitive is validated in three places, a fourth will inevitably be missed. A value object gives the concept a name, validates once at construction, and provides a natural home for derived behavior.
+Extract a value object when repeated validation belongs to an actual domain concept. Preserve normalization and persisted values; do not lowercase an email or change which value is sent to the mailer as an incidental refactor. Treat this regex as the example application contract, not complete email-address validation.
 
-**Incorrect (raw string with validation scattered across call sites):**
+**Before (raw string with validation scattered across call sites):**
 
 ```ruby
 class UserRegistration
@@ -35,7 +33,7 @@ class PasswordReset
 end
 ```
 
-**Correct (value object centralizes validation and behavior):**
+**Alternative (value object centralizes validation and behavior):**
 
 ```ruby
 class EmailAddress
@@ -46,13 +44,15 @@ class EmailAddress
   def initialize(address)
     raise ArgumentError, "invalid email" unless address.match?(PATTERN)
 
-    @address = address.downcase.freeze
+    @address = address.dup.freeze  # Preserve case and do not freeze the caller's string.
+    freeze
   end
 
   # Domain behavior lives with the data that owns it
   def domain = address.split("@").last
   def to_s = address
   def ==(other) = other.is_a?(self.class) && address == other.address
+  alias_method :eql?, :==
   def hash = address.hash
 end
 
@@ -61,7 +61,7 @@ class UserRegistration
     email = EmailAddress.new(email)
 
     user = User.create!(email: email.to_s, name: name)
-    Mailer.send_welcome(email.to_s)
+    Mailer.send_welcome(user.email)  # Preserve the persisted value used by the original.
     Analytics.track_signup(email.domain)
     user
   end

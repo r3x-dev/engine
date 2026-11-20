@@ -1,7 +1,5 @@
 ---
 title: Avoid Class Methods in Domain Logic
-impact: MEDIUM-HIGH
-impactDescription: reduces test setup from global stubs to 1 constructor injection
 tags: couple, class-methods, testability, instance-methods
 ---
 
@@ -9,7 +7,7 @@ tags: couple, class-methods, testability, instance-methods
 
 Class methods are global entry points that cannot be injected, subclassed cleanly, or mocked without stubbing the class itself. This makes tests brittle and prevents polymorphic dispatch. Converting to an instance method behind a conventional `#call` interface lets callers inject, decorate, and substitute the object freely.
 
-**Incorrect (class method locks callers to a single global implementation):**
+**Before (class method locks callers to a single global implementation):**
 
 ```ruby
 class UserImporter
@@ -27,7 +25,7 @@ end
 UserImporter.import(csv_data)
 ```
 
-**Correct (instance-based with injectable collaborators):**
+**Alternative (instance-based with injectable collaborators):**
 
 ```ruby
 class UserImporter

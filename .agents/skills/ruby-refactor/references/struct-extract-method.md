@@ -1,15 +1,13 @@
 ---
 title: Extract Long Methods into Focused Units
-impact: CRITICAL
-impactDescription: reduces cognitive load by 3-5x
 tags: struct, extract-method, sandi-metz, readability
 ---
 
 ## Extract Long Methods into Focused Units
 
-Long methods force readers to hold multiple concerns in working memory simultaneously. Extracting cohesive blocks into named private methods makes each piece independently understandable, testable, and reusable. Sandi Metz's rule: methods should be 5 lines or fewer.
+Extract a cohesive operation when a name makes its responsibility clearer. Preserve validation order, calculation, external effects, and return value. Do not enforce an arbitrary method line count or extract one-use wrappers without a clarity benefit. The keyword-value omission syntax below requires Ruby 3.1+.
 
-**Incorrect (monolithic method with multiple responsibilities):**
+**Before (monolithic method with multiple responsibilities):**
 
 ```ruby
 class OrderProcessor
@@ -47,7 +45,7 @@ class OrderProcessor
 end
 ```
 
-**Correct (decomposed into focused private methods, each <=5 lines):**
+**Alternative (extract named responsibilities):**
 
 ```ruby
 class OrderProcessor
@@ -95,4 +93,4 @@ class OrderProcessor
 end
 ```
 
-Reference: Sandi Metz, *Practical Object-Oriented Design* -- methods should be 5 lines or fewer.
+Choose extraction boundaries from behavior and state ownership, not a line-count quota.

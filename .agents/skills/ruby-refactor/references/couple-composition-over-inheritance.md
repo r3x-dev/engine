@@ -1,15 +1,13 @@
 ---
 title: Replace Mixin with Composed Object
-impact: HIGH
-impactDescription: eliminates hidden method conflicts and unclear precedence
 tags: couple, composition, mixin, module, inheritance
 ---
 
 ## Replace Mixin with Composed Object
 
-Including multiple modules flattens their methods into a single namespace where conflicts are silent and resolution depends on `ancestors` order. As the mixin count grows, the precedence chain becomes unpredictable and debugging requires tracing through `ancestors`. Composition makes each collaborator explicit with its own interface and no name collisions.
+Consider composition for an actual method collision or unclear state ownership. Ruby lookup order is deterministic; inspect ancestors and super before changing it. Preserve the existing public method and winning behavior, and add new capabilities only within the requested scope. Do not replace every mixin with a collaborator.
 
-**Incorrect (multiple includes with hidden conflict):**
+**Before (multiple includes with hidden conflict):**
 
 ```ruby
 module Searchable
@@ -38,7 +36,7 @@ class ProductCatalog
 end
 ```
 
-**Correct (composed objects with explicit interfaces):**
+**Alternative (composed objects with explicit interfaces):**
 
 ```ruby
 class SearchEngine
@@ -71,7 +69,7 @@ class ProductCatalog
   end
 
   # No conflict — each collaborator has its own object and name
-  def full_text_search(query) = @search_engine.search(query)
-  def exact_filter(query) = @filter.search(query)
+  def search(query) = @filter.search(query)  # Preserve the existing exact-match API.
+  def full_text_search(query) = @search_engine.search(query)  # Optional new capability.
 end
 ```

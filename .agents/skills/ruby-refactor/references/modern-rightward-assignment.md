@@ -1,7 +1,5 @@
 ---
 title: Use Rightward Assignment for Pipeline Expressions
-impact: LOW-MEDIUM
-impactDescription: reduces left-side noise in multi-step pipelines by 30-50%
 tags: modern, rightward-assignment, pipeline, syntax
 ---
 
@@ -9,7 +7,7 @@ tags: modern, rightward-assignment, pipeline, syntax
 
 When a multi-step method chain produces a result that needs a name, traditional leftward assignment forces readers to see the variable name before understanding the transformation. Ruby 3.0+ rightward assignment (`=> variable`) lets the code read top-to-bottom like a pipeline, matching the natural data flow from input to named output.
 
-**Incorrect (leftward assignment breaks reading flow):**
+**Before (leftward assignment breaks reading flow):**
 
 ```ruby
 class SalesReport
@@ -29,7 +27,7 @@ class SalesReport
 end
 ```
 
-**Correct (rightward assignment follows data flow):**
+**Alternative (rightward assignment follows data flow):**
 
 ```ruby
 class SalesReport

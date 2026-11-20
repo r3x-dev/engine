@@ -1,7 +1,5 @@
 ---
 title: Use map/select/reject Over each with Accumulator
-impact: HIGH
-impactDescription: eliminates mutable accumulator pattern
 tags: idiom, enumerable, functional, map, select
 ---
 
@@ -9,7 +7,7 @@ tags: idiom, enumerable, functional, map, select
 
 The `each`-with-accumulator pattern introduces unnecessary mutability and obscures intent. Ruby's Enumerable methods (`map`, `select`, `reject`) declare *what* you want in a single expression, eliminating temporary variables and off-by-one mutation bugs.
 
-**Incorrect (mutable accumulator with each):**
+**Before (mutable accumulator with each):**
 
 ```ruby
 class OrderReport
@@ -39,7 +37,7 @@ class OrderReport
 end
 ```
 
-**Correct (declarative Enumerable methods):**
+**Alternative (declarative Enumerable methods):**
 
 ```ruby
 class OrderReport

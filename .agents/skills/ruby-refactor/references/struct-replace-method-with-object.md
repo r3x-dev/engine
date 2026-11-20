@@ -1,15 +1,17 @@
 ---
 title: Replace Complex Method with Method Object
-impact: HIGH
-impactDescription: enables decomposition of tangled logic
 tags: struct, method-object, complexity, extract
 ---
+
+## Contents
+
+- [Context and examples](#replace-complex-method-with-method-object)
 
 ## Replace Complex Method with Method Object
 
 When a method has many interdependent local variables, extracting pieces into separate methods is painful because each piece needs access to all the locals. Turning the method into its own class converts locals into instance variables, making decomposition straightforward.
 
-**Incorrect (tangled calculation with many interdependent locals):**
+**Before (tangled calculation with many interdependent locals):**
 
 ```ruby
 class InvoiceCalculator
@@ -42,7 +44,7 @@ class InvoiceCalculator
 end
 ```
 
-**Correct (extracted to method object with call()):**
+**Alternative (extracted to method object with call()):**
 
 ```ruby
 class InvoiceCalculator

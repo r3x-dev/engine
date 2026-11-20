@@ -1,15 +1,13 @@
 ---
 title: Replace Nested Conditionals with Guard Clauses
-impact: CRITICAL
-impactDescription: reduces nesting depth by 2-4 levels
 tags: cond, guard-clause, early-return, nesting
 ---
 
 ## Replace Nested Conditionals with Guard Clauses
 
-Deeply nested conditionals force readers to hold multiple branch contexts in working memory simultaneously. Each nesting level doubles the number of mental paths through the method. Guard clauses flatten the structure by handling exceptional cases first, leaving the happy path at the bottom with zero indentation.
+Use guard clauses when they make the existing branch order easier to follow. Preserve short-circuit evaluation, error precedence, and the happy-path return value. Keep nesting when branches need a shared scope or when an early return would skip required cleanup. The example assumes Rails present? semantics.
 
-**Incorrect (deeply nested validation):**
+**Before (deeply nested validation):**
 
 ```ruby
 class PaymentAuthorizer
@@ -36,7 +34,7 @@ class PaymentAuthorizer
 end
 ```
 
-**Correct (flat guard clauses with early returns):**
+**Alternative (flat guard clauses with early returns):**
 
 ```ruby
 class PaymentAuthorizer

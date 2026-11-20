@@ -1,15 +1,13 @@
 ---
 title: Extract Complex Booleans into Named Predicates
-impact: CRITICAL
-impactDescription: reduces boolean complexity from N clauses to 1 named predicate
 tags: cond, decompose, predicate, readability
 ---
 
 ## Extract Complex Booleans into Named Predicates
 
-Compound boolean expressions encode business rules that are invisible to future readers. When the same multi-clause condition appears in two places, it will inevitably diverge. Extracting predicates names the business concept once, makes the condition testable in isolation, and turns the calling code into a readable sentence.
+Extract a repeated condition under one domain name when that name adds meaning. Preserve operand order and short-circuit behavior. Do not split a short condition into several one-use helper methods merely to satisfy a pattern.
 
-**Incorrect (inline compound boolean):**
+**Before (inline compound boolean):**
 
 ```ruby
 class PurchaseService
@@ -29,7 +27,7 @@ class PurchaseService
 end
 ```
 
-**Correct (named predicate methods):**
+**Alternative (named predicate methods):**
 
 ```ruby
 class PurchaseService
@@ -48,15 +46,7 @@ class PurchaseService
   private
 
   def eligible_for_purchase?(user)
-    of_legal_age?(user) && verified_and_active?(user)
-  end
-
-  def of_legal_age?(user)
-    user.age >= 18
-  end
-
-  def verified_and_active?(user)
-    user.verified? && !user.suspended? && user.subscription.active?
+    user.age >= 18 && user.verified? && !user.suspended? && user.subscription.active?
   end
 end
 ```

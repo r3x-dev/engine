@@ -1,15 +1,13 @@
 ---
 title: Implement Null Object with Full Protocol
-impact: MEDIUM
-impactDescription: eliminates conditional nil checking across entire call chain
 tags: pattern, null-object, protocol, duck-typing
 ---
 
 ## Implement Null Object with Full Protocol
 
-Repeated `if current_user` guards litter controllers, views, and helpers with defensive checks that obscure business logic. A single forgotten guard produces a NoMethodError in production. A GuestUser class that responds to the full User protocol with safe defaults eliminates every conditional at every call site, leveraging Ruby's duck typing to treat logged-out state as a first-class concept.
+Use a local guest presentation object only for the explicitly defined display protocol. Keep authentication state separate: do not replace a nil-returning `current_user` with a truthy object globally. Preserve fallbacks for real users whose optional permissions or avatar are nil, and keep guards when they express intent more simply.
 
-**Incorrect (nil checks scattered across the entire call chain):**
+**Before (nil checks scattered across the entire call chain):**
 
 ```ruby
 class ApplicationController < ActionController::Base
@@ -34,7 +32,7 @@ class ApplicationController < ActionController::Base
 end
 ```
 
-**Correct (GuestUser responds to full User protocol with safe defaults):**
+**Alternative (GuestUser responds to full User protocol with safe defaults):**
 
 ```ruby
 class GuestUser
@@ -47,7 +45,7 @@ class GuestUser
   end
 
   def permissions
-    [].freeze  # safe default — no access granted
+    []  # Preserve an independently mutable display value.
   end
 
   def avatar_url
@@ -64,16 +62,13 @@ class GuestUser
 end
 
 class ApplicationController < ActionController::Base
-  def current_user
-    super || GuestUser.new  # single fallback replaces all downstream nil checks
-  end
-
   def dashboard
-    @name = current_user.name
-    @permissions = current_user.permissions
-    @display_name = current_user.to_s
-    @can_edit = current_user.permissions.include?("edit")
-    @avatar_url = current_user.avatar_url  # no conditionals, same interface everywhere
+    user = current_user || GuestUser.new
+    @name = user.name
+    @permissions = user.permissions
+    @display_name = user.to_s
+    @can_edit = user.permissions&.include?("edit") || false
+    @avatar_url = user.avatar_url || "/images/default_avatar.png"
   end
 end
 ```

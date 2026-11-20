@@ -1,7 +1,5 @@
 ---
 title: Omit Explicit return for Last Expression
-impact: MEDIUM-HIGH
-impactDescription: follows Ruby convention, reduces noise
 tags: idiom, return, convention, readability
 ---
 
@@ -9,7 +7,7 @@ tags: idiom, return, convention, readability
 
 Ruby methods implicitly return the value of their last expression. Adding an explicit `return` at the end of a method is redundant noise that signals the author may not be fluent in Ruby conventions. Keep explicit `return` only for early exits (guard clauses) where it communicates intent to short-circuit.
 
-**Incorrect (redundant return on last expression):**
+**Before (redundant return on last expression):**
 
 ```ruby
 class PricingCalculator
@@ -31,7 +29,7 @@ class PricingCalculator
 end
 ```
 
-**Correct (implicit return, explicit only for guard clauses):**
+**Alternative (implicit return, explicit only for guard clauses):**
 
 ```ruby
 class PricingCalculator

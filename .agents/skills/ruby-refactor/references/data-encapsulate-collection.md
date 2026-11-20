@@ -1,15 +1,13 @@
 ---
 title: Encapsulate Collections Behind Domain Methods
-impact: MEDIUM-HIGH
-impactDescription: prevents external mutation and scatters
 tags: data, encapsulate, collection, immutability
 ---
 
 ## Encapsulate Collections Behind Domain Methods
 
-Exposing a raw collection via `attr_accessor` lets any caller add, remove, or replace items without validation. Business rules like quantity limits or duplicate checks get scattered across every call site, and a single `items.clear` can silently violate invariants. Encapsulating the collection behind domain methods keeps mutation controlled and auditable.
+Treat collection encapsulation as an API change when callers currently mutate the exposed Array. Require that migration to be in scope and update its callers. A frozen shallow copy protects only collection membership; its item objects remain shared and mutable. Specify whether item mutation and duplicate-merging are also part of the accepted contract.
 
-**Incorrect (exposed collection allows uncontrolled mutation):**
+**Before (exposed collection allows uncontrolled mutation):**
 
 ```ruby
 class ShoppingCart
@@ -30,7 +28,7 @@ cart.items << CartItem.new(sku: "SHOE-42", price: 89.99, quantity: 1) # duplicat
 cart.items.clear # caller can silently empty the cart
 ```
 
-**Correct (frozen collection with domain methods enforcing rules):**
+**Alternative (frozen collection with domain methods enforcing rules):**
 
 ```ruby
 class ShoppingCart

@@ -1,7 +1,5 @@
 ---
 title: Inject Dependencies via Constructor Defaults
-impact: HIGH
-impactDescription: enables test isolation without monkey-patching
 tags: couple, dependency-injection, testability, constructor
 ---
 
@@ -9,7 +7,7 @@ tags: couple, dependency-injection, testability, constructor
 
 Hard-coded class references inside methods make it impossible to substitute collaborators in tests without monkey-patching or stubbing globals. Injecting dependencies through the constructor with sensible defaults preserves the production path while giving tests a clean seam.
 
-**Incorrect (hard-coded dependency buried inside the method):**
+**Before (hard-coded dependency buried inside the method):**
 
 ```ruby
 class WeatherService
@@ -22,7 +20,7 @@ class WeatherService
 end
 ```
 
-**Correct (inject via constructor with production default):**
+**Alternative (inject via constructor with production default):**
 
 ```ruby
 class WeatherService
