@@ -17,6 +17,7 @@ gem "addressable", require: false
 
 # Json
 gem "multi_json"
+gem "json_schemer", require: false
 
 # HTML/XML parsing
 gem "nokogiri", require: false

@@ -547,6 +547,7 @@ DEPENDENCIES
   heroicon
   highline
   httpx
+  json_schemer
   mail
   mocha
   multi_json
