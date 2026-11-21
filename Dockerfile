@@ -111,7 +111,7 @@ RUN chown -R 1000:1000 log storage tmp
 
 # Shared runtime for production and workflow tests.
 # Runtime already includes jemalloc, which Ruby uses without LD_PRELOAD.
-FROM dhi.io/ruby:$RUBY_VERSION-debian13@sha256:b337a5f3e6b98d6bd503ee6f30d0d91adfc01aa2ef8276b477b334ea04cea4e2 AS runtime
+FROM dhi.io/ruby:$RUBY_VERSION-debian13@sha256:e88e7415050cb923fe7a1670192087cdf592c3af21361def8b94bd97676ec976 AS runtime
 
 # The runtime includes Bundler's library but not its executable.
 COPY --from=build-base /usr/bin/bundle /usr/bin/bundle
