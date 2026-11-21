@@ -10,7 +10,7 @@
 # renovate: datasource=docker depName=docker.io/library/ruby versioning=docker
 ARG RUBY_VERSION=4.0.10
 # Shared build stage for installing gems
-FROM dhi.io/ruby:$RUBY_VERSION-debian13-dev@sha256:951a398ff475db6f4142596720b1c19296da8e88bb1b2e49fec4b96a5054fe04 AS build-base
+FROM dhi.io/ruby:$RUBY_VERSION-debian13-dev@sha256:162b4a211e3e53e9343bdbe438507fde4585be8e22069c2ac6735c564e323e01 AS build-base
 
 # Rails app lives here
 WORKDIR /rails
