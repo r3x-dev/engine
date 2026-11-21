@@ -9,9 +9,9 @@ Workflows execute inside the booted R3x Rails application. They can depend on it
 Rails version, Active Support, Action View and available gems; standalone Ruby
 execution and portability to other runtimes are not requirements.
 
-Read the repository's [AGENTS.md](../../../AGENTS.md) and the affected pack's
-instructions before changing code. Preserve unrelated catalog changes: the engine
-and a mounted workflow catalog can be separate Git repositories.
+Before changing a workflow, read any `AGENTS.md` in the target catalog root
+and any local instructions in the affected pack. Preserve unrelated changes in
+both repositories when the catalog is versioned separately.
 
 ## Choose the relevant reference
 
