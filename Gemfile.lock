@@ -208,7 +208,7 @@ GEM
       grpc (>= 1.84.1, < 2.a)
     googleapis-common-protos-types (1.25.0)
       google-protobuf (~> 4.26)
-    googleauth (1.17.7)
+    googleauth (1.17.8)
       faraday (>= 1.0, < 3.a)
       google-cloud-env (~> 2.2)
       google-logging-utils (~> 0.1)
@@ -511,7 +511,7 @@ GEM
     unicode-emoji (4.3.0)
     uri (1.1.2)
     useragent (0.16.11)
-    webmock (3.36.0)
+    webmock (3.38.0)
       addressable (>= 2.8.0)
       crack (>= 0.3.2)
       hashdiff (>= 0.4.0, < 2.0.0)
@@ -636,7 +636,7 @@ CHECKSUMS
   google-protobuf (4.36.2-x86_64-linux-musl) sha256=0fa17686c896da96a60a705e56ddc7d4ff56413f52787c655bd4c9fb33ffe14f
   googleapis-common-protos (1.11.0) sha256=fe3ceefd26c9a74a3036b632cb3af05d8a368de7b74636bc5cbe05423246acf3
   googleapis-common-protos-types (1.25.0) sha256=3eac7998e9e52f506d5a68d944284b8d2f6d65d744ab92a0cdd269198a009d15
-  googleauth (1.17.7) sha256=9db21857ddbe055a8b0d44ddb75d4ceda97511167431e30121c77c25a9ce9fe5
+  googleauth (1.17.8) sha256=75d81e82150b4407176790d917a19026d6380e08bc1a37707965007664313f82
   grpc (1.85.0) sha256=790fb8073453a7a4e4ade9ab265b92d6e8129f60c8ddae06cc9e3cb18e3e2366
   grpc (1.85.0-aarch64-linux-gnu) sha256=d38ea50e5b45ce7ee8416b522e5926d271a94f8a3346d886625efe0043c6e2bd
   grpc (1.85.0-aarch64-linux-musl) sha256=a84380f5586ae7d6393f69543c07ff5c85758236f52ebdc02c675530d2154015
@@ -769,7 +769,7 @@ CHECKSUMS
   unicode-emoji (4.3.0) sha256=11c02fa73290378c066bb0562cd4c87d8e1b706fbbe0059ca12746a4244de8ce
   uri (1.1.2) sha256=89292e98eabbef6248b0a0ed5e7e398e152f83f17560023a6d94a7f492b169fb
   useragent (0.16.11) sha256=700e6413ad4bb954bb63547fa098dddf7b0ebe75b40cc6f93b8d54255b173844
-  webmock (3.36.0) sha256=1b9a5704f23ca67e6eab34edb1a019447a1a02c9a8401f473702ea19c5752000
+  webmock (3.38.0) sha256=8fa3f656ee73c88fb85f1b136eb5467443cfa1424bfe2b44a538e224c5fbfde7
   websocket-driver (0.8.2) sha256=97c556b019bf3410b4961002ac501621e9322d3f8a7bc02161a09301cc4c4146
   websocket-extensions (0.1.5) sha256=1c6ba63092cda343eb53fc657110c71c754c56484aad42578495227d717a8241
   zeitwerk (2.8.3) sha256=2c85125a8467ce069e20123d1e709a08955c9d29c118c25b46b7b7fafdbb92e5
