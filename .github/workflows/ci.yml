@@ -27,9 +27,6 @@ on:
 permissions:
   contents: read
 
-env:
-  OLD_VERSIONS_TO_KEEP: "10"
-
 jobs:
   scan_ruby:
     if: >
@@ -303,6 +300,10 @@ jobs:
           done
 
   docker_publish:
+    concurrency:
+      group: ghcr-${{ github.repository }}
+      queue: max
+      cancel-in-progress: false
     if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
     needs:
       - scan_ruby
@@ -377,11 +378,3 @@ jobs:
             GIT_CODE_VERSION=${{ github.sha }}
           cache-from: type=gha,scope=docker-test
           cache-to: type=gha,mode=max,scope=docker-test
-
-      - name: Clean up old images
-        uses: dataaxiom/ghcr-cleanup-action@v1
-        with:
-          keep-n-tagged: ${{ env.OLD_VERSIONS_TO_KEEP }}
-          keep-n-untagged: ${{ env.OLD_VERSIONS_TO_KEEP }}
-          exclude-tags: stable,test
-          delete-partial-images: true
