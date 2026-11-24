@@ -5,9 +5,11 @@ module R3x
     class Discord::Messages
       PAGE_SIZE = 100
       SNOWFLAKE = /\A[1-9][0-9]*\z/
+      FALLBACK_RETRY_DELAY = 60
+      private_constant :FALLBACK_RETRY_DELAY
 
       def initialize
-        @connection = HTTPX.with(headers: {
+        @connection = HTTPX.with(timeout: { total_request_timeout: 10 }, headers: {
           "Authorization" => "Bot #{R3x::Env.fetch!("DISCORD_BOT_TOKEN")}",
           "User-Agent"    => "DiscordBot (https://github.com/r3x-dev/engine, 1.0)",
         })
@@ -31,10 +33,20 @@ module R3x
       rescue HTTPX::HTTPError => error
         raise unless [408, 429].include?(error.status) || (500..599).cover?(error.status)
 
-        remember_retry_after(channel_id, error.response) if error.status == 429
+        defer_rate_limited_request(channel_id, error.response) if error.status == 429
         raise RetryLater, "Discord returned HTTP #{error.status}"
-      rescue EOFError, HTTPX::TimeoutError, HTTPX::ConnectionError, HTTPX::ResolveError,
-        Errno::ECONNREFUSED, Errno::ECONNRESET, Errno::EHOSTUNREACH, Errno::ENETUNREACH => error
+      rescue HTTPX::TLSError => error
+        raise unless error.message.match?(/unexpected eof while reading|connection reset by peer/i)
+
+        raise RetryLater, error.message
+      rescue HTTPX::Connection::HTTP2::GoawayError => error
+        raise if error.unrecoverable?
+
+        raise RetryLater, error.message
+      rescue IOError, SocketError, HTTPX::TimeoutError, HTTPX::ConnectionError, HTTPX::ResolveError,
+        HTTPX::Connection::HTTP2::RstStreamError, HTTPX::Connection::HTTP2::PingError, ::HTTP2::Error::ConnectionClosed, ::HTTP2::Error::ProtocolError,
+        Errno::ECONNREFUSED, Errno::ECONNRESET, Errno::ECONNABORTED, Errno::EPIPE, Errno::ETIMEDOUT,
+        Errno::EHOSTUNREACH, Errno::ENETUNREACH, Errno::ENETDOWN, Errno::EHOSTDOWN => error
         raise RetryLater, error.message
       end
 
@@ -57,28 +69,58 @@ module R3x
         messages
       end
 
-      def remember_retry_after(channel_id, response)
+      def defer_rate_limited_request(channel_id, response)
         headers = response.headers
-        delay = headers["retry-after"]
-        global = headers["x-ratelimit-global"] == "true" || headers["x-ratelimit-scope"] == "global"
-        unless delay
-          body = response.json
-          delay = body.fetch("retry_after")
-          global ||= body.fetch("global")
+        body = rate_limit_body(response)
+        scope = rate_limit_scope(headers, body["global"])
+        delay = [retry_after_header(headers["retry-after"]), rate_limit_seconds(body["retry_after"])].compact.max
+        reset_at = monotonic_time + (delay || FALLBACK_RETRY_DELAY)
+
+        if scope == :channel
+          @channel_deadlines[channel_id] = reset_at
+        else
+          @global_deadline = reset_at
         end
 
-        if global
-          @global_deadline = deadline(delay)
-        else
-          @channel_deadlines[channel_id] = deadline(delay)
-        end
+        retry_after = delay ? "#{delay}s" : "#{FALLBACK_RETRY_DELAY}s (fallback for missing or invalid delay)"
+        raise RetryLater, "Discord returned HTTP 429 scope=#{scope} retry_after=#{retry_after}"
+      end
+
+      def rate_limit_body(response)
+        return {} unless response.content_type.mime_type == "application/json"
+
+        body = response.json
+        body.is_a?(Hash) ? body : {}
+      rescue JSON::ParserError, MultiJSON::ParseError
+        {}
+      end
+
+      def rate_limit_scope(headers, global)
+        scope = headers["x-ratelimit-scope"]
+        return :global if global == true || scope == "global" || headers["x-ratelimit-global"] == "true"
+        return :channel if global == false || scope == "user" || scope == "shared"
+
+        :unknown
+      end
+
+      def retry_after_header(value)
+        return unless value
+
+        rate_limit_seconds(value) || [Time.httpdate(value) - Time.current, 0].max
+      rescue ArgumentError
+        nil
       end
 
       def deadline(delay)
-        seconds = Float(delay)
-        raise ArgumentError, "Invalid Discord rate limit delay" unless seconds.finite? && seconds >= 0
+        seconds = rate_limit_seconds(delay)
+        raise ArgumentError, "Invalid Discord rate limit delay" unless seconds
 
         monotonic_time + seconds
+      end
+
+      def rate_limit_seconds(value)
+        seconds = Float(value, exception: false)
+        seconds if seconds&.finite? && seconds >= 0
       end
 
       def monotonic_time

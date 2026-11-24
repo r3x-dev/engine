@@ -41,8 +41,12 @@ plugin :tmp_restart
 # Run the Solid Queue supervisor inside Puma unless this is an explicit web-only process.
 if solid_queue_in_puma
   plugin :solid_queue
+  mode = ENV.fetch("SOLID_QUEUE_SUPERVISOR_MODE", "fork")
+  raise ArgumentError, "SOLID_QUEUE_SUPERVISOR_MODE must be fork or async" unless %w[fork async].include?(mode)
 
-  # The plugin stops Puma with SIGINT regardless of the supervisor's exit status.
+  solid_queue_mode mode
+
+  # In fork mode the plugin stops Puma with SIGINT regardless of the supervisor's exit status.
   # Check for a reported Discord failure after the plugin has finished shutting down.
   failure_reader, failure_writer = IO.pipe
   Rails.application.config.x.discord_polling.failure_writer = failure_writer

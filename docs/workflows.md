@@ -28,7 +28,10 @@ The scheduler polls subscribed channels every 60 seconds. A new subscription sta
 at the current end of the channel. Restarting with the same workflow and trigger
 keys resumes from the saved message ID. Give a different channel a new trigger key.
 
-Temporary Discord outages and rate limits defer the channel until a later poll.
+Each Discord request has a 10-second deadline. A timeout or temporary outage
+defers that channel until a later poll. A rate limit pauses the affected channel,
+or all channels for a global or unspecified limit. If Discord omits a usable
+retry delay, the scheduler waits 60 seconds.
 Invalid configuration or an unexpected polling or enqueue error makes the scheduler
 exit with status 1. In a combined deployment, Puma also exits with status 1.
 A failed enqueue leaves the cursor in place for retry after restart.

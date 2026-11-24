@@ -91,6 +91,11 @@ The default combined process needs `R3X_WORKFLOW_PATHS`; do not also run a separ
 that owns recurring scheduling. `bin/web` owns its web-only setting and does not need a workflow
 mount.
 
+The embedded Solid Queue supervisor defaults to `fork`. Set
+`SOLID_QUEUE_SUPERVISOR_MODE=async` to run its workers, dispatcher, and scheduler as
+threads in Puma. In this mode `JOB_CONCURRENCY` is ignored. A fatal Discord polling
+configuration or runtime error stops the combined service with exit status `1`.
+
 ### Generic Jobs Entrypoint
 
 `bin/jobs` keeps the default Solid Queue CLI behavior. In split Kubernetes

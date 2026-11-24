@@ -96,10 +96,21 @@ module R3x
       assert_includes capture_logged_output { poller.poll }, "503"
       assert_empty TriggerCursor.all
 
-      stub_request(:get, CHANNEL_URL).with(query: { limit: 1 }).to_raise(EOFError.new("descriptor closed"))
+      [
+        EOFError.new("descriptor closed"), Errno::EPIPE.new,
+        HTTPX::TotalRequestTimeoutError.new(nil, nil, 10),
+        HTTPX::Connection::HTTP2::GoawayError.new(:no_error, 1),
+        HTTPX::TLSError.new("unexpected eof while reading")
+      ].each do |error|
+        stub_request(:get, CHANNEL_URL).with(query: { limit: 1 }).to_raise(error)
 
-      assert_includes capture_logged_output { poller.poll }, "descriptor closed"
-      assert_empty TriggerCursor.all
+        assert_includes capture_logged_output { poller.poll }, error.message
+        assert_empty TriggerCursor.all
+      end
+
+      invalid_certificate = HTTPX::TLSError.new("certificate verify failed")
+      stub_request(:get, CHANNEL_URL).with(query: { limit: 1 }).to_raise(invalid_certificate)
+      assert_raises(HTTPX::TLSError) { poller.poll }
 
       stub_page({ limit: 1 }, [discord_message(100)])
       poller.poll

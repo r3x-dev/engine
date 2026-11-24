@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-poller = timer = supervisor = nil
+poller = timer = nil
 failure_pipe = nil
 report_puma_failure = -> { Rails.application.config.x.discord_polling.failure_writer&.write("!") }
 
@@ -8,13 +8,15 @@ SolidQueue::Supervisor.before_boot do
   next unless configuration.configured_processes.any? { |process| process.kind == :scheduler }
 
   poller = R3x::DiscordPoller.from_registry
-  next unless poller
+  failure_pipe = IO.pipe if poller && standalone?
+rescue StandardError => error
+  reported_to_puma = report_puma_failure.call
+  raise if standalone? || !reported_to_puma
 
-  supervisor = self
-  failure_pipe = IO.pipe
-rescue StandardError
-  report_puma_failure.call
-  raise
+  Rails.logger.fatal(error.full_message)
+  # Stop before starting scheduler or worker threads, then let Puma shut down.
+  stop
+  Process.kill(:INT, Process.pid)
 end
 
 SolidQueue.on_scheduler_start do |scheduler|
@@ -29,12 +31,11 @@ SolidQueue.on_scheduler_start do |scheduler|
 
     # A failed child is respawned. Notify its supervisor and use the native
     # graceful shutdown path so the service exits after draining its children.
-    if supervisor.standalone?
+    if failure_pipe
       failure_pipe.last.write("!")
       Process.kill(:TERM, scheduler.supervisor.pid)
     else
-      supervisor.stop
-      Thread.main.raise(error)
+      Process.kill(:INT, scheduler.supervisor.pid)
     end
   end
   timer.execute
@@ -43,10 +44,11 @@ end
 SolidQueue.on_scheduler_stop { timer&.shutdown }
 
 SolidQueue::Supervisor.after_shutdown do
+  poller = nil
   next unless failure_pipe
 
   failed = failure_pipe.first.read_nonblock(1, exception: false) == "!"
   failure_pipe.each(&:close)
-  failure_pipe = poller = nil
+  failure_pipe = nil
   raise "Fatal Discord polling error" if failed
 end
