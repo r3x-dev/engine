@@ -67,7 +67,8 @@ scheduler:
 This is the preferred Kubernetes layout because web scaling, queue execution,
 and recurring scheduling have separate lifecycle and resource needs. The worker
 entrypoint loads workflow classes but skips recurring task ownership. The
-scheduler entrypoint loads workflows and schedules recurring tasks. Both
+scheduler entrypoint loads workflows, schedules recurring tasks, and polls Discord
+when the catalog declares a [Discord message trigger](workflows.md#discord-messages). Both
 entrypoints also enable the internal `jobs` boot profile, which keeps eager
 load enabled in production while trimming the boot surface to the Active Job /
 Active Record runtime instead of the dashboard web stack. The jobs profile also

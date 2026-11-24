@@ -85,6 +85,8 @@ that show shape only.
 | `SOURCETAP_AUTH_TOKEN_*` | Optional variant | Sourcetap explicit `auth_token_env:` | Alternate Sourcetap token env names. | `SOURCETAP_AUTH_TOKEN_STAGING=<token>` |
 | `PROMETHEUS_URL` | Required when Prometheus client is used | `R3x::Client::Prometheus`, `ctx.client.prometheus` | Prometheus base URL. Custom names may start with this prefix. | `PROMETHEUS_URL=http://prometheus.example:9090` |
 | `PROMETHEUS_URL_*` | Optional variant | Prometheus explicit `url_env:` | Alternate Prometheus URL env names. | `PROMETHEUS_URL_HOME=http://prometheus-home.example:9090` |
+| `DISCORD_BOT_TOKEN` | Required for Discord message subscriptions | Scheduler | Bot token with View Channel, Read Message History, and Message Content intent enabled. | — |
+| `R3X_DISCORD_ALLOWED_AUTHOR_IDS` | Required for Discord message subscriptions | Scheduler | Comma-separated Discord user IDs allowed to trigger workflows across subscribed channels. | `123456789012345678,234567890123456789` |
 | `DISCORD_WEBHOOK_URL` | Required when Discord client uses default env | `R3x::Client::Discord`, `ctx.client.discord` | Discord webhook URL. Custom names may start with this prefix. | `DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...` |
 | `DISCORD_WEBHOOK_URL_*` | Optional variant | Discord explicit `webhook_url_env:` | Alternate Discord webhook env names for workflow-specific destinations. | `DISCORD_WEBHOOK_URL_NEWS=https://discord.com/api/webhooks/...` |
 | `OCRSPACE_API_KEY` | Required when OCR client is used | `R3x::Client::Ocr`, `ctx.client.ocr` | OCR.space API key. Custom names may start with this prefix. | `OCRSPACE_API_KEY=<token>` |

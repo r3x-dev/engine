@@ -1,0 +1,107 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+module R3x
+  class DiscordPollerTest < ActiveSupport::TestCase
+    class MessageWorkflow < Workflow::Base
+      self.queue_adapter = :solid_queue
+      trigger :discord_message, key: :inbox, channel_id: "42", attachments: :images, run_per: :message
+    end
+
+    class ImageWorkflow < Workflow::Base
+      self.queue_adapter = :solid_queue
+      trigger :discord_message, key: :inbox, channel_id: "42", attachments: :images, run_per: :attachment
+
+      before_enqueue do |job|
+        throw :abort if job.arguments.last.fetch(:trigger_payload).fetch("attachments").first.fetch("id") == "99"
+      end
+    end
+
+    class DiscardWorkflow < Workflow::Base
+      self.queue_adapter = :solid_queue
+      trigger :discord_message, key: :inbox, channel_id: "42", attachments: :images, run_per: :attachment
+      limits_concurrency to: 1, key: "one", on_conflict: :discard
+    end
+
+    CHANNEL_URL = "https://discord.com/api/v10/channels/42/messages"
+
+    setup do
+      R3x::Env.stubs(:fetch!).with("DISCORD_BOT_TOKEN").returns("test-token")
+      R3x::Env.stubs(:fetch!).with("R3X_DISCORD_ALLOWED_AUTHOR_IDS").returns("1, 2")
+      Workflow::Registry.stubs(:all).returns([MessageWorkflow, ImageWorkflow])
+    end
+
+    test "shares reads and catches up past a full page while new messages arrive" do
+      head = stub_page({ limit: 1 }, [discord_message(100)])
+      assert_no_difference("SolidQueue::Job.count") { DiscordPoller.from_registry.poll }
+      assert_equal %w[100 100], TriggerCursor.order(:message_id).pluck(:message_id)
+      assert_requested head, times: 1
+
+      stub_page({ limit: 1 }, [discord_message(202)])
+      attachments = %w[20 21 22].map { |id| { "id" => id, "content_type" => "image/png" } }
+      history = 200.downto(102).map { |id| discord_message(id) } << discord_message(101, attachments:)
+      first_page = stub_page({ limit: 100, after: "100" }, history)
+      second_page = stub_page({ limit: 100, after: "200" }, [discord_message(203, attachments:), discord_message(202, attachments:), discord_message(201)])
+
+      assert_difference("SolidQueue::Job.count", 8) { DiscordPoller.from_registry.poll }
+
+      assert_requested first_page, times: 1
+      assert_requested second_page, times: 1
+      assert_equal %w[202 202], TriggerCursor.order(:message_id).pluck(:message_id)
+      assert_equal [["101", %w[20 21 22]], ["202", %w[20 21 22]]], admitted(MessageWorkflow)
+      assert_equal [["101", ["20"]], ["101", ["21"]], ["101", ["22"]], ["202", ["20"]], ["202", ["21"]], ["202", ["22"]]], admitted(ImageWorkflow)
+
+      stub_page({ limit: 100, after: "202" }, [discord_message(203, attachments:)])
+
+      assert_difference("SolidQueue::Job.count", 4) { DiscordPoller.from_registry.poll }
+      assert_equal %w[203 203], TriggerCursor.order(:message_id).pluck(:message_id)
+    end
+
+    test "rolls back earlier attachments and cursor when the third enqueue is aborted" do
+      stub_page({ limit: 1 }, [])
+      assert_no_difference("SolidQueue::Job.count") { DiscordPoller.from_registry.poll }
+
+      attachments = %w[20 21 99].map { |id| { "id" => id, "content_type" => "image/png" } }
+      stub_page({ limit: 100, after: "0" }, [discord_message(100, attachments:)])
+
+      log = capture_logged_output { DiscordPoller.from_registry.poll }
+
+      assert_includes log, "ActiveJob::EnqueueError"
+      assert_empty admitted(ImageWorkflow)
+      assert_equal "0", TriggerCursor.find_by!(workflow_key: ImageWorkflow.workflow_key).message_id
+      assert_equal [["100", %w[20 21 99]]], admitted(MessageWorkflow)
+    end
+
+    test "a concurrency discard rolls back the entire message" do
+      Workflow::Registry.stubs(:all).returns([DiscardWorkflow])
+      stub_page({ limit: 1 }, [])
+      poller = DiscordPoller.from_registry
+      poller.poll
+      images = %w[20 21].map { |id| { "id" => id, "content_type" => "image/png" } }
+      stub_page({ limit: 100, after: "0" }, [discord_message(100, attachments: images)])
+
+      assert_no_difference("SolidQueue::Job.count") { poller.poll }
+      assert_equal "0", TriggerCursor.find_by!(workflow_key: DiscardWorkflow.workflow_key).message_id
+    end
+
+    private
+
+    def stub_page(query, messages)
+      stub_request(:get, CHANNEL_URL).with(query:).to_return(
+        status: 200, body: MultiJSON.generate(messages), headers: { "Content-Type" => "application/json" },
+      )
+    end
+
+    def discord_message(id, attachments: [])
+      { "id" => id.to_s, "channel_id" => "42", "author" => { "id" => "1" }, "content" => "Poster", "attachments" => attachments }
+    end
+
+    def admitted(workflow_class)
+      SolidQueue::Job.where(class_name: workflow_class.name).order(:id).map do |job|
+        payload = job.arguments.fetch("arguments").last.fetch("trigger_payload")
+        [payload.fetch("message_id"), payload.fetch("attachments").pluck("id")]
+      end
+    end
+  end
+end

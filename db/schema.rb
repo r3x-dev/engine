@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_03_101652) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_24_100000) do
   create_table "solid_cache_entries", force: :cascade do |t|
     t.integer "byte_size", null: false
     t.datetime "created_at", null: false
@@ -141,6 +141,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_03_101652) do
     t.index ["expires_at"], name: "index_solid_queue_semaphores_on_expires_at"
     t.index ["key", "value"], name: "index_solid_queue_semaphores_on_key_and_value"
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
+  end
+
+  create_table "trigger_cursors", force: :cascade do |t|
+    t.string "workflow_key", null: false
+    t.string "trigger_key", null: false
+    t.string "message_id", null: false
+    t.index ["workflow_key", "trigger_key"], name: "index_trigger_cursors_on_workflow_key_and_trigger_key", unique: true
   end
 
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
