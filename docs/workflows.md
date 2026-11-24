@@ -34,7 +34,9 @@ or all channels for a global or unspecified limit. If Discord omits a usable
 retry delay, the scheduler waits 60 seconds.
 Invalid configuration or an unexpected polling or enqueue error makes the scheduler
 exit with status 1. In a combined deployment, Puma also exits with status 1.
-A failed enqueue leaves the cursor in place for retry after restart.
+A failed enqueue leaves the cursor in place for retry after restart. During graceful
+shutdown, the scheduler gives the active poll half of the Solid Queue shutdown timeout to
+finish, reserving the rest for process cleanup.
 
 Choose `run_per: :message` for one run with all matching images, or
 `run_per: :attachment` for a separate run per image. Each run receives

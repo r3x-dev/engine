@@ -12,6 +12,54 @@ class DiscordSchedulerTest < ActiveSupport::TestCase
     end
   end
 
+  %w[fork async].each do |mode|
+    test "scheduler in #{mode} mode finishes an in-flight Discord read before exiting" do
+      with_scheduler_database(broken_cursor: false) do |env, dir|
+        env["DISCORD_BOT_TOKEN"] = "test"
+        env["SOLID_QUEUE_SUPERVISOR_MODE"] = mode
+        pack = File.join(dir, "inbox")
+        Dir.mkdir(pack)
+        File.write(File.join(pack, "workflow.rb"), <<~RUBY)
+          require #{Rails.root.join("test/fixtures/discord_polling/inbox/workflow.rb").to_s.inspect}
+          require "webmock"
+          require "httpx/adapters/webmock"
+          WebMock.enable!
+          WebMock.stub_request(:get, "https://discord.com/api/v10/channels/42/messages?limit=1").to_return do
+            puts "Discord read started"
+            STDIN.readline
+            { status: 200, headers: { "Content-Type" => "application/json" }, body: '[{"id":"123"}]' }
+          end
+          SolidQueue::Scheduler.before_shutdown(prepend: true) { puts "Scheduler is stopping" }
+        RUBY
+        env["R3X_WORKFLOW_PATHS"] = pack
+        command = mode == "async" ? puma_command(dir) : ["bin/jobs-scheduler"]
+        Open3.popen2e(env, *command, pgroup: true) do |input, stream, child|
+          output = +""
+          Timeout.timeout(15) do
+            stream.each_line do |line|
+              output << line
+              Process.kill(:INT, child.pid) if line.include?("Discord read started")
+              break if line.include?("Scheduler is stopping")
+            end
+
+            assert_includes output, "Scheduler is stopping"
+            assert_nil child.join(0.5), "Scheduler exited with the Discord response still pending"
+            input.puts "release"
+            output << stream.read
+
+            assert_predicate child.value, :success?, output
+          end
+        ensure
+          Process.kill(:KILL, -child.pid) if child.alive?
+        end
+
+        SQLite3::Database.new(env.fetch("R3X_DATABASE_PATH"), readonly: true) do |database|
+          assert_equal "123", database.get_first_value("SELECT message_id FROM trigger_cursors")
+        end
+      end
+    end
+  end
+
   test "combined Puma in fork mode exits on invalid Discord config and on a fatal polling error" do
     with_scheduler_database do |env, dir|
       assert_discord_scheduler_failures(env, *puma_command(dir))

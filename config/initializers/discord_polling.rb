@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-poller = timer = nil
+poller = timer = executor = nil
 failure_pipe = nil
 report_puma_failure = -> { Rails.application.config.x.discord_polling.failure_writer&.write("!") }
 
@@ -19,13 +19,16 @@ rescue StandardError => error
   Process.kill(:INT, Process.pid)
 end
 
-SolidQueue.on_scheduler_start do |scheduler|
-  next unless poller
+# Recurring task registration can fail and cause Solid Queue to replace the scheduler.
+SolidQueue::Scheduler.after_boot do |scheduler|
+  active_poller = poller
+  next unless active_poller
 
-  timer = Concurrent::TimerTask.new(run_now: true, execution_interval: 60, interval_type: :fixed_rate) do
-    Rails.application.executor.wrap { poller.poll }
+  executor = Concurrent::SingleThreadExecutor.new
+  timer = Concurrent::TimerTask.new(executor:, run_now: true, execution_interval: 60, interval_type: :fixed_rate) do |task|
+    Rails.application.executor.wrap { active_poller.poll }
   rescue StandardError => error
-    timer.shutdown
+    task.shutdown
     Rails.logger.fatal(error.full_message)
     report_puma_failure.call
 
@@ -41,7 +44,18 @@ SolidQueue.on_scheduler_start do |scheduler|
   timer.execute
 end
 
-SolidQueue.on_scheduler_stop { timer&.shutdown }
+SolidQueue.on_scheduler_stop do
+  next unless timer
+
+  timer.shutdown
+  executor.shutdown
+  # Leave the supervisor time to drain its remaining processes before its hard stop.
+  unless executor.wait_for_termination(SolidQueue.shutdown_timeout / 2.0)
+    Rails.logger.warn("Stopping the active Discord poll after its shutdown budget expired")
+    executor.kill
+  end
+  timer = executor = nil
+end
 
 SolidQueue::Supervisor.after_shutdown do
   poller = nil
