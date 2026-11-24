@@ -29,12 +29,8 @@ module R3x
     def poll
       @subscriptions_by_channel.each do |channel_id, subscriptions|
         poll_channel(channel_id, subscriptions)
-      rescue Client::Discord::Messages::RateLimited
-        logger.debug { "Discord polling deferred channel_id=#{channel_id} until rate limit reset" }
-      rescue HTTPX::HTTPError => error
-        logger.error "Discord polling failed channel_id=#{channel_id} status=#{error.status}"
-      rescue => error
-        logger.error "Discord polling failed channel_id=#{channel_id} error_class=#{error.class} error_message=#{error.message}"
+      rescue Client::Discord::Messages::RetryLater => error
+        logger.warn "Discord poll deferred channel_id=#{channel_id} reason=#{error.message}"
       end
     end
 
@@ -93,10 +89,6 @@ module R3x
       end
       subscription.message_id = message_id if advanced
       advanced
-    rescue => error
-      logger.error "Discord admission failed workflow_key=#{subscription.workflow_class.workflow_key} " \
-        "trigger_key=#{subscription.trigger.unique_key} message_id=#{message_id} error_class=#{error.class} error_message=#{error.message}"
-      false
     end
 
     def enqueue!(workflow_class, trigger_key, payload)

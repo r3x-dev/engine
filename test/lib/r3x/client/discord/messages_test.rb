@@ -19,7 +19,7 @@ module R3x
         client = Discord::Messages.new
 
         assert_equal [{ "id" => "102" }], client.page("42", limit: 100)
-        assert_raises(Discord::Messages::RateLimited) { client.page("42", limit: 100, after: "102") }
+        assert_raises(Discord::Messages::RetryLater) { client.page("42", limit: 100, after: "102") }
         assert_requested latest
         assert_not_requested following
       end
@@ -31,8 +31,8 @@ module R3x
         other = stub_request(:get, "https://discord.com/api/v10/channels/43/messages?limit=1").to_return(json_response([]))
         client = Discord::Messages.new
 
-        assert_raises(HTTPX::HTTPError) { client.page("42", limit: 1) }
-        assert_raises(Discord::Messages::RateLimited) { client.page("43", limit: 1) }
+        assert_raises(Discord::Messages::RetryLater) { client.page("42", limit: 1) }
+        assert_raises(Discord::Messages::RetryLater) { client.page("43", limit: 1) }
         assert_requested limited, times: 1
         assert_not_requested other
       end

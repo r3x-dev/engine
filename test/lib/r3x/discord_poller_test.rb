@@ -65,9 +65,7 @@ module R3x
       attachments = %w[20 21 99].map { |id| { "id" => id, "content_type" => "image/png" } }
       stub_page({ limit: 100, after: "0" }, [discord_message(100, attachments:)])
 
-      log = capture_logged_output { DiscordPoller.from_registry.poll }
-
-      assert_includes log, "ActiveJob::EnqueueError"
+      assert_raises(ActiveJob::EnqueueError) { DiscordPoller.from_registry.poll }
       assert_empty admitted(ImageWorkflow)
       assert_equal "0", TriggerCursor.find_by!(workflow_key: ImageWorkflow.workflow_key).message_id
       assert_equal [["100", %w[20 21 99]]], admitted(MessageWorkflow)
@@ -81,8 +79,22 @@ module R3x
       images = %w[20 21].map { |id| { "id" => id, "content_type" => "image/png" } }
       stub_page({ limit: 100, after: "0" }, [discord_message(100, attachments: images)])
 
-      assert_no_difference("SolidQueue::Job.count") { poller.poll }
+      assert_raises(ActiveJob::EnqueueError) { poller.poll }
+      assert_empty admitted(DiscardWorkflow)
       assert_equal "0", TriggerCursor.find_by!(workflow_key: DiscardWorkflow.workflow_key).message_id
+    end
+
+    test "a transient Discord outage leaves the cursor for the next poll" do
+      poller = DiscordPoller.from_registry
+      stub_request(:get, CHANNEL_URL).with(query: { limit: 1 }).to_return(status: 503)
+
+      assert_includes capture_logged_output { poller.poll }, "503"
+      assert_empty TriggerCursor.all
+
+      stub_page({ limit: 1 }, [discord_message(100)])
+      poller.poll
+
+      assert_equal %w[100 100], TriggerCursor.pluck(:message_id)
     end
 
     private

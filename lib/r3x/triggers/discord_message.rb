@@ -3,17 +3,16 @@
 module R3x
   module Triggers
     class DiscordMessage < Base
+      attr_reader :channel_id
+
       validates :key, presence: true
       validates :channel_id, format: { with: /\A[1-9][0-9]*\z/ }
       validates :attachments, inclusion: { in: [:images] }
       validates :run_per, inclusion: { in: %i[message attachment] }
 
       def initialize(key: nil, channel_id: nil, attachments: nil, run_per: nil)
-        super(:discord_message, key:, channel_id: channel_id.to_s, attachments:, run_per:)
-      end
-
-      def channel_id
-        options.fetch(:channel_id)
+        @channel_id = channel_id.to_s
+        super(:discord_message, key:, channel_id: @channel_id, attachments:, run_per:)
       end
 
       def payloads(message, allowed_author_ids:)

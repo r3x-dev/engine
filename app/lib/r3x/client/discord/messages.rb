@@ -18,7 +18,7 @@ module R3x
       def page(channel_id, limit: PAGE_SIZE, after: nil)
         wait_until = [@global_deadline, @channel_deadlines.fetch(channel_id, 0)].max
         if wait_until > monotonic_time
-          raise RateLimited, "Discord rate limit reset is pending"
+          raise RetryLater, "Discord rate limit reset is pending"
         end
 
         params = { limit: }
@@ -29,8 +29,13 @@ module R3x
         end
         validate_page(response.json, limit:, after:)
       rescue HTTPX::HTTPError => error
+        raise unless [408, 429].include?(error.status) || (500..599).cover?(error.status)
+
         remember_retry_after(channel_id, error.response) if error.status == 429
-        raise
+        raise RetryLater, "Discord returned HTTP #{error.status}"
+      rescue HTTPX::TimeoutError, HTTPX::ConnectionError, HTTPX::ResolveError,
+        Errno::ECONNREFUSED, Errno::ECONNRESET, Errno::EHOSTUNREACH, Errno::ENETUNREACH => error
+        raise RetryLater, error.message
       end
 
       private

@@ -2,6 +2,6 @@
 
 module R3x
   module Client
-    class Discord::Messages::RateLimited < StandardError; end
+    class Discord::Messages::RetryLater < StandardError; end
   end
 end

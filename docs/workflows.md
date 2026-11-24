@@ -28,12 +28,18 @@ The scheduler polls subscribed channels every 60 seconds. A new subscription sta
 at the current end of the channel. Restarting with the same workflow and trigger
 keys resumes from the saved message ID. Give a different channel a new trigger key.
 
+Temporary Discord outages and rate limits defer the channel until a later poll.
+Invalid configuration or an unexpected polling or enqueue error stops the scheduler
+service. The failing message retains its cursor position for retry after restart.
+
 Choose `run_per: :message` for one run with all matching images, or
 `run_per: :attachment` for a separate run per image. Each run receives
 `channel_id`, `message_id`, `content` and an ordered `attachments` array in
 `ctx.trigger.payload`. Each attachment carries its original Discord ID. The workflow
 uses those IDs to retrieve the images. Only messages from allowed human authors
-with image attachments on the message itself qualify.
+with image attachments on the message itself qualify. When per-attachment runs
+share a concurrency key, use blocking concurrency limits. Discarding a run rolls
+back admission of the whole message.
 
 Enable Read Message History and Message Content before the first poll. Discord
 can return an empty history or omit attachment data when these permissions are
