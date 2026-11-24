@@ -33,7 +33,7 @@ module R3x
 
         remember_retry_after(channel_id, error.response) if error.status == 429
         raise RetryLater, "Discord returned HTTP #{error.status}"
-      rescue HTTPX::TimeoutError, HTTPX::ConnectionError, HTTPX::ResolveError,
+      rescue EOFError, HTTPX::TimeoutError, HTTPX::ConnectionError, HTTPX::ResolveError,
         Errno::ECONNREFUSED, Errno::ECONNRESET, Errno::EHOSTUNREACH, Errno::ENETUNREACH => error
         raise RetryLater, error.message
       end

@@ -29,8 +29,9 @@ at the current end of the channel. Restarting with the same workflow and trigger
 keys resumes from the saved message ID. Give a different channel a new trigger key.
 
 Temporary Discord outages and rate limits defer the channel until a later poll.
-Invalid configuration or an unexpected polling or enqueue error stops the scheduler
-service. The failing message retains its cursor position for retry after restart.
+Invalid configuration or an unexpected polling or enqueue error makes the scheduler
+exit with status 1. In a combined deployment, Puma also exits with status 1.
+A failed enqueue leaves the cursor in place for retry after restart.
 
 Choose `run_per: :message` for one run with all matching images, or
 `run_per: :attachment` for a separate run per image. Each run receives

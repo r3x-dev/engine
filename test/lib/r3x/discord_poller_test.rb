@@ -14,7 +14,9 @@ module R3x
       trigger :discord_message, key: :inbox, channel_id: "42", attachments: :images, run_per: :attachment
 
       before_enqueue do |job|
-        throw :abort if job.arguments.last.fetch(:trigger_payload).fetch("attachments").first.fetch("id") == "99"
+        id = job.arguments.last.fetch(:trigger_payload).fetch("attachments").first.fetch("id")
+        throw :abort if id == "99"
+        raise ActiveRecord::Rollback if id == "98"
       end
     end
 
@@ -58,17 +60,20 @@ module R3x
       assert_equal %w[203 203], TriggerCursor.order(:message_id).pluck(:message_id)
     end
 
-    test "rolls back earlier attachments and cursor when the third enqueue is aborted" do
-      stub_page({ limit: 1 }, [])
-      assert_no_difference("SolidQueue::Job.count") { DiscordPoller.from_registry.poll }
+    { "aborts" => "99", "rolls back" => "98" }.each do |action, last_id|
+      test "propagates the failure and rolls back earlier attachments when the third enqueue #{action}" do
+        stub_page({ limit: 1 }, [])
+        assert_no_difference("SolidQueue::Job.count") { DiscordPoller.from_registry.poll }
 
-      attachments = %w[20 21 99].map { |id| { "id" => id, "content_type" => "image/png" } }
-      stub_page({ limit: 100, after: "0" }, [discord_message(100, attachments:)])
+        ids = ["20", "21", last_id]
+        attachments = ids.map { |id| { "id" => id, "content_type" => "image/png" } }
+        stub_page({ limit: 100, after: "0" }, [discord_message(100, attachments:)])
 
-      assert_raises(ActiveJob::EnqueueError) { DiscordPoller.from_registry.poll }
-      assert_empty admitted(ImageWorkflow)
-      assert_equal "0", TriggerCursor.find_by!(workflow_key: ImageWorkflow.workflow_key).message_id
-      assert_equal [["100", %w[20 21 99]]], admitted(MessageWorkflow)
+        assert_raises(ActiveJob::EnqueueError) { DiscordPoller.from_registry.poll }
+        assert_empty admitted(ImageWorkflow)
+        assert_equal "0", TriggerCursor.find_by!(workflow_key: ImageWorkflow.workflow_key).message_id
+        assert_equal [["100", ids]], admitted(MessageWorkflow)
+      end
     end
 
     test "a concurrency discard rolls back the entire message" do
@@ -89,6 +94,11 @@ module R3x
       stub_request(:get, CHANNEL_URL).with(query: { limit: 1 }).to_return(status: 503)
 
       assert_includes capture_logged_output { poller.poll }, "503"
+      assert_empty TriggerCursor.all
+
+      stub_request(:get, CHANNEL_URL).with(query: { limit: 1 }).to_raise(EOFError.new("descriptor closed"))
+
+      assert_includes capture_logged_output { poller.poll }, "descriptor closed"
       assert_empty TriggerCursor.all
 
       stub_page({ limit: 1 }, [discord_message(100)])

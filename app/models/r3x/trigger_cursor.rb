@@ -14,7 +14,9 @@ module R3x
 
         yield
         true
-      end || false
+      rescue ActiveRecord::Rollback => error
+        raise ActiveJob::EnqueueError, "Discord enqueue rolled back for message #{to}: #{error.message}"
+      end
     end
   end
 end

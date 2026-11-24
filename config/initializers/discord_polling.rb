@@ -2,6 +2,7 @@
 
 poller = timer = supervisor = nil
 failure_pipe = nil
+report_puma_failure = -> { Rails.application.config.x.discord_polling.failure_writer&.write("!") }
 
 SolidQueue::Supervisor.before_boot do
   next unless configuration.configured_processes.any? { |process| process.kind == :scheduler }
@@ -11,6 +12,9 @@ SolidQueue::Supervisor.before_boot do
 
   supervisor = self
   failure_pipe = IO.pipe
+rescue StandardError
+  report_puma_failure.call
+  raise
 end
 
 SolidQueue.on_scheduler_start do |scheduler|
@@ -21,6 +25,7 @@ SolidQueue.on_scheduler_start do |scheduler|
   rescue StandardError => error
     timer.shutdown
     Rails.logger.fatal(error.full_message)
+    report_puma_failure.call
 
     # A failed child is respawned. Notify its supervisor and use the native
     # graceful shutdown path so the service exits after draining its children.
