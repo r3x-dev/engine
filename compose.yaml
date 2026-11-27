@@ -8,8 +8,8 @@ services:
     environment:
       BUNDLE_PATH: ${DOCKER_BUNDLE_DIR:?Use ./dockerized.sh}
       GEM_HOME: ${DOCKER_BUNDLE_DIR:?Use ./dockerized.sh}
-      BUNDLE_IGNORE_CONFIG: "true"
-      BUNDLE_FROZEN: "true"
+      BUNDLE_IGNORE_CONFIG: 'true'
+      BUNDLE_FROZEN: 'true'
       BUNDLE_GEMFILE: ${DOCKER_PROJECT_DIR:?Use ./dockerized.sh}/Gemfile
       XDG_CACHE_HOME: ${DOCKER_CACHE_DIR:?Use ./dockerized.sh}
       DPRINT_CACHE_DIR: ${DOCKER_CACHE_DIR:?Use ./dockerized.sh}/dprint
@@ -18,7 +18,7 @@ services:
       HOME: /tmp
     working_dir: ${DOCKER_PROJECT_DIR:?Use ./dockerized.sh}
     # Rootless UID 0 maps to the daemon user; rootful uses the invoking host user.
-    user: "${DOCKERIZED_USER:?Use ./dockerized.sh}"
+    user: '${DOCKERIZED_USER:?Use ./dockerized.sh}'
     init: true
     read_only: true
     cap_drop:
@@ -38,11 +38,11 @@ services:
       - /tmp:mode=1777,exec
       - ${DOCKER_PROJECT_DIR:?Use ./dockerized.sh}/tmp/pids:mode=1777
     ports:
-      - "127.0.0.1:3000:3000"
+      - '127.0.0.1:3000:3000'
     entrypoint: [
-      "${DOCKER_PROJECT_DIR:?Use ./dockerized.sh}/bin/docker-entrypoint",
+      '${DOCKER_PROJECT_DIR:?Use ./dockerized.sh}/bin/docker-entrypoint',
     ]
-    command: ["./bin/rails", "server", "-b", "0.0.0.0"]
+    command: ['./bin/rails', 'server', '-b', '0.0.0.0']
 
   js-tests:
     image: gcr.io/distroless/nodejs26-debian13:nonroot@sha256:1d736cf8b5716c07a245301f92717143215d248fd55771ee1936ef4b3302e531
@@ -61,7 +61,7 @@ services:
         source: .
         target: /workspace
         read_only: true
-    command: ["--test", "test/javascript/*_test.js"]
+    command: ['--test', 'test/javascript/*_test.js']
 
   postgres:
     image: postgres:18-alpine@sha256:0115267ab5a509022df9319c77be365cef335adb71556c75f60f5360ee247e71
@@ -75,7 +75,7 @@ services:
     tmpfs:
       - /var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U r3x -d r3x_test"]
+      test: ['CMD-SHELL', 'pg_isready -U r3x -d r3x_test']
       interval: 2s
       timeout: 5s
       retries: 15
@@ -85,7 +85,7 @@ services:
     image: ghcr.io/immanuwell/droast:1.7.0@sha256:4f31be49f26804c0a2f8a0ab0ae578719e30376323e8fd5951c6dcc79a478b40
     pull_policy: never
     profiles: [lint]
-    user: "${DOCKERIZED_USER:?Use ./dockerized.sh}"
+    user: '${DOCKERIZED_USER:?Use ./dockerized.sh}'
     working_dir: /workspace
     network_mode: none
     read_only: true
@@ -100,4 +100,4 @@ services:
         read_only: true
         bind:
           create_host_path: false
-    command: ["Dockerfile"]
+    command: ['Dockerfile']

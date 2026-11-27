@@ -1,6 +1,7 @@
 {
   "yaml": {
-    "indentWidth": 2
+    "indentWidth": 2,
+    "quotes": "preferSingle"
   },
   "includes": [
     "**/*.{yaml,yml}"

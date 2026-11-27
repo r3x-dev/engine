@@ -4,7 +4,7 @@ description: Install the Ruby version declared in the Dockerfile
 inputs:
   bundler-cache:
     description: Install and cache the bundle
-    default: "true"
+    default: 'true'
 
 outputs:
   ruby-version:
