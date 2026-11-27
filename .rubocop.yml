@@ -57,7 +57,7 @@ Layout/LineLength:
   Max: 140
   AutoCorrect: false
   Exclude:
-    - "test/**/*"
+    - 'test/**/*'
 
 Rails/TimeZone:
   Enabled: true
@@ -66,51 +66,51 @@ Rails/TimeZone:
 R3x/PreferLoggerConcern:
   Enabled: true
   Include:
-    - "app/lib/r3x/client/**/*"
+    - 'app/lib/r3x/client/**/*'
 
 R3x/PreferR3xEnv:
   Enabled: true
   Include:
-    - "app/**/*.rb"
-    - "lib/**/*.rb"
+    - 'app/**/*.rb'
+    - 'lib/**/*.rb'
 
 R3x/TopLevelGoogleConstants:
   Enabled: true
   Include:
-    - "app/lib/r3x/client/**/*.rb"
+    - 'app/lib/r3x/client/**/*.rb'
 
 R3x/NoRequireAutoloadedFile:
   Enabled: true
   Include:
-    - "app/**/*.rb"
-    - "lib/**/*.rb"
+    - 'app/**/*.rb'
+    - 'lib/**/*.rb'
   AutoloadPaths:
-    - "app/controllers"
-    - "app/helpers"
-    - "app/jobs"
-    - "app/lib"
-    - "app/models"
-    - "lib"
+    - 'app/controllers'
+    - 'app/helpers'
+    - 'app/jobs'
+    - 'app/lib'
+    - 'app/models'
+    - 'lib'
   IgnoredPaths:
-    - "lib/assets"
-    - "lib/tasks"
+    - 'lib/assets'
+    - 'lib/tasks'
 
 R3x/PreferHttpxResponseJson:
   Enabled: true
   Include:
-    - "app/**/*.rb"
-    - "lib/**/*.rb"
+    - 'app/**/*.rb'
+    - 'lib/**/*.rb'
 
 R3x/PreferHttpxRaiseForStatus:
   Enabled: true
   Include:
-    - "app/**/*.rb"
-    - "lib/**/*.rb"
+    - 'app/**/*.rb'
+    - 'lib/**/*.rb'
 
 R3x/NoManualMethodPatchingInTests:
   Enabled: true
   Include:
-    - "test/**/*_test.rb"
+    - 'test/**/*_test.rb'
 
 R3x/AvoidHashTap:
   Enabled: true

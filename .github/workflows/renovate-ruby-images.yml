@@ -3,7 +3,7 @@ name: Renovate Ruby Images
 on:
   push:
     branches:
-      - "renovate/docker.io-library-ruby-*"
+      - 'renovate/docker.io-library-ruby-*'
 
 permissions:
   contents: write
@@ -26,7 +26,7 @@ jobs:
         id: ruby
         uses: ./.github/actions/setup-ruby
         with:
-          bundler-cache: "false"
+          bundler-cache: 'false'
 
       - name: Log in to DHI
         uses: docker/login-action@v4

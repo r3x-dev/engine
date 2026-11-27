@@ -1,10 +1,10 @@
-worktree_dir: ".."
+worktree_dir: '..'
 # window_prefix: ""  # Odkomentuj żeby usunąć prefix 'wm-' (domyślnie: wm-<branch>)
 
 files:
   copy:
-    - ".env"
-    - "workflows/"
+    - '.env'
+    - 'workflows/'
 
 # Nadpisuje globalne panes — just setup przed agentem (w panelu tmux)
 panes:
