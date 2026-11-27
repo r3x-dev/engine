@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^apply_patch$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.codex/hooks/lint.sh\"",
+            "timeout": 60,
+            "statusMessage": "Checking changed Ruby files"
+          }
+        ]
+      }
+    ]
+  }
+}
