@@ -3,6 +3,7 @@ name: Renovate Ruby Images
 on:
   push:
     branches:
+      - 'renovate/ruby'
       - 'renovate/docker.io-library-ruby-*'
 
 permissions:

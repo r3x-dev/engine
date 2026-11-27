@@ -76,6 +76,23 @@
       enabled: false,
     },
     {
+      description: 'Group Ruby version and DHI image digest updates',
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'docker.io/library/ruby',
+        'dhi.io/ruby',
+      ],
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+        'digest',
+      ],
+      groupName: 'Ruby',
+      groupSingleUpdates: true,
+    },
+    {
       description: 'Update in-range Bundler gems in Gemfile.lock',
       matchManagers: [
         'bundler',
