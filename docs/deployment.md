@@ -67,7 +67,8 @@ scheduler:
 This is the preferred Kubernetes layout because web scaling, queue execution,
 and recurring scheduling have separate lifecycle and resource needs. The worker
 entrypoint loads workflow classes but skips recurring task ownership. The
-scheduler entrypoint loads workflows and schedules recurring tasks. Both
+scheduler entrypoint loads workflows, schedules recurring tasks, and polls Discord
+when the catalog declares a [Discord message trigger](workflows.md#discord-messages). Both
 entrypoints also enable the internal `jobs` boot profile, which keeps eager
 load enabled in production while trimming the boot surface to the Active Job /
 Active Record runtime instead of the dashboard web stack. The jobs profile also
@@ -89,6 +90,11 @@ bin/web
 The default combined process needs `R3X_WORKFLOW_PATHS`; do not also run a separate jobs scheduler
 that owns recurring scheduling. `bin/web` owns its web-only setting and does not need a workflow
 mount.
+
+The embedded Solid Queue supervisor defaults to `fork`. Set
+`SOLID_QUEUE_SUPERVISOR_MODE=async` to run its workers, dispatcher, and scheduler as
+threads in Puma. In this mode `JOB_CONCURRENCY` is ignored. A fatal Discord polling
+configuration or runtime error stops the combined service with exit status `1`.
 
 ### Generic Jobs Entrypoint
 

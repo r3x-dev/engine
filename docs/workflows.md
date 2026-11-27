@@ -17,3 +17,37 @@ the shared rules and selects task-specific references:
 See the [worked digest](workflows/example_multi_step_digest.md) for a composed
 example and its delivery limitations. Environment and deployment setup remain in
 [environment.md](environment.md) and [deployment.md](deployment.md).
+
+## Discord messages
+
+```ruby
+trigger :discord_message, key: :posters, channel_id: "123456789012345678", attachments: :images, run_per: :message
+```
+
+The scheduler polls subscribed channels every 60 seconds. A new subscription starts
+at the current end of the channel. Restarting with the same workflow and trigger
+keys resumes from the saved message ID. Give a different channel a new trigger key.
+
+Each Discord request has a 10-second deadline. A timeout or temporary outage
+defers that channel until a later poll. A rate limit pauses the affected channel,
+or all channels for a global or unspecified limit. If Discord omits a usable
+retry delay, the scheduler waits 60 seconds.
+Invalid configuration or an unexpected polling or enqueue error makes the scheduler
+exit with status 1. In a combined deployment, Puma also exits with status 1.
+A failed enqueue leaves the cursor in place for retry after restart. During graceful
+shutdown, the scheduler gives the active poll half of the Solid Queue shutdown timeout to
+finish, reserving the rest for process cleanup.
+
+Choose `run_per: :message` for one run with all matching images, or
+`run_per: :attachment` for a separate run per image. Each run receives
+`channel_id`, `message_id`, `content` and an ordered `attachments` array in
+`ctx.trigger.payload`. Each attachment carries its original Discord ID. The workflow
+uses those IDs to retrieve the images. Only messages from allowed human authors
+with image attachments on the message itself qualify. When per-attachment runs
+share a concurrency key, use blocking concurrency limits. Discarding a run rolls
+back admission of the whole message.
+
+Enable Read Message History and Message Content before the first poll. Discord
+can return an empty history or omit attachment data when these permissions are
+missing. Restoring access can expose older messages after an empty initial read,
+and messages already passed by the cursor will not be revisited.
